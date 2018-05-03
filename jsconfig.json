@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "es6",
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true
+  },
+  "typeAcquisition": {
+    "enable": true
+  },
+  "exclude": ["**/node_modules", "**/.eslintcache", "package"]
+}

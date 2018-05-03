@@ -1,0 +1,49 @@
+{
+  "name": "roaring",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CRoaring port for NodeJS",
+  "main": "index.js",
+  "gypfile": true,
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "dev:build": "node-gyp build",
+    "dev:tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.d.ts --exclude **/node_modules/**",
+    "dev:eslint": "node ./node_modules/.bin/eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SalvatorePreviti/roaring-wasm.git"
+  },
+  "files": ["README.md", "binding.gyp", "index.js", "index.d.ts", "RoaringBitmap32.js", "RoaringBitmap32.d.ts"],
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "keywords": ["CRoaring"],
+  "author": "Salvatore Previti",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/SalvatorePreviti/roaring-wasm/issues"
+  },
+  "homepage": "https://github.com/SalvatorePreviti/roaring-wasm#readme",
+  "dependencies": {
+    "nan": "^2.10.0",
+    "node-gyp": "^3.x.x"
+  },
+  "devDependencies": {
+    "@types/jest": "^22.2.3",
+    "@types/node": "^10.0.0",
+    "eslint": "^4.19.1",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-jest": "^21.15.1",
+    "eslint-plugin-node": "^6.0.1",
+    "jest": "^22.4.3",
+    "prettier": "^1.12.1",
+    "ts-jest": "^22.4.4",
+    "tslint": "^5.9.1",
+    "tslint-config-prettier": "^1.12.0",
+    "tslint-microsoft-contrib": "^5.0.3",
+    "typescript": "^2.8.3"
+  }
+}

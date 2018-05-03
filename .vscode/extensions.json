@@ -1,0 +1,3 @@
+{
+  "recommendations": ["ms-vscode.cpptools", "eg2.tslint", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "xaver.clang-format"]
+}

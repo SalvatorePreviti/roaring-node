@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "allowSyntheticDefaultImports": false,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "alwaysStrict": true,
+    "baseUrl": ".",
+    "charset": "utf8",
+    "declaration": true,
+    "emitDecoratorMetadata": false,
+    "esModuleInterop": false,
+    "experimentalDecorators": false,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": false,
+    "lib": ["esnext"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "newLine": "LF",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noStrictGenericChecks": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": ".",
+    "pretty": true,
+    "removeComments": false,
+    "rootDir": ".",
+    "strict": true,
+    "skipLibCheck": false,
+    "skipDefaultLibCheck": false,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "target": "es2017"
+  },
+  "exclude": ["node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*", "test/**/*"],
+  "typeAcquisition": {
+    "enable": true
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "extends": "../tslint.json",
+  "rules": {
+    "no-empty": false,
+    "missing-jsdoc": false,
+    "no-implicit-dependencies": false,
+    "no-console": false,
+    "typedef": false,
+    "completed-docs": false,
+    "promise-function-async": false
+  }
+}
