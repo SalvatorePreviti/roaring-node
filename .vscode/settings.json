@@ -47,6 +47,7 @@
     "atomic": "cpp",
     "bitset": "cpp",
     "locale": "cpp",
-    "queue": "cpp"
+    "queue": "cpp",
+    "ios": "cpp"
   }
 }

@@ -14,11 +14,9 @@ void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
 
+  Nan::SetNamedPropertyHandler(ctor->InstanceTemplate(), namedPropertyGetter);
+
   Nan::SetPrototypeMethod(ctor, "next", next);
-
-  auto ctorInstanceTemplate = ctor->InstanceTemplate();
-
-  Nan::SetNamedPropertyHandler(ctorInstanceTemplate, namedPropertyGetter);
 
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
@@ -55,14 +53,17 @@ void RoaringBitmap32Iterator::New(const Nan::FunctionCallbackInfo<v8::Value> & i
     return Nan::ThrowError(Nan::New("RoaringBitmap32Iterator::ctor - allocation failed").ToLocalChecked());
   }
 
-  instance->Wrap(info.Holder());
+  auto holder = info.Holder();
+
+  instance->Wrap(holder);
 
   if (roaring) {
     instance->roaring = roaring;
-    instance->roaringObject = info[0];
+    instance->it.has_value = true;
+    instance->bitmap.Reset(info.GetIsolate(), info[0]);
   }
 
-  info.GetReturnValue().Set(info.Holder());
+  info.GetReturnValue().Set(holder);
 }
 
 void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> & info) {
@@ -80,35 +81,35 @@ void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> &
 }
 
 void RoaringBitmap32Iterator::next(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32Iterator * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.Holder());
+  RoaringBitmap32Iterator * instance = Nan::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.This());
 
-  if (!self || !self->roaring)
-    return setReturnValueToIteratorResult(info);
-
-  if (self->it.parent == nullptr) {
-    roaring_init_iterator(&self->roaring->roaring, &self->it);
-  } else if (!roaring_advance_uint32_iterator(&self->it)) {
-    self->roaring = nullptr;
-    self->roaringObject = Nan::Undefined();
+  if (!instance || !instance->it.has_value) {
     return setReturnValueToIteratorResult(info);
   }
 
-  if (!self->it.has_value) {
-    self->roaring = nullptr;
-    self->roaringObject = Nan::Undefined();
+  if (instance->it.parent == nullptr) {
+    roaring_init_iterator(&instance->roaring->roaring, &instance->it);
+  } else if (!roaring_advance_uint32_iterator(&instance->it)) {
+    instance->it.has_value = false;
+    instance->bitmap.Reset();
     return setReturnValueToIteratorResult(info);
   }
 
-  return setReturnValueToIteratorResult(info, self->it.current_value);
+  if (!instance->it.has_value) {
+    instance->bitmap.Reset();
+    return setReturnValueToIteratorResult(info);
+  }
+
+  return setReturnValueToIteratorResult(info, instance->it.current_value);
 }
 
 NAN_PROPERTY_GETTER(RoaringBitmap32Iterator::namedPropertyGetter) {
   if (property->IsSymbol()) {
     if (Nan::Equals(property, v8::Symbol::GetIterator(info.GetIsolate())).FromJust()) {
-      auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
+      auto instance = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
       auto iter_template = Nan::New<v8::FunctionTemplate>();
       Nan::SetCallHandler(
-          iter_template, [](const Nan::FunctionCallbackInfo<v8::Value> & info) { info.GetReturnValue().Set(info.This()); }, Nan::New<v8::External>(self));
+          iter_template, [](const Nan::FunctionCallbackInfo<v8::Value> & info) { info.GetReturnValue().Set(info.This()); }, Nan::New<v8::External>(instance));
       info.GetReturnValue().Set(iter_template->GetFunction());
     }
   }

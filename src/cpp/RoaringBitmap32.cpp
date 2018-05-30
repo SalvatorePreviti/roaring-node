@@ -125,26 +125,6 @@ NAN_PROPERTY_GETTER(RoaringBitmap32::isEmpty_getter) {
   info.GetReturnValue().Set(roaring_bitmap_is_empty(&self->roaring));
 }
 
-// void RoaringBitmap32::values(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-/*auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
-if (property->IsSymbol()) {
-if (Nan::Equals(property, v8::Symbol::GetIterator(info.GetIsolate())).FromJust()) {
-  return RoaringBitmap32::values(info);
-  auto iter_template = Nan::New<v8::FunctionTemplate>();
-  Nan::SetCallHandler(iter_template,
-      [](const Nan::FunctionCallbackInfo<v8::Value> & info) {
-        auto next_template = Nan::New<v8::FunctionTemplate>();
-        Nan::SetCallHandler(next_template, RoaringBitmap32::next, info.Data());
-        auto obj = Nan::New<v8::Object>();
-        Nan::Set(obj, Nan::New<v8::String>("next").ToLocalChecked(), next_template->GetFunction());
-        info.GetReturnValue().Set(obj);
-      },
-      Nan::New<v8::External>(self));
-  info.GetReturnValue().Set(iter_template->GetFunction());
-}
-return;
-}*/
-
 void RoaringBitmap32::has(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() < 1 || !info[0]->IsUint32()) {
     info.GetReturnValue().Set(false);

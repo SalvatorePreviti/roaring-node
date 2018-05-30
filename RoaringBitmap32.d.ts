@@ -33,13 +33,6 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public [Symbol.iterator](): RoaringBitmap32Iterator
 
   /**
-   * Gets a new iterator able to iterate all values in the set in order.
-   *
-   * @returns A new iterator
-   */
-  public values(): RoaringBitmap32Iterator
-
-  /**
    * Gets the minimum value in the set.
    *
    * @returns The minimum value in the set or 0xFFFFFFFF if empty.
