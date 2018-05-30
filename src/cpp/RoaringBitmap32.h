@@ -31,6 +31,8 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void clear(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void minimum(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void maximum(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void isSubset(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void isStrictSubset(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
   RoaringBitmap32();
 

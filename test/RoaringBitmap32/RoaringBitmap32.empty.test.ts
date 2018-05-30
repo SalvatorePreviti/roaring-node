@@ -50,6 +50,32 @@ describe('RoaringBitmap32 empty', () => {
     })
   })
 
+  describe('clear, remove', () => {
+    it('clear does nothing', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.clear()).toBe(undefined)
+      expect(bitmap.size).toBe(0)
+    })
+
+    it('remove does nothing', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.remove(19)).toBe(undefined)
+      expect(bitmap.size).toBe(0)
+    })
+
+    it('delete does nothing', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.delete(19)).toBe(false)
+      expect(bitmap.size).toBe(0)
+    })
+
+    it('removeMany does nothing', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.removeMany([123])
+      expect(bitmap.size).toBe(0)
+    })
+  })
+
   describe('minimum', () => {
     it('returns 4294967295', () => {
       const bitmap = new RoaringBitmap32()
@@ -90,6 +116,70 @@ describe('RoaringBitmap32 empty', () => {
         done: true,
         value: undefined
       })
+    })
+  })
+
+  describe('isSubset', () => {
+    it('has isSubset function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.isSubset).toBe('function')
+    })
+
+    it('returns false for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.isSubset(null as any)).toBe(false)
+      expect(bitmap.isSubset(undefined as any)).toBe(false)
+      expect(bitmap.isSubset(123 as any)).toBe(false)
+      expect(bitmap.isSubset([123] as any)).toBe(false)
+    })
+
+    it('returns true with itself', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.isSubset(bitmap)).toBe(true)
+    })
+
+    it('returns true with another empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      expect(a.isSubset(b)).toBe(true)
+    })
+
+    it('returns true with another non empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      expect(a.isSubset(b)).toBe(true)
+    })
+  })
+
+  describe('isStrictSubset', () => {
+    it('has isStrictSubset function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.isStrictSubset).toBe('function')
+    })
+
+    it('returns false for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.isStrictSubset(null as any)).toBe(false)
+      expect(bitmap.isStrictSubset(undefined as any)).toBe(false)
+      expect(bitmap.isStrictSubset(123 as any)).toBe(false)
+      expect(bitmap.isStrictSubset([123] as any)).toBe(false)
+    })
+
+    it('returns false with itself', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.isStrictSubset(bitmap)).toBe(false)
+    })
+
+    it('returns false with another empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      expect(a.isStrictSubset(b)).toBe(false)
+    })
+
+    it('returns true with another non empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      expect(a.isStrictSubset(b)).toBe(true)
     })
   })
 })

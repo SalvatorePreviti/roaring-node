@@ -95,9 +95,8 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * Removes a value from the set.
    *
    * @param value The unsigned 32 bit integer to remove.
-   * @returns The same RoaringBitmap32 instance.
    */
-  public remove(value: number): this
+  public remove(value: number): void
 
   /**
    * Removes multiple values from the set.
@@ -108,6 +107,11 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * @returns The same RoaringBitmap32 instance.
    */
   public removeMany(values: Iterable<number>): this
+
+  /**
+   * Removes all values from the set freeing resources.
+   */
+  public clear(): void
 
   /**
    * Performs an union in place ("this = this OR values").
@@ -126,6 +130,25 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * @returns The same RoaringBitmap32 instance.
    */
   public andNotInPlace(values: Iterable<number>): this
+
+  /**
+   * Checks wether this set is a subset or the same as the given set.
+   * Returns false also if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set.
+   * @returns True if this set is a subset of the given RoaringBitmap32. False if not.
+   */
+  public isSubset(other: RoaringBitmap32): boolean
+
+  /**
+   * Checks wether this set is a strict subset of the given set.
+   * Returns false if the sets are the same.
+   * Returns false also if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set.
+   * @returns True if this set is a strict subset of the given RoaringBitmap32. False if not.
+   */
+  public isStrictSubset(other: RoaringBitmap32): boolean
 }
 
 export = RoaringBitmap32

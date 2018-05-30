@@ -38,9 +38,10 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "removeMany", removeMany);
   Nan::SetPrototypeMethod(ctor, "delete", removeChecked);
   Nan::SetPrototypeMethod(ctor, "clear", clear);
-
   Nan::SetPrototypeMethod(ctor, "orInPlace", addMany);
   Nan::SetPrototypeMethod(ctor, "andNotInPlace", removeMany);
+  Nan::SetPrototypeMethod(ctor, "isSubset", isSubset);
+  Nan::SetPrototypeMethod(ctor, "isStrictSubset", isStrictSubset);
 
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
@@ -221,7 +222,6 @@ void RoaringBitmap32::remove(const Nan::FunctionCallbackInfo<v8::Value> & info) 
     RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
     roaring_bitmap_remove(&self->roaring, info[0]->Uint32Value());
   }
-  return info.GetReturnValue().Set(info.This());
 }
 
 void RoaringBitmap32::removeChecked(const Nan::FunctionCallbackInfo<v8::Value> & info) {
@@ -247,4 +247,24 @@ void RoaringBitmap32::clear(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   }
   ra_clear(&self->roaring.high_low_container);
   self->roaring.high_low_container = std::move(newRoaring.high_low_container);
+}
+
+void RoaringBitmap32::isSubset(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() < 1 || !RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0])) {
+    return info.GetReturnValue().Set(false);
+  }
+
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  RoaringBitmap32 * other = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+  info.GetReturnValue().Set(roaring_bitmap_is_subset(&self->roaring, &other->roaring));
+}
+
+void RoaringBitmap32::isStrictSubset(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() < 1 || !RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0])) {
+    return info.GetReturnValue().Set(false);
+  }
+
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  RoaringBitmap32 * other = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+  info.GetReturnValue().Set(roaring_bitmap_is_strict_subset(&self->roaring, &other->roaring));
 }
