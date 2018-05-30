@@ -1,10 +1,7 @@
 BasedOnStyle: Chromium
 IndentWidth: 2
-ColumnLimit: 160
 UseTab: Never
-
-Language: Cpp
-
+ColumnLimit: 160
 AlignAfterOpenBracket: DontAlign
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
@@ -20,6 +17,8 @@ PointerAlignment: Middle
 BinPackArguments: true
 MaxEmptyLinesToKeep: 1
 BreakConstructorInitializers: AfterColon
+DisableFormat: false
 
+---
 Language: JavaScript
 DisableFormat: true

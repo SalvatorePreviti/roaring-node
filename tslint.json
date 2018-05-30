@@ -7,7 +7,7 @@
     "jsdoc-format": true,
     "newline-before-return": false,
     "no-any": false,
-    "no-redundant-jsdoc": false,
+    "no-redundant-jsdoc": true,
     "no-relative-imports": false,
     "no-require-imports": false,
     "no-single-line-block-comment": false,

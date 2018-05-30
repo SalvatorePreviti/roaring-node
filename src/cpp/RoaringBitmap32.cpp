@@ -1,33 +1,36 @@
 #include "v8utils.h"
 
 #include "RoaringBitmap32.h"
+#include "RoaringBitmap32Iterator.h"
 
-Nan::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructor;
+Nan::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
+Nan::Persistent<v8::Function> RoaringBitmap32::constructor;
 Nan::Persistent<v8::Object> _Uint32Array;
 Nan::Persistent<v8::Function> _Uint32Array_from;
 
 static roaring_bitmap_t roaring_bitmap_zero;
 
-NAN_MODULE_INIT(RoaringBitmap32::Init) {
+void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   memset(&roaring_bitmap_zero, 0, sizeof(roaring_bitmap_zero));
 
   auto className = Nan::New("RoaringBitmap32").ToLocalChecked();
 
   v8::Local<v8::FunctionTemplate> ctor = Nan::New<v8::FunctionTemplate>(RoaringBitmap32::New);
-  constructor.Reset(ctor);
+  RoaringBitmap32::constructorTemplate.Reset(ctor);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
 
-  auto ctorFunction = ctor->GetFunction();
-  auto ctorObject = ctorFunction->ToObject();
   auto ctorInstanceTemplate = ctor->InstanceTemplate();
-
-  v8utils::defineHiddenField(ctorObject, "default", ctorObject);
 
   Nan::SetAccessor(ctorInstanceTemplate, Nan::New("isEmpty").ToLocalChecked(), isEmpty_getter);
   Nan::SetAccessor(ctorInstanceTemplate, Nan::New("size").ToLocalChecked(), size_getter);
 
+  Nan::SetNamedPropertyHandler(ctorInstanceTemplate, namedPropertyGetter);
+
+  Nan::SetPrototypeMethod(ctor, "minimum", minimum);
+  Nan::SetPrototypeMethod(ctor, "maximum", maximum);
   Nan::SetPrototypeMethod(ctor, "has", has);
+  Nan::SetPrototypeMethod(ctor, "contains", has);
   Nan::SetPrototypeMethod(ctor, "add", add);
   Nan::SetPrototypeMethod(ctor, "tryAdd", tryAdd);
   Nan::SetPrototypeMethod(ctor, "addMany", addMany);
@@ -39,10 +42,12 @@ NAN_MODULE_INIT(RoaringBitmap32::Init) {
   Nan::SetPrototypeMethod(ctor, "orInPlace", addMany);
   Nan::SetPrototypeMethod(ctor, "andNotInPlace", removeMany);
 
-  Nan::SetPrototypeMethod(ctor, "minimum", minimum);
-  Nan::SetPrototypeMethod(ctor, "maximum", maximum);
+  auto ctorFunction = ctor->GetFunction();
+  auto ctorObject = ctorFunction->ToObject();
+  v8utils::defineHiddenField(ctorObject, "default", ctorObject);
 
-  target->Set(className, ctorFunction);
+  exports->Set(className, ctorFunction);
+  constructor.Reset(ctorFunction);
 
   auto uint32ArrayType = Nan::Get(Nan::GetCurrentContext()->Global(), Nan::New("Uint32Array").ToLocalChecked()).ToLocalChecked()->ToObject();
   _Uint32Array.Reset(uint32ArrayType);
@@ -56,10 +61,17 @@ RoaringBitmap32::~RoaringBitmap32() {
   ra_clear(&roaring.high_low_container);
 }
 
-NAN_METHOD(RoaringBitmap32::New) {
-  // throw an error if constructor is called without new keyword
+void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (!info.IsConstructCall()) {
-    return Nan::ThrowError(Nan::New("RoaringBitmap32::New - called without new keyword").ToLocalChecked());
+    v8::Local<v8::Function> cons = Nan::New(constructor);
+    if (info.Length() < 1) {
+      v8::Local<v8::Value> argv[0] = {};
+      info.GetReturnValue().Set(Nan::NewInstance(cons, 0, argv).ToLocalChecked());
+    } else {
+      v8::Local<v8::Value> argv[1] = {info[0]};
+      info.GetReturnValue().Set(Nan::NewInstance(cons, 1, argv).ToLocalChecked());
+    }
+    return;
   }
 
   // create a new instance and wrap our javascript instance
@@ -81,6 +93,23 @@ NAN_METHOD(RoaringBitmap32::New) {
   }
 }
 
+NAN_PROPERTY_GETTER(RoaringBitmap32::namedPropertyGetter) {
+  if (property->IsSymbol()) {
+    if (Nan::Equals(property, v8::Symbol::GetIterator(info.GetIsolate())).FromJust()) {
+      auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
+      auto iter_template = Nan::New<v8::FunctionTemplate>();
+      Nan::SetCallHandler(iter_template,
+          [](const Nan::FunctionCallbackInfo<v8::Value> & info) {
+            v8::Local<v8::Value> argv[1] = {info.This()};
+            v8::Local<v8::Function> cons = Nan::New(RoaringBitmap32Iterator::constructor);
+            info.GetReturnValue().Set(Nan::NewInstance(cons, 1, argv).ToLocalChecked());
+          },
+          Nan::New<v8::External>(self));
+      info.GetReturnValue().Set(iter_template->GetFunction());
+    }
+  }
+}
+
 NAN_PROPERTY_GETTER(RoaringBitmap32::size_getter) {
   const RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
   auto size = roaring_bitmap_get_cardinality(&self->roaring);
@@ -96,7 +125,27 @@ NAN_PROPERTY_GETTER(RoaringBitmap32::isEmpty_getter) {
   info.GetReturnValue().Set(roaring_bitmap_is_empty(&self->roaring));
 }
 
-NAN_METHOD(RoaringBitmap32::has) {
+// void RoaringBitmap32::values(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+/*auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
+if (property->IsSymbol()) {
+if (Nan::Equals(property, v8::Symbol::GetIterator(info.GetIsolate())).FromJust()) {
+  return RoaringBitmap32::values(info);
+  auto iter_template = Nan::New<v8::FunctionTemplate>();
+  Nan::SetCallHandler(iter_template,
+      [](const Nan::FunctionCallbackInfo<v8::Value> & info) {
+        auto next_template = Nan::New<v8::FunctionTemplate>();
+        Nan::SetCallHandler(next_template, RoaringBitmap32::next, info.Data());
+        auto obj = Nan::New<v8::Object>();
+        Nan::Set(obj, Nan::New<v8::String>("next").ToLocalChecked(), next_template->GetFunction());
+        info.GetReturnValue().Set(obj);
+      },
+      Nan::New<v8::External>(self));
+  info.GetReturnValue().Set(iter_template->GetFunction());
+}
+return;
+}*/
+
+void RoaringBitmap32::has(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() < 1 || !info[0]->IsUint32()) {
     info.GetReturnValue().Set(false);
   } else {
@@ -105,17 +154,17 @@ NAN_METHOD(RoaringBitmap32::has) {
   }
 }
 
-NAN_METHOD(RoaringBitmap32::minimum) {
+void RoaringBitmap32::minimum(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   return info.GetReturnValue().Set(roaring_bitmap_minimum(&self->roaring));
 }
 
-NAN_METHOD(RoaringBitmap32::maximum) {
+void RoaringBitmap32::maximum(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   return info.GetReturnValue().Set(roaring_bitmap_maximum(&self->roaring));
 }
 
-NAN_METHOD(RoaringBitmap32::add) {
+void RoaringBitmap32::add(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() < 1 || !info[0]->IsUint32())
     return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::add - 32 bit unsigned integer expected").ToLocalChecked());
 
@@ -124,7 +173,7 @@ NAN_METHOD(RoaringBitmap32::add) {
   return info.GetReturnValue().Set(info.This());
 }
 
-NAN_METHOD(RoaringBitmap32::tryAdd) {
+void RoaringBitmap32::tryAdd(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() < 1 || !info[0]->IsUint32())
     return info.GetReturnValue().Set(false);
 
@@ -144,7 +193,7 @@ void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & 
   }
 
   if (arg->IsObject() && !arg->IsNull()) {
-    if (RoaringBitmap32::constructor.Get(isolate)->HasInstance(arg)) {
+    if (RoaringBitmap32::constructorTemplate.Get(isolate)->HasInstance(arg)) {
       RoaringBitmap32 * other = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
       roaring_bitmap_or_inplace(&self->roaring, &other->roaring);
     } else {
@@ -159,7 +208,7 @@ void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & 
   return Nan::ThrowTypeError(Nan::New("Uint32Array, RoaringBitmap32 or Iterable<number> expected").ToLocalChecked());
 }
 
-NAN_METHOD(RoaringBitmap32::addMany) {
+void RoaringBitmap32::addMany(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() > 0) {
     RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
     roaringAddMany(info.GetIsolate(), self, info[0]);
@@ -168,11 +217,11 @@ NAN_METHOD(RoaringBitmap32::addMany) {
   return Nan::ThrowTypeError(Nan::New("Uint32Array, RoaringBitmap32 or Iterable<number> expected").ToLocalChecked());
 }
 
-NAN_METHOD(RoaringBitmap32::removeMany) {
+void RoaringBitmap32::removeMany(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() > 0) {
     auto const & arg = info[0];
     RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-    if (RoaringBitmap32::constructor.Get(info.GetIsolate())->HasInstance(arg)) {
+    if (RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(arg)) {
       RoaringBitmap32 * other = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
       roaring_bitmap_andnot_inplace(&self->roaring, &other->roaring);
       return info.GetReturnValue().Set(info.This());
@@ -187,14 +236,15 @@ NAN_METHOD(RoaringBitmap32::removeMany) {
   return Nan::ThrowTypeError(Nan::New("Uint32Array, RoaringBitmap32 or Iterable<number> expected").ToLocalChecked());
 }
 
-NAN_METHOD(RoaringBitmap32::remove) {
+void RoaringBitmap32::remove(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() >= 1 && info[0]->IsUint32()) {
     RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
     roaring_bitmap_remove(&self->roaring, info[0]->Uint32Value());
   }
+  return info.GetReturnValue().Set(info.This());
 }
 
-NAN_METHOD(RoaringBitmap32::removeChecked) {
+void RoaringBitmap32::removeChecked(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() < 1 || !info[0]->IsUint32()) {
     info.GetReturnValue().Set(false);
   } else {
@@ -209,7 +259,7 @@ NAN_METHOD(RoaringBitmap32::removeChecked) {
   }
 }
 
-NAN_METHOD(RoaringBitmap32::clear) {
+void RoaringBitmap32::clear(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   roaring_bitmap_t newRoaring;
   if (!ra_init(&newRoaring.high_low_container)) {

@@ -1,2 +1,1 @@
-'use strict'
-module.exports = require('./build/Release/roaring.node').RoaringBitmap32
+module.exports = require('./index').RoaringBitmap32
