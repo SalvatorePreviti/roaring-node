@@ -1,6 +1,8 @@
 #ifndef __ROARING__H__
 #define __ROARING__H__
 
+#define USESSE4 1
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

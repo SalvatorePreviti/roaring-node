@@ -15,11 +15,20 @@
     "type": "git",
     "url": "git+https://github.com/SalvatorePreviti/roaring-wasm.git"
   },
-  "files": ["README.md", "binding.gyp", "index.js", "index.d.ts", "RoaringBitmap32.js", "RoaringBitmap32.d.ts"],
+  "files": [
+    "README.md",
+    "binding.gyp",
+    "index.js",
+    "index.d.ts",
+    "RoaringBitmap32.js",
+    "RoaringBitmap32.d.ts"
+  ],
   "engines": {
     "node": ">=6.0.0"
   },
-  "keywords": ["CRoaring"],
+  "keywords": [
+    "CRoaring"
+  ],
   "author": "Salvatore Previti",
   "license": "Apache-2.0",
   "bugs": {
@@ -32,17 +41,17 @@
   },
   "devDependencies": {
     "@types/jest": "^22.2.3",
-    "@types/node": "^10.0.0",
+    "@types/node": "^10.1.4",
     "eslint": "^4.19.1",
     "eslint-config-prettier": "^2.9.0",
-    "eslint-plugin-import": "^2.11.0",
-    "eslint-plugin-jest": "^21.15.1",
+    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-jest": "^21.17.0",
     "eslint-plugin-node": "^6.0.1",
-    "jest": "^22.4.3",
-    "prettier": "^1.12.1",
-    "ts-jest": "^22.4.4",
-    "tslint": "^5.9.1",
-    "tslint-config-prettier": "^1.12.0",
+    "jest": "^23.0.1",
+    "prettier": "^1.13.2",
+    "ts-jest": "^22.4.6",
+    "tslint": "^5.10.0",
+    "tslint-config-prettier": "^1.13.0",
     "tslint-microsoft-contrib": "^5.0.3",
     "typescript": "^2.8.3"
   }

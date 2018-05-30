@@ -1,6 +1,6 @@
 # submodules
 
-src/cpp/CRoaringUnityBuild
+src/cpp/CRoaringUnityBuild/**/*
 
 # build output
 
