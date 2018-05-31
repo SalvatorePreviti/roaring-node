@@ -26,6 +26,15 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public constructor(values?: Iterable<number>)
 
   /**
+   * Deserializes the bitmap from an Uint8Array or a Buffer.
+   * Returns a new RoaringBitmap32 instance.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   */
+  public static deserialize(serialized: Uint8Array, portable?: boolean): RoaringBitmap32
+
+  /**
    * Gets a new iterator able to iterate all values in the set in order.
    *
    * @returns A new iterator

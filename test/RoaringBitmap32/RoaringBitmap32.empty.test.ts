@@ -428,6 +428,58 @@ describe('RoaringBitmap32 empty', () => {
     })
   })
 
+  describe('deserialize', () => {
+    it('is a function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.deserialize).toBe('function')
+    })
+
+    it('deserializes empty bitmap (non portable)', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3])
+      bitmap.deserialize(Buffer.from([1, 0, 0, 0, 0]))
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('deserializes empty bitmap (non portable, explicit)', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3])
+      bitmap.deserialize(Buffer.from([1, 0, 0, 0, 0]), false)
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('deserializes empty bitmap (portable)', () => {
+      const bitmap = new RoaringBitmap32([1, 2])
+      bitmap.deserialize(Buffer.from([58, 48, 0, 0, 0, 0, 0, 0]), true)
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+  })
+
+  describe('deserialize static', () => {
+    it('is a function', () => {
+      expect(typeof RoaringBitmap32.deserialize).toBe('function')
+    })
+
+    it('deserializes empty bitmap (non portable)', () => {
+      const bitmap = RoaringBitmap32.deserialize(Buffer.from([1, 0, 0, 0, 0]))
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('deserializes empty bitmap (non portable, explicit)', () => {
+      const bitmap = RoaringBitmap32.deserialize(Buffer.from([1, 0, 0, 0, 0]), false)
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('deserializes empty bitmap (portable)', () => {
+      const bitmap = RoaringBitmap32.deserialize(Buffer.from([58, 48, 0, 0, 0, 0, 0, 0]), true)
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+  })
+
   describe('rank', () => {
     it('has rank function', () => {
       const bitmap = new RoaringBitmap32()

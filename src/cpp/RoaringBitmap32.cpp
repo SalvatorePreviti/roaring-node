@@ -65,6 +65,9 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
+
+  Nan::SetMethod(ctorObject, "deserialize", deserializeStatic);
+
   v8utils::defineHiddenField(ctorObject, "default", ctorObject);
 
   exports->Set(className, ctorFunction);
@@ -532,14 +535,36 @@ void RoaringBitmap32::serialize(const Nan::FunctionCallbackInfo<v8::Value> & inf
   }
 }
 
+void RoaringBitmap32::deserializeStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32::deserializeInner(info, true);
+}
+
 void RoaringBitmap32::deserialize(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32::deserializeInner(info, false);
+}
+
+void RoaringBitmap32::deserializeInner(const Nan::FunctionCallbackInfo<v8::Value> & info, bool isStatic) {
   if (info.Length() == 0 || (!info[0]->IsUint8Array() && !info[0]->IsInt8Array() && !info[0]->IsUint8ClampedArray())) {
     return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::deserialize requires an argument of type Uint8Array or Buffer").ToLocalChecked());
   }
 
-  bool portable = info.Length() > 1 && info[1]->IsTrue();
+  RoaringBitmap32 * self = nullptr;
 
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  if (isStatic) {
+    v8::Local<v8::Function> cons = Nan::New(constructor);
+    v8::Local<v8::Value> argv[0] = {};
+    auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+    info.GetReturnValue().Set(result);
+    self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+  } else {
+    self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  }
+
+  if (!self) {
+    return Nan::ThrowError(Nan::New("RoaringBitmap32::deserialize could not create RoaringBitmap32").ToLocalChecked());
+  }
+
+  bool portable = info.Length() > 1 && info[1]->IsTrue();
 
   Nan::TypedArrayContents<uint8_t> typedArray(info[0]);
   auto bufLen = typedArray.length();
