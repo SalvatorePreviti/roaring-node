@@ -10,8 +10,8 @@ void initTypes(const Nan::FunctionCallbackInfo<v8::Value> & info) {
 
 void InitModule(v8::Local<v8::Object> exports) {
   TypedArrays::initTypedArrays(Nan::GetCurrentContext()->Global());
-  Nan::SetMethod(exports, "_initTypes", initTypes);
 
+  v8utils::defineHiddenFunction(exports, "_initTypes", initTypes);
   v8utils::defineHiddenField(exports, "default", exports);
 
   RoaringBitmap32::Init(exports);

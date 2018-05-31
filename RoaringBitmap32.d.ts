@@ -388,14 +388,14 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public getSerializationSizeInBytes(portable?: boolean): number
 
   /**
-   * Serializes the bitmap into a new Uint8Array.
+   * Serializes the bitmap into a new Buffer.
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
-   * @returns A new Uint8Array that contains the serialized bitmap.
+   * @returns A new Buffer that contains the serialized bitmap.
    */
-  public serialize(portable?: boolean): Uint8Array
+  public serialize(portable?: boolean): Buffer
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.

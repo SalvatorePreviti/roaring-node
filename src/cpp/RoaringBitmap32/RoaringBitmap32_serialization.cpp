@@ -76,16 +76,21 @@ void RoaringBitmap32::deserialize(const Nan::FunctionCallbackInfo<v8::Value> & i
 }
 
 void RoaringBitmap32::deserializeInner(const Nan::FunctionCallbackInfo<v8::Value> & info, bool isStatic) {
-  if (info.Length() == 0 || (!info[0]->IsUint8Array() && !info[0]->IsInt8Array() && !info[0]->IsUint8ClampedArray())) {
+  if (info.Length() == 0 || (!info[0]->IsUint8Array() && !info[0]->IsInt8Array() && !info[0]->IsUint8ClampedArray()))
     return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::deserialize requires an argument of type Uint8Array or Buffer").ToLocalChecked());
-  }
 
   RoaringBitmap32 * self = nullptr;
 
   if (isStatic) {
     v8::Local<v8::Function> cons = Nan::New(constructor);
     v8::Local<v8::Value> argv[0] = {};
-    auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+
+    auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+    if (resultMaybe.IsEmpty())
+      return;
+
+    auto result = resultMaybe.ToLocalChecked();
+
     info.GetReturnValue().Set(result);
     self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
   } else {
@@ -101,7 +106,12 @@ void RoaringBitmap32::deserializeInner(const Nan::FunctionCallbackInfo<v8::Value
   Nan::TypedArrayContents<uint8_t> typedArray(info[0]);
   auto bufLen = typedArray.length();
   if (bufLen == 0) {
-    return RoaringBitmap32::clear(info);
+    roaring_bitmap_t newRoaring;
+    if (!ra_init(&newRoaring.high_low_container))
+      return Nan::ThrowError(Nan::New("RoaringBitmap32::deserialize - failed to initialize a new roaring container").ToLocalChecked());
+    ra_clear(&self->roaring.high_low_container);
+    self->roaring.high_low_container = std::move(newRoaring.high_low_container);
+    return;
   }
 
   const char * bufaschar = (const char *)*typedArray;

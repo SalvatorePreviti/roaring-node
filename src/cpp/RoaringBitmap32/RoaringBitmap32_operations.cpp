@@ -38,8 +38,11 @@ void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & 
       roaring_bitmap_or_inplace(&self->roaring, &other->roaring);
     } else {
       v8::Local<v8::Value> argv[] = {arg};
-      Nan::TypedArrayContents<uint32_t> typedArray(TypedArrays::Uint32Array_from.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv));
-      roaring_bitmap_add_many(&self->roaring, typedArray.length(), *typedArray);
+      auto t = TypedArrays::Uint32Array_from.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv);
+      if (!t.IsEmpty()) {
+        Nan::TypedArrayContents<uint32_t> typedArray(t);
+        roaring_bitmap_add_many(&self->roaring, typedArray.length(), *typedArray);
+      }
     }
 
     return;
@@ -182,7 +185,7 @@ void RoaringBitmap32::clear(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   roaring_bitmap_t newRoaring;
   if (!ra_init(&newRoaring.high_low_container)) {
-    Nan::ThrowError(Nan::New("RoaringBitmap32::clear - failed to initialize a new roaring container").ToLocalChecked());
+    return Nan::ThrowError(Nan::New("RoaringBitmap32::clear - failed to initialize a new roaring container").ToLocalChecked());
   }
   ra_clear(&self->roaring.high_low_container);
   self->roaring.high_low_container = std::move(newRoaring.high_low_container);
@@ -222,7 +225,12 @@ void RoaringBitmap32::andStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
 
   v8::Local<v8::Function> cons = Nan::New(constructor);
   v8::Local<v8::Value> argv[0] = {};
-  auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+
+  auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+  if (resultMaybe.IsEmpty())
+    return;
+
+  auto result = resultMaybe.ToLocalChecked();
   auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
   roaring_bitmap_t * r = roaring_bitmap_and(&a->roaring, &b->roaring);
@@ -248,7 +256,12 @@ void RoaringBitmap32::orStatic(const Nan::FunctionCallbackInfo<v8::Value> & info
 
   v8::Local<v8::Function> cons = Nan::New(constructor);
   v8::Local<v8::Value> argv[0] = {};
-  auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+
+  auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+  if (resultMaybe.IsEmpty())
+    return;
+
+  auto result = resultMaybe.ToLocalChecked();
   auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
   roaring_bitmap_t * r = roaring_bitmap_or(&a->roaring, &b->roaring);
@@ -274,7 +287,12 @@ void RoaringBitmap32::xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
 
   v8::Local<v8::Function> cons = Nan::New(constructor);
   v8::Local<v8::Value> argv[0] = {};
-  auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+
+  auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+  if (resultMaybe.IsEmpty())
+    return;
+
+  auto result = resultMaybe.ToLocalChecked();
   auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
   roaring_bitmap_t * r = roaring_bitmap_xor(&a->roaring, &b->roaring);
@@ -300,7 +318,12 @@ void RoaringBitmap32::andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
 
   v8::Local<v8::Function> cons = Nan::New(constructor);
   v8::Local<v8::Value> argv[0] = {};
-  auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+
+  auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+  if (resultMaybe.IsEmpty())
+    return;
+
+  auto result = resultMaybe.ToLocalChecked();
   auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
   roaring_bitmap_t * r = roaring_bitmap_andnot(&a->roaring, &b->roaring);

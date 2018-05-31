@@ -29,6 +29,7 @@
     "no-function-expression": false,
     "no-var-requires": false,
     "import-name": false,
-    "max-classes-per-file": false
+    "max-classes-per-file": false,
+    "mocha-no-side-effect-code": false
   }
 }

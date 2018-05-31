@@ -94,10 +94,16 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
     v8::Local<v8::Function> cons = Nan::New(constructor);
     if (info.Length() < 1) {
       v8::Local<v8::Value> argv[0] = {};
-      info.GetReturnValue().Set(Nan::NewInstance(cons, 0, argv).ToLocalChecked());
+      auto v = Nan::NewInstance(cons, 0, argv);
+      if (!v.IsEmpty()) {
+        info.GetReturnValue().Set(v.ToLocalChecked());
+      }
     } else {
       v8::Local<v8::Value> argv[1] = {info[0]};
-      info.GetReturnValue().Set(Nan::NewInstance(cons, 1, argv).ToLocalChecked());
+      auto v = Nan::NewInstance(cons, 1, argv);
+      if (!v.IsEmpty()) {
+        info.GetReturnValue().Set(v.ToLocalChecked());
+      }
     }
     return;
   }
@@ -105,10 +111,12 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   // create a new instance and wrap our javascript instance
   RoaringBitmap32 * instance = new RoaringBitmap32();
 
-  if (!instance || !ra_init(&instance->roaring.high_low_container)) {
-    if (instance != nullptr)
-      delete instance;
-    Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to initialize native roaring container").ToLocalChecked());
+  if (!instance)
+    return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to create native roaring container").ToLocalChecked());
+
+  if (!ra_init(&instance->roaring.high_low_container)) {
+    delete instance;
+    return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to initialize native roaring container").ToLocalChecked());
   }
 
   instance->Wrap(info.Holder());
@@ -116,7 +124,7 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   // return the wrapped javascript instance
   info.GetReturnValue().Set(info.Holder());
 
-  if (info.Length() >= 1) {
+  if (info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull()) {
     if (RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0])) {
       instance->copyFrom(info);
     } else {
@@ -132,9 +140,11 @@ NAN_PROPERTY_GETTER(RoaringBitmap32::namedPropertyGetter) {
       auto iter_template = Nan::New<v8::FunctionTemplate>();
       Nan::SetCallHandler(iter_template,
           [](const Nan::FunctionCallbackInfo<v8::Value> & info) {
-            v8::Local<v8::Value> argv[1] = {info.This()};
             v8::Local<v8::Function> cons = Nan::New(RoaringBitmap32Iterator::constructor);
-            info.GetReturnValue().Set(Nan::NewInstance(cons, 1, argv).ToLocalChecked());
+            v8::Local<v8::Value> argv[1] = {info.This()};
+            auto resultMaybe = Nan::NewInstance(cons, 1, argv);
+            if (!resultMaybe.IsEmpty())
+              info.GetReturnValue().Set(resultMaybe.ToLocalChecked());
           },
           Nan::New<v8::External>(self));
       info.GetReturnValue().Set(iter_template->GetFunction());
@@ -225,7 +235,11 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
   }
 
   v8::Local<v8::Value> argv[1] = {Nan::New((uint32_t)size)};
-  auto typedArray = Nan::NewInstance(TypedArrays::Uint32Array_ctor.Get(info.GetIsolate()), 1, argv).ToLocalChecked();
+  auto typedArrayMaybe = Nan::NewInstance(TypedArrays::Uint32Array_ctor.Get(info.GetIsolate()), 1, argv);
+  if (typedArrayMaybe.IsEmpty())
+    return;
+
+  auto typedArray = typedArrayMaybe.ToLocalChecked();
 
   if (size != 0) {
     Nan::TypedArrayContents<uint32_t> typedArrayContent(typedArray);
