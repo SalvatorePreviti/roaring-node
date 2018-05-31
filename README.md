@@ -1,4 +1,4 @@
-# roaring-wasm
+# roaring
 
 Port of Roaring Bitmaps for NodeJS as a native addon.
 

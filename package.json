@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "gypfile": true,
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SalvatorePreviti/roaring-wasm.git"
+    "url": "git+https://github.com/SalvatorePreviti/roaring.git"
   },
   "files": [
     "src/cpp/**/*.*",
@@ -33,9 +33,9 @@
   "author": "Salvatore Previti",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/SalvatorePreviti/roaring-wasm/issues"
+    "url": "https://github.com/SalvatorePreviti/roaring/issues"
   },
-  "homepage": "https://github.com/SalvatorePreviti/roaring-wasm#readme",
+  "homepage": "https://github.com/SalvatorePreviti/roaring#readme",
   "dependencies": {
     "nan": "^2.10.0"
   },
