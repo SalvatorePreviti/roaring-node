@@ -397,6 +397,48 @@ describe('RoaringBitmap32 empty', () => {
     })
   })
 
+  describe('coptFrom', () => {
+    it('is a function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.copyFrom).toBe('function')
+    })
+
+    it('does nothing when copying self', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.copyFrom(bitmap)
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('does nothing when copying an empty array', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.copyFrom([])
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('does nothing when copying an empty RoaringBitmap32', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.copyFrom(new RoaringBitmap32())
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('clears if passed an empty array', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3])
+      bitmap.copyFrom([])
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('clears if passed an empty RoaringBitmap32', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3])
+      bitmap.copyFrom(new RoaringBitmap32())
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+  })
+
   describe('getSerializationSizeInBytes', () => {
     it('returns standard value for empty bitmap (non portable)', () => {
       const bitmap = new RoaringBitmap32()

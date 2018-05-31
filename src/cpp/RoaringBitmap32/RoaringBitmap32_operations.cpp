@@ -66,6 +66,10 @@ void RoaringBitmap32::copyFrom(const Nan::FunctionCallbackInfo<v8::Value> & info
       if (RoaringBitmap32::constructorTemplate.Get(isolate)->HasInstance(arg)) {
         RoaringBitmap32 * other = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
 
+        if (self == other) {
+          return;
+        }
+
         ra_clear(&self->roaring.high_low_container);
         bool is_ok = ra_copy(&other->roaring.high_low_container, &self->roaring.high_low_container, other->roaring.copy_on_write);
         if (!is_ok) {

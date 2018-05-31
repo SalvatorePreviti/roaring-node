@@ -64,6 +64,14 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public has(value: number): boolean
 
   /**
+   * Overwrite the content of this bitmap copying it from an Iterable or another RoaringBitmap32.
+   * This function is optimized for copying RoaringBitmap32 instances.
+   *
+   * @param values The new values or a RoaringBitmap32 instance.
+   */
+  public copyFrom(values: Iterable<number>): void
+
+  /**
    * Adds a single value to the set.
    *
    * @param value The value to add. Must be a valid 32 bit unsigned integer.
