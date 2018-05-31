@@ -410,6 +410,19 @@ describe('RoaringBitmap32 empty', () => {
     })
   })
 
+  describe('serialize', () => {
+    it('returns standard value for empty bitmap (non portable)', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(Array.from(bitmap.serialize())).toEqual([1, 0, 0, 0, 0])
+      expect(Array.from(bitmap.serialize(false))).toEqual([1, 0, 0, 0, 0])
+    })
+
+    it('returns standard value for empty bitmap (portable)', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(Array.from(bitmap.serialize(true))).toEqual([58, 48, 0, 0, 0, 0, 0, 0])
+    })
+  })
+
   describe('rank', () => {
     it('has rank function', () => {
       const bitmap = new RoaringBitmap32()
@@ -430,6 +443,20 @@ describe('RoaringBitmap32 empty', () => {
       expect(bitmap.rank(100)).toBe(0)
       expect(bitmap.rank(0x7fffffff)).toBe(0)
       expect(bitmap.rank(0xffffffff)).toBe(0)
+    })
+  })
+
+  describe('toUint32Array', () => {
+    it('has toUint32Array function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.toUint32Array).toBe('function')
+    })
+
+    it('returns an empty Uint32Array', () => {
+      const bitmap = new RoaringBitmap32()
+      const a = bitmap.toUint32Array()
+      expect(a).toBeInstanceOf(Uint32Array)
+      expect(a.length).toBe(0)
     })
   })
 })

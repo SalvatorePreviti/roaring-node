@@ -28,7 +28,9 @@
   "engines": {
     "node": ">=6.0.0"
   },
-  "keywords": ["CRoaring"],
+  "keywords": [
+    "CRoaring"
+  ],
   "author": "Salvatore Previti",
   "license": "Apache-2.0",
   "bugs": {
@@ -47,12 +49,12 @@
     "eslint-plugin-import": "^2.12.0",
     "eslint-plugin-jest": "^21.17.0",
     "eslint-plugin-node": "^6.0.1",
-    "jest": "^23.0.1",
-    "prettier": "^1.13.2",
+    "jest": "^23.1.0",
+    "prettier": "^1.13.3",
     "ts-jest": "^22.4.6",
     "tslint": "^5.10.0",
     "tslint-config-prettier": "^1.13.0",
     "tslint-microsoft-contrib": "^5.0.3",
-    "typescript": "^2.8.3"
+    "typescript": "^2.8.4"
   }
 }

@@ -284,6 +284,15 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public rank(maxValue: number): number
 
   /**
+   * Creates a new Uint32Array and fills it with all the values in the bitmap.
+   * The returned array may be very big, up to 4 gigabytes.
+   * Use this function only when you know what you are doing.
+   *
+   * @returns A new Uint32Array instance containing all the items in the set.
+   */
+  public toUint32Array(): Uint32Array
+
+  /**
    * How many bytes are required to serialize this bitmap.
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -293,6 +302,16 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * @returns How many bytes are required to serialize this bitmap.
    */
   public getSerializationSizeInBytes(portable?: boolean): number
+
+  /**
+   * Serializes the bitmap into a new Uint8Array.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @returns A new Uint8Array that contains the serialized bitmap.
+   */
+  public serialize(portable?: boolean): Uint8Array
 }
 
 export = RoaringBitmap32

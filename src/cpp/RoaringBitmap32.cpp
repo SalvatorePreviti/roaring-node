@@ -2,11 +2,12 @@
 
 #include "RoaringBitmap32.h"
 #include "RoaringBitmap32Iterator.h"
+#include "TypedArrays.h"
+
+#define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
 
 Nan::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
 Nan::Persistent<v8::Function> RoaringBitmap32::constructor;
-Nan::Persistent<v8::Object> _Uint32Array;
-Nan::Persistent<v8::Function> _Uint32Array_from;
 
 static roaring_bitmap_t roaring_bitmap_zero;
 
@@ -56,7 +57,9 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "runOptimize", runOptimize);
   Nan::SetPrototypeMethod(ctor, "shrinkToFit", shrinkToFit);
   Nan::SetPrototypeMethod(ctor, "rank", rank);
+  Nan::SetPrototypeMethod(ctor, "toUint32Array", toUint32Array);
   Nan::SetPrototypeMethod(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
+  Nan::SetPrototypeMethod(ctor, "serialize", serialize);
 
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
@@ -64,10 +67,6 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   exports->Set(className, ctorFunction);
   constructor.Reset(ctorFunction);
-
-  auto uint32ArrayType = Nan::Get(Nan::GetCurrentContext()->Global(), Nan::New("Uint32Array").ToLocalChecked()).ToLocalChecked()->ToObject();
-  _Uint32Array.Reset(uint32ArrayType);
-  _Uint32Array_from.Reset(v8::Local<v8::Function>::Cast(Nan::Get(uint32ArrayType, Nan::New("from").ToLocalChecked()).ToLocalChecked()));
 }
 
 RoaringBitmap32::RoaringBitmap32() : roaring(roaring_bitmap_zero) {
@@ -194,7 +193,7 @@ void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & 
       roaring_bitmap_or_inplace(&self->roaring, &other->roaring);
     } else {
       v8::Local<v8::Value> argv[] = {arg};
-      Nan::TypedArrayContents<uint32_t> typedArray(_Uint32Array_from.Get(isolate)->Call(_Uint32Array.Get(isolate), 1, argv));
+      Nan::TypedArrayContents<uint32_t> typedArray(TypedArrays::Uint32Array_from.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv));
       roaring_bitmap_add_many(&self->roaring, typedArray.length(), *typedArray);
     }
 
@@ -405,9 +404,89 @@ void RoaringBitmap32::rank(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   info.GetReturnValue().Set((double)roaring_bitmap_rank(&self->roaring, info[0]->Uint32Value()));
 }
 
+void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+
+  auto size = roaring_bitmap_get_cardinality(&self->roaring);
+
+  if (size >= 0xFFFFFFFF) {
+    Nan::ThrowError(Nan::New("RoaringBitmap32::toUint32Array - array too big").ToLocalChecked());
+  }
+
+  v8::Local<v8::Value> argv[1] = {Nan::New((uint32_t)size)};
+  auto typedArray = Nan::NewInstance(TypedArrays::Uint32Array_ctor.Get(info.GetIsolate()), 1, argv).ToLocalChecked();
+
+  if (size != 0) {
+    Nan::TypedArrayContents<uint32_t> typedArrayContent(typedArray);
+    if (!typedArrayContent.length() || !*typedArrayContent)
+      Nan::ThrowError(Nan::New("RoaringBitmap32::toUint32Array - failed to allocate").ToLocalChecked());
+
+    roaring_bitmap_to_uint32_array(&self->roaring, *typedArrayContent);
+  }
+
+  info.GetReturnValue().Set(typedArray);
+}
+
 void RoaringBitmap32::getSerializationSizeInBytes(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   bool portable = info.Length() > 0 && info[0]->IsTrue();
-  double bytes = portable ? roaring_bitmap_portable_size_in_bytes(&self->roaring) : roaring_bitmap_size_in_bytes(&self->roaring);
-  info.GetReturnValue().Set(bytes);
+
+  auto portablesize = roaring_bitmap_portable_size_in_bytes(&self->roaring);
+
+  if (portable) {
+    return info.GetReturnValue().Set((double)portablesize);
+  }
+
+  auto cardinality = roaring_bitmap_get_cardinality(&self->roaring);
+  auto sizeasarray = cardinality * sizeof(uint32_t) + sizeof(uint32_t);
+
+  if (portablesize < sizeasarray || sizeasarray >= MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES - 1) {
+    return info.GetReturnValue().Set((double)(portablesize + 1));
+  }
+
+  return info.GetReturnValue().Set((double)(sizeasarray + 1));
+}
+
+void RoaringBitmap32::serialize(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+
+  bool portable = info.Length() > 0 && info[0]->IsTrue();
+  auto portablesize = roaring_bitmap_portable_size_in_bytes(&self->roaring);
+
+  if (portable) {
+    v8::Local<v8::Value> argv[1] = {Nan::New((double)(portablesize))};
+    auto typedArray = Nan::NewInstance(TypedArrays::Uint8Array_ctor.Get(info.GetIsolate()), 1, argv).ToLocalChecked();
+    Nan::TypedArrayContents<uint8_t> buf(typedArray);
+    if (!buf.length() || !*buf)
+      Nan::ThrowError(Nan::New("RoaringBitmap32::serialize - failed to allocate").ToLocalChecked());
+
+    roaring_bitmap_portable_serialize(&self->roaring, (char *)*buf);
+    info.GetReturnValue().Set(typedArray);
+  } else {
+    auto cardinality = roaring_bitmap_get_cardinality(&self->roaring);
+    auto sizeasarray = cardinality * sizeof(uint32_t) + sizeof(uint32_t);
+
+    if (portablesize < sizeasarray || sizeasarray >= MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES - 1) {
+      v8::Local<v8::Value> argv[1] = {Nan::New((double)(portablesize + 1))};
+      auto typedArray = Nan::NewInstance(TypedArrays::Uint8Array_ctor.Get(info.GetIsolate()), 1, argv).ToLocalChecked();
+      Nan::TypedArrayContents<uint8_t> buf(typedArray);
+      if (!buf.length() || !*buf)
+        Nan::ThrowError(Nan::New("RoaringBitmap32::serialize - failed to allocate").ToLocalChecked());
+
+      (*buf)[0] = SERIALIZATION_CONTAINER;
+      roaring_bitmap_portable_serialize(&self->roaring, (char *)*buf + 1);
+      info.GetReturnValue().Set(typedArray);
+    } else {
+      v8::Local<v8::Value> argv[1] = {Nan::New((double)(sizeasarray + 1))};
+      auto typedArray = Nan::NewInstance(TypedArrays::Uint8Array_ctor.Get(info.GetIsolate()), 1, argv).ToLocalChecked();
+      Nan::TypedArrayContents<uint8_t> buf(typedArray);
+      if (!buf.length() || !*buf)
+        Nan::ThrowError(Nan::New("RoaringBitmap32::serialize - failed to allocate").ToLocalChecked());
+
+      (*buf)[0] = SERIALIZATION_ARRAY_UINT32;
+      memcpy(*buf + 1, &cardinality, sizeof(uint32_t));
+      roaring_bitmap_to_uint32_array(&self->roaring, (uint32_t *)(*buf + 1 + sizeof(uint32_t)));
+      info.GetReturnValue().Set(typedArray);
+    }
+  }
 }

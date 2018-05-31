@@ -13,6 +13,14 @@ void defineHiddenField(const T & target, const char * name, const v8::Local<v8::
   target->DefineProperty(Nan::GetCurrentContext(), Nan::New(name).ToLocalChecked(), propertyDescriptor).ToChecked();
 }
 
+template <typename T>
+void defineHiddenFunction(const T & target, const char * name, const v8::Local<v8::Function> & value) {
+  v8::PropertyDescriptor propertyDescriptor(value, false);
+  propertyDescriptor.set_configurable(false);
+  propertyDescriptor.set_enumerable(false);
+  target->DefineProperty(Nan::GetCurrentContext(), Nan::New(name).ToLocalChecked(), propertyDescriptor).ToChecked();
+}
+
 }  // namespace v8utils
 
 #endif

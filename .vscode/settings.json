@@ -48,6 +48,7 @@
     "bitset": "cpp",
     "locale": "cpp",
     "queue": "cpp",
-    "ios": "cpp"
+    "ios": "cpp",
+    "__string": "cpp"
   }
 }
