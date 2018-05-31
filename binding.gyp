@@ -1,8 +1,8 @@
 {
   "target_defaults": {
     "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
-    "cflags": ["-Wall", "-O3"],
-    "cflags_cc": ["-Wall", "-O3"]
+    "cflags": ["-O3"],
+    "cflags_cc": ["-O3"]
   },
   "targets": [
     {
