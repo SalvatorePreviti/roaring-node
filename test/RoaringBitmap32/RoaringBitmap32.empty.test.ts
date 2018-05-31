@@ -19,9 +19,33 @@ describe('RoaringBitmap32 empty', () => {
       expect(bitmap.isEmpty).toBe(true)
     })
 
+    it('creates an empty bitmap with an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32(new RoaringBitmap32())
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
     it('can be called as a normal function', () => {
       const bitmap = ((RoaringBitmap32 as any) as () => RoaringBitmap32)()
       expect(bitmap).toBeInstanceOf(RoaringBitmap32)
+    })
+  })
+
+  describe('from', () => {
+    it('is a function', () => {
+      expect(typeof RoaringBitmap32.from).toBe('function')
+    })
+
+    it('creates an empty bitmap with an empty array', () => {
+      const bitmap = RoaringBitmap32.from([])
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with an empty bitmap', () => {
+      const bitmap = RoaringBitmap32.from(new RoaringBitmap32())
+      expect(bitmap.size).toBe(0)
+      expect(bitmap.isEmpty).toBe(true)
     })
   })
 
@@ -311,6 +335,206 @@ describe('RoaringBitmap32 empty', () => {
     })
   })
 
+  describe('andInPlace', () => {
+    it('is a function', () => {
+      expect(typeof new RoaringBitmap32().andInPlace).toBe('function')
+    })
+
+    it('does nothing with an empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      a.andInPlace(b)
+      expect(a.isEmpty).toBe(true)
+    })
+
+    it('does nothing with an empty array', () => {
+      const a = new RoaringBitmap32()
+      a.andInPlace([])
+      expect(a.isEmpty).toBe(true)
+    })
+
+    it('does nothing with an non empty array', () => {
+      const a = new RoaringBitmap32()
+      a.andInPlace([1, 2, 3])
+      expect(a.isEmpty).toBe(true)
+    })
+  })
+
+  describe('andNotInPlace', () => {
+    it('is a function', () => {
+      expect(typeof new RoaringBitmap32().andNotInPlace).toBe('function')
+    })
+
+    it('does nothing with an empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      a.andNotInPlace(b)
+      expect(a.isEmpty).toBe(true)
+    })
+
+    it('does nothing with an empty array', () => {
+      const a = new RoaringBitmap32()
+      a.andNotInPlace([])
+      expect(a.isEmpty).toBe(true)
+    })
+
+    it('does nothing with an non empty array', () => {
+      const a = new RoaringBitmap32()
+      a.andNotInPlace([1, 2, 3])
+      expect(a.isEmpty).toBe(true)
+    })
+  })
+
+  describe('orInPlace', () => {
+    it('is a function', () => {
+      expect(typeof new RoaringBitmap32().orInPlace).toBe('function')
+    })
+
+    it('does nothing with an empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      a.orInPlace(b)
+      expect(a.isEmpty).toBe(true)
+    })
+
+    it('does nothing with an empty array', () => {
+      const a = new RoaringBitmap32()
+      a.orInPlace([])
+      expect(a.isEmpty).toBe(true)
+    })
+
+    it('adds values to an empty bitmap', () => {
+      const a = new RoaringBitmap32()
+      a.orInPlace([1, 2, 3])
+      expect(a.size).toBe(3)
+    })
+  })
+
+  describe('xorInPlace', () => {
+    it('is a function', () => {
+      expect(typeof new RoaringBitmap32().xorInPlace).toBe('function')
+    })
+
+    it('does nothing with an empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      a.xorInPlace(b)
+      expect(a.isEmpty).toBe(true)
+    })
+
+    it('does nothing with an empty array', () => {
+      const a = new RoaringBitmap32()
+      a.xorInPlace([])
+      expect(a.isEmpty).toBe(true)
+    })
+
+    it('adds values to an empty bitmap', () => {
+      const a = new RoaringBitmap32()
+      a.xorInPlace([1, 2, 3])
+      expect(a.size).toBe(3)
+    })
+
+    it('xors', () => {
+      const a = new RoaringBitmap32([1, 2, 3])
+      a.xorInPlace([1, 2, 3])
+      expect(a.size).toBe(0)
+    })
+  })
+
+  describe('static and', () => {
+    it('is a function', () => {
+      expect(typeof RoaringBitmap32.and).toBe('function')
+    })
+
+    it('returns empty with empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      const c = RoaringBitmap32.and(a, b)
+      expect(c.isEmpty).toBe(true)
+    })
+
+    it('returns empty with an non empty bitmap', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      const c = RoaringBitmap32.and(a, b)
+      expect(c.isEmpty).toBe(true)
+    })
+  })
+
+  describe('static andNot', () => {
+    it('is a function', () => {
+      expect(typeof RoaringBitmap32.andNot).toBe('function')
+    })
+
+    it('returns empty with empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      const c = RoaringBitmap32.andNot(a, b)
+      expect(c.isEmpty).toBe(true)
+    })
+
+    it('returns empty  with an non empty array', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      const c = RoaringBitmap32.andNot(a, b)
+      expect(c.isEmpty).toBe(true)
+    })
+  })
+
+  describe('static or', () => {
+    it('is a function', () => {
+      expect(typeof RoaringBitmap32.or).toBe('function')
+    })
+
+    it('returns empty with empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      const c = RoaringBitmap32.or(a, b)
+      expect(c.isEmpty).toBe(true)
+    })
+
+    it('performs or with empty and non empty', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      const c = RoaringBitmap32.or(a, b)
+      expect(c.size).toBe(3)
+    })
+
+    it('performs or with non empty and non empty', () => {
+      const a = new RoaringBitmap32([1, 2, 5])
+      const b = new RoaringBitmap32([1, 2, 3])
+      const c = RoaringBitmap32.or(a, b)
+      expect(c.size).toBe(4)
+    })
+  })
+
+  describe('static xor', () => {
+    it('is a function', () => {
+      expect(typeof RoaringBitmap32.xor).toBe('function')
+    })
+
+    it('returns empty with empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      const c = RoaringBitmap32.xor(a, b)
+      expect(c.isEmpty).toBe(true)
+    })
+
+    it('performs or with empty and non empty', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      const c = RoaringBitmap32.xor(a, b)
+      expect(c.size).toBe(3)
+    })
+
+    it('performs or with non empty and non empty', () => {
+      const a = new RoaringBitmap32([1, 2, 5])
+      const b = new RoaringBitmap32([1, 2, 3])
+      const c = RoaringBitmap32.xor(a, b)
+      expect(c.size).toBe(2)
+    })
+  })
+
   describe('andNotCardinality', () => {
     it('has andCardinality function', () => {
       const bitmap = new RoaringBitmap32()
@@ -568,6 +792,29 @@ describe('RoaringBitmap32 empty', () => {
       expect(bitmap.rank(100)).toBe(0)
       expect(bitmap.rank(0x7fffffff)).toBe(0)
       expect(bitmap.rank(0xffffffff)).toBe(0)
+    })
+  })
+
+  describe('select', () => {
+    it('has select function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.select).toBe('function')
+    })
+
+    it('returns undefined for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.select(null as any)).toBe(undefined)
+      expect(bitmap.select(undefined as any)).toBe(undefined)
+      expect(bitmap.select(-123 as any)).toBe(undefined)
+      expect(bitmap.select([123] as any)).toBe(undefined)
+    })
+
+    it('returns undefined with any value', () => {
+      const bitmap = new RoaringBitmap32([12, 3, 4])
+      expect(bitmap.select(0)).toBe(undefined)
+      expect(bitmap.select(100)).toBe(undefined)
+      expect(bitmap.select(0x7fffffff)).toBe(undefined)
+      expect(bitmap.select(3)).toBe(undefined)
     })
   })
 

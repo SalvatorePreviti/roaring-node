@@ -58,6 +58,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "runOptimize", runOptimize);
   Nan::SetPrototypeMethod(ctor, "shrinkToFit", shrinkToFit);
   Nan::SetPrototypeMethod(ctor, "rank", rank);
+  Nan::SetPrototypeMethod(ctor, "select", select);
   Nan::SetPrototypeMethod(ctor, "toUint32Array", toUint32Array);
   Nan::SetPrototypeMethod(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
   Nan::SetPrototypeMethod(ctor, "serialize", serialize);
@@ -68,6 +69,12 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetMethod(ctorObject, "deserialize", deserializeStatic);
   Nan::SetMethod(ctorObject, "swap", swapStatic);
+  Nan::SetMethod(ctorObject, "and", andStatic);
+  Nan::SetMethod(ctorObject, "or", orStatic);
+  Nan::SetMethod(ctorObject, "xor", xorStatic);
+  Nan::SetMethod(ctorObject, "andNot", andNotStatic);
+
+  ctorObject->Set(Nan::New("from").ToLocalChecked(), ctorFunction);
 
   v8utils::defineHiddenField(ctorObject, "default", ctorObject);
 
@@ -178,6 +185,21 @@ void RoaringBitmap32::rank(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   info.GetReturnValue().Set((double)roaring_bitmap_rank(&self->roaring, info[0]->Uint32Value()));
 }
 
+void RoaringBitmap32::select(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() <= 1 || !info[0]->IsUint32()) {
+    return info.GetReturnValue().Set(Nan::Undefined());
+  }
+
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+
+  uint32_t element;
+  if (roaring_bitmap_select(&self->roaring, info[0]->Uint32Value(), &element)) {
+    return info.GetReturnValue().Set(element);
+  }
+
+  return info.GetReturnValue().Set(Nan::Undefined());
+}
+
 void RoaringBitmap32::removeRunCompression(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set(roaring_bitmap_remove_run_compression(&self->roaring));
@@ -214,25 +236,4 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
   }
 
   info.GetReturnValue().Set(typedArray);
-}
-
-void RoaringBitmap32::swapStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  if (info.Length() < 2) {
-    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::swap expects 2 arguments").ToLocalChecked());
-  }
-
-  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0])) {
-    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::swap first argument must be a RoaringBitmap32").ToLocalChecked());
-  }
-
-  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[1])) {
-    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::swap second argument must be a RoaringBitmap32").ToLocalChecked());
-  }
-
-  RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
-  RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
-
-  if (a != b) {
-    std::swap(a->roaring, b->roaring);
-  }
 }

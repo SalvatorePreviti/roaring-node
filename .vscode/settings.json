@@ -49,6 +49,10 @@
     "locale": "cpp",
     "queue": "cpp",
     "ios": "cpp",
-    "__string": "cpp"
+    "__string": "cpp",
+    "__mutex_base": "cpp",
+    "istream": "cpp",
+    "ostream": "cpp",
+    "streambuf": "cpp"
   }
 }

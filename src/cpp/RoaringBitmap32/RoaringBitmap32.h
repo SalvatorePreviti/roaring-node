@@ -45,6 +45,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void jaccardIndex(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void flipRange(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void rank(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void select(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
   static void removeRunCompression(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void runOptimize(const Nan::FunctionCallbackInfo<v8::Value> & info);
@@ -58,6 +59,10 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void deserializeStatic(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
   static void swapStatic(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void andStatic(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void orStatic(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
   RoaringBitmap32();
 

@@ -194,3 +194,121 @@ void RoaringBitmap32::flipRange(const Nan::FunctionCallbackInfo<v8::Value> & inf
     roaring_bitmap_flip_inplace(&self->roaring, info[0]->Uint32Value(), info[1]->Uint32Value());
   }
 }
+
+void RoaringBitmap32::swapStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() < 2)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::swap expects 2 arguments").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::swap first argument must be a RoaringBitmap32").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[1]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::swap second argument must be a RoaringBitmap32").ToLocalChecked());
+  RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+  RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
+
+  if (a != b) {
+    std::swap(a->roaring, b->roaring);
+  }
+}
+
+void RoaringBitmap32::andStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() < 2)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::and expects 2 arguments").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::and first argument must be a RoaringBitmap32").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[1]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::and second argument must be a RoaringBitmap32").ToLocalChecked());
+  RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+  RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
+
+  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Local<v8::Value> argv[0] = {};
+  auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+  auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+
+  roaring_bitmap_t * r = roaring_bitmap_and(&a->roaring, &b->roaring);
+  if (r == nullptr)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::and failed materalization").ToLocalChecked());
+
+  ra_clear(&self->roaring.high_low_container);
+  self->roaring.high_low_container = std::move(r->high_low_container);
+
+  info.GetReturnValue().Set(result);
+}
+
+void RoaringBitmap32::orStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() < 2)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::or expects 2 arguments").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::or first argument must be a RoaringBitmap32").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[1]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::or second argument must be a RoaringBitmap32").ToLocalChecked());
+
+  RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+  RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
+
+  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Local<v8::Value> argv[0] = {};
+  auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+  auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+
+  roaring_bitmap_t * r = roaring_bitmap_or(&a->roaring, &b->roaring);
+  if (r == nullptr)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::or failed materalization").ToLocalChecked());
+
+  ra_clear(&self->roaring.high_low_container);
+  self->roaring.high_low_container = std::move(r->high_low_container);
+
+  info.GetReturnValue().Set(result);
+}
+
+void RoaringBitmap32::xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() < 2)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::xor expects 2 arguments").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::xor first argument must be a RoaringBitmap32").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[1]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::xor second argument must be a RoaringBitmap32").ToLocalChecked());
+
+  RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+  RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
+
+  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Local<v8::Value> argv[0] = {};
+  auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+  auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+
+  roaring_bitmap_t * r = roaring_bitmap_xor(&a->roaring, &b->roaring);
+  if (r == nullptr)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::xor failed materalization").ToLocalChecked());
+
+  ra_clear(&self->roaring.high_low_container);
+  self->roaring.high_low_container = std::move(r->high_low_container);
+
+  info.GetReturnValue().Set(result);
+}
+
+void RoaringBitmap32::andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() < 2)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::andnot expects 2 arguments").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::andnot first argument must be a RoaringBitmap32").ToLocalChecked());
+  if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[1]))
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::andnot second argument must be a RoaringBitmap32").ToLocalChecked());
+
+  RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+  RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
+
+  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Local<v8::Value> argv[0] = {};
+  auto result = Nan::NewInstance(cons, 0, argv).ToLocalChecked();
+  auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+
+  roaring_bitmap_t * r = roaring_bitmap_andnot(&a->roaring, &b->roaring);
+  if (r == nullptr)
+    return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::andnot failed materalization").ToLocalChecked());
+
+  ra_clear(&self->roaring.high_low_container);
+  self->roaring.high_low_container = std::move(r->high_low_container);
+
+  info.GetReturnValue().Set(result);
+}

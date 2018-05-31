@@ -26,13 +26,13 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public constructor(values?: Iterable<number>)
 
   /**
-   * Swaps the content of two RoaringBitmap32 instances.
+   * Creates an instance of RoaringBitmap32 from the given Iterable.
+   * This function is optimized if the given argument is a RoaringBitmap32 (performs a copy).
    *
-   * @param a First RoaringBitmap32 instance to swap
-   * @param b Second RoaringBitmap32 instance to swap
-   * @memberof RoaringBitmap32
+   * @param values The values to set.
+   * @returns A new RoaringBitmap32 instance filled with the given values.
    */
-  public static swap(a: RoaringBitmap32, b: RoaringBitmap32): void
+  public static from(values: Iterable<number>): RoaringBitmap32
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.
@@ -42,6 +42,54 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * The portable version is meant to be compatible with Java and Go versions.
    */
   public static deserialize(serialized: Uint8Array, portable?: boolean): RoaringBitmap32
+
+  /**
+   * Swaps the content of two RoaringBitmap32 instances.
+   *
+   * @param a First RoaringBitmap32 instance to swap
+   * @param b Second RoaringBitmap32 instance to swap
+   */
+  public static swap(a: RoaringBitmap32, b: RoaringBitmap32): void
+
+  /**
+   * Returns a new RoaringBitmap32 with the intersection (and) between the given two bitmaps.
+   * The provided bitmaps are not modified.
+   *
+   * @param a The first RoaringBitmap32 instance to and.
+   * @param b The second RoaringBitmap32 instance to and.
+   * @returns A new bitmap, a AND b
+   */
+  public static and(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32
+
+  /**
+   * Returns a new RoaringBitmap32 with the union (or) of the two given bitmaps.
+   * The provided bitmaps are not modified.
+   *
+   * @param a The first RoaringBitmap32 instance to or.
+   * @param b The second RoaringBitmap32 instance to or.
+   * @returns A new bitmap, a OR b
+   */
+  public static or(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32
+
+  /**
+   * Returns a new RoaringBitmap32 with the symmetric union (xor) between the two given bitmaps.
+   * The provided bitmaps are not modified.
+   *
+   * @param a The first RoaringBitmap32 instance to xor.
+   * @param b The second RoaringBitmap32 instance to xor.
+   * @returns A new bitmap, a XOR b
+   */
+  public static xor(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32
+
+  /**
+   * Returns a new RoaringBitmap32 with the difference (and not) between the two given bitmaps.
+   * The provided bitmaps are not modified.
+   *
+   * @param a The first RoaringBitmap32 instance.
+   * @param b The second RoaringBitmap32 instance.
+   * @returns A new bitmap, a AND NOT b
+   */
+  public static andNot(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32
 
   /**
    * Gets a new iterator able to iterate all values in the set in order.
@@ -308,6 +356,16 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * @returns Returns the number of values in the set that are smaller or equal to the given value.
    */
   public rank(maxValue: number): number
+
+  /**
+   * If the size of the roaring bitmap is strictly greater than rank,
+   * then this function returns the element of given rank.
+   * Otherwise, it returns undefined.
+   *
+   * @param rank The rank, an unsigned 32 bit integer.
+   * @returns The element of the given rank or undefined if not found.
+   */
+  public select(rank: number): number | undefined
 
   /**
    * Creates a new Uint32Array and fills it with all the values in the bitmap.
