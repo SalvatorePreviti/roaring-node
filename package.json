@@ -1,7 +1,6 @@
 {
   "name": "roaring",
-  "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "gypfile": true,
@@ -16,6 +15,7 @@
     "url": "git+https://github.com/SalvatorePreviti/roaring-wasm.git"
   },
   "files": [
+    "LICENSE.md",
     "README.md",
     "binding.gyp",
     "index.js",
