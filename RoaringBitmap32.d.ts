@@ -26,6 +26,15 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public constructor(values?: Iterable<number>)
 
   /**
+   * Swaps the content of two RoaringBitmap32 instances.
+   *
+   * @param a First RoaringBitmap32 instance to swap
+   * @param b Second RoaringBitmap32 instance to swap
+   * @memberof RoaringBitmap32
+   */
+  public static swap(a: RoaringBitmap32, b: RoaringBitmap32): void
+
+  /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.
    * Returns a new RoaringBitmap32 instance.
    *

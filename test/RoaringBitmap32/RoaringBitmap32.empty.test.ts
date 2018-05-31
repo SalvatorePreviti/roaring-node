@@ -397,7 +397,7 @@ describe('RoaringBitmap32 empty', () => {
     })
   })
 
-  describe('coptFrom', () => {
+  describe('copyFrom', () => {
     it('is a function', () => {
       const bitmap = new RoaringBitmap32()
       expect(typeof bitmap.copyFrom).toBe('function')
@@ -436,6 +436,32 @@ describe('RoaringBitmap32 empty', () => {
       bitmap.copyFrom(new RoaringBitmap32())
       expect(bitmap.size).toBe(0)
       expect(bitmap.isEmpty).toBe(true)
+    })
+  })
+
+  describe('swap', () => {
+    it('is a function', () => {
+      expect(typeof RoaringBitmap32.swap).toBe('function')
+    })
+
+    it('swaps two empty bitmaps', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      RoaringBitmap32.swap(a, b)
+      expect(a.size).toBe(0)
+      expect(a.isEmpty).toBe(true)
+      expect(b.size).toBe(0)
+      expect(b.isEmpty).toBe(true)
+    })
+
+    it('swaps two bitmap', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      RoaringBitmap32.swap(a, b)
+      expect(a.size).toBe(3)
+      expect(a.isEmpty).toBe(false)
+      expect(b.size).toBe(0)
+      expect(b.isEmpty).toBe(true)
     })
   })
 
