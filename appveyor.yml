@@ -5,13 +5,6 @@ environment:
 
 os: Visual Studio 2015
 
-clone_script:
-- cmd: >-
-    git clone -q --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
-    cd %APPVEYOR_BUILD_FOLDER%
-    git checkout -q %APPVEYOR_REPO_COMMIT%
-    git submodule update --init --recursive
-
 install:
   - ps: Install-Product node $env:nodejs_version x64
   - node --version
