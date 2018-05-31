@@ -1,6 +1,6 @@
-#include "v8utils.h"
+#include "../v8utils.h"
 
-#include "RoaringBitmap32.h"
+#include "../RoaringBitmap32/RoaringBitmap32.h"
 #include "RoaringBitmap32Iterator.h"
 
 Nan::Persistent<v8::FunctionTemplate> RoaringBitmap32Iterator::constructorTemplate;

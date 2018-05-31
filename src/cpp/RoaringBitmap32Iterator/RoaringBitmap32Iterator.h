@@ -1,7 +1,7 @@
 #ifndef __ROARINGBITMAP32ITERATOR__H__
 #define __ROARINGBITMAP32ITERATOR__H__
 
-#include "./RoaringBitmap32.h"
+#include "../RoaringBitmap32/RoaringBitmap32.h"
 
 class RoaringBitmap32Iterator : public Nan::ObjectWrap {
  public:

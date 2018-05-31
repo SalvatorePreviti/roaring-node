@@ -1,8 +1,8 @@
-#include "v8utils.h"
+#include "../v8utils.h"
 
+#include "../RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
+#include "../TypedArrays.h"
 #include "RoaringBitmap32.h"
-#include "RoaringBitmap32Iterator.h"
-#include "TypedArrays.h"
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
 

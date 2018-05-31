@@ -2,7 +2,7 @@
 #define __ROARINGBITMAP32__H__
 
 #include <nan.h>
-#include "roaring.h"
+#include "../roaring.h"
 
 class RoaringBitmap32;
 class RoaringBitmap32Iterator;
