@@ -312,6 +312,14 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * @returns A new Uint8Array that contains the serialized bitmap.
    */
   public serialize(portable?: boolean): Uint8Array
+
+  /**
+   * Deserializes the bitmap from an Uint8Array or a Buffer.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   */
+  public deserialize(serialized: Uint8Array, portable?: boolean): void
 }
 
 export = RoaringBitmap32

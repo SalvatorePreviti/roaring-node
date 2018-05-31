@@ -22,6 +22,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void has(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void copyFrom(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void add(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void tryAdd(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void addMany(const Nan::FunctionCallbackInfo<v8::Value> & info);
@@ -52,6 +53,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void getSerializationSizeInBytes(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void serialize(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void deserialize(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
   RoaringBitmap32();
 

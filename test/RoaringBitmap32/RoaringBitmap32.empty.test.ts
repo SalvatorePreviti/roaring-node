@@ -411,6 +411,11 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('serialize', () => {
+    it('returns a Buffer', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.serialize()).toBeInstanceOf(Buffer)
+    })
+
     it('returns standard value for empty bitmap (non portable)', () => {
       const bitmap = new RoaringBitmap32()
       expect(Array.from(bitmap.serialize())).toEqual([1, 0, 0, 0, 0])
