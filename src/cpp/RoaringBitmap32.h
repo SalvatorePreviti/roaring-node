@@ -25,6 +25,8 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void add(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void tryAdd(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void addMany(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void andInPlace(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void xorInPlace(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void remove(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void removeMany(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void removeChecked(const Nan::FunctionCallbackInfo<v8::Value> & info);
@@ -33,6 +35,21 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void maximum(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void isSubset(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void isStrictSubset(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void intersects(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void isEqual(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void andCardinality(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void orCardinality(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void andNotCardinality(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void xorCardinality(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void jaccardIndex(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void flipRange(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void rank(const Nan::FunctionCallbackInfo<v8::Value> & info);
+
+  static void removeRunCompression(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void runOptimize(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void shrinkToFit(const Nan::FunctionCallbackInfo<v8::Value> & info);
+
+  static void getSerializationSizeInBytes(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
   RoaringBitmap32();
 

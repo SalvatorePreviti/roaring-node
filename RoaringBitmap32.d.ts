@@ -117,7 +117,7 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * Performs an union in place ("this = this OR values").
    * Same as addMany.
    *
-   * @param values A RoaringBitmap32 instance or an iterable of values to insert.
+   * @param values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
    * @returns The same RoaringBitmap32 instance.
    */
   public orInPlace(values: Iterable<number>): this
@@ -126,10 +126,30 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * Performs a AND NOT operation in place ("this = this AND NOT values").
    * Same as removeMany.
    *
-   * @param values A RoaringBitmap32 instance or an iterable of values to insert.
+   * @param values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
    * @returns The same RoaringBitmap32 instance.
    */
   public andNotInPlace(values: Iterable<number>): this
+
+  /**
+   * Performs the intersection (and) between the current bitmap and the provided bitmap,
+   * writing the result in the current bitmap.
+   * The provided bitmap is not modified.
+   *
+   * @param values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
+   * @returns The same RoaringBitmap32 instance.
+   */
+  public andInPlace(values: Iterable<number>): this
+
+  /**
+   * Performs the symmetric union (xor) between the current bitmap and the provided bitmap,
+   * writing the result in the current bitmap.
+   * The provided bitmap is not modified.
+   *
+   * @param values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
+   * @returns The same RoaringBitmap32 instance.
+   */
+  public xorInPlace(values: Iterable<number>): this
 
   /**
    * Checks wether this set is a subset or the same as the given set.
@@ -149,6 +169,130 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * @returns True if this set is a strict subset of the given RoaringBitmap32. False if not.
    */
   public isStrictSubset(other: RoaringBitmap32): boolean
+
+  /**
+   * Checks wether this set is equal to another set.
+   * Returns false also if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set to compare for equality.
+   * @returns True if the two sets contains the same elements, false if not.
+   */
+  public isEqual(other: RoaringBitmap32): boolean
+
+  /**
+   * Check whether the two bitmaps intersect.
+   * Returns true if there is at least one item in common, false if not.
+   * Returns false also if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set to compare for intersection.
+   * @returns True if the two set intersects, false if not.
+   */
+  public intersects(other: RoaringBitmap32): boolean
+
+  /**
+   * Computes the size of the intersection between two bitmaps (the number of values in common).
+   * Returns -1 if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set to compare for intersection.
+   * @returns The number of elements in common.
+   */
+  public andCardinality(other: RoaringBitmap32): number
+
+  /**
+   * Computes the size of the union between two bitmaps.
+   * Returns -1 if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set to compare for intersection.
+   * @returns The number of elements in common.
+   */
+  public orCardinality(other: RoaringBitmap32): number
+
+  /**
+   * Computes the size of the difference (andnot) between two bitmaps.
+   * Returns -1 if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set to compare for intersection.
+   * @returns The number of elements in common.
+   */
+  public andNotCardinality(other: RoaringBitmap32): number
+
+  /**
+   * Computes the size of the symmetric difference (xor) between two bitmaps.
+   * Returns -1 if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set to compare for intersection.
+   * @returns The number of elements in common.
+   */
+  public xorCardinality(other: RoaringBitmap32): number
+
+  /**
+   * Computes the Jaccard index between two bitmaps.
+   * (Also known as the Tanimoto distance or the Jaccard similarity coefficient).
+   * See https://en.wikipedia.org/wiki/Jaccard_index
+   *
+   * The Jaccard index is undefined if both bitmaps are empty.
+   *
+   * Returns -1 if the given argument is not a RoaringBitmap32 instance.
+   *
+   * @param other The other set to compare.
+   * @returns The Jaccard index.
+   */
+  public jaccardIndex(other: RoaringBitmap32): number
+
+  /**
+   * Negates in place all the values within a specified interval.
+   * Areas outside the range are passed through unchanged.
+   * The function does nothing if values are not valid unsigned 32 bit integers.
+   *
+   * @param rangeStart The start index. Must be a 32 bit integer.
+   * @param rangeEnd The end index. Must be a 32 bit integer.
+   */
+  public flipRange(rangeStart: number, rangeEnd: number): void
+
+  /**
+   * Remove run-length encoding even when it is more space efficient.
+   * Return whether a change was applied.
+   *
+   * @returns True if a change was applied, false if not.
+   */
+  public removeRunCompression(): boolean
+
+  /**
+   * Convert array and bitmap containers to run containers when it is more efficient;
+   * also convert from run containers when more space efficient.
+   * Returns true if the bitmap has at least one run container.
+   * Additional savings might be possible by calling shrinkToFit().
+   *
+   * @returns True if the bitmap has at least one run container.
+   */
+  public runOptimize(): boolean
+
+  /**
+   * If needed, reallocate memory to shrink the memory usage.
+   * Returns the number of bytes saved.
+   *
+   * @returns The number of bytes saved.
+   */
+  public shrinkToFit(): number
+
+  /**
+   *  Returns the number of values in the set that are smaller or equal to the given value.
+   *
+   * @param maxValue The maximum value
+   * @returns Returns the number of values in the set that are smaller or equal to the given value.
+   */
+  public rank(maxValue: number): number
+
+  /**
+   * How many bytes are required to serialize this bitmap.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param portable Optional value. If true, portable format is used. Default is false.
+   * @returns How many bytes are required to serialize this bitmap.
+   */
+  public getSerializationSizeInBytes(portable?: boolean): number
 }
 
 export = RoaringBitmap32

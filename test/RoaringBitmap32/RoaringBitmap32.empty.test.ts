@@ -182,4 +182,254 @@ describe('RoaringBitmap32 empty', () => {
       expect(a.isStrictSubset(b)).toBe(true)
     })
   })
+
+  describe('isEqual', () => {
+    it('has isEqual function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.isEqual).toBe('function')
+    })
+
+    it('returns false for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.isEqual(null as any)).toBe(false)
+      expect(bitmap.isEqual(undefined as any)).toBe(false)
+      expect(bitmap.isEqual(123 as any)).toBe(false)
+      expect(bitmap.isEqual([123] as any)).toBe(false)
+    })
+
+    it('returns true with itself', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.isEqual(bitmap)).toBe(true)
+    })
+
+    it('returns true with another empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      expect(a.isEqual(b)).toBe(true)
+    })
+
+    it('returns false with another non empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      expect(a.isEqual(b)).toBe(false)
+    })
+  })
+
+  describe('intersects', () => {
+    it('has intersects function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.intersects).toBe('function')
+    })
+
+    it('returns false for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.intersects(null as any)).toBe(false)
+      expect(bitmap.intersects(undefined as any)).toBe(false)
+      expect(bitmap.intersects(123 as any)).toBe(false)
+      expect(bitmap.intersects([123] as any)).toBe(false)
+    })
+
+    it('returns false with itself', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.intersects(bitmap)).toBe(false)
+    })
+
+    it('returns false with another empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      expect(a.intersects(b)).toBe(false)
+    })
+
+    it('returns false with another non empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      expect(a.intersects(b)).toBe(false)
+    })
+  })
+
+  describe('andCardinality', () => {
+    it('has andCardinality function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.andCardinality).toBe('function')
+    })
+
+    it('returns -1 for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.andCardinality(null as any)).toBe(-1)
+      expect(bitmap.andCardinality(undefined as any)).toBe(-1)
+      expect(bitmap.andCardinality(123 as any)).toBe(-1)
+      expect(bitmap.andCardinality([123] as any)).toBe(-1)
+    })
+
+    it('returns 0 with itself', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.andCardinality(bitmap)).toBe(0)
+    })
+
+    it('returns 0 with another empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      expect(a.andCardinality(b)).toBe(0)
+    })
+
+    it('returns 0 with another non empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      expect(a.andCardinality(b)).toBe(0)
+    })
+  })
+
+  describe('orCardinality', () => {
+    it('has orCardinality function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.orCardinality).toBe('function')
+    })
+
+    it('returns -1 for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.orCardinality(null as any)).toBe(-1)
+      expect(bitmap.orCardinality(undefined as any)).toBe(-1)
+      expect(bitmap.orCardinality(123 as any)).toBe(-1)
+      expect(bitmap.orCardinality([123] as any)).toBe(-1)
+    })
+
+    it('returns 0 with itself', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.orCardinality(bitmap)).toBe(0)
+    })
+
+    it('returns 0 with another empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      expect(a.orCardinality(b)).toBe(0)
+    })
+
+    it('returns other set size with another non empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      expect(a.orCardinality(b)).toBe(3)
+    })
+  })
+
+  describe('andNotCardinality', () => {
+    it('has andCardinality function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.andNotCardinality).toBe('function')
+    })
+
+    it('returns -1 for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.andNotCardinality(null as any)).toBe(-1)
+      expect(bitmap.andNotCardinality(undefined as any)).toBe(-1)
+      expect(bitmap.andNotCardinality(123 as any)).toBe(-1)
+      expect(bitmap.andNotCardinality([123] as any)).toBe(-1)
+    })
+
+    it('returns 0 with itself', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.andNotCardinality(bitmap)).toBe(0)
+    })
+
+    it('returns 0 with another empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      expect(a.andNotCardinality(b)).toBe(0)
+    })
+
+    it('returns 0 with another non empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      expect(a.andNotCardinality(b)).toBe(0)
+    })
+  })
+
+  describe('xorCardinality', () => {
+    it('has xorCardinality function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.andNotCardinality).toBe('function')
+    })
+
+    it('returns -1 for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.xorCardinality(null as any)).toBe(-1)
+      expect(bitmap.xorCardinality(undefined as any)).toBe(-1)
+      expect(bitmap.xorCardinality(123 as any)).toBe(-1)
+      expect(bitmap.xorCardinality([123] as any)).toBe(-1)
+    })
+
+    it('returns 0 with itself', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.xorCardinality(bitmap)).toBe(0)
+    })
+
+    it('returns 0 with another empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32()
+      expect(a.xorCardinality(b)).toBe(0)
+    })
+
+    it('returns other set size with another non empty set', () => {
+      const a = new RoaringBitmap32()
+      const b = new RoaringBitmap32([1, 2, 3])
+      expect(a.xorCardinality(b)).toBe(3)
+    })
+  })
+
+  describe('removeRunCompression', () => {
+    it('does nothing', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.removeRunCompression()).toBe(false)
+    })
+  })
+
+  describe('runOptimize', () => {
+    it('does nothing', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.runOptimize()).toBe(false)
+    })
+  })
+
+  describe('shrinkToFit', () => {
+    it('shrinks some memory', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.shrinkToFit()).toBe(44)
+      expect(bitmap.shrinkToFit()).toBe(0)
+    })
+  })
+
+  describe('getSerializationSizeInBytes', () => {
+    it('returns standard value for empty bitmap (non portable)', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.getSerializationSizeInBytes()).toBe(5)
+      expect(bitmap.getSerializationSizeInBytes(false)).toBe(5)
+    })
+
+    it('returns standard value for empty bitmap (portable)', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.getSerializationSizeInBytes(true)).toBe(8)
+    })
+  })
+
+  describe('rank', () => {
+    it('has rank function', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(typeof bitmap.rank).toBe('function')
+    })
+
+    it('returns 0 for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.rank(null as any)).toBe(0)
+      expect(bitmap.rank(undefined as any)).toBe(0)
+      expect(bitmap.rank(-123 as any)).toBe(0)
+      expect(bitmap.rank([123] as any)).toBe(0)
+    })
+
+    it('returns 0 with any value', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.rank(0)).toBe(0)
+      expect(bitmap.rank(100)).toBe(0)
+      expect(bitmap.rank(0x7fffffff)).toBe(0)
+      expect(bitmap.rank(0xffffffff)).toBe(0)
+    })
+  })
 })

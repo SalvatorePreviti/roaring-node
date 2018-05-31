@@ -21,14 +21,14 @@
     "index.js",
     "index.d.ts",
     "RoaringBitmap32.js",
-    "RoaringBitmap32.d.ts"
+    "RoaringBitmap32.d.ts",
+    "RoaringBitmap32Iterator.js",
+    "RoaringBitmap32Iterator.d.ts"
   ],
   "engines": {
     "node": ">=6.0.0"
   },
-  "keywords": [
-    "CRoaring"
-  ],
+  "keywords": ["CRoaring"],
   "author": "Salvatore Previti",
   "license": "Apache-2.0",
   "bugs": {
