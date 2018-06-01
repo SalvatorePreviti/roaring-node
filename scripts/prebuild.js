@@ -16,7 +16,9 @@ for (let i = 2; i < process.argv.length; ++i) {
 }
 
 const oldProcessArgv = process.argv
+
 process.argv = args
+
 try {
   require('prebuild/bin')
 } finally {
