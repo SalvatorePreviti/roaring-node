@@ -9,6 +9,7 @@ install:
 script:
   - npm run tslint
   - npm test
+  - node ./scripts/prebuild
 
 os:
   - osx
