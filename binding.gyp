@@ -2,7 +2,7 @@
   "targets": [
     {
       "target_name": "roaring",
-      "cflags": ["-O3", "-Wall"],
+      "cflags": ["-O3", "-Wall", "-std=c99"],
       "cflags_cc": ["-O3", "-Wall"],
       "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
       "sources": [

@@ -1,13 +1,13 @@
 {
   "name": "roaring",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "gypfile": true,
   "scripts": {
-    "install": "prebuild --install --prefer-clang",
-    "rebuild": "prebuild --compile --prefer-clang",
-    "prebuild": "prebuild -t 8.0.0 -t 9.0.0 -t 10.0.0 --strip --verbose --prefer-clang",
+    "install": "prebuild-install || node-gyp rebuild",
+    "rebuild": "prebuild --compile",
+    "prebuild": "prebuild -t 8.0.0 -t 9.0.0 -t 10.0.0 --strip --verbose",
     "test": "jest",
     "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/**"
   },
@@ -30,7 +30,9 @@
   "engines": {
     "node": ">=8.0.0"
   },
-  "keywords": ["CRoaring"],
+  "keywords": [
+    "CRoaring"
+  ],
   "author": "Salvatore Previti",
   "license": "Apache-2.0",
   "bugs": {
@@ -39,9 +41,10 @@
   "homepage": "https://github.com/SalvatorePreviti/roaring#readme",
   "dependencies": {
     "nan": "^2.10.0",
-    "prebuild": "^7.6.0"
+    "prebuild-install": "^4.0.0"
   },
   "devDependencies": {
+    "prebuild": "^7.6.0",
     "@types/jest": "^22.2.3",
     "@types/node": "^10.3.0",
     "eslint": "^4.19.1",
