@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "gypfile": true,
@@ -29,9 +29,7 @@
   "engines": {
     "node": ">=8.0.0"
   },
-  "keywords": [
-    "CRoaring"
-  ],
+  "keywords": ["CRoaring"],
   "author": "Salvatore Previti",
   "license": "Apache-2.0",
   "bugs": {
