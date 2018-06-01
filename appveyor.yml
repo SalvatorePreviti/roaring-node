@@ -22,7 +22,5 @@ test_script:
   - npm run tslint
   - npm test
 
-after_test:
-  - npm run prebuild
-
-deploy: OFF
+deploy_script:
+  - node ./scripts/prebuild

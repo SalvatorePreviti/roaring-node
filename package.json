@@ -7,7 +7,6 @@
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",
     "rebuild": "prebuild --compile",
-    "prebuild": "prebuild -t 8.0.0 -t 9.0.0 -t 10.0.0 --strip --verbose",
     "test": "jest",
     "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/**"
   },
@@ -30,9 +29,7 @@
   "engines": {
     "node": ">=8.0.0"
   },
-  "keywords": [
-    "CRoaring"
-  ],
+  "keywords": ["CRoaring"],
   "author": "Salvatore Previti",
   "license": "Apache-2.0",
   "bugs": {
