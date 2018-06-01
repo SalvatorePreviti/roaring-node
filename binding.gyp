@@ -2,8 +2,8 @@
   "targets": [
     {
       "target_name": "roaring",
-      "cflags": ["-O3", "-Wall"],
-      "cflags_cc": ["-O3", "-Wall"],
+      "cflags": ["-O3", "-Wall", "-std=c++11"],
+      "cflags_cc": ["-O3", "-Wall", "-std=c++11"],
       "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
       "sources": [
         "src/cpp/module.cpp",
