@@ -18,11 +18,11 @@ install:
 cache:
   - node_modules
 
-build_script:
-  - npm run prebuild
-
 test_script:
   - npm run tslint
   - npm test
+
+after_test:
+  - npm run prebuild
 
 deploy: OFF
