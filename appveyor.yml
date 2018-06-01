@@ -6,10 +6,10 @@ environment:
 os: Visual Studio 2017
 
 install:
-  - @IF /I "%PLATFORM%" == "x86" SET PATH=C:\python27;%PATH%
-  - @IF /I "%PLATFORM%" == "x64" SET PATH=C:\Python27-x64;%PATH%
-  - @IF /I "%PLATFORM%" == "x86" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
-  - @IF /I "%PLATFORM%" == "x64" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+  - IF /I "%PLATFORM%" == "x86" SET PATH=C:\python27;%PATH%
+  - IF /I "%PLATFORM%" == "x64" SET PATH=C:\Python27-x64;%PATH%
+  - IF /I "%PLATFORM%" == "x86" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
+  - IF /I "%PLATFORM%" == "x64" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - ps: Install-Product node $env:nodejs_version $env:Platform
   - npm i npm@latest -g
   - git submodule -q update --init
