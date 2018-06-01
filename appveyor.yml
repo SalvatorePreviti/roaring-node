@@ -21,3 +21,4 @@ test_script:
 
 deploy_script:
   - node ./scripts/prebuild
+
