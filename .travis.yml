@@ -1,0 +1,18 @@
+sudo: false
+
+language: node_js
+
+install:
+  - git submodule -q update --init
+  - npm install
+
+script:
+  - npm run tslint
+  - npm test
+
+os:
+  - osx
+  - linux
+
+node_js:
+  - "10"
