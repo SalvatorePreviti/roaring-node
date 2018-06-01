@@ -7,8 +7,6 @@ args.push('-t', '9.0.0')
 args.push('-t', '10.0.0')
 args.push('--strip')
 
-args.push('--verbose')
-
 if (process.env.PREBUILD_GITHUB_TOKEN) {
   args.push('-u', process.env.PREBUILD_GITHUB_TOKEN)
 }
