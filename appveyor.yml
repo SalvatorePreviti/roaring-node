@@ -6,9 +6,10 @@ environment:
 os: Visual Studio 2015
 
 install:
-  - cmd: git submodule -q update --init
-  - node --version
+  - Install-Product node $env:nodejs_version
   - npm i npm@latest -g
+  - git submodule -q update --init
+  - node --version
   - npm install
 
 cache:
