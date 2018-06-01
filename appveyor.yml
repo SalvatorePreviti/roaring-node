@@ -6,7 +6,7 @@ environment:
 os: Visual Studio 2015
 
 install:
-  - Install-Product node $env:nodejs_version
+  - ps: Install-Product node $env:nodejs_version
   - npm i npm@latest -g
   - git submodule -q update --init
   - node --version
