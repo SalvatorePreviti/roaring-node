@@ -15,9 +15,6 @@ install:
   - git submodule -q update --init
   - npm install
 
-cache:
-  - node_modules
-
 test_script:
   - npm run tslint
   - npm test
