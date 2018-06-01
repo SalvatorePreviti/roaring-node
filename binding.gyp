@@ -1,12 +1,10 @@
 {
-  "target_defaults": {
-    "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
-    "cflags": ["-O3", "-Wall"],
-    "cflags_cc": ["-O3", "-Wall"]
-  },
   "targets": [
     {
       "target_name": "roaring",
+      "cflags": ["-O3", "-Wall"],
+      "cflags_cc": ["-O3", "-Wall"],
+      "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
       "sources": [
         "src/cpp/module.cpp",
         "src/cpp/TypedArrays.cpp",

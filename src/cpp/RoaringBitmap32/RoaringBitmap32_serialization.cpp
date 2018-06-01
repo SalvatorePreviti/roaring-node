@@ -54,7 +54,7 @@ void RoaringBitmap32::serialize(const Nan::FunctionCallbackInfo<v8::Value> & inf
       roaring_bitmap_portable_serialize(&self->roaring, (char *)*buf + 1);
       info.GetReturnValue().Set(typedArray);
     } else {
-      auto typedArray = TypedArrays::bufferAllocUnsafe(info.GetIsolate(), sizeasarray + 1);
+      auto typedArray = TypedArrays::bufferAllocUnsafe(info.GetIsolate(), (size_t)sizeasarray + 1);
       Nan::TypedArrayContents<uint8_t> buf(typedArray);
       if (!buf.length() || !*buf)
         return Nan::ThrowError(Nan::New("RoaringBitmap32::serialize - failed to allocate").ToLocalChecked());
@@ -83,9 +83,8 @@ void RoaringBitmap32::deserializeInner(const Nan::FunctionCallbackInfo<v8::Value
 
   if (isStatic) {
     v8::Local<v8::Function> cons = Nan::New(constructor);
-    v8::Local<v8::Value> argv[0] = {};
 
-    auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+    auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
     if (resultMaybe.IsEmpty())
       return;
 

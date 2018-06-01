@@ -224,9 +224,8 @@ void RoaringBitmap32::andStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
   RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
 
   v8::Local<v8::Function> cons = Nan::New(constructor);
-  v8::Local<v8::Value> argv[0] = {};
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
   if (resultMaybe.IsEmpty())
     return;
 
@@ -255,9 +254,8 @@ void RoaringBitmap32::orStatic(const Nan::FunctionCallbackInfo<v8::Value> & info
   RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
 
   v8::Local<v8::Function> cons = Nan::New(constructor);
-  v8::Local<v8::Value> argv[0] = {};
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
   if (resultMaybe.IsEmpty())
     return;
 
@@ -286,9 +284,8 @@ void RoaringBitmap32::xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
   RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
 
   v8::Local<v8::Function> cons = Nan::New(constructor);
-  v8::Local<v8::Value> argv[0] = {};
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
   if (resultMaybe.IsEmpty())
     return;
 
@@ -317,9 +314,8 @@ void RoaringBitmap32::andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
   RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
 
   v8::Local<v8::Function> cons = Nan::New(constructor);
-  v8::Local<v8::Value> argv[0] = {};
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, argv);
+  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
   if (resultMaybe.IsEmpty())
     return;
 

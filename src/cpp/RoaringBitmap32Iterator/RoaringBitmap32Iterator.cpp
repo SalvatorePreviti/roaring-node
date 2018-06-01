@@ -31,8 +31,7 @@ void RoaringBitmap32Iterator::New(const Nan::FunctionCallbackInfo<v8::Value> & i
   if (!info.IsConstructCall()) {
     v8::Local<v8::Function> cons = Nan::New(constructor);
     if (info.Length() < 1) {
-      v8::Local<v8::Value> argv[0] = {};
-      auto v = Nan::NewInstance(cons, 0, argv);
+      auto v = Nan::NewInstance(cons, 0, nullptr);
       if (!v.IsEmpty())
         info.GetReturnValue().Set(v.ToLocalChecked());
     } else {
