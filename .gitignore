@@ -5,6 +5,7 @@ src/cpp/CRoaringUnityBuild/**/*
 # build output
 
 *.o
+prebuilds/
 build/
 package/
 

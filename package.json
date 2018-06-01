@@ -5,11 +5,11 @@
   "main": "index.js",
   "gypfile": true,
   "scripts": {
+    "install": "prebuild --install --prefer-clang",
+    "rebuild": "prebuild --compile --prefer-clang",
+    "prebuild": "prebuild -t 8.0.0 -t 9.0.0 -t 10.0.0 --strip --verbose --prefer-clang",
     "test": "jest",
-    "dev:build": "node-gyp build",
-    "dev:rebuild": "node-gyp rebuild",
-    "dev:tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.d.ts --exclude **/node_modules/**",
-    "dev:eslint": "node ./node_modules/.bin/eslint ."
+    "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/**"
   },
   "repository": {
     "type": "git",
@@ -28,11 +28,9 @@
     "RoaringBitmap32Iterator.d.ts"
   ],
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
-  "keywords": [
-    "CRoaring"
-  ],
+  "keywords": ["CRoaring"],
   "author": "Salvatore Previti",
   "license": "Apache-2.0",
   "bugs": {
@@ -40,7 +38,8 @@
   },
   "homepage": "https://github.com/SalvatorePreviti/roaring#readme",
   "dependencies": {
-    "nan": "^2.10.0"
+    "nan": "^2.10.0",
+    "prebuild": "^7.6.0"
   },
   "devDependencies": {
     "@types/jest": "^22.2.3",

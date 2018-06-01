@@ -1,6 +1,9 @@
-import RoaringBitmap32 from './RoaringBitmap32'
-import RoaringBitmap32Iterator from './RoaringBitmap32Iterator'
+import RoaringBitmap32 = require('./RoaringBitmap32')
+import RoaringBitmap32Iterator = require('./RoaringBitmap32Iterator')
 
+/**
+ * Roaring main module
+ */
 declare class RoaringModule {
   /**
    * 32 bit roaring bitmap class
@@ -13,7 +16,7 @@ declare class RoaringModule {
   public readonly RoaringBitmap32Iterator: typeof RoaringBitmap32Iterator
 
   // Allows: import roaring from 'roaring'
-  private readonly default: typeof roaring
+  private readonly default: RoaringModule
 }
 
 /**
