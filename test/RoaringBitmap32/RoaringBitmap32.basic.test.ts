@@ -114,7 +114,7 @@ describe('RoaringBitmap32 basic', () => {
       expect(bitmap2).toBeInstanceOf(RoaringBitmap32)
       expect(bitmap2.size).toBe(values.length)
       expect(bitmap2.isEmpty).toBe(false)
-      expect(bitmap2.toUint32Array()).toEqual(values)
+      expect(Array.from(bitmap2.toUint32Array())).toEqual(values)
     })
   })
 })

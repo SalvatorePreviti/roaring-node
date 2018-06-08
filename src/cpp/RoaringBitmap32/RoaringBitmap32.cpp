@@ -66,6 +66,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "clone", clone);
   Nan::SetPrototypeMethod(ctor, "toString", toString);
   Nan::SetPrototypeMethod(ctor, "contentToString", contentToString);
+  Nan::SetPrototypeMethod(ctor, "statistics", statistics);
 
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
@@ -292,4 +293,26 @@ void RoaringBitmap32::clone(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (!v.IsEmpty()) {
     info.GetReturnValue().Set(v.ToLocalChecked());
   }
+}
+
+void RoaringBitmap32::statistics(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  roaring_statistics_t stats;
+  roaring_bitmap_statistics(&self->roaring, &stats);
+  auto result = Nan::New<v8::Object>();
+  result->Set(Nan::New<v8::String>("containers").ToLocalChecked(), Nan::New(stats.n_containers));
+  result->Set(Nan::New<v8::String>("arrayContainers").ToLocalChecked(), Nan::New(stats.n_array_containers));
+  result->Set(Nan::New<v8::String>("runContainers").ToLocalChecked(), Nan::New(stats.n_run_containers));
+  result->Set(Nan::New<v8::String>("bitsetContainers").ToLocalChecked(), Nan::New(stats.n_bitset_containers));
+  result->Set(Nan::New<v8::String>("valuesInArrayContainers").ToLocalChecked(), Nan::New(stats.n_values_array_containers));
+  result->Set(Nan::New<v8::String>("valuesInRunContainers").ToLocalChecked(), Nan::New(stats.n_values_run_containers));
+  result->Set(Nan::New<v8::String>("valuesInBitsetContainers").ToLocalChecked(), Nan::New(stats.n_values_bitset_containers));
+  result->Set(Nan::New<v8::String>("bytesInArrayContainers").ToLocalChecked(), Nan::New(stats.n_bytes_array_containers));
+  result->Set(Nan::New<v8::String>("bytesInRunContainers").ToLocalChecked(), Nan::New(stats.n_bytes_run_containers));
+  result->Set(Nan::New<v8::String>("bytesInBitsetContainers").ToLocalChecked(), Nan::New(stats.n_bytes_bitset_containers));
+  result->Set(Nan::New<v8::String>("maxValue").ToLocalChecked(), Nan::New(stats.max_value));
+  result->Set(Nan::New<v8::String>("minValue").ToLocalChecked(), Nan::New(stats.min_value));
+  result->Set(Nan::New<v8::String>("sumOfAllValues").ToLocalChecked(), Nan::New((double)stats.sum_value));
+  result->Set(Nan::New<v8::String>("size").ToLocalChecked(), Nan::New((double)stats.cardinality));
+  info.GetReturnValue().Set(result);
 }

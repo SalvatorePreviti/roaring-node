@@ -422,6 +422,81 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * It may return a very big string.
    */
   public contentToString(): string
+
+  /**
+   * Returns an object that contains several statistinc information about this RoaringBitmap32 instance.
+   */
+  public statistics(): {
+    /**
+     * Number of containers.
+     */
+    containers: number
+
+    /*
+     * Number of array containers.
+     */
+    arrayContainers: number
+
+    /*
+     * Number of run containers.
+     */
+    runContainers: number
+
+    /*
+     * Number of bitmap containers.
+     */
+    bitsetContainers: number
+
+    /*
+     * Number of values in array containers.
+     */
+    valuesInArrayContainers: number
+
+    /*
+     * Number of values in run containers.
+     */
+    valuesInRunContainers: number
+
+    /*
+     * Number of values in  bitmap containers.
+     */
+    valuesInBitsetContainers: number
+
+    /*
+     * Number of allocated bytes in array containers.
+     */
+    bytesInArrayContainers: number
+
+    /*
+     * Number of allocated bytes in run containers.
+     */
+    bytesInRunContainers: number
+
+    /*
+     * Number of allocated bytes in bitmap containers.
+     */
+    bytesInBitsetContainers: number
+
+    /*
+     * The maximal value.
+     */
+    maxValue: number
+
+    /* 
+     * The minimal value.
+     */
+    minValue: number
+
+    /*
+     * The sum of all values
+     */
+    sumOfAllValues: number
+
+    /*
+     * Total number of values stored in the bitmap
+     */
+    size: number
+  }
 }
 
 export = RoaringBitmap32

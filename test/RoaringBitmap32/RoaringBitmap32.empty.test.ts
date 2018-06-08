@@ -856,4 +856,27 @@ describe('RoaringBitmap32 empty', () => {
       expect(bitmap2.isEmpty).toBe(true)
     })
   })
+
+  describe('statistics', () => {
+    it('returns a statistics object for an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      const statistics = bitmap.statistics()
+      expect(statistics).toEqual({
+        containers: 0,
+        arrayContainers: 0,
+        runContainers: 0,
+        bitsetContainers: 0,
+        valuesInArrayContainers: 0,
+        valuesInRunContainers: 0,
+        valuesInBitsetContainers: 0,
+        bytesInArrayContainers: 0,
+        bytesInRunContainers: 0,
+        bytesInBitsetContainers: 0,
+        maxValue: 0,
+        minValue: 4294967295,
+        sumOfAllValues: 0,
+        size: 0
+      })
+    })
+  })
 })
