@@ -60,6 +60,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "rank", rank);
   Nan::SetPrototypeMethod(ctor, "select", select);
   Nan::SetPrototypeMethod(ctor, "toUint32Array", toUint32Array);
+  Nan::SetPrototypeMethod(ctor, "toArray", toArray);
   Nan::SetPrototypeMethod(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
   Nan::SetPrototypeMethod(ctor, "serialize", serialize);
   Nan::SetPrototypeMethod(ctor, "deserialize", deserialize);
@@ -253,6 +254,11 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
   }
 
   info.GetReturnValue().Set(typedArray);
+}
+
+void RoaringBitmap32::toArray(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Local<v8::Value> argv[1] = {info.Holder()};
+  info.GetReturnValue().Set(TypedArrays::Array_from.Get(info.GetIsolate())->Call(TypedArrays::Array.Get(info.GetIsolate()), 1, argv));
 }
 
 void RoaringBitmap32::toString(const Nan::FunctionCallbackInfo<v8::Value> & info) {

@@ -818,6 +818,13 @@ describe('RoaringBitmap32 empty', () => {
     })
   })
 
+  describe('toArray', () => {
+    it('returns an empty array', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.toArray()).toEqual([])
+    })
+  })
+
   describe('toUint32Array', () => {
     it('has toUint32Array function', () => {
       const bitmap = new RoaringBitmap32()

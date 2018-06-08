@@ -117,4 +117,34 @@ describe('RoaringBitmap32 basic', () => {
       expect(Array.from(bitmap2.toUint32Array())).toEqual(values)
     })
   })
+
+  describe('toUint32Array', () => {
+    it('returns an array with 1 element for 1 element', () => {
+      const bitmap = new RoaringBitmap32([1])
+      const x = bitmap.toUint32Array()
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x.length).toBe(1)
+      expect(Array.from(x)).toEqual([1])
+    })
+
+    it('returns an array with multiple elements', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
+      const x = bitmap.toUint32Array()
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x.length).toBe(6)
+      expect(Array.from(x)).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
+    })
+  })
+
+  describe('toArray', () => {
+    it('returns an array with 1 element for 1 element', () => {
+      const bitmap = new RoaringBitmap32([1])
+      expect(bitmap.toArray()).toEqual([1])
+    })
+
+    it('returns an array with multiple elements', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
+      expect(bitmap.toArray()).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
+    })
+  })
 })

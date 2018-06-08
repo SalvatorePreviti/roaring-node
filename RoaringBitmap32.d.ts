@@ -372,9 +372,17 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * The returned array may be very big, up to 4 gigabytes.
    * Use this function only when you know what you are doing.
    *
-   * @returns A new Uint32Array instance containing all the items in the set.
+   * @returns A new Uint32Array instance containing all the items in the set in order.
    */
   public toUint32Array(): Uint32Array
+
+  /**
+   * Creates a new plain JS array and fills it with all the values in the bitmap.
+   * The returned array may be very big, use this function only when you know what you are doing.
+   *
+   * @returns A new plain JS array that contains all the items in the set in order.
+   */
+  public toArray(): number[]
 
   /**
    * How many bytes are required to serialize this bitmap.
