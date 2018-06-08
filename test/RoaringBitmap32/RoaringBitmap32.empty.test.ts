@@ -845,4 +845,15 @@ describe('RoaringBitmap32 empty', () => {
       expect(bitmap.contentToString()).toBe('{}')
     })
   })
+
+  describe('clone', () => {
+    it('returns a cloned empty bitmap', () => {
+      const bitmap1 = new RoaringBitmap32()
+      const bitmap2 = bitmap1.clone()
+      expect(bitmap1 !== bitmap2).toBeTruthy()
+      expect(bitmap2).toBeInstanceOf(RoaringBitmap32)
+      expect(bitmap2.size).toBe(0)
+      expect(bitmap2.isEmpty).toBe(true)
+    })
+  })
 })

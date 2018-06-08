@@ -104,4 +104,17 @@ describe('RoaringBitmap32 basic', () => {
       expect(bitmap.contentToString()).toEqual('{100,200,201,202,203,204,300,2147483647,4294967295}')
     })
   })
+
+  describe('clone', () => {
+    it('returns a cloned bitmap', () => {
+      const values = [1, 2, 100, 101, 200, 400, 0x7fffffff, 0xffffffff]
+      const bitmap1 = new RoaringBitmap32(values)
+      const bitmap2 = bitmap1.clone()
+      expect(bitmap1 !== bitmap2).toBeTruthy()
+      expect(bitmap2).toBeInstanceOf(RoaringBitmap32)
+      expect(bitmap2.size).toBe(values.length)
+      expect(bitmap2.isEmpty).toBe(false)
+      expect(bitmap2.toUint32Array()).toEqual(values)
+    })
+  })
 })

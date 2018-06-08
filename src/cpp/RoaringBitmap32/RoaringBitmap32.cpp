@@ -63,6 +63,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
   Nan::SetPrototypeMethod(ctor, "serialize", serialize);
   Nan::SetPrototypeMethod(ctor, "deserialize", deserialize);
+  Nan::SetPrototypeMethod(ctor, "clone", clone);
   Nan::SetPrototypeMethod(ctor, "toString", toString);
   Nan::SetPrototypeMethod(ctor, "contentToString", contentToString);
 
@@ -281,4 +282,14 @@ void RoaringBitmap32::contentToString(const Nan::FunctionCallbackInfo<v8::Value>
   outer_iter_data.str += '}';
 
   info.GetReturnValue().Set(Nan::New(outer_iter_data.str).ToLocalChecked());
+}
+
+void RoaringBitmap32::clone(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Local<v8::Function> cons = Nan::New(constructor);
+
+  v8::Local<v8::Value> argv[1] = {info.Holder()};
+  auto v = Nan::NewInstance(cons, 1, argv);
+  if (!v.IsEmpty()) {
+    info.GetReturnValue().Set(v.ToLocalChecked());
+  }
 }

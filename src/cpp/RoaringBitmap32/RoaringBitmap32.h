@@ -64,6 +64,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
+  static void clone(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void toString(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void contentToString(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
