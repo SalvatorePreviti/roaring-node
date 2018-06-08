@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "gypfile": true,
@@ -8,6 +8,7 @@
     "install": "prebuild-install || node-gyp rebuild",
     "rebuild": "prebuild --compile",
     "comple": "node-gyp build",
+    "recomple": "node-gyp rebuild",
     "test": "jest",
     "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/**"
   },
@@ -45,8 +46,8 @@
   },
   "devDependencies": {
     "prebuild": "^7.6.0",
-    "@types/jest": "^22.2.3",
-    "@types/node": "^10.3.0",
+    "@types/jest": "^23.0.0",
+    "@types/node": "^10.3.2",
     "eslint": "^4.19.1",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.12.0",

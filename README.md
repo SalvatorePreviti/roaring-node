@@ -30,3 +30,19 @@ Portable Roaring bitmaps in C - <https://github.com/RoaringBitmap/CRoaring>
 # API
 
 See the .d.ts declaration files
+
+# Development, local building
+
+To rebuild the C++ sources
+
+```
+git submodule update --init --recursive
+
+npm run recomple
+```
+
+To run the unit test
+
+```
+npm test
+```

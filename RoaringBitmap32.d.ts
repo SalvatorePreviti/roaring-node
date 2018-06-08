@@ -183,7 +183,8 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public removeMany(values: Iterable<number>): this
 
   /**
-   * Removes all values from the set freeing resources.
+   * Removes all values from the set.
+   * It frees resources, if needed you can use clear to free some memory before the garbage collector disposes this instance.
    */
   public clear(): void
 
