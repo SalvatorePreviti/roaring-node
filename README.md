@@ -1,6 +1,7 @@
 # roaring
 
-Port of Roaring Bitmaps for NodeJS as a native addon.
+Port of [Roaring Bitmaps](http://roaringbitmap.org) for NodeJS as a native addon.
+It is interoperable with other implementations via the [Roaring format](https://github.com/RoaringBitmap/RoaringFormatSpec/).
 
 Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
 

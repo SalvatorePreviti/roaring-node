@@ -831,4 +831,18 @@ describe('RoaringBitmap32 empty', () => {
       expect(a.length).toBe(0)
     })
   })
+
+  describe('toString', () => {
+    it('returns "RoaringBitmap32:0"', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.toString()).toBe('RoaringBitmap32:0')
+    })
+  })
+
+  describe('contentToString', () => {
+    it('returns "{}"', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.contentToString()).toBe('{}')
+    })
+  })
 })

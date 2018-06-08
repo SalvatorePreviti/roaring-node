@@ -80,4 +80,28 @@ describe('RoaringBitmap32 basic', () => {
       expect(Array.from(bitmap)).toEqual(values.slice().sort((a, b) => a - b))
     })
   })
+
+  describe('toString', () => {
+    it('returns "RoaringBitmap32:1" for a bitmap with 1 element', () => {
+      const bitmap = new RoaringBitmap32([1])
+      expect(bitmap.toString()).toEqual('RoaringBitmap32:1')
+    })
+
+    it('returns "RoaringBitmap32:2" for a bitmap with 2 elements', () => {
+      const bitmap = new RoaringBitmap32([1, 2])
+      expect(bitmap.toString()).toEqual('RoaringBitmap32:2')
+    })
+  })
+
+  describe('contentToString', () => {
+    it('generates a valid string for 1 value', () => {
+      const bitmap = new RoaringBitmap32([1])
+      expect(bitmap.contentToString()).toEqual('{1}')
+    })
+    it('generates a valid string for few values', () => {
+      const values = [100, 200, 201, 202, 203, 204, 300, 0x7fffffff, 0xffffffff]
+      const bitmap = new RoaringBitmap32(values)
+      expect(bitmap.contentToString()).toEqual('{100,200,201,202,203,204,300,2147483647,4294967295}')
+    })
+  })
 })

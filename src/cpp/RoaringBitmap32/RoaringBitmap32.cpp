@@ -63,6 +63,8 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
   Nan::SetPrototypeMethod(ctor, "serialize", serialize);
   Nan::SetPrototypeMethod(ctor, "deserialize", deserialize);
+  Nan::SetPrototypeMethod(ctor, "toString", toString);
+  Nan::SetPrototypeMethod(ctor, "contentToString", contentToString);
 
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
@@ -249,4 +251,34 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
   }
 
   info.GetReturnValue().Set(typedArray);
+}
+
+void RoaringBitmap32::toString(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  std::string result("RoaringBitmap32:");
+  result += std::to_string(self ? roaring_bitmap_get_cardinality(&self->roaring) : 0);
+  info.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+}
+
+void RoaringBitmap32::contentToString(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  struct iter_data {
+    std::string str;
+    char first_char = '{';
+  } outer_iter_data;
+  if (self && !roaring_bitmap_is_empty(&self->roaring)) {
+    roaring_iterate(&self->roaring,
+        [](uint32_t value, void * inner_iter_data) -> bool {
+          ((iter_data *)inner_iter_data)->str += ((iter_data *)inner_iter_data)->first_char;
+          ((iter_data *)inner_iter_data)->str += std::to_string(value);
+          ((iter_data *)inner_iter_data)->first_char = ',';
+          return true;
+        },
+        (void *)&outer_iter_data);
+  } else {
+    outer_iter_data.str = '{';
+  }
+  outer_iter_data.str += '}';
+
+  info.GetReturnValue().Set(Nan::New(outer_iter_data.str).ToLocalChecked());
 }

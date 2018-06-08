@@ -404,6 +404,24 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * The portable version is meant to be compatible with Java and Go versions.
    */
   public deserialize(serialized: Uint8Array, portable?: boolean): void
+
+  /**
+   * Returns a new RoaringBitmap32 that is a copy of this bitmap.
+   * Same as new RoaringBitmap32(copy)
+   */
+  public clone(): RoaringBitmap32
+
+  /**
+   * Returns "RoaringBitmap32(size)".
+   * To have a standard string representation of the content as a string, call this.contentToString() instead.
+   */
+  public toString(): string
+
+  /**
+   * Returns a standard string representation of the content of this RoaringBitmap32 instance.
+   * It may return a very big string.
+   */
+  public contentToString(): string
 }
 
 export = RoaringBitmap32
