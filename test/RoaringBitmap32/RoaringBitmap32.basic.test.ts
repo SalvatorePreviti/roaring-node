@@ -80,4 +80,71 @@ describe('RoaringBitmap32 basic', () => {
       expect(Array.from(bitmap)).toEqual(values.slice().sort((a, b) => a - b))
     })
   })
+
+  describe('toString', () => {
+    it('returns "RoaringBitmap32:1" for a bitmap with 1 element', () => {
+      const bitmap = new RoaringBitmap32([1])
+      expect(bitmap.toString()).toEqual('RoaringBitmap32:1')
+    })
+
+    it('returns "RoaringBitmap32:2" for a bitmap with 2 elements', () => {
+      const bitmap = new RoaringBitmap32([1, 2])
+      expect(bitmap.toString()).toEqual('RoaringBitmap32:2')
+    })
+  })
+
+  describe('contentToString', () => {
+    it('generates a valid string for 1 value', () => {
+      const bitmap = new RoaringBitmap32([1])
+      expect(bitmap.contentToString()).toEqual('{1}')
+    })
+    it('generates a valid string for few values', () => {
+      const values = [100, 200, 201, 202, 203, 204, 300, 0x7fffffff, 0xffffffff]
+      const bitmap = new RoaringBitmap32(values)
+      expect(bitmap.contentToString()).toEqual('{100,200,201,202,203,204,300,2147483647,4294967295}')
+    })
+  })
+
+  describe('clone', () => {
+    it('returns a cloned bitmap', () => {
+      const values = [1, 2, 100, 101, 200, 400, 0x7fffffff, 0xffffffff]
+      const bitmap1 = new RoaringBitmap32(values)
+      const bitmap2 = bitmap1.clone()
+      expect(bitmap1 !== bitmap2).toBeTruthy()
+      expect(bitmap2).toBeInstanceOf(RoaringBitmap32)
+      expect(bitmap2.size).toBe(values.length)
+      expect(bitmap2.isEmpty).toBe(false)
+      expect(Array.from(bitmap2.toUint32Array())).toEqual(values)
+    })
+  })
+
+  describe('toUint32Array', () => {
+    it('returns an array with 1 element for 1 element', () => {
+      const bitmap = new RoaringBitmap32([1])
+      const x = bitmap.toUint32Array()
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x.length).toBe(1)
+      expect(Array.from(x)).toEqual([1])
+    })
+
+    it('returns an array with multiple elements', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
+      const x = bitmap.toUint32Array()
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x.length).toBe(6)
+      expect(Array.from(x)).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
+    })
+  })
+
+  describe('toArray', () => {
+    it('returns an array with 1 element for 1 element', () => {
+      const bitmap = new RoaringBitmap32([1])
+      expect(bitmap.toArray()).toEqual([1])
+    })
+
+    it('returns an array with multiple elements', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
+      expect(bitmap.toArray()).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
+    })
+  })
 })

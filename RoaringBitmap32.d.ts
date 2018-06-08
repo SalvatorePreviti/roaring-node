@@ -183,7 +183,8 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public removeMany(values: Iterable<number>): this
 
   /**
-   * Removes all values from the set freeing resources.
+   * Removes all values from the set.
+   * It frees resources, if needed you can use clear to free some memory before the garbage collector disposes this instance.
    */
   public clear(): void
 
@@ -372,9 +373,17 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * The returned array may be very big, up to 4 gigabytes.
    * Use this function only when you know what you are doing.
    *
-   * @returns A new Uint32Array instance containing all the items in the set.
+   * @returns A new Uint32Array instance containing all the items in the set in order.
    */
   public toUint32Array(): Uint32Array
+
+  /**
+   * Creates a new plain JS array and fills it with all the values in the bitmap.
+   * The returned array may be very big, use this function only when you know what you are doing.
+   *
+   * @returns A new plain JS array that contains all the items in the set in order.
+   */
+  public toArray(): number[]
 
   /**
    * How many bytes are required to serialize this bitmap.
@@ -404,6 +413,99 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * The portable version is meant to be compatible with Java and Go versions.
    */
   public deserialize(serialized: Uint8Array, portable?: boolean): void
+
+  /**
+   * Returns a new RoaringBitmap32 that is a copy of this bitmap.
+   * Same as new RoaringBitmap32(copy)
+   */
+  public clone(): RoaringBitmap32
+
+  /**
+   * Returns "RoaringBitmap32(size)".
+   * To have a standard string representation of the content as a string, call this.contentToString() instead.
+   */
+  public toString(): string
+
+  /**
+   * Returns a standard string representation of the content of this RoaringBitmap32 instance.
+   * It may return a very big string.
+   */
+  public contentToString(): string
+
+  /**
+   * Returns an object that contains several statistinc information about this RoaringBitmap32 instance.
+   */
+  public statistics(): {
+    /**
+     * Number of containers.
+     */
+    containers: number
+
+    /*
+     * Number of array containers.
+     */
+    arrayContainers: number
+
+    /*
+     * Number of run containers.
+     */
+    runContainers: number
+
+    /*
+     * Number of bitmap containers.
+     */
+    bitsetContainers: number
+
+    /*
+     * Number of values in array containers.
+     */
+    valuesInArrayContainers: number
+
+    /*
+     * Number of values in run containers.
+     */
+    valuesInRunContainers: number
+
+    /*
+     * Number of values in  bitmap containers.
+     */
+    valuesInBitsetContainers: number
+
+    /*
+     * Number of allocated bytes in array containers.
+     */
+    bytesInArrayContainers: number
+
+    /*
+     * Number of allocated bytes in run containers.
+     */
+    bytesInRunContainers: number
+
+    /*
+     * Number of allocated bytes in bitmap containers.
+     */
+    bytesInBitsetContainers: number
+
+    /*
+     * The maximal value.
+     */
+    maxValue: number
+
+    /* 
+     * The minimal value.
+     */
+    minValue: number
+
+    /*
+     * The sum of all values
+     */
+    sumOfAllValues: number
+
+    /*
+     * Total number of values stored in the bitmap
+     */
+    size: number
+  }
 }
 
 export = RoaringBitmap32
