@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "gypfile": true,
