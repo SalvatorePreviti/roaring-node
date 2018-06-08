@@ -5,7 +5,7 @@ It is interoperable with other implementations via the [Roaring format](https://
 
 Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
 
-For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10.0, use [roaring-aws](https://www.npmjs.com/package/roaring).
+For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10.0, use [roaring-aws](https://www.npmjs.com/package/roaring-aws).
 
 ## installation
 
