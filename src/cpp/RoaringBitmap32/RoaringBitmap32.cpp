@@ -61,6 +61,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "select", select);
   Nan::SetPrototypeMethod(ctor, "toUint32Array", toUint32Array);
   Nan::SetPrototypeMethod(ctor, "toArray", toArray);
+  Nan::SetPrototypeMethod(ctor, "toJSON", toArray);
   Nan::SetPrototypeMethod(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
   Nan::SetPrototypeMethod(ctor, "serialize", serialize);
   Nan::SetPrototypeMethod(ctor, "deserialize", deserialize);
@@ -273,22 +274,36 @@ void RoaringBitmap32::contentToString(const Nan::FunctionCallbackInfo<v8::Value>
   struct iter_data {
     std::string str;
     char first_char = '{';
-  } outer_iter_data;
+    uint64_t maxLen = 260000;
+  } iterData;
+
+  if (info.Length() >= 1 && info[0]->IsNumber()) {
+    double nv = info[0]->NumberValue();
+    if (nv >= 0) {
+      iterData.maxLen = (uint64_t)nv;
+    }
+  }
+
   if (self && !roaring_bitmap_is_empty(&self->roaring)) {
     roaring_iterate(&self->roaring,
-        [](uint32_t value, void * inner_iter_data) -> bool {
-          ((iter_data *)inner_iter_data)->str += ((iter_data *)inner_iter_data)->first_char;
-          ((iter_data *)inner_iter_data)->str += std::to_string(value);
-          ((iter_data *)inner_iter_data)->first_char = ',';
+        [](uint32_t value, void * p) -> bool {
+          if (((iter_data *)p)->str.length() >= ((iter_data *)p)->maxLen) {
+            ((iter_data *)p)->str.append("...");
+            return false;
+          }
+
+          ((iter_data *)p)->str += ((iter_data *)p)->first_char;
+          ((iter_data *)p)->str.append(std::to_string(value));
+          ((iter_data *)p)->first_char = ',';
           return true;
         },
-        (void *)&outer_iter_data);
+        (void *)&iterData);
   } else {
-    outer_iter_data.str = '{';
+    iterData.str = '[';
   }
-  outer_iter_data.str += '}';
+  iterData.str += ']';
 
-  info.GetReturnValue().Set(Nan::New(outer_iter_data.str).ToLocalChecked());
+  info.GetReturnValue().Set(Nan::New(iterData.str).ToLocalChecked());
 }
 
 void RoaringBitmap32::clone(const Nan::FunctionCallbackInfo<v8::Value> & info) {

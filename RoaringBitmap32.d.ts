@@ -386,6 +386,14 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public toArray(): number[]
 
   /**
+   * Returns a plain JS array with all the values in the bitmap.
+   * Used by JSON.stringify to serialize this bitmap.
+   *
+   * @returns A new plain JS array that contains all the items in the set in order.
+   */
+  public toJSON(): number[]
+
+  /**
    * How many bytes are required to serialize this bitmap.
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -422,15 +430,18 @@ declare class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns "RoaringBitmap32(size)".
-   * To have a standard string representation of the content as a string, call this.contentToString() instead.
+   * To have a standard string representation of the content as a string, call contentToString() instead.
    */
   public toString(): string
 
   /**
-   * Returns a standard string representation of the content of this RoaringBitmap32 instance.
-   * It may return a very big string.
+   * Returns a standard string representation of the content of this RoaringBitmap32 instance. It may return a very long string.
+   * Default max length is 260000, everything after around maxLength is truncated (ellipsis added).
+   *
+   * @param maxLength Approximate maximum length of the string. Ellipsis will be added.
+   * @returns A string in the format "[1,2,3...]"
    */
-  public contentToString(): string
+  public contentToString(maxLength?: number): string
 
   /**
    * Returns an object that contains several statistinc information about this RoaringBitmap32 instance.

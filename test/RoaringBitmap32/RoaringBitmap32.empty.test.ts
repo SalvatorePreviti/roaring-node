@@ -32,10 +32,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('from', () => {
-    it('is a function', () => {
-      expect(typeof RoaringBitmap32.from).toBe('function')
-    })
-
     it('creates an empty bitmap with an empty array', () => {
       const bitmap = RoaringBitmap32.from([])
       expect(bitmap.size).toBe(0)
@@ -50,11 +46,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('has', () => {
-    it('is a function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.has).toBe('function')
-    })
-
     it('returns false with some random ids', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.has(0)).toBe(false)
@@ -117,11 +108,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('get iterator', () => {
-    it('has iterator function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap[Symbol.iterator]).toBe('function')
-    })
-
     it('returns a RoaringBitmap32Iterator', () => {
       const bitmap = new RoaringBitmap32()
       const iterator = bitmap[Symbol.iterator]()
@@ -144,11 +130,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('isSubset', () => {
-    it('has isSubset function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.isSubset).toBe('function')
-    })
-
     it('returns false for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.isSubset(null as any)).toBe(false)
@@ -176,11 +157,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('isStrictSubset', () => {
-    it('has isStrictSubset function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.isStrictSubset).toBe('function')
-    })
-
     it('returns false for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.isStrictSubset(null as any)).toBe(false)
@@ -208,11 +184,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('isEqual', () => {
-    it('has isEqual function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.isEqual).toBe('function')
-    })
-
     it('returns false for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.isEqual(null as any)).toBe(false)
@@ -240,11 +211,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('intersects', () => {
-    it('has intersects function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.intersects).toBe('function')
-    })
-
     it('returns false for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.intersects(null as any)).toBe(false)
@@ -272,11 +238,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('andCardinality', () => {
-    it('has andCardinality function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.andCardinality).toBe('function')
-    })
-
     it('returns -1 for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.andCardinality(null as any)).toBe(-1)
@@ -304,11 +265,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('orCardinality', () => {
-    it('has orCardinality function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.orCardinality).toBe('function')
-    })
-
     it('returns -1 for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.orCardinality(null as any)).toBe(-1)
@@ -336,10 +292,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('andInPlace', () => {
-    it('is a function', () => {
-      expect(typeof new RoaringBitmap32().andInPlace).toBe('function')
-    })
-
     it('does nothing with an empty bitmaps', () => {
       const a = new RoaringBitmap32()
       const b = new RoaringBitmap32()
@@ -361,10 +313,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('andNotInPlace', () => {
-    it('is a function', () => {
-      expect(typeof new RoaringBitmap32().andNotInPlace).toBe('function')
-    })
-
     it('does nothing with an empty bitmaps', () => {
       const a = new RoaringBitmap32()
       const b = new RoaringBitmap32()
@@ -386,10 +334,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('orInPlace', () => {
-    it('is a function', () => {
-      expect(typeof new RoaringBitmap32().orInPlace).toBe('function')
-    })
-
     it('does nothing with an empty bitmaps', () => {
       const a = new RoaringBitmap32()
       const b = new RoaringBitmap32()
@@ -411,10 +355,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('xorInPlace', () => {
-    it('is a function', () => {
-      expect(typeof new RoaringBitmap32().xorInPlace).toBe('function')
-    })
-
     it('does nothing with an empty bitmaps', () => {
       const a = new RoaringBitmap32()
       const b = new RoaringBitmap32()
@@ -442,10 +382,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('static and', () => {
-    it('is a function', () => {
-      expect(typeof RoaringBitmap32.and).toBe('function')
-    })
-
     it('returns empty with empty bitmaps', () => {
       const a = new RoaringBitmap32()
       const b = new RoaringBitmap32()
@@ -462,10 +398,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('static andNot', () => {
-    it('is a function', () => {
-      expect(typeof RoaringBitmap32.andNot).toBe('function')
-    })
-
     it('returns empty with empty bitmaps', () => {
       const a = new RoaringBitmap32()
       const b = new RoaringBitmap32()
@@ -482,10 +414,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('static or', () => {
-    it('is a function', () => {
-      expect(typeof RoaringBitmap32.or).toBe('function')
-    })
-
     it('returns empty with empty bitmaps', () => {
       const a = new RoaringBitmap32()
       const b = new RoaringBitmap32()
@@ -509,10 +437,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('static xor', () => {
-    it('is a function', () => {
-      expect(typeof RoaringBitmap32.xor).toBe('function')
-    })
-
     it('returns empty with empty bitmaps', () => {
       const a = new RoaringBitmap32()
       const b = new RoaringBitmap32()
@@ -536,11 +460,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('andNotCardinality', () => {
-    it('has andCardinality function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.andNotCardinality).toBe('function')
-    })
-
     it('returns -1 for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.andNotCardinality(null as any)).toBe(-1)
@@ -568,11 +487,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('xorCardinality', () => {
-    it('has xorCardinality function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.andNotCardinality).toBe('function')
-    })
-
     it('returns -1 for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.xorCardinality(null as any)).toBe(-1)
@@ -704,8 +618,7 @@ describe('RoaringBitmap32 empty', () => {
 
   describe('serialize', () => {
     it('returns a Buffer', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(bitmap.serialize()).toBeInstanceOf(Buffer)
+      expect(new RoaringBitmap32().serialize()).toBeInstanceOf(Buffer)
     })
 
     it('returns standard value for empty bitmap (non portable)', () => {
@@ -715,17 +628,11 @@ describe('RoaringBitmap32 empty', () => {
     })
 
     it('returns standard value for empty bitmap (portable)', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(Array.from(bitmap.serialize(true))).toEqual([58, 48, 0, 0, 0, 0, 0, 0])
+      expect(Array.from(new RoaringBitmap32().serialize(true))).toEqual([58, 48, 0, 0, 0, 0, 0, 0])
     })
   })
 
   describe('deserialize', () => {
-    it('is a function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.deserialize).toBe('function')
-    })
-
     it('deserializes empty bitmap (non portable)', () => {
       const bitmap = new RoaringBitmap32([1, 2, 3])
       bitmap.deserialize(Buffer.from([1, 0, 0, 0, 0]))
@@ -749,10 +656,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('deserialize static', () => {
-    it('is a function', () => {
-      expect(typeof RoaringBitmap32.deserialize).toBe('function')
-    })
-
     it('deserializes empty bitmap (non portable)', () => {
       const bitmap = RoaringBitmap32.deserialize(Buffer.from([1, 0, 0, 0, 0]))
       expect(bitmap.size).toBe(0)
@@ -773,11 +676,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('rank', () => {
-    it('has rank function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.rank).toBe('function')
-    })
-
     it('returns 0 for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.rank(null as any)).toBe(0)
@@ -796,11 +694,6 @@ describe('RoaringBitmap32 empty', () => {
   })
 
   describe('select', () => {
-    it('has select function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.select).toBe('function')
-    })
-
     it('returns undefined for invalid values', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.select(null as any)).toBe(undefined)
@@ -820,20 +713,13 @@ describe('RoaringBitmap32 empty', () => {
 
   describe('toArray', () => {
     it('returns an empty array', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(bitmap.toArray()).toEqual([])
+      expect(new RoaringBitmap32().toArray()).toEqual([])
     })
   })
 
   describe('toUint32Array', () => {
-    it('has toUint32Array function', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(typeof bitmap.toUint32Array).toBe('function')
-    })
-
     it('returns an empty Uint32Array', () => {
-      const bitmap = new RoaringBitmap32()
-      const a = bitmap.toUint32Array()
+      const a = new RoaringBitmap32().toUint32Array()
       expect(a).toBeInstanceOf(Uint32Array)
       expect(a.length).toBe(0)
     })
@@ -841,15 +727,13 @@ describe('RoaringBitmap32 empty', () => {
 
   describe('toString', () => {
     it('returns "RoaringBitmap32:0"', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(bitmap.toString()).toBe('RoaringBitmap32:0')
+      expect(new RoaringBitmap32().toString()).toBe('RoaringBitmap32:0')
     })
   })
 
   describe('contentToString', () => {
-    it('returns "{}"', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(bitmap.contentToString()).toBe('{}')
+    it('returns "[]"', () => {
+      expect(new RoaringBitmap32().contentToString()).toBe('[]')
     })
   })
 
@@ -884,6 +768,18 @@ describe('RoaringBitmap32 empty', () => {
         sumOfAllValues: 0,
         size: 0
       })
+    })
+  })
+
+  describe('toJSON', () => {
+    it('returns an empty array', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.toJSON()).toEqual([])
+    })
+
+    it('works with JSON.stringify', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(JSON.stringify(bitmap)).toEqual('[]')
     })
   })
 })
