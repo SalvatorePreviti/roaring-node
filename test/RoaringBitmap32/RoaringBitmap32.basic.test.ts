@@ -106,7 +106,7 @@ describe('RoaringBitmap32 basic', () => {
     it('supports maxLength correctly', () => {
       const values = [100, 200, 201, 202, 203, 204, 300, 0x7fffffff, 0xffffffff]
       const bitmap = new RoaringBitmap32(values)
-      expect(bitmap.contentToString(74)).toEqual('[100,200,201,202,203,204...]')
+      expect(bitmap.contentToString(13)).toEqual('[100,200,201,202...]')
     })
   })
 

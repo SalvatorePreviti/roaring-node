@@ -22,12 +22,15 @@ declare class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Creates an instance of RoaringBitmap32.
+   * Is faster to pass a Uint32Array instance instead of an array or an iterable.
+   * Is optimized if the given argument is a RoaringBitmap32 (performs a fast copy).
    */
   public constructor(values?: Iterable<number>)
 
   /**
    * Creates an instance of RoaringBitmap32 from the given Iterable.
-   * This function is optimized if the given argument is a RoaringBitmap32 (performs a copy).
+   * Is faster to pass a Uint32Array instance instead of an array or an iterable.
+   * Is optimized if the given argument is a RoaringBitmap32 (performs a fast copy).
    *
    * @param values The values to set.
    * @returns A new RoaringBitmap32 instance filled with the given values.
@@ -92,6 +95,24 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public static andNot(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32
 
   /**
+   * Performs a union between all the given RoaringBitmap32 instances.
+   * This function is faster than calling or multiple times.
+   *
+   * @param values An array of RoaringBitmap32 instances to or together.
+   * @returns A new RoaringBitmap32 that contains the union of all the given bitmaps.
+   */
+  public static orMany(values: RoaringBitmap32[]): RoaringBitmap32
+
+  /**
+   * Performs a union between all the given RoaringBitmap32 instances.
+   * This function is faster than calling or multiple times.
+   *
+   * @param values The RoaringBitmap32 instances to or together.
+   * @returns A new RoaringBitmap32 that contains the union of all the given bitmaps.
+   */
+  public static orMany(...values: RoaringBitmap32[]): RoaringBitmap32
+
+  /**
    * Gets a new iterator able to iterate all values in the set in order.
    *
    * @returns A new iterator
@@ -149,7 +170,8 @@ declare class RoaringBitmap32 implements Iterable<number> {
    * Adds multiple values to the set.
    * Faster than calling add() multiple times.
    * It is faster to insert sorted or partially sorted values.
-   * This function is optimized if the argument is an instance of RoaringBitmap32 (it performs an OR union).
+   * Is faster to use Uint32Array instead of arrays or iterables.
+   * Is optimized if the argument is an instance of RoaringBitmap32 (it performs an OR union).
    *
    * @param values An iterable of values to insert.
    * @returns The same RoaringBitmap32 instance.
@@ -175,6 +197,7 @@ declare class RoaringBitmap32 implements Iterable<number> {
   /**
    * Removes multiple values from the set.
    * Faster than calling remove() multiple times.
+   * Is faster to use Uint32Array instead of arrays or iterables.
    * This function is optimized if the argument is an instance of RoaringBitmap32 (it performs an AND NOT operation).
    *
    * @param values An iterable of values to remove.
@@ -190,6 +213,8 @@ declare class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Performs an union in place ("this = this OR values").
+   * Is faster to use Uint32Array instead of arrays or iterables.
+   * This function is optimized if the argument is an instance of RoaringBitmap32.
    * Same as addMany.
    *
    * @param values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
@@ -199,6 +224,8 @@ declare class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Performs a AND NOT operation in place ("this = this AND NOT values").
+   * Is faster to use Uint32Array instead of arrays or iterables.
+   * This function is optimized if the argument is an instance of RoaringBitmap32.
    * Same as removeMany.
    *
    * @param values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
@@ -209,6 +236,8 @@ declare class RoaringBitmap32 implements Iterable<number> {
   /**
    * Performs the intersection (and) between the current bitmap and the provided bitmap,
    * writing the result in the current bitmap.
+   * Is faster to use Uint32Array instead of arrays or iterables.
+   * This function is optimized if the argument is an instance of RoaringBitmap32.
    * The provided bitmap is not modified.
    *
    * @param values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
@@ -219,6 +248,8 @@ declare class RoaringBitmap32 implements Iterable<number> {
   /**
    * Performs the symmetric union (xor) between the current bitmap and the provided bitmap,
    * writing the result in the current bitmap.
+   * Is faster to use Uint32Array instead of arrays or iterables.
+   * This function is optimized if the argument is an instance of RoaringBitmap32.
    * The provided bitmap is not modified.
    *
    * @param values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.

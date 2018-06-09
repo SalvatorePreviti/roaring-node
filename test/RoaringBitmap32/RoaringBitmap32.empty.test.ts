@@ -513,6 +513,43 @@ describe('RoaringBitmap32 empty', () => {
     })
   })
 
+  describe('orMany', () => {
+    it('creates an empty bitmap with no argument passed', () => {
+      const x = RoaringBitmap32.orMany()
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with a single empty bitmap passed', () => {
+      const x = RoaringBitmap32.orMany(new RoaringBitmap32())
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with a single empty bitmap passed as array', () => {
+      const x = RoaringBitmap32.orMany([new RoaringBitmap32()])
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with multiple empty bitmap passed', () => {
+      const x = RoaringBitmap32.orMany(new RoaringBitmap32(), new RoaringBitmap32(), new RoaringBitmap32())
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with a multiple empty bitmap passed as array', () => {
+      const x = RoaringBitmap32.orMany([new RoaringBitmap32(), new RoaringBitmap32(), new RoaringBitmap32()])
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+  })
+
   describe('removeRunCompression', () => {
     it('does nothing', () => {
       const bitmap = new RoaringBitmap32()
