@@ -124,6 +124,10 @@ describe('RoaringBitmap32 basic', () => {
   })
 
   describe('toString', () => {
+    it('returns "RoaringBitmap32:0 for an empty bitmap"', () => {
+      expect(new RoaringBitmap32().toString()).toBe('RoaringBitmap32:0')
+    })
+
     it('returns "RoaringBitmap32:1" for a bitmap with 1 element', () => {
       const bitmap = new RoaringBitmap32([1])
       expect(bitmap.toString()).toEqual('RoaringBitmap32:1')
@@ -136,6 +140,9 @@ describe('RoaringBitmap32 basic', () => {
   })
 
   describe('contentToString', () => {
+    it('returns "[]" for an empty bitmap', () => {
+      expect(new RoaringBitmap32().contentToString()).toBe('[]')
+    })
     it('generates a valid string for 1 value', () => {
       const bitmap = new RoaringBitmap32([1])
       expect(bitmap.contentToString()).toEqual('[1]')
@@ -153,6 +160,15 @@ describe('RoaringBitmap32 basic', () => {
   })
 
   describe('clone', () => {
+    it('returns a cloned empty bitmap', () => {
+      const bitmap1 = new RoaringBitmap32()
+      const bitmap2 = bitmap1.clone()
+      expect(bitmap1 !== bitmap2).toBeTruthy()
+      expect(bitmap2).toBeInstanceOf(RoaringBitmap32)
+      expect(bitmap2.size).toBe(0)
+      expect(bitmap2.isEmpty).toBe(true)
+    })
+
     it('returns a cloned bitmap', () => {
       const values = [1, 2, 100, 101, 200, 400, 0x7fffffff, 0xffffffff]
       const bitmap1 = new RoaringBitmap32(values)
@@ -165,7 +181,42 @@ describe('RoaringBitmap32 basic', () => {
     })
   })
 
+  describe('select', () => {
+    it('returns undefined for invalid values on an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.select(null as any)).toBe(undefined)
+      expect(bitmap.select(undefined as any)).toBe(undefined)
+      expect(bitmap.select(-123 as any)).toBe(undefined)
+      expect(bitmap.select([123] as any)).toBe(undefined)
+      expect(bitmap.select(0)).toBe(undefined)
+      expect(bitmap.select(100)).toBe(undefined)
+      expect(bitmap.select(0x7fffffff)).toBe(undefined)
+      expect(bitmap.select(3)).toBe(undefined)
+    })
+
+    it('returns the correct value', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 10, 100, 1000, 2000, 3000])
+      expect(bitmap.select(0)).toBe(1)
+      expect(bitmap.select(1)).toBe(2)
+      expect(bitmap.select(2)).toBe(3)
+      expect(bitmap.select(3)).toBe(4)
+      expect(bitmap.select(4)).toBe(5)
+      expect(bitmap.select(5)).toBe(10)
+      expect(bitmap.select(6)).toBe(100)
+      expect(bitmap.select(7)).toBe(1000)
+      expect(bitmap.select(8)).toBe(2000)
+      expect(bitmap.select(9)).toBe(3000)
+      expect(bitmap.select(10)).toBe(undefined)
+    })
+  })
+
   describe('toUint32Array', () => {
+    it('returns an empty Uint32Array for an empty bitmap', () => {
+      const a = new RoaringBitmap32().toUint32Array()
+      expect(a).toBeInstanceOf(Uint32Array)
+      expect(a.length).toBe(0)
+    })
+
     it('returns an array with 1 element for 1 element', () => {
       const bitmap = new RoaringBitmap32([1])
       const x = bitmap.toUint32Array()
@@ -184,6 +235,10 @@ describe('RoaringBitmap32 basic', () => {
   })
 
   describe('toArray', () => {
+    it('returns an empty array for an empty bitmap', () => {
+      expect(new RoaringBitmap32().toArray()).toEqual([])
+    })
+
     it('returns an array with 1 element for 1 element', () => {
       const bitmap = new RoaringBitmap32([1])
       expect(bitmap.toArray()).toEqual([1])
@@ -196,6 +251,15 @@ describe('RoaringBitmap32 basic', () => {
   })
 
   describe('toJSON', () => {
+    it('returns an empty array with an empty bitmap', () => {
+      expect(new RoaringBitmap32().toJSON()).toEqual([])
+    })
+
+    it('works with JSON.stringify with an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(JSON.stringify(bitmap)).toEqual('[]')
+    })
+
     it('returns an array with all the values', () => {
       const bitmap = new RoaringBitmap32([1, 2, 3])
       expect(bitmap.toJSON()).toEqual([1, 2, 3])
@@ -208,6 +272,27 @@ describe('RoaringBitmap32 basic', () => {
   })
 
   describe('statistics', () => {
+    it('returns a statistics object for an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      const statistics = bitmap.statistics()
+      expect(statistics).toEqual({
+        containers: 0,
+        arrayContainers: 0,
+        runContainers: 0,
+        bitsetContainers: 0,
+        valuesInArrayContainers: 0,
+        valuesInRunContainers: 0,
+        valuesInBitsetContainers: 0,
+        bytesInArrayContainers: 0,
+        bytesInRunContainers: 0,
+        bytesInBitsetContainers: 0,
+        maxValue: 0,
+        minValue: 4294967295,
+        sumOfAllValues: 0,
+        size: 0
+      })
+    })
+
     it('returns valid statistics', () => {
       const rb = new RoaringBitmap32()
       rb.addMany([1, 2, 3, 4, 6, 7])
