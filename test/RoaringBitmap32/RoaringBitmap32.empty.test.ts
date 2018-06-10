@@ -3,10 +3,6 @@ import RoaringBitmap32Iterator = require('../../RoaringBitmap32Iterator')
 
 describe('RoaringBitmap32 empty', () => {
   describe('constructor', () => {
-    it('is a class', () => {
-      expect(typeof RoaringBitmap32).toBe('function')
-    })
-
     it('creates an empty bitmap with no arguments', () => {
       const bitmap = new RoaringBitmap32()
       expect(bitmap.size).toBe(0)
