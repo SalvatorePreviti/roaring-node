@@ -94,6 +94,11 @@ describe('RoaringBitmap32 basic', () => {
       for (const value of values) {
         expect(bitmap.has(value)).toBe(true)
       }
+      const valuesSet = new Set(values)
+      for (const value of bitmap) {
+        expect(valuesSet.delete(value)).toBe(true)
+      }
+      expect(valuesSet.size).toBe(0)
       expect(Array.from(bitmap)).toEqual(values.slice().sort((a, b) => a - b))
     })
   })
@@ -207,24 +212,44 @@ describe('RoaringBitmap32 basic', () => {
       const rb = new RoaringBitmap32()
       rb.addMany([1, 2, 3, 4, 6, 7])
       rb.addMany([999991, 999992, 999993, 999994, 999996, 999997])
-      let stats = rb.statistics()
-      expect(stats.size).toBe(rb.size)
-      expect(stats.containers).toBe(2)
-      expect(stats.arrayContainers).toBe(2)
-      expect(stats.runContainers).toBe(0)
-      expect(stats.bitsetContainers).toBe(0)
+      expect(rb.statistics()).toEqual({
+        containers: 2,
+        arrayContainers: 2,
+        runContainers: 0,
+        bitsetContainers: 0,
+        valuesInArrayContainers: 12,
+        valuesInRunContainers: 0,
+        valuesInBitsetContainers: 0,
+        bytesInArrayContainers: 24,
+        bytesInRunContainers: 0,
+        bytesInBitsetContainers: 0,
+        maxValue: 999997,
+        minValue: 1,
+        sumOfAllValues: 5999986,
+        size: 12
+      })
       rb.runOptimize()
       rb.shrinkToFit()
-      stats = rb.statistics()
-      expect(stats.size).toBe(rb.size)
-      expect(stats.containers).toBe(2)
-      expect(stats.arrayContainers).toBe(0)
-      expect(stats.runContainers).toBe(2)
-      expect(stats.bitsetContainers).toBe(0)
+      expect(rb.statistics()).toEqual({
+        containers: 2,
+        arrayContainers: 0,
+        runContainers: 2,
+        bitsetContainers: 0,
+        valuesInArrayContainers: 0,
+        valuesInRunContainers: 12,
+        valuesInBitsetContainers: 0,
+        bytesInArrayContainers: 0,
+        bytesInRunContainers: 20,
+        bytesInBitsetContainers: 0,
+        maxValue: 999997,
+        minValue: 1,
+        sumOfAllValues: 5999986,
+        size: 12
+      })
     })
   })
 
-  describe('simple tests', () => {
+  describe('general tests', () => {
     it('allows adding 900 values', () => {
       const bitmap = new RoaringBitmap32()
       for (let i = 100; i < 1000; ++i) {
@@ -233,6 +258,8 @@ describe('RoaringBitmap32 basic', () => {
       expect(bitmap.size).toBe(900)
       expect(bitmap.runOptimize()).toBe(true)
       expect(bitmap.size).toBe(900)
+      expect(bitmap.minimum()).toBe(100)
+      expect(bitmap.maximum()).toBe(999)
     })
 
     it('works with some "fancy" operations', () => {

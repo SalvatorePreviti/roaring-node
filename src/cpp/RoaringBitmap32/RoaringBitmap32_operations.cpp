@@ -442,7 +442,6 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
 
       for (size_t i = 0; i < arrayLength; ++i) {
         v8::Local<v8::Value> item = array->Get(i);
-
         if (!ctorType->HasInstance(item)) {
           return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances").ToLocalChecked());
         }
@@ -465,7 +464,7 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
 
       ra_clear(&self->roaring.high_low_container);
 
-      roaring_bitmap_t * r = roaring_bitmap_or_many(length, x);
+      roaring_bitmap_t * r = roaring_bitmap_or_many(arrayLength, x);
       if (r == nullptr) {
         free(x);
         return Nan::ThrowTypeError(Nan::New("RoaringBitmap32::orMany failed roaring allocation").ToLocalChecked());
