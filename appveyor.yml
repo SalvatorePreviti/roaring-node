@@ -1,7 +1,6 @@
--
-  branches:
-    only: 
-      - deploy
+branches:
+  only: 
+    - deploy
 
 environment:
   matrix:
