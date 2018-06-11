@@ -193,7 +193,7 @@ void RoaringBitmap32::maximum(const Nan::FunctionCallbackInfo<v8::Value> & info)
 }
 
 void RoaringBitmap32::rank(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  if (info.Length() <= 1 || !info[0]->IsUint32()) {
+  if (info.Length() < 1 || !info[0]->IsUint32()) {
     return info.GetReturnValue().Set(0);
   }
 

@@ -1,125 +1,23 @@
 import RoaringBitmap32 from '../../RoaringBitmap32'
 
 describe('RoaringBitmap32 basic', () => {
-  describe('add', () => {
-    it('works with multiple values', () => {
-      const values = [100, 120, 130, 140, 150, 99, 1, 13, 64]
-      const bitmap = new RoaringBitmap32()
-      for (const value of values) {
-        expect(bitmap.has(value)).toBe(false)
-        expect(bitmap.add(value)).toBe(bitmap)
-      }
-      for (const value of values) {
-        expect(bitmap.has(value)).toBe(true)
-      }
-      expect(Array.from(bitmap)).toEqual(values.slice().sort((a, b) => a - b))
+  describe('minimum', () => {
+    it('returns 4294967295 for an empty bitmap', () => {
+      expect(new RoaringBitmap32().minimum()).toBe(4294967295)
     })
-
-    it('accepts 32 bit big numbers', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(bitmap.has(0x7fffffff)).toBe(false)
-      expect(bitmap.has(0xfffffffe)).toBe(false)
-      expect(bitmap.has(0xffffffff)).toBe(false)
-      bitmap.add(0x7fffffff)
-      bitmap.add(0xfffffffe)
-      bitmap.add(0xffffffff)
-      expect(bitmap.has(0x7fffffff)).toBe(true)
-      expect(bitmap.has(0xfffffffe)).toBe(true)
-      expect(bitmap.has(0xffffffff)).toBe(true)
-      expect(Array.from(bitmap)).toEqual([2147483647, 4294967294, 4294967295])
+    it('returns the minimum value', () => {
+      const bitmap = new RoaringBitmap32([5, 3, 1, 2, 9])
+      expect(bitmap.minimum()).toBe(1)
     })
   })
 
-  describe('constructor', () => {
-    it('construct with an array of values', () => {
-      const values = [1, 2, 3, 6, 7, 8, 20, 44444]
-      const bitmap = new RoaringBitmap32(values)
-      bitmap.runOptimize()
-      bitmap.shrinkToFit()
-      expect(bitmap.size).toBe(values.length)
-      for (const v of values) {
-        expect(bitmap.has(v)).toBe(true)
-      }
-      expect(bitmap.has(5)).toBe(false)
+  describe('maximum', () => {
+    it('returns 0 for an empty bitmap', () => {
+      expect(new RoaringBitmap32().maximum()).toBe(0)
     })
-
-    it('construct with an UInt32Array', () => {
-      const values = [1, 2, 3, 6, 7, 8, 20, 44444]
-      const bitmap = new RoaringBitmap32(new Uint32Array(values))
-      bitmap.runOptimize()
-      bitmap.shrinkToFit()
-      expect(bitmap.size).toBe(values.length)
-      for (const v of values) {
-        expect(bitmap.has(v)).toBe(true)
-      }
-      expect(bitmap.has(5)).toBe(false)
-    })
-
-    it('construct with a RoaringBitmap32', () => {
-      const values = [1, 2, 3, 6, 7, 8, 20, 44444]
-      const bitmap1 = new RoaringBitmap32(values)
-      const bitmap2 = new RoaringBitmap32(bitmap1)
-      expect(bitmap2.size).toBe(values.length)
-      for (const v of values) {
-        expect(bitmap2.has(v)).toBe(true)
-      }
-      expect(bitmap2.has(5)).toBe(false)
-    })
-  })
-
-  describe('addMany', () => {
-    it('works with an array', () => {
-      const values = [100, 120, 130, 140, 150, 99, 1, 13, 64]
-      const sortedValues = values.slice().sort((a, b) => a - b)
-      const bitmap = new RoaringBitmap32()
-      bitmap.addMany(values)
-      for (const value of values) {
-        expect(bitmap.has(value)).toBe(true)
-      }
-
-      let i = 0
-      for (const value of bitmap) {
-        expect(value).toBe(sortedValues[i++])
-      }
-
-      expect(i).toBe(sortedValues.length)
-      expect(bitmap.size).toBe(values.length)
-      expect(Array.from(bitmap)).toEqual(sortedValues)
-    })
-
-    it('works with an Uint32Array', () => {
-      const values = [100, 120, 130, 140, 150, 99, 1, 13, 64]
-      const bitmap = new RoaringBitmap32()
-      bitmap.addMany(new Uint32Array(values))
-      for (const value of values) {
-        expect(bitmap.has(value)).toBe(true)
-      }
-      const valuesSet = new Set(values)
-      for (const value of bitmap) {
-        expect(valuesSet.delete(value)).toBe(true)
-      }
-      expect(valuesSet.size).toBe(0)
-      expect(Array.from(bitmap)).toEqual(values.slice().sort((a, b) => a - b))
-    })
-  })
-
-  describe('constructor', () => {
-    it('works with an array', () => {
-      const values = [100, 120, 130, 140, 150, 99, 1, 13, 64]
-      const bitmap = new RoaringBitmap32(values)
-      for (const value of values) {
-        expect(bitmap.has(value)).toBe(true)
-      }
-      expect(Array.from(bitmap)).toEqual(values.slice().sort((a, b) => a - b))
-    })
-
-    it('works with an Uint32Array', () => {
-      const values = [100, 120, 130, 140, 150, 99, 1, 13, 64]
-      const bitmap = new RoaringBitmap32(new Uint32Array(values))
-      for (const value of values) {
-        expect(bitmap.has(value)).toBe(true)
-      }
-      expect(Array.from(bitmap)).toEqual(values.slice().sort((a, b) => a - b))
+    it('returns the maximum value', () => {
+      const bitmap = new RoaringBitmap32([5, 3, 1, 2, 9])
+      expect(bitmap.maximum()).toBe(9)
     })
   })
 
@@ -207,6 +105,39 @@ describe('RoaringBitmap32 basic', () => {
       expect(bitmap.select(8)).toBe(2000)
       expect(bitmap.select(9)).toBe(3000)
       expect(bitmap.select(10)).toBe(undefined)
+    })
+  })
+
+  describe('rank', () => {
+    it('returns 0 for invalid values', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.rank(null as any)).toBe(0)
+      expect(bitmap.rank(undefined as any)).toBe(0)
+      expect(bitmap.rank(-123 as any)).toBe(0)
+      expect(bitmap.rank([123] as any)).toBe(0)
+    })
+
+    it('returns 0 with any value on an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.rank(0)).toBe(0)
+      expect(bitmap.rank(100)).toBe(0)
+      expect(bitmap.rank(0x7fffffff)).toBe(0)
+      expect(bitmap.rank(0xffffffff)).toBe(0)
+    })
+
+    it('returns the correct value', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 10, 100, 1000, 2000, 3000])
+      expect(bitmap.rank(0)).toBe(0)
+      expect(bitmap.rank(1)).toBe(1)
+      expect(bitmap.rank(2)).toBe(2)
+      expect(bitmap.rank(3)).toBe(3)
+      expect(bitmap.rank(4)).toBe(4)
+      expect(bitmap.rank(5)).toBe(5)
+      expect(bitmap.rank(10)).toBe(6)
+      expect(bitmap.rank(100)).toBe(7)
+      expect(bitmap.rank(1000)).toBe(8)
+      expect(bitmap.rank(2000)).toBe(9)
+      expect(bitmap.rank(3000)).toBe(10)
     })
   })
 

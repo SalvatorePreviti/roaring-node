@@ -15,6 +15,12 @@ declare class RoaringModule {
    */
   public readonly RoaringBitmap32Iterator: typeof RoaringBitmap32Iterator
 
+  /**
+   * Property. Gets the version of the CRoaring libary as a string.
+   * Example: "0.2.42"
+   */
+  public readonly version: string
+
   // Allows: import roaring from 'roaring'
   private readonly default: RoaringModule
 }

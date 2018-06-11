@@ -94,4 +94,42 @@ describe('RoaringBitmap32Iterator', () => {
       expect(values).toEqual([123, 456, 789])
     })
   })
+
+  describe('RoaringBitmap32 iterable', () => {
+    it('returns a RoaringBitmap32Iterator', () => {
+      const bitmap = new RoaringBitmap32()
+      const iterator = bitmap[Symbol.iterator]()
+      expect(iterator).toBeInstanceOf(RoaringBitmap32Iterator)
+      expect(typeof iterator.next).toBe('function')
+    })
+
+    it('returns an empty iterator for an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      const iterator = bitmap[Symbol.iterator]()
+      expect(iterator.next()).toEqual({
+        done: true,
+        value: undefined
+      })
+      expect(iterator.next()).toEqual({
+        done: true,
+        value: undefined
+      })
+    })
+    it('iterates a non empty bitmap', () => {
+      const bitmap = new RoaringBitmap32([0xffffffff, 3])
+      const iterator = bitmap[Symbol.iterator]()
+      expect(iterator.next()).toEqual({
+        done: false,
+        value: 3
+      })
+      expect(iterator.next()).toEqual({
+        done: false,
+        value: 0xffffffff
+      })
+      expect(iterator.next()).toEqual({
+        done: true,
+        value: undefined
+      })
+    })
+  })
 })
