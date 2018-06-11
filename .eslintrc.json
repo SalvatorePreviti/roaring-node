@@ -12,6 +12,7 @@
     "sourceType": "module"
   },
   "rules": {
+    "valid-jsdoc": "warn",
     "no-console": "warn",
     "node/shebang": "off",
     "prefer-template": "warn",
