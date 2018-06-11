@@ -265,6 +265,40 @@ describe('RoaringBitmap32 basic', () => {
     })
   })
 
+  describe('removeRunCompression', () => {
+    it('does nothing with an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.removeRunCompression()).toBe(false)
+    })
+  })
+
+  describe('runOptimize', () => {
+    it('does nothing with an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.runOptimize()).toBe(false)
+    })
+    it('run optimizes', () => {
+      const bitmap = new RoaringBitmap32()
+      for (let i = 200; i > 0; --i) {
+        bitmap.add(i)
+      }
+      expect(bitmap.runOptimize()).toBe(true)
+      expect(bitmap.statistics().runContainers).toBe(1)
+      bitmap.removeRunCompression()
+      bitmap.shrinkToFit()
+      expect(bitmap.statistics().runContainers).toBe(0)
+      expect(bitmap.size).toEqual(200)
+    })
+  })
+
+  describe('shrinkToFit', () => {
+    it('shrinks some memory', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.shrinkToFit()).toBe(44)
+      expect(bitmap.shrinkToFit()).toBe(0)
+    })
+  })
+
   describe('general tests', () => {
     it('allows adding 900 values', () => {
       const bitmap = new RoaringBitmap32()

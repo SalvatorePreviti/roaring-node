@@ -76,6 +76,35 @@ describe('RoaringBitmap32 serialization', () => {
     })
   })
 
+  describe('getSerializationSizeInBytes', () => {
+    it('returns standard value for empty bitmap (non portable)', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.getSerializationSizeInBytes()).toBe(5)
+      expect(bitmap.getSerializationSizeInBytes(false)).toBe(5)
+    })
+
+    it('returns standard value for empty bitmap (portable)', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.getSerializationSizeInBytes(true)).toBe(8)
+    })
+
+    it('returns the correct amount of bytes (non portable)', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff])
+      expect(bitmap.getSerializationSizeInBytes(false)).toEqual(bitmap.serialize(false).byteLength)
+      bitmap.runOptimize()
+      bitmap.shrinkToFit()
+      expect(bitmap.getSerializationSizeInBytes(false)).toEqual(bitmap.serialize(false).byteLength)
+    })
+
+    it('returns the correct amount of bytes (portable)', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff])
+      expect(bitmap.getSerializationSizeInBytes(true)).toEqual(bitmap.serialize(true).byteLength)
+      bitmap.runOptimize()
+      bitmap.shrinkToFit()
+      expect(bitmap.getSerializationSizeInBytes(true)).toEqual(bitmap.serialize(true).byteLength)
+    })
+  })
+
   describe('serialize, deserialize', () => {
     it('is able to serialize and deserialize data (non portable)', () => {
       const values = [1, 2, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff]
