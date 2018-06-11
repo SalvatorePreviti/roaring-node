@@ -1,5 +1,5 @@
 branches:
-  only: deploy
+  - only: deploy
 
 environment:
   matrix:
