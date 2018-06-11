@@ -19,7 +19,7 @@ declare class RoaringModule {
    * Property. Gets the version of the CRoaring libary as a string.
    * Example: "0.2.42"
    */
-  public readonly version: string
+  public readonly CRoaringVersion: string
 
   // Allows: import roaring from 'roaring'
   private readonly default: RoaringModule
