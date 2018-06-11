@@ -4,6 +4,7 @@
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "types": "index.d.ts",
+  "typings": "index.d.ts",
   "gypfile": true,
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",
