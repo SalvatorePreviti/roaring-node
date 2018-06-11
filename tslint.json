@@ -31,6 +31,7 @@
     "no-var-requires": false,
     "import-name": false,
     "max-classes-per-file": false,
-    "mocha-no-side-effect-code": false
+    "mocha-no-side-effect-code": false,
+    "match-default-export-name": false
   }
 }

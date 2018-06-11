@@ -12,7 +12,7 @@
     "comple": "node-gyp build",
     "recomple": "node-gyp rebuild",
     "test": "jest",
-    "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/**"
+    "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/** --exclude **/test/**"
   },
   "repository": {
     "type": "git",
