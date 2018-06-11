@@ -44,7 +44,7 @@ bitmap1.addMany([100, 1000])
 console.log('bitmap1.toArray():', bitmap1.toArray())
 
 const bitmap2 = new RoaringBitmap32([3, 4, 1000])
-console.log('bitmap2.toArray():', bitmap1.toArray())
+console.log('bitmap2.toArray():', bitmap2.toArray())
 
 const bitmap3 = new RoaringBitmap32()
 console.log('bitmap1.size:', bitmap1.size)
