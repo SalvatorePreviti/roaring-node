@@ -32,4 +32,13 @@ describe('roaring', () => {
       expect(Number.isInteger(Number.parseInt(values[i]))).toBe(true)
     }
   })
+
+  it('has roaring PackageVersion', () => {
+    expect(typeof roaring.PackageVersion).toBe('string')
+    const values = roaring.CRoaringVersion.split('.')
+    expect(values.length).toBe(3)
+    for (let i = 0; i < 3; ++i) {
+      expect(Number.isInteger(Number.parseInt(values[i]))).toBe(true)
+    }
+  })
 })

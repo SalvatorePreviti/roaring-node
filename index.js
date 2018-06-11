@@ -6,4 +6,14 @@ roaringNode._initTypes({
   Uint32Array
 })
 
+if (!roaringNode.hasOwnProperty('PackageVersion')) {
+  Object.defineProperty(roaringNode, 'PackageVersion', {
+    get() {
+      return require('./package.json').version
+    },
+    enumerable: true,
+    configurable: false
+  })
+}
+
 module.exports = roaringNode

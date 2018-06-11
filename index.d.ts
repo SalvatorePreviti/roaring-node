@@ -16,10 +16,16 @@ declare class RoaringModule {
   public readonly RoaringBitmap32Iterator: typeof RoaringBitmap32Iterator
 
   /**
-   * Property. Gets the version of the CRoaring libary as a string.
+   * Property: The version of the CRoaring libary as a string.
    * Example: "0.2.42"
    */
   public readonly CRoaringVersion: string
+
+  /**
+   * Property: The version of the roaring npm package as a string.
+   * Example: "0.2.2"
+   */
+  public readonly PackageVersion: string
 
   // Allows: import roaring from 'roaring'
   private readonly default: RoaringModule
