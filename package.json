@@ -3,6 +3,7 @@
   "version": "0.2.2",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
+  "types": "index.d.ts",
   "gypfile": true,
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",
@@ -45,7 +46,6 @@
     "prebuild-install": "^4.0.0"
   },
   "devDependencies": {
-    "prebuild": "^7.6.0",
     "@types/jest": "^23.0.0",
     "@types/node": "^10.3.2",
     "eslint": "^4.19.1",
@@ -54,6 +54,7 @@
     "eslint-plugin-jest": "^21.17.0",
     "eslint-plugin-node": "^6.0.1",
     "jest": "^23.1.0",
+    "prebuild": "^7.6.0",
     "prettier": "^1.13.5",
     "ts-jest": "^22.4.6",
     "tslint": "^5.10.0",
