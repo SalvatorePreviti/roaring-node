@@ -9,20 +9,6 @@ void initTypes(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   TypedArrays::initTypedArrays(info[0]->ToObject());
 }
 
-enum {
-#ifdef USEAVX
-  useavx = 1,
-#else
-  useavx = 0,
-#endif
-
-#ifdef USESSE4
-  usesse4 = 1,
-#else
-  usesse4 = 0,
-#endif
-};
-
 void InitModule(v8::Local<v8::Object> exports) {
   TypedArrays::initTypedArrays(Nan::GetCurrentContext()->Global());
 
@@ -32,8 +18,17 @@ void InitModule(v8::Local<v8::Object> exports) {
       Nan::New(std::to_string(ROARING_VERSION_MAJOR) + "." + std::to_string(ROARING_VERSION_MINOR) + "." + std::to_string(ROARING_VERSION_REVISION))
           .ToLocalChecked());
 
-  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(!!useavx));
-  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(!!usesse4));
+#ifdef USESSE4
+  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(true));
+#else
+  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(false));
+#endif
+
+#ifdef USEAVX
+  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(true));
+#else
+  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(false));
+#endif
 
   RoaringBitmap32::Init(exports);
   RoaringBitmap32Iterator::Init(exports);

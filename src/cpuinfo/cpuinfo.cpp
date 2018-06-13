@@ -1,40 +1,21 @@
 #include "node.h"
 
-// unless DISABLEAVX was defined, if we have __AVX2__, we enable AVX
-#if (!defined(USEAVX)) && (!defined(DISABLEAVX)) && (defined(__AVX2__))
-#define USEAVX
-#define USESSE4
-#endif
-
-#if (defined(__POPCNT__)) && (defined(__SSE4_2__))
-#define USESSE4
-#endif
-
-#if (defined(USESSE4) || defined(USEAVX))
-#define MUST_CHECK_CPUID
-#ifdef _MSC_VER
+#if (defined(_MSC_VER)) || (defined(__INTEL_COMPILER))
 #include <intrin.h>
 void getSupportedInstructions(bool & sse42, bool & avx2) {
   int d[4] = {0, 0, 0, 0};
   __cpuid(d, 1);
   if (((d[0] >> 8) & 15) >= 6) {
-    avx2 = (((d[2] & (1 << 28)) != 0) && ((d[2] & (1 << 27)) != 0));
-    sse42 = avx2 || ((d[2] & (1 << 20)) != 0);
+    sse42 = (((d[2] & (1 << 20)) != 0) && ((d[2] & (1 << 23)) != 0));
+    avx2 = sse42 && (((d[2] & (1 << 28)) != 0) && ((d[2] & (1 << 27)) != 0));
   }
 }
 #else
 #include <cpuid.h>
 void getSupportedInstructions(bool & sse42, bool & avx2) {
-  int d[4] = {0, 0, 0, 0};
-  __cpuid(1, d[0], d[1], d[2], d[3]);
-  if (((d[0] >> 8) & 15) >= 6) {
-    avx2 = (((d[2] & (1 << 28)) != 0) && ((d[2] & (1 << 27)) != 0));
-    sse42 = avx2 || ((d[2] & (1 << 20)) != 0);
-  }
+  sse42 = (__builtin_cpu_supports("sse4.2") && __builtin_cpu_supports("popcnt"));
+  avx2 = sse42 && __builtin_cpu_supports("avx2");
 }
-#endif
-#else
-#define getSupportedInstructions(...) ((void)0)
 #endif
 
 void InitModule(v8::Local<v8::Object> exports) {
