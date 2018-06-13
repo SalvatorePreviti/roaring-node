@@ -33,7 +33,7 @@ void InitModule(v8::Local<v8::Object> exports) {
           .ToLocalChecked());
 
   v8utils::defineReadonlyField(exports, "AVX2", Nan::New(!!useavx));
-  v8utils::defineReadonlyField(exports, "SSE4", Nan::New(!!usesse4));
+  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(!!usesse4));
 
   RoaringBitmap32::Init(exports);
   RoaringBitmap32Iterator::Init(exports);

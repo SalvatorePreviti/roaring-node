@@ -42,7 +42,7 @@
             "sources": ["src/cpuinfo/cpuinfo.cpp"]
           },
           {
-            "target_name": "roaring-sse4",
+            "target_name": "roaring-sse42",
             "cflags": ["-O3", "-std=c99", "-msse4.2"],
             "cflags_cc": ["-O3", "-std=c++11", "-msse4.2"],
             "xcode_settings": {

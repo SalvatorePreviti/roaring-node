@@ -7,12 +7,10 @@ language: node_js
 
 install:
   - git submodule -q update --init
-  - npm install --ignore-scripts
+  - npm install
 
 script:
   - set -e
-  - node-gyp rebuild
-  - ls -R build
   - npm run tslint
   - npm test
   - node ./scripts/prebuild

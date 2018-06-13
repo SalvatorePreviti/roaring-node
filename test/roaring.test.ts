@@ -46,7 +46,7 @@ describe('roaring', () => {
     expect(typeof roaring.AVX2).toBe('boolean')
   })
 
-  it('has SSE4 boolean property', () => {
-    expect(typeof roaring.SSE4).toBe('boolean')
+  it('has SSE42 boolean property', () => {
+    expect(typeof roaring.SSE42).toBe('boolean')
   })
 })
