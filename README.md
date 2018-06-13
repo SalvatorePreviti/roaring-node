@@ -80,6 +80,10 @@ console.log('deserialized:', RoaringBitmap32.deserialize(serialized).toArray())
 
 See the .d.ts declaration files
 
+To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring roaring.
+
+To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring roaring.
+
 # Development, local building
 
 To rebuild the C++ sources
