@@ -9,8 +9,8 @@
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",
     "rebuild": "prebuild --compile",
-    "comple": "node-gyp build",
-    "recomple": "node-gyp rebuild",
+    "compile": "node-gyp build",
+    "recompile": "node-gyp rebuild",
     "test": "jest",
     "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/** --exclude **/test/**"
   },
