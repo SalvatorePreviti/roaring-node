@@ -44,6 +44,11 @@
               "GCC_ENABLE_SSE42_EXTENSIONS": "YES",
               "OTHER_CFLAGS": ["-msse4.2"]
             },
+            "msvs_settings": {
+              "VCCLCompilerTool": {
+                "AdditionalOptions": ["/arch:SSE2"]
+              }
+            },
             "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
             "sources": [
               "src/cpp/roaring.c",

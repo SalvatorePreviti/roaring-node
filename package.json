@@ -7,10 +7,10 @@
   "typings": "index.d.ts",
   "gypfile": true,
   "scripts": {
-    "install": "prebuild-install || node-gyp rebuild",
+    "install": "prebuild-install || node-gyp rebuild -j 12",
     "rebuild": "prebuild --compile",
-    "compile": "node-gyp build",
-    "recompile": "node-gyp rebuild",
+    "compile": "node-gyp build -j 12",
+    "recompile": "node-gyp rebuild -j 12",
     "test": "jest",
     "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/** --exclude **/test/**"
   },

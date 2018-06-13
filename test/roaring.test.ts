@@ -50,13 +50,19 @@ describe('roaring', () => {
     expect(typeof roaring.SSE42).toBe('boolean')
   })
 
-  it('AVX2/SSE42 matches the expected cpu', () => {
+  it('Active AVX2/SSE42 matches the expected value', () => {
+    let architecture
     if (roaring.AVX2) {
-      expect(process.env.ROARING_TEST_EXPECTED_CPU).toBe('AVX2')
+      architecture = 'AVX2'
+      expect(roaring.SSE42).toBe(true)
     } else if (roaring.SSE42) {
-      expect(process.env.ROARING_TEST_EXPECTED_CPU).toBe('SSE42')
+      architecture = 'SSE42'
     } else {
-      expect(process.env.ROARING_TEST_EXPECTED_CPU).toBe('PLAIN')
+      architecture = 'PLAIN'
+    }
+
+    if (process.env.ROARING_TEST_EXPECTED_CPU) {
+      expect(architecture).toBe(process.env.ROARING_TEST_EXPECTED_CPU)
     }
   })
 })
