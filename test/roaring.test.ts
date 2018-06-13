@@ -41,4 +41,12 @@ describe('roaring', () => {
       expect(Number.isInteger(Number.parseInt(values[i]))).toBe(true)
     }
   })
+
+  it('has AVX2 boolean property', () => {
+    expect(typeof roaring.AVX2).toBe('boolean')
+  })
+
+  it('has SSE4 boolean property', () => {
+    expect(typeof roaring.SSE4).toBe('boolean')
+  })
 })
