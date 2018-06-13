@@ -1,20 +1,10 @@
-const path = require('path')
-const fs = require('fs')
-const os = require('os')
-
-let cpu
-if (os.arch() === 'x64') {
-  try {
-    const cpuInfoPath = './build/Release/cpuinfo.node'
-    cpu = fs.existsSync(path.join(__dirname, cpuInfoPath)) && require(cpuInfoPath).cpu
-  } catch (error) {
-    // ignore error
-  }
-}
+const cpuInfo = require('./lib/cpuinfo')
 
 let roaringNodePath
-if (cpu) {
-  roaringNodePath = `./build/Release/roaring-${cpu}.node`
+if (cpuInfo.AVX2) {
+  roaringNodePath = `./build/Release/roaring-avx2.node`
+} else if (cpuInfo.SSE42) {
+  roaringNodePath = './build/Release/roaring-sse42.node'
 } else {
   roaringNodePath = './build/Release/roaring.node'
 }

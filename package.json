@@ -20,6 +20,7 @@
   },
   "files": [
     "src/cpp/**/*.*",
+    "lib/*.js",
     "LICENSE.md",
     "README.md",
     "binding.gyp",

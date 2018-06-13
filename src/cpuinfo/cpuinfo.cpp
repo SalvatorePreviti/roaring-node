@@ -36,20 +36,19 @@ int __get_cpuid_max_func() {
 #endif
 #endif
 
-const char * getInstructionsName() {
-  const char * result = "";
-  unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
+void getSupportedInstructions(bool & sse42, bool & avx2) {
+  sse42 = false;
+  avx2 = false;
 
 #ifdef MUST_CHECK_CPUID
+  unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
   auto max_level = __get_cpuid_max(0, NULL);
 
-  bool sse42 = false;
 #ifdef USESSE4
   if (max_level >= 1) {
     __cpuid_count(1, 0, eax, ebx, ecx, edx);
     if (ecx & (1 << 20)) {
       sse42 = true;
-      result = "sse42";
     }
   }
 #endif
@@ -58,17 +57,22 @@ const char * getInstructionsName() {
   if (sse42 && max_level >= 7) {
     __cpuid_count(7, 0, eax, ebx, ecx, edx);
     if (ebx & (1 << 5)) {
-      result = "avx2";
+      avx2 = true;
     }
   }
 #endif
 #endif
-  return result;
 }
 
 void InitModule(v8::Local<v8::Object> exports) {
+  bool sse42;
+  bool avx2;
+
+  getSupportedInstructions(sse42, avx2);
+
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  exports->Set(v8::String::NewFromUtf8(isolate, "cpu"), v8::String::NewFromUtf8(isolate, getInstructionsName()));
+  exports->Set(v8::String::NewFromUtf8(isolate, "SSE42"), v8::Boolean::New(isolate, sse42));
+  exports->Set(v8::String::NewFromUtf8(isolate, "AVX2"), v8::Boolean::New(isolate, avx2));
 }
 
 NODE_MODULE(roaring, InitModule);
