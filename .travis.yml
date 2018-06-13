@@ -12,6 +12,7 @@ install:
 script:
   - set -e
   - node-gyp rebuild
+  - ls -R build
   - npm run tslint
   - npm test
   - node ./scripts/prebuild
