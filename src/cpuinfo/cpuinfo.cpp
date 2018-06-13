@@ -2,7 +2,7 @@
 
 #if (defined(_MSC_VER)) || (defined(__INTEL_COMPILER))
 #include <intrin.h>
-#else
+#endif
 
 void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type) {
   cpu_info[0] = cpu_info[1] = cpu_info[2] = cpu_info[3] = 0;
@@ -54,7 +54,6 @@ void getSupportedInstructions(bool & sse42, bool & avx2) {
     avx2 = (cpu_info[1] & (1 << 5)) != 0;
   }
 }
-#endif
 
 void InitModule(v8::Local<v8::Object> exports) {
   bool sse42 = false;
