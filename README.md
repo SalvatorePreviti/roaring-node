@@ -78,11 +78,11 @@ console.log('deserialized:', RoaringBitmap32.deserialize(serialized).toArray())
 
 # API
 
-See the .d.ts declaration files
+See the .d.ts declaration files and check the source code at <https://github.com/SalvatorePreviti/roaring-node>
 
-To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring roaring.
+To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_AVX2 to 'true' before requiring this package.
 
-To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring roaring.
+To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring this package.
 
 # Development, local building
 
