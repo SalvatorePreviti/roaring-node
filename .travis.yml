@@ -10,6 +10,7 @@ install:
   - npm install
 
 script:
+  - set -ev
   - npm run tslint
   - npm test
   - node ./scripts/prebuild
