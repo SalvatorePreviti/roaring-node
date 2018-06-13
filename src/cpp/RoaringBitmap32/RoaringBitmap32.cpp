@@ -9,11 +9,9 @@
 Nan::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
 Nan::Persistent<v8::Function> RoaringBitmap32::constructor;
 
-static roaring_bitmap_t roaring_bitmap_zero;
+uint8_t roaring_bitmap_zero[sizeof(roaring_bitmap_t)] = {0};
 
 void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
-  memset(&roaring_bitmap_zero, 0, sizeof(roaring_bitmap_zero));
-
   auto className = Nan::New("RoaringBitmap32").ToLocalChecked();
 
   v8::Local<v8::FunctionTemplate> ctor = Nan::New<v8::FunctionTemplate>(RoaringBitmap32::New);
@@ -89,7 +87,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   constructor.Reset(ctorFunction);
 }
 
-RoaringBitmap32::RoaringBitmap32() : roaring(roaring_bitmap_zero) {
+RoaringBitmap32::RoaringBitmap32() : roaring(*((roaring_bitmap_t *)&roaring_bitmap_zero)) {
 }
 
 RoaringBitmap32::~RoaringBitmap32() {
@@ -120,9 +118,13 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (!instance)
     return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to create native roaring container").ToLocalChecked());
 
-  if (!ra_init(&instance->roaring.high_low_container)) {
-    delete instance;
-    return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to initialize native roaring container").ToLocalChecked());
+  bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
+
+  if (!hasParameter) {
+    if (!ra_init(&instance->roaring.high_low_container)) {
+      delete instance;
+      return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to initialize native roaring container").ToLocalChecked());
+    }
   }
 
   instance->Wrap(info.Holder());
@@ -130,7 +132,7 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   // return the wrapped javascript instance
   info.GetReturnValue().Set(info.Holder());
 
-  if (info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull()) {
+  if (hasParameter) {
     if (RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0])) {
       instance->copyFrom(info);
     } else {
