@@ -7,6 +7,11 @@
       "target_name": "roaring",
       "cflags": ["-O3", "-std=c99"],
       "cflags_cc": ["-O3", "-std=c++11"],
+      "msvs_settings": {
+        "VCCLCompilerTool": {
+          "AdditionalOptions": ["/arch:SSE2"]
+        }
+      },
       "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
       "sources": [
         "src/cpp/roaring.c",
@@ -27,18 +32,8 @@
         "targets": [
           {
             "target_name": "cpuinfo",
-            "cflags": ["-O3", "-std=c99", "-mavx2"],
-            "cflags_cc": ["-O3", "-std=c++11", "-mavx2"],
-            "xcode_settings": {
-              "GCC_ENABLE_SSE42_EXTENSIONS": "YES",
-              "CLANG_X86_VECTOR_INSTRUCTIONS": "avx2",
-              "OTHER_CFLAGS": ["-mavx2"]
-            },
-            "msvs_settings": {
-              "VCCLCompilerTool": {
-                "AdditionalOptions": ["/arch:AVX2"]
-              }
-            },
+            "cflags": ["-O3"],
+            "cflags_cc": ["-O3"],
             "sources": ["src/cpuinfo/cpuinfo.cpp"]
           },
           {

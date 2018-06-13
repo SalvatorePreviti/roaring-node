@@ -56,7 +56,7 @@ describe('roaring', () => {
     } else if (roaring.SSE42) {
       expect(process.env.ROARING_TEST_EXPECTED_CPU).toBe('SSE42')
     } else {
-      expect(process.env.ROARING_TEST_EXPECTED_CPU).toBe('DEFAULT')
+      expect(process.env.ROARING_TEST_EXPECTED_CPU).toBe('PLAIN')
     }
   })
 })
