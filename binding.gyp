@@ -26,7 +26,7 @@
       {
         "targets": [
           {
-            "target_name": "roaring-cpuinfo",
+            "target_name": "cpuinfo",
             "cflags": ["-O3", "-std=c99", "-mavx2"],
             "cflags_cc": ["-O3", "-std=c++11", "-mavx2"],
             "xcode_settings": {

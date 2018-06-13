@@ -1,12 +1,15 @@
 const path = require('path')
 const fs = require('fs')
+const os = require('os')
 
 let cpu
-try {
-  const cpuInfoPath = './build/Release/roaring-cpuinfo.node'
-  cpu = fs.existsSync(path.join(__dirname, cpuInfoPath)) && require(cpuInfoPath).cpu
-} catch (error) {
-  // ignore error
+if (os.arch() === 'x64') {
+  try {
+    const cpuInfoPath = './build/Release/cpuinfo.node'
+    cpu = fs.existsSync(path.join(__dirname, cpuInfoPath)) && require(cpuInfoPath).cpu
+  } catch (error) {
+    // ignore error
+  }
 }
 
 let roaringNodePath
