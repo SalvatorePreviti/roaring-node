@@ -9,7 +9,8 @@ void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type) {
 
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_AMD64) || defined(_M_IX86))
   __cpuid((int *)cpu_info, cpu_info_type);
-#elif defined(__i386__)
+#else
+#if defined(__i386__)
   __asm__ __volatile__(
       "pushfl; pushfl; "
       "popl %0; "
@@ -32,6 +33,7 @@ void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type) {
                        : "0"(cpu_info_type), "2"(0U));
 #else
   __asm__ __volatile__("cpuid" : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3]) : "0"(cpu_info_type), "2"(0U));
+#endif
 #endif
 }
 
