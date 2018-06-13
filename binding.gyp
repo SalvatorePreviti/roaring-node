@@ -7,11 +7,6 @@
       "target_name": "roaring",
       "cflags": ["-O3", "-std=c99"],
       "cflags_cc": ["-O3", "-std=c++11"],
-      "msvs_settings": {
-        "VCCLCompilerTool": {
-          "AdditionalOptions": ["/arch:SSE2"]
-        }
-      },
       "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
       "sources": [
         "src/cpp/roaring.c",
@@ -43,11 +38,6 @@
             "xcode_settings": {
               "GCC_ENABLE_SSE42_EXTENSIONS": "YES",
               "OTHER_CFLAGS": ["-msse4.2"]
-            },
-            "msvs_settings": {
-              "VCCLCompilerTool": {
-                "AdditionalOptions": ["/arch:SSE2"]
-              }
             },
             "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
             "sources": [
