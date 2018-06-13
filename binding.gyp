@@ -8,6 +8,7 @@
       "cflags": ["-O3", "-std=c99"],
       "cflags_cc": ["-O3", "-std=c++11"],
       "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
+      "defines": ["DISABLEAVX"],
       "sources": [
         "src/cpp/roaring.c",
         "src/cpp/module.cpp",
@@ -35,6 +36,7 @@
             "target_name": "roaring-sse42",
             "cflags": ["-O3", "-std=c99", "-msse4.2"],
             "cflags_cc": ["-O3", "-std=c++11", "-msse4.2"],
+            "defines": ["DISABLEAVX", "__POPCNT__", "__SSE4_2__"],
             "xcode_settings": {
               "GCC_ENABLE_SSE42_EXTENSIONS": "YES",
               "OTHER_CFLAGS": ["-msse4.2"]
@@ -55,6 +57,7 @@
             "target_name": "roaring-avx2",
             "cflags": ["-O3", "-std=c99", "-mavx2"],
             "cflags_cc": ["-O3", "-std=c++11", "-mavx2"],
+            "defines": ["USEAVX", "__POPCNT__", "__SSE4_2__"],
             "xcode_settings": {
               "GCC_ENABLE_SSE42_EXTENSIONS": "YES",
               "CLANG_X86_VECTOR_INSTRUCTIONS": "avx2",
