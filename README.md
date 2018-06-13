@@ -91,6 +91,8 @@ To rebuild the C++ sources
 ```
 git submodule update --init --recursive
 
+npm install nan
+
 npm run recompile
 ```
 
