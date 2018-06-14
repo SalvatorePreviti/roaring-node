@@ -15,10 +15,13 @@ script:
   - npm test
   - node ./scripts/prebuild
 
-os:
-  - osx
-    osx_image: xcode9.3
-  - linux
+matrix:
+  include:
+  
+    - os: osx
+      osx_image: xcode9.3
+
+    - os: linux
 
 node_js:
   - "10"
