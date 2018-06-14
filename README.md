@@ -25,6 +25,8 @@ Roaring Bitmaps - <http://roaringbitmap.org/>
 
 Portable Roaring bitmaps in C - <https://github.com/RoaringBitmap/CRoaring>
 
+Portable Roaring bitmaps in C (unity build) - https://github.com/lemire/CRoaringUnityBuild
+
 # Licenses
 
 - This package is provided as open source software using Apache License.
