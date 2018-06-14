@@ -40,8 +40,7 @@ Portable Roaring bitmaps in C (unity build) - https://github.com/lemire/CRoaring
 // create this file as demo.js
 // type node demo.js
 
-var RoaringBitmap32 = require('roaring/RoaringBitmap32')
-const RoaringBitmap32 = require('./RoaringBitmap32')
+const RoaringBitmap32 = require('roaring/RoaringBitmap32')
 
 const bitmap1 = new RoaringBitmap32([1, 2, 3, 4, 5])
 bitmap1.addMany([100, 1000])
