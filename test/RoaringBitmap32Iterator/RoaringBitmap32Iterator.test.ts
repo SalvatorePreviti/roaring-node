@@ -19,7 +19,7 @@ describe('RoaringBitmap32Iterator', () => {
     })
 
     it('can be called as a normal function', () => {
-      const iter = ((RoaringBitmap32Iterator as any) as () => RoaringBitmap32Iterator)()
+      const iter = (RoaringBitmap32Iterator as any)()
       expect(iter).toBeInstanceOf(RoaringBitmap32Iterator)
     })
 

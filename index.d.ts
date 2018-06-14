@@ -594,6 +594,16 @@ declare class RoaringModule {
   public readonly RoaringBitmap32Iterator: typeof RoaringBitmap32Iterator
 
   /**
+   * True if SSE4.2 instruction set is supported and currently used by CRoaring library.
+   */
+  public readonly SSE42: boolean
+
+  /**
+   * True if AVX2 instruction set is supported and currently used by CRoaring library.
+   */
+  public readonly AVX2: boolean
+
+  /**
    * Property: The version of the CRoaring libary as a string.
    * Example: "0.2.42"
    */

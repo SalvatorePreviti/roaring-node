@@ -1,7 +1,7 @@
 #include "roaring.h"
 
-#define printf(...) (0)
-#define fprintf(...) (0)
+#define printf(...) ((void)0)
+#define fprintf(...) ((void)0)
 
 #if defined(__clang__)
 #pragma clang diagnostic push

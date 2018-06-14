@@ -1,4 +1,15 @@
-const roaringNode = require('./build/Release/roaring.node')
+const cpuInfo = require('./lib/cpuinfo')
+
+let roaringNodePath
+if (cpuInfo.AVX2) {
+  roaringNodePath = `./build/Release/roaring-avx2.node`
+} else if (cpuInfo.SSE42) {
+  roaringNodePath = './build/Release/roaring-sse42.node'
+} else {
+  roaringNodePath = './build/Release/roaring.node'
+}
+
+const roaringNode = require(roaringNodePath)
 
 roaringNode._initTypes({
   Array,

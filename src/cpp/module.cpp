@@ -18,6 +18,18 @@ void InitModule(v8::Local<v8::Object> exports) {
       Nan::New(std::to_string(ROARING_VERSION_MAJOR) + "." + std::to_string(ROARING_VERSION_MINOR) + "." + std::to_string(ROARING_VERSION_REVISION))
           .ToLocalChecked());
 
+#ifdef USESSE4
+  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(true));
+#else
+  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(false));
+#endif
+
+#ifdef USEAVX
+  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(true));
+#else
+  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(false));
+#endif
+
   RoaringBitmap32::Init(exports);
   RoaringBitmap32Iterator::Init(exports);
 }

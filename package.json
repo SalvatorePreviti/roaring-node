@@ -1,16 +1,16 @@
 {
   "name": "roaring",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "types": "index.d.ts",
   "typings": "index.d.ts",
   "gypfile": true,
   "scripts": {
-    "install": "prebuild-install || node-gyp rebuild",
+    "install": "prebuild-install || node-gyp rebuild -j 12",
     "rebuild": "prebuild --compile",
-    "compile": "node-gyp build",
-    "recompile": "node-gyp rebuild",
+    "compile": "node-gyp build -j 12",
+    "recompile": "node-gyp rebuild -j 12",
     "test": "jest",
     "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/** --exclude **/test/**"
   },
@@ -20,6 +20,8 @@
   },
   "files": [
     "src/cpp/**/*.*",
+    "src/cpuinfo/**/*.*",
+    "lib/*.js",
     "LICENSE.md",
     "README.md",
     "binding.gyp",
@@ -47,8 +49,8 @@
     "prebuild-install": "^4.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^23.0.0",
-    "@types/node": "^10.3.2",
+    "@types/jest": "^23.1.0",
+    "@types/node": "^10.3.3",
     "eslint": "^4.19.1",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.12.0",
@@ -61,6 +63,6 @@
     "tslint": "^5.10.0",
     "tslint-config-prettier": "^1.13.0",
     "tslint-microsoft-contrib": "^5.0.3",
-    "typescript": "^2.9.1"
+    "typescript": "^2.9.2"
   }
 }

@@ -41,4 +41,28 @@ describe('roaring', () => {
       expect(Number.isInteger(Number.parseInt(values[i]))).toBe(true)
     }
   })
+
+  it('has AVX2 boolean property', () => {
+    expect(typeof roaring.AVX2).toBe('boolean')
+  })
+
+  it('has SSE42 boolean property', () => {
+    expect(typeof roaring.SSE42).toBe('boolean')
+  })
+
+  it('Active AVX2/SSE42 matches the expected value', () => {
+    let architecture
+    if (roaring.AVX2) {
+      architecture = 'AVX2'
+      expect(roaring.SSE42).toBe(true)
+    } else if (roaring.SSE42) {
+      architecture = 'SSE42'
+    } else {
+      architecture = 'PLAIN'
+    }
+
+    if (process.env.ROARING_TEST_EXPECTED_CPU) {
+      expect(architecture).toBe(process.env.ROARING_TEST_EXPECTED_CPU)
+    }
+  })
 })

@@ -1,7 +1,9 @@
 # roaring
 
 Port of [Roaring Bitmaps](http://roaringbitmap.org) for NodeJS as a native addon.
+
 It is interoperable with other implementations via the [Roaring format](https://github.com/RoaringBitmap/RoaringFormatSpec/).
+It takes advantage of AVX2 or SSE4.2 instructions on 64 bit platforms that supports it.
 
 Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
 
@@ -23,6 +25,8 @@ Roaring Bitmaps - <http://roaringbitmap.org/>
 
 Portable Roaring bitmaps in C - <https://github.com/RoaringBitmap/CRoaring>
 
+Portable Roaring bitmaps in C (unity build) - https://github.com/lemire/CRoaringUnityBuild
+
 # Licenses
 
 - This package is provided as open source software using Apache License.
@@ -36,8 +40,7 @@ Portable Roaring bitmaps in C - <https://github.com/RoaringBitmap/CRoaring>
 // create this file as demo.js
 // type node demo.js
 
-var RoaringBitmap32 = require('roaring/RoaringBitmap32')
-const RoaringBitmap32 = require('./RoaringBitmap32')
+const RoaringBitmap32 = require('roaring/RoaringBitmap32')
 
 const bitmap1 = new RoaringBitmap32([1, 2, 3, 4, 5])
 bitmap1.addMany([100, 1000])
@@ -76,7 +79,11 @@ console.log('deserialized:', RoaringBitmap32.deserialize(serialized).toArray())
 
 # API
 
-See the .d.ts declaration files
+See the .d.ts declaration files and check the source code at <https://github.com/SalvatorePreviti/roaring-node>
+
+To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_AVX2 to 'true' before requiring this package.
+
+To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring this package.
 
 # Development, local building
 
