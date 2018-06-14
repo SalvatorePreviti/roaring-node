@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "CRoaring port for NodeJS",
   "main": "index.js",
   "types": "index.d.ts",
@@ -20,6 +20,7 @@
   },
   "files": [
     "src/cpp/**/*.*",
+    "src/cpuinfo/**/*.*",
     "lib/*.js",
     "LICENSE.md",
     "README.md",
