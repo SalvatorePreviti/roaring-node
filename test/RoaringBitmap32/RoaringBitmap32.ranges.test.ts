@@ -1,4 +1,5 @@
 import RoaringBitmap32 from '../../RoaringBitmap32'
+import RoaringBitmap32Iterator from '../../RoaringBitmap32Iterator'
 
 describe('RoaringBitmap32 ranges', () => {
   describe('hasRange', () => {
@@ -260,6 +261,14 @@ describe('RoaringBitmap32 ranges', () => {
       bitmap.flipRange(4294967294, Infinity)
       expect(bitmap.has(4294967294)).toBe(true)
       expect(bitmap.has(4294967295)).toBe(true)
+    })
+
+    it('enumerates correctly flipping the end', () => {
+      const bitmap = new RoaringBitmap32()
+      const iterator = new RoaringBitmap32Iterator(bitmap)
+      bitmap.flipRange(4294967295, 4294967296)
+      expect(iterator.next()).toEqual({ done: false, value: 4294967295 })
+      expect(iterator.next()).toEqual({ done: true, value: undefined })
     })
   })
 })
