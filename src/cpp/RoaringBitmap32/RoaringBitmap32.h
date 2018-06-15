@@ -46,6 +46,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void xorCardinality(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void jaccardIndex(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void flipRange(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void addRange(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void rank(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void select(const Nan::FunctionCallbackInfo<v8::Value> & info);
 

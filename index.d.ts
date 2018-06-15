@@ -211,6 +211,28 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public removeMany(values: Iterable<number>): this
 
   /**
+   * Negates (in place) the roaring bitmap within a specified interval: [rangeStart, rangeEnd).
+   * First element is included, last element is excluded.
+   * The number of negated values is rangeEnd - rangeStart.
+   * Areas outside the range are passed through unchanged.
+   *
+   * @param rangeStart The start index. Trimmed to 0.
+   * @param rangeEnd The end index. Trimmed to 4294967297.
+   */
+  public flipRange(rangeStart: number, rangeEnd: number): void
+
+  /**
+   * Adds all the values in the interval: [rangeStart, rangeEnd).
+   * First element is included, last element is excluded.
+   * The number of added values is rangeEnd - rangeStart.
+   * Areas outside the range are passed through unchanged.
+   *
+   * @param rangeStart The start index. Trimmed to 0.
+   * @param rangeEnd The end index. Trimmed to 4294967297.
+   */
+  public addRange(rangeStart: number, rangeEnd: number): void
+
+  /**
    * Removes all values from the set.
    * It frees resources, if needed you can use clear to free some memory before the garbage collector disposes this instance.
    */
@@ -351,17 +373,6 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public jaccardIndex(other: RoaringBitmap32): number
 
   /**
-   * Negates (in place) the roaring bitmap within a specified interval: [rangeStart, rangeEnd).
-   * First element is included, last element is excluded.
-   * The number of negated values is rangeEnd - rangeStart.
-   * Areas outside the range are passed through unchanged.
-   *
-   * @param rangeStart The start index. Must be an non-negative number.
-   * @param rangeEnd The end index. Must be a non-negative number.
-   */
-  public flipRange(rangeStart: number, rangeEnd: number): void
-
-  /**
    * Remove run-length encoding even when it is more space efficient.
    * Return whether a change was applied.
    *
@@ -473,9 +484,9 @@ declare class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns a standard string representation of the content of this RoaringBitmap32 instance. It may return a very long string.
-   * Default max length is 260000, everything after around maxLength is truncated (ellipsis added).
+   * Default max length is 32000 characters, everything after maxLength is truncated (ellipsis added).
    *
-   * @param maxLength Approximate maximum length of the string. Ellipsis will be added.
+   * @param maxLength Approximate maximum length of the string. Ellipsis will be added if the string is longer.
    * @returns A string in the format "[1,2,3...]"
    */
   public contentToString(maxLength?: number): string

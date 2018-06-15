@@ -58,7 +58,132 @@ describe('RoaringBitmap32 ranges', () => {
       expect(bitmap.hasRange(55, 55.7)).toBe(true)
     })
 
-    // test integer maxvalue once C is fixed
+    it('works with 0xFFFFFFFF', () => {
+      const bitmap = new RoaringBitmap32([4294967295])
+      expect(bitmap.hasRange(4294967295, 4294967296)).toBe(true)
+      expect(bitmap.hasRange(4294967294, 4294967296)).toBe(false)
+      expect(bitmap.hasRange(4294967295, 4294967297)).toBe(false)
+      expect(bitmap.hasRange(4294967294, 4294967297)).toBe(false)
+    })
+
+    it('works with 0xFFFFFFFE and 0xFFFFFFFF', () => {
+      const bitmap = new RoaringBitmap32([4294967294, 4294967295])
+      expect(bitmap.has(4294967293)).toBe(false)
+      expect(bitmap.has(4294967294)).toBe(true)
+      expect(bitmap.has(4294967295)).toBe(true)
+      expect(bitmap.hasRange(4294967295, 4294967296)).toBe(true)
+      expect(bitmap.hasRange(4294967294, 4294967295)).toBe(true)
+      expect(bitmap.hasRange(4294967293, 4294967294)).toBe(false)
+      expect(bitmap.hasRange(4294967295, 4294967296)).toBe(true)
+      expect(bitmap.hasRange(4294967294, 4294967297)).toBe(false)
+      expect(bitmap.hasRange(4294967293, 4294967296)).toBe(false)
+      expect(bitmap.hasRange(4294967293, 4294967297)).toBe(false)
+    })
+
+    it('works with 0xFFFFFFFD, 0xFFFFFFFE and 0xFFFFFFFF', () => {
+      const bitmap = new RoaringBitmap32([4294967293, 4294967294, 4294967295])
+      expect(bitmap.has(4294967292)).toBe(false)
+      expect(bitmap.has(4294967293)).toBe(true)
+      expect(bitmap.has(4294967294)).toBe(true)
+      expect(bitmap.has(4294967295)).toBe(true)
+
+      expect(bitmap.hasRange(4294967292, 4294967293)).toBe(false)
+      expect(bitmap.hasRange(4294967292, 4294967294)).toBe(false)
+      expect(bitmap.hasRange(4294967292, 4294967295)).toBe(false)
+      expect(bitmap.hasRange(4294967292, 4294967296)).toBe(false)
+
+      expect(bitmap.hasRange(4294967293, 4294967297)).toBe(false)
+      expect(bitmap.hasRange(4294967294, 4294967297)).toBe(false)
+      expect(bitmap.hasRange(4294967295, 4294967297)).toBe(false)
+      expect(bitmap.hasRange(4294967296, 4294967297)).toBe(false)
+
+      expect(bitmap.hasRange(4294967293, 4294967294)).toBe(true)
+      expect(bitmap.hasRange(4294967293, 4294967295)).toBe(true)
+      expect(bitmap.hasRange(4294967293, 4294967296)).toBe(true)
+
+      expect(bitmap.hasRange(4294967294, 4294967295)).toBe(true)
+      expect(bitmap.hasRange(4294967294, 4294967296)).toBe(true)
+
+      expect(bitmap.hasRange(4294967295, 4294967296)).toBe(true)
+    })
+  })
+
+  describe('addRange', () => {
+    it('does nothing for invalid values', () => {
+      const bitmap = new RoaringBitmap32([1, 2])
+      bitmap.addRange(undefined as any, 6)
+      bitmap.addRange(null as any, 6)
+      bitmap.addRange('0' as any, 6)
+      bitmap.addRange(0, [8] as any)
+      bitmap.addRange(NaN, 4)
+      bitmap.addRange(4, 4)
+      bitmap.addRange(-2, -4)
+      bitmap.addRange(-4, -2)
+      bitmap.addRange(4, 2)
+      bitmap.addRange(4, -2)
+      expect(bitmap.toArray()).toEqual([1, 2])
+    })
+
+    it('flips a ranges on an empty bitmap', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.addRange(1, 3)
+      bitmap.addRange(3, 5)
+      bitmap.addRange(8, 10)
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 8, 9])
+    })
+
+    it('accepts negative numbers', () => {
+      const bitmap = new RoaringBitmap32([1])
+      bitmap.addRange(-4, 3)
+      expect(bitmap.toArray()).toEqual([0, 1, 2])
+    })
+
+    it('accepts negative infinity', () => {
+      const bitmap = new RoaringBitmap32([1])
+      bitmap.addRange(-Infinity, 3)
+      expect(bitmap.toArray()).toEqual([0, 1, 2])
+    })
+
+    it('adds ranges', () => {
+      const bitmap = new RoaringBitmap32([4, 6, 7])
+      bitmap.addRange(1, 3)
+      bitmap.addRange(3, 5)
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 6, 7])
+      bitmap.addRange(8, 10)
+      bitmap.addRange(4, 10)
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+      bitmap.addRange(4, 10)
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    })
+
+    it('adds 0xFFFFFFFF', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.addRange(4294967295, 4294967296)
+      expect(bitmap.has(4294967294)).toBe(false)
+      expect(bitmap.has(4294967295)).toBe(true)
+    })
+
+    it('adds 0xFFFFFFFE and 0xFFFFFFFF', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.addRange(4294967294, 4294967296)
+      expect(bitmap.has(4294967293)).toBe(false)
+      expect(bitmap.has(4294967294)).toBe(true)
+      expect(bitmap.has(4294967295)).toBe(true)
+    })
+
+    it('supports very big numbers', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.addRange(4294967294, 9000000000)
+      expect(bitmap.has(4294967294)).toBe(true)
+      expect(bitmap.has(4294967295)).toBe(true)
+    })
+
+    it('supports positive infinity', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.addRange(4294967294, Infinity)
+      expect(bitmap.has(4294967294)).toBe(true)
+      expect(bitmap.has(4294967295)).toBe(true)
+    })
   })
 
   describe('flipRange', () => {
@@ -108,6 +233,33 @@ describe('RoaringBitmap32 ranges', () => {
       expect(bitmap.toArray()).toEqual([1, 2, 3, 6, 7, 8, 9])
     })
 
-    // test integer maxvalue once C is fixed
+    it('flips 0xFFFFFFFF', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.flipRange(4294967295, 4294967296)
+      expect(bitmap.has(4294967294)).toBe(false)
+      expect(bitmap.has(4294967295)).toBe(true)
+    })
+
+    it('flips 0xFFFFFFFE and 0xFFFFFFFF', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.flipRange(4294967294, 4294967296)
+      expect(bitmap.has(4294967293)).toBe(false)
+      expect(bitmap.has(4294967294)).toBe(true)
+      expect(bitmap.has(4294967295)).toBe(true)
+    })
+
+    it('supports very big numbers', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.flipRange(4294967294, 9000000000)
+      expect(bitmap.has(4294967294)).toBe(true)
+      expect(bitmap.has(4294967295)).toBe(true)
+    })
+
+    it('supports positive infinity', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.flipRange(4294967294, Infinity)
+      expect(bitmap.has(4294967294)).toBe(true)
+      expect(bitmap.has(4294967295)).toBe(true)
+    })
   })
 })
