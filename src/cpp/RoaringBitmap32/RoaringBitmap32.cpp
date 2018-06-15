@@ -201,28 +201,18 @@ void RoaringBitmap32::hasRange(const Nan::FunctionCallbackInfo<v8::Value> & info
 
   minimum = std::ceil(minimum);
   maximum = std::ceil(maximum);
-  if (minimum < 0 || maximum > 4294967297) {
+  if (minimum < 0 || maximum > 4294967296) {
     return info.GetReturnValue().Set(false);
   }
 
   uint64_t minInteger = (uint64_t)minimum;
   uint64_t maxInteger = (uint64_t)maximum;
 
-  if (minInteger >= maxInteger || maxInteger > 4294967297) {
+  if (minInteger >= maxInteger || maxInteger > 4294967296) {
     return info.GetReturnValue().Set(false);
   }
 
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-
-  // HACK: temporary fix until roaring_bitmap_contains_range properly is fixed in the C source code
-  if (maxInteger == 4294967296) {
-    if (minInteger != 4294967295) {
-      if (!roaring_bitmap_contains_range(&self->roaring, minInteger, maxInteger - 1)) {
-        return info.GetReturnValue().Set(false);
-      }
-    }
-    return info.GetReturnValue().Set(roaring_bitmap_contains(&self->roaring, 4294967295));
-  }
 
   info.GetReturnValue().Set(roaring_bitmap_contains_range(&self->roaring, minInteger, maxInteger));
 }
