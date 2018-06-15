@@ -94,17 +94,7 @@ void RoaringBitmap32Iterator::next(const Nan::FunctionCallbackInfo<v8::Value> & 
   if (instance->it.parent == nullptr) {
     roaring_init_iterator(&instance->roaring->roaring, &instance->it);
   } else {
-    auto prev = instance->it.current_value;
-
     if (!roaring_advance_uint32_iterator(&instance->it)) {
-      instance->it.has_value = false;
-      instance->bitmap.Reset();
-      return setReturnValueToIteratorResult(info);
-    }
-
-    // HACK: flip_range and add_range breaks the iterator if flipping 0xFFFFFFFF.
-    // This is a temporary hack until the C source gets fixed.
-    if (instance->it.current_value < prev) {
       instance->it.has_value = false;
       instance->bitmap.Reset();
       return setReturnValueToIteratorResult(info);

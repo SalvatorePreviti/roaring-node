@@ -185,6 +185,14 @@ describe('RoaringBitmap32 ranges', () => {
       expect(bitmap.has(4294967294)).toBe(true)
       expect(bitmap.has(4294967295)).toBe(true)
     })
+
+    it('enumerates correctly when adding a range the end', () => {
+      const bitmap = new RoaringBitmap32()
+      const iterator = new RoaringBitmap32Iterator(bitmap)
+      bitmap.addRange(4294967295, 4294967296)
+      expect(iterator.next()).toEqual({ done: false, value: 4294967295 })
+      expect(iterator.next()).toEqual({ done: true, value: undefined })
+    })
   })
 
   describe('flipRange', () => {
@@ -263,7 +271,7 @@ describe('RoaringBitmap32 ranges', () => {
       expect(bitmap.has(4294967295)).toBe(true)
     })
 
-    it('enumerates correctly flipping the end', () => {
+    it('enumerates correctly when flipping a range at the end', () => {
       const bitmap = new RoaringBitmap32()
       const iterator = new RoaringBitmap32Iterator(bitmap)
       bitmap.flipRange(4294967295, 4294967296)
