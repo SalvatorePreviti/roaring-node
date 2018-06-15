@@ -93,12 +93,10 @@ void RoaringBitmap32Iterator::next(const Nan::FunctionCallbackInfo<v8::Value> & 
 
   if (instance->it.parent == nullptr) {
     roaring_init_iterator(&instance->roaring->roaring, &instance->it);
-  } else {
-    if (!roaring_advance_uint32_iterator(&instance->it)) {
-      instance->it.has_value = false;
-      instance->bitmap.Reset();
-      return setReturnValueToIteratorResult(info);
-    }
+  } else if (!roaring_advance_uint32_iterator(&instance->it)) {
+    instance->it.has_value = false;
+    instance->bitmap.Reset();
+    return setReturnValueToIteratorResult(info);
   }
 
   if (!instance->it.has_value) {
