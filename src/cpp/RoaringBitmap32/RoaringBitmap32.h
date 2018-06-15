@@ -2,6 +2,7 @@
 #define __ROARINGBITMAP32__H__
 
 #include <nan.h>
+#include <cmath>
 #include "../roaring.h"
 
 class RoaringBitmap32;
@@ -22,6 +23,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void has(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void hasRange(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void copyFrom(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void add(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void tryAdd(const Nan::FunctionCallbackInfo<v8::Value> & info);
