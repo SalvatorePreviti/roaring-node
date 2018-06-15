@@ -20,14 +20,18 @@ void InitModule(v8::Local<v8::Object> exports) {
 
 #ifdef USESSE4
   v8utils::defineReadonlyField(exports, "SSE42", Nan::New(true));
-#else
-  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(false));
-#endif
-
 #ifdef USEAVX
   v8utils::defineReadonlyField(exports, "AVX2", Nan::New(true));
+  v8utils::defineReadonlyField(exports, "instructionSet", Nan::New("AVX2").ToLocalChecked());
 #else
   v8utils::defineReadonlyField(exports, "AVX2", Nan::New(false));
+  v8utils::defineReadonlyField(exports, "instructionSet", Nan::New("SSE42").ToLocalChecked());
+#endif
+
+#else
+  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(false));
+  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(false));
+  v8utils::defineReadonlyField(exports, "instructionSet", Nan::New("PLAIN").ToLocalChecked());
 #endif
 
   RoaringBitmap32::Init(exports);

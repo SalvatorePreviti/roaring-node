@@ -473,7 +473,7 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public contentToString(maxLength?: number): string
 
   /**
-   * Returns an object that contains several statistinc information about this RoaringBitmap32 instance.
+   * Returns an object that contains statistic information about this RoaringBitmap32 instance.
    */
   public statistics(): {
     /**
@@ -594,20 +594,29 @@ declare class RoaringModule {
   public readonly RoaringBitmap32Iterator: typeof RoaringBitmap32Iterator
 
   /**
-   * True if SSE4.2 instruction set is supported and currently used by CRoaring library.
-   */
-  public readonly SSE42: boolean
-
-  /**
-   * True if AVX2 instruction set is supported and currently used by CRoaring library.
-   */
-  public readonly AVX2: boolean
-
-  /**
    * Property: The version of the CRoaring libary as a string.
    * Example: "0.2.42"
    */
   public readonly CRoaringVersion: string
+
+  /**
+   * Property: Indicates wether Streaming SIMD Extensions 4.2 instruction set is supported and currently used by the underlying CRoaring library.
+   */
+  public readonly SSE42: boolean
+
+  /**
+   * Property: Indicates wether Advanced Vector Extensions 2 instruction set is supported and currently used by the underlying CRoaring library.
+   */
+  public readonly AVX2: boolean
+
+  /**
+   * Property: The instruction set supported and currently used by the underlying CRoraring library.
+   * Possible values are:
+   *  - 'AVX2' - Advanced Vector Extensions 2
+   *  - 'SSE42' - Streaming SIMD Extensions 4.2
+   *  - 'PLAIN' - no special instruction set
+   */
+  public readonly instructionSet: 'AVX2' | 'SSE42' | 'PLAIN'
 
   /**
    * Property: The version of the roaring npm package as a string.
