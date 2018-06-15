@@ -79,9 +79,7 @@ describe('roaring', () => {
         architecture = 'PLAIN'
       }
 
-      if (process.env.ROARING_TEST_EXPECTED_CPU) {
-        expect(architecture).toBe(process.env.ROARING_TEST_EXPECTED_CPU)
-      }
+      expect(architecture).toBe(process.env.ROARING_TEST_EXPECTED_CPU)
     })
   }
 })
