@@ -103,16 +103,11 @@
   },
   "overrides": [
     {
-      "files": ["**/*.mjs"],
-      "rules": {
-        "node/no-unsupported-features": ["error", { "ignores": ["modules"] }]
-      }
-    },
-    {
       "files": ["scripts/**/*.js"],
       "plugins": [],
       "rules": {
-        "node/no-unpublished-require": 0
+        "node/no-unpublished-require": 0,
+        "no-console": 0
       }
     },
     {
