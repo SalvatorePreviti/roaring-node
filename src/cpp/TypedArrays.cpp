@@ -10,6 +10,9 @@ Nan::Persistent<v8::Function> TypedArrays::Buffer_allocUnsafe;
 Nan::Persistent<v8::Object> TypedArrays::Array;
 Nan::Persistent<v8::Function> TypedArrays::Array_from;
 
+Nan::Persistent<v8::Object> TypedArrays::Set;
+Nan::Persistent<v8::Function> TypedArrays::Set_ctor;
+
 void TypedArrays::initTypedArrays(const v8::Local<v8::Object> & global) {
   auto uint32Array = Nan::Get(global, Nan::New("Uint32Array").ToLocalChecked()).ToLocalChecked()->ToObject();
   TypedArrays::Uint32Array.Reset(uint32Array);
@@ -23,6 +26,10 @@ void TypedArrays::initTypedArrays(const v8::Local<v8::Object> & global) {
   auto array = Nan::Get(global, Nan::New("Array").ToLocalChecked()).ToLocalChecked()->ToObject();
   TypedArrays::Array.Reset(array);
   TypedArrays::Array_from.Reset(v8::Local<v8::Function>::Cast(Nan::Get(array, Nan::New("from").ToLocalChecked()).ToLocalChecked()));
+
+  auto set = Nan::Get(global, Nan::New("Set").ToLocalChecked()).ToLocalChecked()->ToObject();
+  TypedArrays::Set.Reset(set);
+  TypedArrays::Set_ctor.Reset(v8::Local<v8::Function>::Cast(set));
 }
 
 v8::Local<v8::Value> TypedArrays::bufferAllocUnsafe(v8::Isolate * isolate, size_t size) {

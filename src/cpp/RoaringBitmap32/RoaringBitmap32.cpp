@@ -62,6 +62,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "select", select);
   Nan::SetPrototypeMethod(ctor, "toUint32Array", toUint32Array);
   Nan::SetPrototypeMethod(ctor, "toArray", toArray);
+  Nan::SetPrototypeMethod(ctor, "toSet", toSet);
   Nan::SetPrototypeMethod(ctor, "toJSON", toArray);
   Nan::SetPrototypeMethod(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
   Nan::SetPrototypeMethod(ctor, "serialize", serialize);
@@ -296,6 +297,14 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
 void RoaringBitmap32::toArray(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   v8::Local<v8::Value> argv[1] = {info.Holder()};
   info.GetReturnValue().Set(TypedArrays::Array_from.Get(info.GetIsolate())->Call(TypedArrays::Array.Get(info.GetIsolate()), 1, argv));
+}
+
+void RoaringBitmap32::toSet(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Local<v8::Value> argv[1] = {info.This()};
+  auto v = Nan::NewInstance(TypedArrays::Set_ctor.Get(info.GetIsolate()), 1, argv);
+  if (!v.IsEmpty()) {
+    info.GetReturnValue().Set(v.ToLocalChecked());
+  }
 }
 
 void RoaringBitmap32::toString(const Nan::FunctionCallbackInfo<v8::Value> & info) {

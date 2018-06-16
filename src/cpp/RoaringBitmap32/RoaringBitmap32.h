@@ -56,6 +56,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
 
   static void toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void toArray(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void toSet(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void getSerializationSizeInBytes(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void serialize(const Nan::FunctionCallbackInfo<v8::Value> & info);
 

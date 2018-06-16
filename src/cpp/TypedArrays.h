@@ -15,6 +15,9 @@ class TypedArrays {
   static Nan::Persistent<v8::Function> Uint32Array_ctor;
   static Nan::Persistent<v8::Function> Uint32Array_from;
 
+  static Nan::Persistent<v8::Object> Set;
+  static Nan::Persistent<v8::Function> Set_ctor;
+
   static void initTypedArrays(const v8::Local<v8::Object> & global);
 
   static v8::Local<v8::Value> bufferAllocUnsafe(v8::Isolate * isolate, size_t size);

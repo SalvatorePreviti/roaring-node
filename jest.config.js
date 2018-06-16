@@ -1,6 +1,6 @@
-const cpuinfo = require('./lib/cpuinfo')
+const instructionSet = require('./lib/instructionSet')
 
-function makeTestProject() {
+function testProject() {
   return {
     testEnvironment: 'node',
     verbose: true,
@@ -18,30 +18,30 @@ function makeTestProject() {
   }
 }
 
-const defaultProject = makeTestProject()
+const defaultProject = testProject()
 
-defaultProject.setupFiles = ['./scripts/config/jest-init-plain.js']
+defaultProject.setupFiles = ['./test/config/jest-init-plain.js']
 
 const projects = [defaultProject]
 
-if (cpuinfo.AVX2) {
-  const avx2Project = makeTestProject()
-  avx2Project.displayName = 'AVX'
-  avx2Project.setupFiles = ['./scripts/config/jest-init-avx2.js']
+if (instructionSet === 'AVX2') {
+  const avx2Project = testProject()
+  avx2Project.displayName = 'AVX2 '
+  avx2Project.setupFiles = ['./test/config/jest-init-avx2.js']
   projects.push(avx2Project)
 }
 
-if (cpuinfo.SSE42) {
-  const sse42Project = makeTestProject()
-  sse42Project.displayName = 'SSE'
-  sse42Project.setupFiles = ['./scripts/config/jest-init-sse4.js']
+if (instructionSet === 'AVX2' || instructionSet === 'SSE42') {
+  const sse42Project = testProject()
+  sse42Project.displayName = 'SSE42'
+  sse42Project.setupFiles = ['./test/config/jest-init-sse4.js']
   projects.push(sse42Project)
 }
 
 if (projects.length === 1) {
   module.exports = defaultProject
 } else {
-  defaultProject.displayName = ' C '
+  defaultProject.displayName = 'PLAIN'
   module.exports = {
     projects
   }
