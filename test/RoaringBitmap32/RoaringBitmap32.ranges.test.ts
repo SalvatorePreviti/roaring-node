@@ -44,16 +44,27 @@ describe('RoaringBitmap32 ranges', () => {
 
     it('accepts floating point values', () => {
       const bitmap = new RoaringBitmap32([50, 51, 52, 53, 55])
-      expect(bitmap.hasRange(50, 53.4)).toBe(true)
-      expect(bitmap.hasRange(50, 53.6)).toBe(true)
-      expect(bitmap.hasRange(50.3, 53.4)).toBe(true)
-      expect(bitmap.hasRange(50.7, 53.7)).toBe(true)
-      expect(bitmap.hasRange(49.9, 52)).toBe(true)
-      expect(bitmap.hasRange(50, 52.3)).toBe(true)
-      expect(bitmap.hasRange(49.9, 54.9)).toBe(false)
-      expect(bitmap.hasRange(49.2, 54)).toBe(true)
-      expect(bitmap.hasRange(49.9, 54)).toBe(true)
+
+      expect(bitmap.hasRange(50, 52)).toBe(true)
+      expect(bitmap.hasRange(50, 53)).toBe(true)
       expect(bitmap.hasRange(50, 54)).toBe(true)
+      expect(bitmap.hasRange(50, 55)).toBe(false)
+
+      expect(bitmap.hasRange(50, 52.1)).toBe(true)
+      expect(bitmap.hasRange(50, 52.6)).toBe(true)
+      expect(bitmap.hasRange(50, 53.1)).toBe(true)
+      expect(bitmap.hasRange(50, 53.6)).toBe(true)
+      expect(bitmap.hasRange(50, 54.1)).toBe(false)
+      expect(bitmap.hasRange(50, 54.6)).toBe(false)
+      expect(bitmap.hasRange(50.3, 52.4)).toBe(true)
+      expect(bitmap.hasRange(50.7, 52.7)).toBe(true)
+
+      expect(bitmap.hasRange(49.9, 52)).toBe(true)
+      expect(bitmap.hasRange(49.9, 52.2)).toBe(true)
+      expect(bitmap.hasRange(49.9, 52.6)).toBe(true)
+      expect(bitmap.hasRange(49.9, 53.6)).toBe(true)
+      expect(bitmap.hasRange(49.9, 54.6)).toBe(false)
+
       expect(bitmap.hasRange(55, 55.2)).toBe(true)
       expect(bitmap.hasRange(55, 55.5)).toBe(true)
       expect(bitmap.hasRange(55, 55.7)).toBe(true)
