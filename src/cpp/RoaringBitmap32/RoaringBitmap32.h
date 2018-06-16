@@ -2,6 +2,7 @@
 #define __ROARINGBITMAP32__H__
 
 #include <nan.h>
+#include <cmath>
 #include "../roaring.h"
 
 class RoaringBitmap32;
@@ -22,6 +23,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
 
   static void New(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void has(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void hasRange(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void copyFrom(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void add(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void tryAdd(const Nan::FunctionCallbackInfo<v8::Value> & info);
@@ -44,6 +46,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
   static void xorCardinality(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void jaccardIndex(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void flipRange(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void addRange(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void rank(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void select(const Nan::FunctionCallbackInfo<v8::Value> & info);
 
@@ -53,6 +56,7 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
 
   static void toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void toArray(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void toSet(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void getSerializationSizeInBytes(const Nan::FunctionCallbackInfo<v8::Value> & info);
   static void serialize(const Nan::FunctionCallbackInfo<v8::Value> & info);
 

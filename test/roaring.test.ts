@@ -50,10 +50,6 @@ describe('roaring', () => {
     expect(typeof roaring.SSE42).toBe('boolean')
   })
 
-  it('has instructionSet that matches the expected value', () => {
-    expect(typeof roaring.SSE42).toBe('boolean')
-  })
-
   describe('instructionSet has a valid value', () => {
     switch (roaring.instructionSet) {
       case 'AVX2':

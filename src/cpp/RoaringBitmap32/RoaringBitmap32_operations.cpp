@@ -191,10 +191,50 @@ void RoaringBitmap32::clear(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   self->roaring.high_low_container = std::move(newRoaring.high_low_container);
 }
 
+inline static bool getRangeOperationParameters(const Nan::FunctionCallbackInfo<v8::Value> & info, uint64_t & minInteger, uint64_t & maxInteger) {
+  if (info.Length() < 2 || !info[0]->IsNumber() || !info[1]->IsNumber()) {
+    return false;
+  }
+
+  double minimum = info[0]->NumberValue();
+  if (std::isnan(minimum)) {
+    return false;
+  }
+
+  double maximum = info[1]->NumberValue();
+  if (std::isnan(maximum)) {
+    return false;
+  }
+
+  if (minimum < 0) {
+    minimum = 0;
+  }
+
+  if (maximum < 0) {
+    maximum = 0;
+  } else if (maximum > 4294967296) {
+    maximum = 4294967296;
+  }
+
+  minInteger = (uint64_t)minimum;
+  maxInteger = (uint64_t)maximum;
+
+  return minInteger < maxInteger;
+}
+
 void RoaringBitmap32::flipRange(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  if (info.Length() >= 2 && info[0]->IsUint32() && info[1]->IsUint32()) {
+  uint64_t minInteger, maxInteger;
+  if (getRangeOperationParameters(info, minInteger, maxInteger)) {
     RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-    roaring_bitmap_flip_inplace(&self->roaring, info[0]->Uint32Value(), info[1]->Uint32Value());
+    roaring_bitmap_flip_inplace(&self->roaring, minInteger, maxInteger);
+  }
+}
+
+void RoaringBitmap32::addRange(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  uint64_t minInteger, maxInteger;
+  if (getRangeOperationParameters(info, minInteger, maxInteger)) {
+    RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+    roaring_bitmap_add_range_closed(&self->roaring, (uint32_t)minInteger, (uint32_t)(maxInteger - 1));
   }
 }
 

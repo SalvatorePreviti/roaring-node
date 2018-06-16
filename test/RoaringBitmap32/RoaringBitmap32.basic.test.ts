@@ -181,6 +181,27 @@ describe('RoaringBitmap32 basic', () => {
     })
   })
 
+  describe('toSet', () => {
+    it('returns an empty set for an empty bitmap', () => {
+      const set = new RoaringBitmap32().toSet()
+      expect(set).toBeInstanceOf(Set)
+      expect(Array.from(set)).toEqual([])
+    })
+
+    it('returns an array with 1 element for 1 element', () => {
+      const set = new RoaringBitmap32([1]).toSet()
+      expect(set).toBeInstanceOf(Set)
+      expect(Array.from(set)).toEqual([1])
+    })
+
+    it('returns an array with multiple elements', () => {
+      const values = [1, 2, 10, 30, 0x7fffffff, 0xffffffff]
+      const set = new RoaringBitmap32(values).toSet()
+      expect(set).toBeInstanceOf(Set)
+      expect(Array.from(set)).toEqual(values)
+    })
+  })
+
   describe('toJSON', () => {
     it('returns an empty array with an empty bitmap', () => {
       expect(new RoaringBitmap32().toJSON()).toEqual([])
