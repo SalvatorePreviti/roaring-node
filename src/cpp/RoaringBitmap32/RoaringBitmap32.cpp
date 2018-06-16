@@ -28,8 +28,10 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(ctor, "minimum", minimum);
   Nan::SetPrototypeMethod(ctor, "maximum", maximum);
-  Nan::SetPrototypeMethod(ctor, "has", has);
   Nan::SetPrototypeMethod(ctor, "contains", has);
+  Nan::SetPrototypeMethod(ctor, "has", has);
+  Nan::SetPrototypeMethod(ctor, "containsRange", hasRange);
+  Nan::SetPrototypeMethod(ctor, "hasRange", hasRange);
   Nan::SetPrototypeMethod(ctor, "copyFrom", copyFrom);
   Nan::SetPrototypeMethod(ctor, "add", add);
   Nan::SetPrototypeMethod(ctor, "tryAdd", tryAdd);
@@ -52,6 +54,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(ctor, "xorCardinality", xorCardinality);
   Nan::SetPrototypeMethod(ctor, "jaccardIndex", jaccardIndex);
   Nan::SetPrototypeMethod(ctor, "flipRange", flipRange);
+  Nan::SetPrototypeMethod(ctor, "addRange", addRange);
   Nan::SetPrototypeMethod(ctor, "removeRunCompression", removeRunCompression);
   Nan::SetPrototypeMethod(ctor, "runOptimize", runOptimize);
   Nan::SetPrototypeMethod(ctor, "shrinkToFit", shrinkToFit);
@@ -185,6 +188,36 @@ void RoaringBitmap32::has(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   }
 }
 
+void RoaringBitmap32::hasRange(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  if (info.Length() < 2 || !info[0]->IsNumber() || !info[1]->IsNumber()) {
+    return info.GetReturnValue().Set(false);
+  }
+
+  double minimum = info[0]->NumberValue();
+  double maximum = info[1]->NumberValue();
+
+  if (std::isnan(minimum) || std::isnan(maximum)) {
+    return info.GetReturnValue().Set(false);
+  }
+
+  minimum = std::ceil(minimum);
+  maximum = std::ceil(maximum);
+  if (minimum < 0 || maximum > 4294967296) {
+    return info.GetReturnValue().Set(false);
+  }
+
+  uint64_t minInteger = (uint64_t)minimum;
+  uint64_t maxInteger = (uint64_t)maximum;
+
+  if (minInteger >= maxInteger || maxInteger > 4294967296) {
+    return info.GetReturnValue().Set(false);
+  }
+
+  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+
+  info.GetReturnValue().Set(roaring_bitmap_contains_range(&self->roaring, minInteger, maxInteger));
+}
+
 void RoaringBitmap32::minimum(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   return info.GetReturnValue().Set(roaring_bitmap_minimum(&self->roaring));
@@ -286,7 +319,7 @@ void RoaringBitmap32::contentToString(const Nan::FunctionCallbackInfo<v8::Value>
   struct iter_data {
     std::string str;
     char first_char = '[';
-    uint64_t maxLen = 260000;
+    uint64_t maxLen = 32000;
   } iterData;
 
   if (info.Length() >= 1 && info[0]->IsNumber()) {
