@@ -1,20 +1,23 @@
 #!/usr/bin/env node
 
-const printSystemInfo = require('./printSystemInfo')
+const systemInfo = require('./systemInfo')
+const promiseMap = require('./lib/promiseMap')
 const chalk = require('chalk').default
 const path = require('path')
 const fs = require('fs')
+const { fork } = require('child_process')
 
-function listBenchamrkFiles() {
+function listBenchmarksAsync() {
   return new Promise((resolve, reject) => {
+    const benchmarkPostfix = '.xxx.js'
     const folder = path.resolve(path.join(__dirname, '../benchmarks'))
     fs.readdir(folder, (err, files) => {
       if (err) {
         reject(err)
       } else {
         resolve(
-          files.filter(file => file.endsWith('.benchmark.js')).map(file => {
-            return { name: file.substr(0, file.length - 13), path: path.join(folder, file) }
+          files.filter(file => file.endsWith(benchmarkPostfix)).map(file => {
+            return { name: file.substr(0, file.length - benchmarkPostfix.length), path: path.join(folder, file) }
           })
         )
       }
@@ -22,19 +25,37 @@ function listBenchamrkFiles() {
   })
 }
 
-async function benchmarks() {
-  const files = await listBenchamrkFiles()
+function runBenchmarkAsync(benchmark) {
+  return new Promise((resolve, reject) => {
+    const forked = fork(benchmark.path, { env: { NODE_BENCHMARK_FORKED: 1 } })
+    forked.on('error', error => {
+      reject(error)
+    })
+    forked.on('message', message => {
+      console.log(message)
+    })
+    forked.on('exit', code => {
+      if (code !== 0) {
+        const error = new Error(`Benchmark "${benchmark.name}" failed.`)
+        error.stack = error.message
+        reject(error)
+      } else {
+        resolve()
+      }
+      forked.disconnect()
+    })
+  })
+}
 
-  console.log(chalk.green('*'), chalk.greenBright('running'), chalk.cyanBright(files.length), chalk.greenBright('benchmarks...'), '\n')
-  for (const file of files) {
-    const benchmark = require(file.path)
-    await benchmark()
-    console.log()
-  }
+async function benchmarks() {
+  const benchmarks = await listBenchmarksAsync()
+
+  console.log(chalk.green('*'), chalk.greenBright('running'), chalk.cyanBright(benchmarks.length), chalk.greenBright('benchmarks...'), '\n')
+  await promiseMap(benchmarks, runBenchmarkAsync, systemInfo.physicalCpuCount)
 }
 
 function run() {
-  printSystemInfo()
+  systemInfo.print()
   const benchmarksCompletedMessage = `\n${chalk.green('*')} ${chalk.greenBright('benchmarks completed')}`
   console.time(benchmarksCompletedMessage)
   return benchmarks()
@@ -45,7 +66,7 @@ function run() {
     })
     .catch(error => {
       console.log()
-      console.error(chalk.red('*'), chalk.redBright('benchmarks failed'), chalk.red('-'), error, '\n')
+      console.error(chalk.red('*'), chalk.redBright('FAIL'), chalk.red('-'), error, '\n')
       if (!process.exitCode) {
         process.exitCode = 1
       }

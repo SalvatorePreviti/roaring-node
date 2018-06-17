@@ -61,6 +61,7 @@
     "eslint-plugin-node": "^6.0.1",
     "fastbitset": "^0.2.7",
     "jest": "^23.1.0",
+    "physical-cpu-count": "^2.0.0",
     "prebuild": "^7.6.0",
     "prettier": "^1.13.5",
     "ts-jest": "^22.4.6",
