@@ -60,7 +60,6 @@
     "eslint-plugin-jest": "^21.17.0",
     "eslint-plugin-node": "^6.0.1",
     "fastbitset": "^0.2.7",
-    "globby": "^8.0.1",
     "jest": "^23.1.0",
     "prebuild": "^7.6.0",
     "prettier": "^1.13.5",

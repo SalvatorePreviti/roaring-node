@@ -1,17 +1,33 @@
 #!/usr/bin/env node
 
 const printSystemInfo = require('./printSystemInfo')
-const globby = require('globby')
 const chalk = require('chalk').default
 const path = require('path')
+const fs = require('fs')
+
+function listBenchamrkFiles() {
+  return new Promise((resolve, reject) => {
+    const folder = path.resolve(path.join(__dirname, '../benchmarks'))
+    fs.readdir(folder, (err, files) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(
+          files.filter(file => file.endsWith('.benchmark.js')).map(file => {
+            return { name: file.substr(0, file.length - 13), path: path.join(folder, file) }
+          })
+        )
+      }
+    })
+  })
+}
 
 async function benchmarks() {
-  const files = await globby(path.join(__dirname, '../benchmarks/**/*.benchmark.js'))
+  const files = await listBenchamrkFiles()
 
   console.log(chalk.green('*'), chalk.greenBright('running'), chalk.cyanBright(files.length), chalk.greenBright('benchmarks...'), '\n')
-
   for (const file of files) {
-    const benchmark = require(file)
+    const benchmark = require(file.path)
     await benchmark()
     console.log()
   }
