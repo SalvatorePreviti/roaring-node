@@ -40,6 +40,7 @@ class BenchSuite {
     this.name = name
     this.results = []
     this.details = []
+    this.hasErrors = false
   }
 
   detail(text) {
@@ -63,6 +64,9 @@ class BenchSuite {
     }
 
     b.on('complete', () => {
+      if (b.error) {
+        this.hasErrors = true
+      }
       pushBenchResult(this.results, b)
     })
 
@@ -95,6 +99,7 @@ async function runSuite(suiteDeclaration) {
       }
     }
   } catch (e) {
+    benchSuite.hasErrors = true
     error = errorToString(e)
   } finally {
     actions.suiteReport({
@@ -102,6 +107,7 @@ async function runSuite(suiteDeclaration) {
       name: suiteDeclaration.name,
       details: benchSuite.details,
       error,
+      hasErrors: benchSuite.hasErrors,
       benchs: benchSuite.results,
       fastest: fastest && fastest.name
     })

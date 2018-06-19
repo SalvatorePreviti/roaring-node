@@ -31,6 +31,7 @@ function listBenchFiles() {
 
 function runBenchFileAsync(benchFile) {
   return new Promise((resolve, reject) => {
+    let hasErrors = false
     const forked = fork(benchFile, [benchReport.colorFlags], {
       env: { NODE_BENCHMARK_FORKED: 1 }
     })
@@ -40,6 +41,9 @@ function runBenchFileAsync(benchFile) {
     forked.on('message', message => {
       if (message && message.type === 'suiteReport') {
         spinner.clear()
+        if (message.hasErrors) {
+          hasErrors = true
+        }
         benchReport.printSuiteName(message.name)
         benchReport.printSuiteReport(message)
       }
@@ -48,10 +52,10 @@ function runBenchFileAsync(benchFile) {
     forked.on('exit', code => {
       if (code !== 0) {
         const error = new Error(`"${benchFile}" failed.`)
-        error.stack = error.message
+        error.stack = `Error: ${error.message}`
         reject(error)
       } else {
-        resolve()
+        resolve(hasErrors)
       }
     })
   })
@@ -60,10 +64,24 @@ function runBenchFileAsync(benchFile) {
 async function benchmarks() {
   systemInfo.print()
   spinner.start()
+  let hasErrors = false
   try {
     const benchFiles = await listBenchFiles()
     console.log(chalk.green('*'), chalk.greenBright('running'), chalk.cyanBright(benchFiles.length), chalk.greenBright('files...'), '\n')
-    await promiseMap(benchFiles, runBenchFileAsync, Math.max(1, systemInfo.physicalCpuCount - 1))
+    await promiseMap(
+      benchFiles,
+      async benchFile => {
+        if (!(await runBenchFileAsync(benchFile))) {
+          hasErrors = true
+        }
+      },
+      Math.max(1, systemInfo.physicalCpuCount - 1)
+    )
+    if (hasErrors) {
+      const error = new Error('Benchmarks failed')
+      error.stack = `Error: ${error.message}`
+      throw error
+    }
   } finally {
     spinner.stop()
   }
