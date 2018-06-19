@@ -1,4 +1,4 @@
-#include "TypedArrays.h"
+#include "v8utils.h"
 
 Nan::Persistent<v8::Object> TypedArrays::Uint32Array;
 Nan::Persistent<v8::Function> TypedArrays::Uint32Array_ctor;
@@ -36,3 +36,17 @@ v8::Local<v8::Value> TypedArrays::bufferAllocUnsafe(v8::Isolate * isolate, size_
   v8::Local<v8::Value> argv[] = {{Nan::New((double)size)}};
   return TypedArrays::Buffer_allocUnsafe.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv);
 }
+
+namespace v8utils {
+
+  void throwError(const char * message) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    isolate->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(isolate, message)));
+  }
+
+  void throwTypeError(const char * message) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, message)));
+  }
+
+}  // namespace v8utils

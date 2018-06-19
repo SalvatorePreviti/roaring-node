@@ -47,14 +47,14 @@ void RoaringBitmap32Iterator::New(const Nan::FunctionCallbackInfo<v8::Value> & i
 
   if (info.Length() >= 1) {
     if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0])) {
-      return Nan::ThrowTypeError(Nan::New("RoaringBitmap32Iterator::ctor - argument must be of type RoaringBitmap32").ToLocalChecked());
+      return v8utils::throwTypeError("RoaringBitmap32Iterator::ctor - argument must be of type RoaringBitmap32");
     }
     roaring = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
   }
 
   RoaringBitmap32Iterator * instance = new RoaringBitmap32Iterator();
   if (!instance) {
-    return Nan::ThrowError(Nan::New("RoaringBitmap32Iterator::ctor - allocation failed").ToLocalChecked());
+    return v8utils::throwError("RoaringBitmap32Iterator::ctor - allocation failed");
   }
 
   auto holder = info.Holder();

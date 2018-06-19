@@ -3,7 +3,6 @@
 
 #include "RoaringBitmap32/RoaringBitmap32.h"
 #include "RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
-#include "TypedArrays.h"
 
 void initTypes(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   TypedArrays::initTypedArrays(info[0]->ToObject());

@@ -1,7 +1,6 @@
 #include "../v8utils.h"
 
 #include "../RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
-#include "../TypedArrays.h"
 #include "RoaringBitmap32.h"
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
@@ -76,12 +75,13 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   auto ctorObject = ctorFunction->ToObject();
 
   Nan::SetMethod(ctorObject, "deserialize", deserializeStatic);
-  Nan::SetMethod(ctorObject, "swap", swapStatic);
   Nan::SetMethod(ctorObject, "and", andStatic);
   Nan::SetMethod(ctorObject, "or", orStatic);
   Nan::SetMethod(ctorObject, "xor", xorStatic);
   Nan::SetMethod(ctorObject, "andNot", andNotStatic);
   Nan::SetMethod(ctorObject, "orMany", orManyStatic);
+
+  NODE_SET_METHOD(ctorObject, "swap", swapStatic);
 
   ctorObject->Set(Nan::New("from").ToLocalChecked(), ctorFunction);
 
@@ -120,14 +120,14 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * instance = new RoaringBitmap32();
 
   if (!instance)
-    return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to create native roaring container").ToLocalChecked());
+    return v8utils::throwError("RoaringBitmap32::ctor - failed to create native roaring container");
 
   bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
 
   if (!hasParameter) {
     if (!ra_init(&instance->roaring.high_low_container)) {
       delete instance;
-      return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to initialize native roaring container").ToLocalChecked());
+      return v8utils::throwError("RoaringBitmap32::ctor - failed to initialize native roaring container");
     }
   }
 
@@ -273,7 +273,7 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
   auto size = roaring_bitmap_get_cardinality(&self->roaring);
 
   if (size >= 0xFFFFFFFF) {
-    return Nan::ThrowError(Nan::New("RoaringBitmap32::toUint32Array - array too big").ToLocalChecked());
+    return v8utils::throwError("RoaringBitmap32::toUint32Array - array too big");
   }
 
   v8::Local<v8::Value> argv[1] = {Nan::New((uint32_t)size)};
@@ -286,7 +286,7 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
   if (size != 0) {
     Nan::TypedArrayContents<uint32_t> typedArrayContent(typedArray);
     if (!typedArrayContent.length() || !*typedArrayContent)
-      return Nan::ThrowError(Nan::New("RoaringBitmap32::toUint32Array - failed to allocate").ToLocalChecked());
+      return v8utils::throwError("RoaringBitmap32::toUint32Array - failed to allocate");
 
     roaring_bitmap_to_uint32_array(&self->roaring, *typedArrayContent);
   }

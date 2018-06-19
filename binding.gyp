@@ -12,7 +12,7 @@
       "sources": [
         "src/cpp/roaring.c",
         "src/cpp/module.cpp",
-        "src/cpp/TypedArrays.cpp",
+        "src/cpp/v8utils.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
@@ -45,7 +45,7 @@
             "sources": [
               "src/cpp/roaring.c",
               "src/cpp/module.cpp",
-              "src/cpp/TypedArrays.cpp",
+              "src/cpp/v8utils.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
@@ -72,7 +72,7 @@
             "sources": [
               "src/cpp/roaring.c",
               "src/cpp/module.cpp",
-              "src/cpp/TypedArrays.cpp",
+              "src/cpp/v8utils.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
