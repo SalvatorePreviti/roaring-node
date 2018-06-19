@@ -87,18 +87,87 @@ To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_S
 
 # Development, local building
 
-To rebuild the C++ sources
+Clone the repository and install all the dependencies
 
 ```
+git clone https://github.com/SalvatorePreviti/roaring-node.git
+
 git submodule update --init --recursive
 
-npm install nan
+npm install
+```
 
+### To rebuild the C++ sources
+
+```
 npm run recompile
 ```
 
-To run the unit test
+### To run the unit test
 
 ```
 npm test
+```
+
+### To run the performance benchmarks
+
+```sh
+npm run benchmarks
+```
+
+It will produce a result similar to this one
+
+```
+Platform : Darwin 17.6.0 x64
+CPU      : Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz AVX2
+Cores    : 4 physical - 8 logical
+Memory   : 16.00 GB
+NodeJS   : v10.4.1 - V8 v6.7.288.45-node.7
+
+* running 6 files...
+
+• suite intersection size
+  262144 elements
+  ✔ Set                   33.26 ops/sec  ±1.06%  57 runs  -99.99%
+  ✔ FastBitSet        14,364.56 ops/sec  ±3.95%  83 runs  -94.61%
+  ✔ RoaringBitmap32  266,718.85 ops/sec  ±1.01%  86 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite intersection (in place)
+  65536 elements
+  ✔ Set                    199.99 ops/sec  ±1.96%  63 runs  -100.00%
+  ✔ FastBitSet          93,394.64 ops/sec  ±3.38%  79 runs   -98.02%
+  ✔ RoaringBitmap32  4,720,764.58 ops/sec  ±0.81%  87 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite intersection (new)
+  1048576 elements
+  ✔ Set                  3.32 ops/sec  ±6.64%  13 runs  -99.91%
+  ✔ FastBitSet       1,436.14 ops/sec  ±1.34%  85 runs  -59.63%
+  ✔ RoaringBitmap32  3,557.16 ops/sec  ±4.49%  51 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite union (in place)
+  65536 elements
+  ✔ Set                  201.71 ops/sec  ±3.45%  61 runs  -99.96%
+  ✔ FastBitSet       147,147.28 ops/sec  ±1.18%  80 runs  -70.43%
+  ✔ RoaringBitmap32  497,687.77 ops/sec  ±2.84%  83 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite union size
+  262144 elements
+  ✔ Set                   22.77 ops/sec  ±2.08%  42 runs  -99.99%
+  ✔ FastBitSet         7,766.65 ops/sec  ±2.62%  83 runs  -97.17%
+  ✔ RoaringBitmap32  274,167.71 ops/sec  ±1.12%  86 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite union (new)
+  1048576 elements
+  ✔ Set                  1.72 ops/sec   ±4.90%   9 runs  -99.92%
+  ✔ FastBitSet         698.26 ops/sec   ±1.89%  76 runs  -65.66%
+  ✔ RoaringBitmap32  2,033.11 ops/sec  ±14.20%  49 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+
+* completed: 39997.923ms
 ```

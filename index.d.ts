@@ -500,7 +500,7 @@ declare class RoaringBitmap32 implements Iterable<number> {
   public contentToString(maxLength?: number): string
 
   /**
-   * Returns an object that contains several statistinc information about this RoaringBitmap32 instance.
+   * Returns an object that contains statistic information about this RoaringBitmap32 instance.
    */
   public statistics(): {
     /**
