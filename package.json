@@ -13,7 +13,8 @@
     "recompile": "node-gyp rebuild -j 12",
     "test": "jest",
     "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/** --exclude **/test/**",
-    "benchmarks": "node ./scripts/benchmarks.js"
+    "benchmarks": "node ./scripts/benchmarks.js",
+    "benchmarks/": "node ./scripts/benchmarks.js"
   },
   "repository": {
     "type": "git",
@@ -50,8 +51,8 @@
     "prebuild-install": "^4.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^23.1.0",
-    "@types/node": "^10.3.3",
+    "@types/jest": "^23.1.1",
+    "@types/node": "^10.3.4",
     "benchmark": "^2.1.4",
     "chalk": "^2.4.1",
     "eslint": "^4.19.1",
