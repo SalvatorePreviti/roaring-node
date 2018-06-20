@@ -49,4 +49,27 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, message)));
   }
 
+  void defineHiddenField(v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    v8::PropertyDescriptor propertyDescriptor(value, false);
+    propertyDescriptor.set_configurable(false);
+    propertyDescriptor.set_enumerable(false);
+    target->DefineProperty(Nan::GetCurrentContext(), v8::String::NewFromUtf8(isolate, name), propertyDescriptor).ToChecked();
+  }
+
+  void defineReadonlyField(v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    v8::PropertyDescriptor propertyDescriptor(value, false);
+    propertyDescriptor.set_configurable(false);
+    propertyDescriptor.set_enumerable(true);
+    target->DefineProperty(Nan::GetCurrentContext(), v8::String::NewFromUtf8(isolate, name), propertyDescriptor).ToChecked();
+  }
+
+  void defineHiddenFunction(v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
+    t->SetClassName(v8::String::NewFromUtf8(isolate, name));
+    defineHiddenField(target, name, t->GetFunction());
+  }
+
 }  // namespace v8utils
