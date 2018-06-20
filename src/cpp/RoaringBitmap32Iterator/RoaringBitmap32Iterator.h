@@ -9,8 +9,8 @@ class RoaringBitmap32Iterator : public Nan::ObjectWrap {
   RoaringBitmap32 * roaring;
   v8::Persistent<v8::Value> bitmap;
 
-  static Nan::Persistent<v8::FunctionTemplate> constructorTemplate;
-  static Nan::Persistent<v8::Function> constructor;
+  static v8::Persistent<v8::FunctionTemplate> constructorTemplate;
+  static v8::Persistent<v8::Function> constructor;
 
   static void Init(v8::Local<v8::Object> exports);
   static void New(const Nan::FunctionCallbackInfo<v8::Value> & info);

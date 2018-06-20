@@ -14,7 +14,7 @@ void InitModule(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
-  TypedArrays::initTypedArrays(isolate, Nan::GetCurrentContext()->Global());
+  TypedArrays::initTypedArrays(isolate, isolate->GetCurrentContext()->Global());
 
   v8utils::defineHiddenFunction(exports, "_initTypes", initTypes);
 

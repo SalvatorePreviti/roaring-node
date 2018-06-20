@@ -12,8 +12,8 @@ class RoaringBitmap32 : public Nan::ObjectWrap {
  public:
   roaring_bitmap_t roaring;
 
-  static Nan::Persistent<v8::FunctionTemplate> constructorTemplate;
-  static Nan::Persistent<v8::Function> constructor;
+  static v8::Persistent<v8::FunctionTemplate> constructorTemplate;
+  static v8::Persistent<v8::Function> constructor;
 
   static void Init(v8::Local<v8::Object> exports);
 

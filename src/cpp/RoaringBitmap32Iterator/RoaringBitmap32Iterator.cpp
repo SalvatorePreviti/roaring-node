@@ -3,8 +3,8 @@
 #include "../RoaringBitmap32/RoaringBitmap32.h"
 #include "RoaringBitmap32Iterator.h"
 
-Nan::Persistent<v8::FunctionTemplate> RoaringBitmap32Iterator::constructorTemplate;
-Nan::Persistent<v8::Function> RoaringBitmap32Iterator::constructor;
+v8::Persistent<v8::FunctionTemplate> RoaringBitmap32Iterator::constructorTemplate;
+v8::Persistent<v8::Function> RoaringBitmap32Iterator::constructor;
 
 void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
@@ -12,7 +12,7 @@ void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
   auto className = v8::String::NewFromUtf8(isolate, "RoaringBitmap32Iterator");
 
   v8::Local<v8::FunctionTemplate> ctor = Nan::New<v8::FunctionTemplate>(RoaringBitmap32Iterator::New);
-  constructorTemplate.Reset(ctor);
+  constructorTemplate.Reset(isolate, ctor);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
 
@@ -24,7 +24,7 @@ void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
   auto ctorObject = ctorFunction->ToObject();
   v8utils::defineHiddenField(ctorObject, "default", ctorObject);
 
-  constructor.Reset(ctorFunction);
+  constructor.Reset(isolate, ctorFunction);
 
   exports->Set(className, ctorFunction);
 }
@@ -67,7 +67,7 @@ void RoaringBitmap32Iterator::New(const Nan::FunctionCallbackInfo<v8::Value> & i
   if (roaring) {
     instance->roaring = roaring;
     instance->it.has_value = true;
-    instance->bitmap.Reset(info.GetIsolate(), info[0]);
+    instance->bitmap.Reset(isolate, info[0]);
   }
 
   info.GetReturnValue().Set(holder);
@@ -90,6 +90,7 @@ void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> &
 }
 
 void RoaringBitmap32Iterator::next(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32Iterator * instance = Nan::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.This());
 
   if (!instance || !instance->it.has_value) {
@@ -100,12 +101,12 @@ void RoaringBitmap32Iterator::next(const Nan::FunctionCallbackInfo<v8::Value> & 
     roaring_init_iterator(&instance->roaring->roaring, &instance->it);
   } else if (!roaring_advance_uint32_iterator(&instance->it)) {
     instance->it.has_value = false;
-    instance->bitmap.Reset();
+    instance->bitmap.Reset(isolate, v8::Null(isolate));
     return setReturnValueToIteratorResult(info);
   }
 
   if (!instance->it.has_value) {
-    instance->bitmap.Reset();
+    instance->bitmap.Reset(isolate, v8::Null(isolate));
     return setReturnValueToIteratorResult(info);
   }
 

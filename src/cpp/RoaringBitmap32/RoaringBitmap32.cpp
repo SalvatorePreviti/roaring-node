@@ -5,8 +5,8 @@
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
 
-Nan::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
-Nan::Persistent<v8::Function> RoaringBitmap32::constructor;
+v8::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
+v8::Persistent<v8::Function> RoaringBitmap32::constructor;
 
 uint8_t roaring_bitmap_zero[sizeof(roaring_bitmap_t)] = {0};
 
@@ -16,7 +16,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   v8::Local<v8::String> className = v8::String::NewFromUtf8(isolate, "RoaringBitmap32");
 
   v8::Local<v8::FunctionTemplate> ctor = Nan::New<v8::FunctionTemplate>(RoaringBitmap32::New);
-  RoaringBitmap32::constructorTemplate.Reset(ctor);
+  RoaringBitmap32::constructorTemplate.Reset(isolate, ctor);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
 
@@ -90,7 +90,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   v8utils::defineHiddenField(ctorObject, "default", ctorObject);
 
   exports->Set(className, ctorFunction);
-  constructor.Reset(ctorFunction);
+  constructor.Reset(isolate, ctorFunction);
 }
 
 RoaringBitmap32::RoaringBitmap32() : roaring(*((roaring_bitmap_t *)&roaring_bitmap_zero)) {
