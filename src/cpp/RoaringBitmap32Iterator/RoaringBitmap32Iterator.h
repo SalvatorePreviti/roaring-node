@@ -13,8 +13,8 @@ class RoaringBitmap32Iterator : public Nan::ObjectWrap {
   static v8::Persistent<v8::Function> constructor;
 
   static void Init(v8::Local<v8::Object> exports);
-  static void New(const Nan::FunctionCallbackInfo<v8::Value> & info);
-  static void next(const Nan::FunctionCallbackInfo<v8::Value> & info);
+  static void New(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void next(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static NAN_PROPERTY_GETTER(namedPropertyGetter);
 

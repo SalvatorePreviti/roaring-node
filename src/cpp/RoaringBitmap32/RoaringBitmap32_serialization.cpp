@@ -5,7 +5,10 @@
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
 
-void RoaringBitmap32::getSerializationSizeInBytes(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   bool portable = info.Length() > 0 && info[0]->IsTrue();
 
@@ -25,8 +28,10 @@ void RoaringBitmap32::getSerializationSizeInBytes(const Nan::FunctionCallbackInf
   return info.GetReturnValue().Set((double)(sizeasarray + 1));
 }
 
-void RoaringBitmap32::serialize(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
   bool portable = info.Length() > 0 && info[0]->IsTrue();
@@ -67,16 +72,18 @@ void RoaringBitmap32::serialize(const Nan::FunctionCallbackInfo<v8::Value> & inf
   }
 }
 
-void RoaringBitmap32::deserializeStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32::deserializeInner(info, true);
 }
 
-void RoaringBitmap32::deserialize(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32::deserializeInner(info, false);
 }
 
-void RoaringBitmap32::deserializeInner(const Nan::FunctionCallbackInfo<v8::Value> & info, bool isStatic) {
+void RoaringBitmap32::deserializeInner(const v8::FunctionCallbackInfo<v8::Value> & info, bool isStatic) {
   v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   if (info.Length() == 0 || (!info[0]->IsUint8Array() && !info[0]->IsInt8Array() && !info[0]->IsUint8ClampedArray()))
     return v8utils::throwTypeError("RoaringBitmap32::deserialize requires an argument of type Uint8Array or Buffer");
 

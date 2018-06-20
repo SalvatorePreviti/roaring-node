@@ -28,9 +28,9 @@ namespace v8utils {
   void throwError(const char * message);
   void throwTypeError(const char * message);
 
-  void defineHiddenField(v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
-  void defineReadonlyField(v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
-  void defineHiddenFunction(v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback);
+  void defineHiddenField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
+  void defineReadonlyField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
+  void defineHiddenFunction(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback);
 
   template <typename T>
   struct TypedArrayContent {
