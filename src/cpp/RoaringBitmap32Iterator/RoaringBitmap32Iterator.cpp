@@ -6,6 +6,7 @@ v8::Persistent<v8::Function> RoaringBitmap32Iterator::constructor;
 
 void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::HandleScope scope(isolate);
 
   auto className = v8::String::NewFromUtf8(isolate, "RoaringBitmap32Iterator");
 
@@ -102,7 +103,7 @@ void RoaringBitmap32Iterator::done_getter(v8::Local<v8::String> property, const 
   v8::HandleScope scope(isolate);
 
   const RoaringBitmap32Iterator * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.Holder());
-  info.GetReturnValue().Set(instance->it.parent == nullptr || instance->it.has_value);
+  info.GetReturnValue().Set(instance->it.has_value);
 }
 
 void RoaringBitmap32Iterator::value_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
