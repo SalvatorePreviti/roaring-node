@@ -46,12 +46,12 @@ namespace v8utils {
       if (from->IsArrayBufferView()) {
         v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
 
-        const size_t byte_length = array->ByteLength();
-        const ptrdiff_t byte_offset = array->ByteOffset();
+        const size_t byteLength = array->ByteLength();
+        const ptrdiff_t byteOffset = array->ByteOffset();
         v8::Local<v8::ArrayBuffer> buffer = array->Buffer();
 
-        length = byte_length / sizeof(T);
-        data = static_cast<char *>(buffer->GetContents().Data()) + byte_offset;
+        length = byteLength / sizeof(T);
+        data = static_cast<char *>(buffer->GetContents().Data()) + byteOffset;
       }
 
       this->length = length;
