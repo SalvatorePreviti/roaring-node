@@ -93,6 +93,7 @@ void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
   auto className = v8::String::NewFromUtf8(isolate, "RoaringBitmap32Iterator");
 
   v8::Local<v8::FunctionTemplate> ctor = v8::FunctionTemplate::New(isolate, New);
+
   constructorTemplate.Reset(isolate, ctor);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
