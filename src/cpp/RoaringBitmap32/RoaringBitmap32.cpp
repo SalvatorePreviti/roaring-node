@@ -152,7 +152,7 @@ NAN_PROPERTY_GETTER(RoaringBitmap32::namedPropertyGetter) {
   v8::Isolate * isolate = info.GetIsolate();
 
   if (property->IsSymbol()) {
-    if (Nan::Equals(property, v8::Symbol::GetIterator(isolate)).FromJust()) {
+    if (property->Equals(v8::Symbol::GetIterator(isolate))) {
       auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
 
       v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
@@ -246,8 +246,10 @@ void RoaringBitmap32::rank(const Nan::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void RoaringBitmap32::select(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+
   if (info.Length() < 1 || !info[0]->IsUint32()) {
-    return info.GetReturnValue().Set(Nan::Undefined());
+    return info.GetReturnValue().Set(v8::Undefined(isolate));
   }
 
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
@@ -257,7 +259,7 @@ void RoaringBitmap32::select(const Nan::FunctionCallbackInfo<v8::Value> & info) 
     return info.GetReturnValue().Set(element);
   }
 
-  return info.GetReturnValue().Set(Nan::Undefined());
+  return info.GetReturnValue().Set(v8::Undefined(isolate));
 }
 
 void RoaringBitmap32::removeRunCompression(const Nan::FunctionCallbackInfo<v8::Value> & info) {
