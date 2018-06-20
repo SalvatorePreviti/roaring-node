@@ -260,6 +260,8 @@ void RoaringBitmap32::swapStatic(const v8::FunctionCallbackInfo<v8::Value> & inf
 }
 
 void RoaringBitmap32::andStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+
   if (info.Length() < 2)
     return v8utils::throwTypeError("RoaringBitmap32::and expects 2 arguments");
   if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
@@ -269,7 +271,7 @@ void RoaringBitmap32::andStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
   RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
   RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
 
-  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
 
   auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
   if (resultMaybe.IsEmpty())
@@ -289,6 +291,7 @@ void RoaringBitmap32::andStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
 }
 
 void RoaringBitmap32::orStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   if (info.Length() < 2)
     return v8utils::throwTypeError("RoaringBitmap32::or expects 2 arguments");
   if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
@@ -299,7 +302,7 @@ void RoaringBitmap32::orStatic(const Nan::FunctionCallbackInfo<v8::Value> & info
   RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
   RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
 
-  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
 
   auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
   if (resultMaybe.IsEmpty())
@@ -319,6 +322,7 @@ void RoaringBitmap32::orStatic(const Nan::FunctionCallbackInfo<v8::Value> & info
 }
 
 void RoaringBitmap32::xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   if (info.Length() < 2)
     return v8utils::throwTypeError("RoaringBitmap32::xor expects 2 arguments");
   if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
@@ -329,7 +333,7 @@ void RoaringBitmap32::xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
   RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
   RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
 
-  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
 
   auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
   if (resultMaybe.IsEmpty())
@@ -349,6 +353,7 @@ void RoaringBitmap32::xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
 }
 
 void RoaringBitmap32::andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   if (info.Length() < 2)
     return v8utils::throwTypeError("RoaringBitmap32::andnot expects 2 arguments");
   if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0]))
@@ -359,7 +364,7 @@ void RoaringBitmap32::andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
   RoaringBitmap32 * a = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
   RoaringBitmap32 * b = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[1]->ToObject());
 
-  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
 
   auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
   if (resultMaybe.IsEmpty())
@@ -380,9 +385,10 @@ void RoaringBitmap32::andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
 
 template <typename T, typename TLen>
 void orManyStaticImpl(const Nan::FunctionCallbackInfo<v8::Value> & info, T & array, TLen length) {
-  auto ctorType = RoaringBitmap32::constructorTemplate.Get(info.GetIsolate());
+  v8::Isolate * isolate = info.GetIsolate();
 
-  v8::Local<v8::Function> cons = Nan::New(RoaringBitmap32::constructor);
+  v8::Local<v8::FunctionTemplate> ctorType = RoaringBitmap32::constructorTemplate.Get(isolate);
+  v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
 
   if (length == 1) {
     if (!ctorType->HasInstance(info[0])) {
@@ -440,13 +446,14 @@ void orManyStaticImpl(const Nan::FunctionCallbackInfo<v8::Value> & info, T & arr
 }
 
 void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  auto length = info.Length();
+  v8::Isolate * isolate = info.GetIsolate();
+  int length = info.Length();
 
-  auto ctorType = RoaringBitmap32::constructorTemplate.Get(info.GetIsolate());
-  v8::Local<v8::Function> cons = Nan::New(RoaringBitmap32::constructor);
+  v8::Local<v8::FunctionTemplate> ctorType = RoaringBitmap32::constructorTemplate.Get(isolate);
+  v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
 
   if (length == 0) {
-    auto v = Nan::NewInstance(Nan::New(constructor), 0, nullptr);
+    auto v = Nan::NewInstance(constructor.Get(isolate), 0, nullptr);
     if (!v.IsEmpty()) {
       info.GetReturnValue().Set(v.ToLocalChecked());
     }
@@ -460,7 +467,7 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
       size_t arrayLength = array->Length();
 
       if (arrayLength == 0) {
-        auto v = Nan::NewInstance(Nan::New(constructor), 0, nullptr);
+        auto v = Nan::NewInstance(cons, 0, nullptr);
         if (!v.IsEmpty()) {
           info.GetReturnValue().Set(v.ToLocalChecked());
         }

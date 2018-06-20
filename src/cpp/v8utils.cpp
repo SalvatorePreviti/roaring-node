@@ -33,7 +33,7 @@ void TypedArrays::initTypedArrays(v8::Isolate * isolate, const v8::Local<v8::Obj
 }
 
 v8::Local<v8::Value> TypedArrays::bufferAllocUnsafe(v8::Isolate * isolate, size_t size) {
-  v8::Local<v8::Value> argv[] = {{Nan::New((double)size)}};
+  v8::Local<v8::Value> argv[] = {v8::Number::New(isolate, (double)size)};
   return TypedArrays::Buffer_allocUnsafe.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv);
 }
 

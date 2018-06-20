@@ -101,8 +101,9 @@ RoaringBitmap32::~RoaringBitmap32() {
 }
 
 void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   if (!info.IsConstructCall()) {
-    v8::Local<v8::Function> cons = Nan::New(constructor);
+    v8::Local<v8::Function> cons = constructor.Get(isolate);
     if (info.Length() < 1) {
       auto v = Nan::NewInstance(cons, 0, nullptr);
       if (!v.IsEmpty()) {
@@ -148,13 +149,15 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 NAN_PROPERTY_GETTER(RoaringBitmap32::namedPropertyGetter) {
+  v8::Isolate * isolate = info.GetIsolate();
+
   if (property->IsSymbol()) {
-    if (Nan::Equals(property, v8::Symbol::GetIterator(info.GetIsolate())).FromJust()) {
+    if (Nan::Equals(property, v8::Symbol::GetIterator(isolate)).FromJust()) {
       auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
       auto iter_template = Nan::New<v8::FunctionTemplate>();
       Nan::SetCallHandler(iter_template,
           [](const Nan::FunctionCallbackInfo<v8::Value> & info) {
-            v8::Local<v8::Function> cons = Nan::New(RoaringBitmap32Iterator::constructor);
+            v8::Local<v8::Function> cons = RoaringBitmap32Iterator::constructor.Get(v8::Isolate::GetCurrent());
             v8::Local<v8::Value> argv[1] = {info.This()};
             auto resultMaybe = Nan::NewInstance(cons, 1, argv);
             if (!resultMaybe.IsEmpty())
@@ -310,13 +313,15 @@ void RoaringBitmap32::toSet(const Nan::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void RoaringBitmap32::toString(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   std::string result("RoaringBitmap32:");
   result += std::to_string(self ? roaring_bitmap_get_cardinality(&self->roaring) : 0);
-  info.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+  info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, result.c_str()));
 }
 
 void RoaringBitmap32::contentToString(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   struct iter_data {
     std::string str;
@@ -350,11 +355,12 @@ void RoaringBitmap32::contentToString(const Nan::FunctionCallbackInfo<v8::Value>
   }
   iterData.str += ']';
 
-  info.GetReturnValue().Set(Nan::New(iterData.str).ToLocalChecked());
+  info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, iterData.str.c_str()));
 }
 
 void RoaringBitmap32::clone(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Local<v8::Function> cons = Nan::New(constructor);
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
 
   v8::Local<v8::Value> argv[1] = {info.Holder()};
   auto v = Nan::NewInstance(cons, 1, argv);

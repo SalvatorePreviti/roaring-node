@@ -30,8 +30,9 @@ void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
 }
 
 void RoaringBitmap32Iterator::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   if (!info.IsConstructCall()) {
-    v8::Local<v8::Function> cons = Nan::New(constructor);
+    v8::Local<v8::Function> cons = constructor.Get(isolate);
     if (info.Length() < 1) {
       auto v = Nan::NewInstance(cons, 0, nullptr);
       if (!v.IsEmpty())

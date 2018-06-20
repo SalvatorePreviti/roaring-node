@@ -75,13 +75,14 @@ void RoaringBitmap32::deserialize(const Nan::FunctionCallbackInfo<v8::Value> & i
 }
 
 void RoaringBitmap32::deserializeInner(const Nan::FunctionCallbackInfo<v8::Value> & info, bool isStatic) {
+  v8::Isolate * isolate = info.GetIsolate();
   if (info.Length() == 0 || (!info[0]->IsUint8Array() && !info[0]->IsInt8Array() && !info[0]->IsUint8ClampedArray()))
     return v8utils::throwTypeError("RoaringBitmap32::deserialize requires an argument of type Uint8Array or Buffer");
 
   RoaringBitmap32 * self = nullptr;
 
   if (isStatic) {
-    v8::Local<v8::Function> cons = Nan::New(constructor);
+    v8::Local<v8::Function> cons = constructor.Get(isolate);
 
     auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
     if (resultMaybe.IsEmpty())
