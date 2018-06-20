@@ -55,7 +55,7 @@ function runBenchFileAsync(benchFile) {
         error.stack = `Error: ${error.message}`
         reject(error)
       } else {
-        resolve(hasErrors)
+        resolve(!hasErrors)
       }
     })
   })
