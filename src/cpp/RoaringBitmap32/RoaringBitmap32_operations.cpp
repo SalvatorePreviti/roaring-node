@@ -26,8 +26,8 @@ void RoaringBitmap32::tryAdd(const Nan::FunctionCallbackInfo<v8::Value> & info) 
 template <typename TArg>
 void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & arg) {
   if (arg->IsUint32Array() || arg->IsInt32Array()) {
-    Nan::TypedArrayContents<uint32_t> typedArray(arg);
-    roaring_bitmap_add_many(&self->roaring, typedArray.length(), *typedArray);
+    v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
+    roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
     return;
   }
 
@@ -39,8 +39,8 @@ void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & 
       v8::Local<v8::Value> argv[] = {arg};
       auto t = TypedArrays::Uint32Array_from.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv);
       if (!t.IsEmpty()) {
-        Nan::TypedArrayContents<uint32_t> typedArray(t);
-        roaring_bitmap_add_many(&self->roaring, typedArray.length(), *typedArray);
+        v8utils::TypedArrayContent<uint32_t> typedArray(isolate, t);
+        roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
       }
     }
 
@@ -51,16 +51,16 @@ void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & 
 }
 
 void RoaringBitmap32::copyFrom(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   if (info.Length() > 0) {
     auto const & arg = info[0];
 
-    v8::Isolate * isolate = info.GetIsolate();
     RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
     if (arg->IsUint32Array() || arg->IsInt32Array()) {
-      Nan::TypedArrayContents<uint32_t> typedArray(arg);
+      v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
       RoaringBitmap32::clear(info);
-      roaring_bitmap_add_many(&self->roaring, typedArray.length(), *typedArray);
+      roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
       return;
     }
 
@@ -81,9 +81,10 @@ void RoaringBitmap32::copyFrom(const Nan::FunctionCallbackInfo<v8::Value> & info
         self->roaring.copy_on_write = other->roaring.copy_on_write;
       } else {
         v8::Local<v8::Value> argv[] = {arg};
-        Nan::TypedArrayContents<uint32_t> typedArray(TypedArrays::Uint32Array_from.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv));
+        v8utils::TypedArrayContent<uint32_t> typedArray(
+            isolate, TypedArrays::Uint32Array_from.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv));
         RoaringBitmap32::clear(info);
-        roaring_bitmap_add_many(&self->roaring, typedArray.length(), *typedArray);
+        roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
       }
     }
     return;

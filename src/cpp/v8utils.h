@@ -32,6 +32,33 @@ namespace v8utils {
   void defineReadonlyField(v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
   void defineHiddenFunction(v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback);
 
+  template <typename T>
+  struct TypedArrayContent {
+    size_t length;
+    T * data;
+
+    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::Local<v8::Value> from) : length(0), data(NULL) {
+      v8::HandleScope scope(isolate);
+
+      size_t length = 0;
+      void * data = NULL;
+
+      if (from->IsArrayBufferView()) {
+        v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
+
+        const size_t byte_length = array->ByteLength();
+        const ptrdiff_t byte_offset = array->ByteOffset();
+        v8::Local<v8::ArrayBuffer> buffer = array->Buffer();
+
+        length = byte_length / sizeof(T);
+        data = static_cast<char *>(buffer->GetContents().Data()) + byte_offset;
+      }
+
+      this->length = length;
+      this->data = static_cast<T *>(data);
+    }
+  };
+
 }  // namespace v8utils
 
 #endif
