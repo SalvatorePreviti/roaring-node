@@ -3,12 +3,28 @@
 
 #include "../RoaringBitmap32/RoaringBitmap32.h"
 
-class RoaringBitmap32Iterator : public v8utils::ObjectWrap {
+class RoaringBitmap32IteratorState : public v8utils::ObjectWrap {
  public:
   roaring_uint32_iterator_t it;
   RoaringBitmap32 * roaring;
-  v8::Persistent<v8::Value> bitmap;
 
+  static v8::Persistent<v8::FunctionTemplate> constructorTemplate;
+  static v8::Persistent<v8::Function> constructor;
+
+  static void New(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void done_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+  static void value_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+
+  RoaringBitmap32IteratorState();
+
+ private:
+  friend class RoaringBitmap32Iterator;
+  static void Init(v8::Isolate * isolate);
+};
+
+class RoaringBitmap32Iterator {
+ public:
   static v8::Persistent<v8::FunctionTemplate> constructorTemplate;
   static v8::Persistent<v8::Function> constructor;
 
@@ -18,11 +34,9 @@ class RoaringBitmap32Iterator : public v8utils::ObjectWrap {
 
   static void iterator_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info);
 
-  static void done_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-  static void value_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-
-  RoaringBitmap32Iterator();
-  virtual ~RoaringBitmap32Iterator();
+ private:
+  RoaringBitmap32Iterator() = delete;
+  ~RoaringBitmap32Iterator() = delete;
 };
 
 #endif
