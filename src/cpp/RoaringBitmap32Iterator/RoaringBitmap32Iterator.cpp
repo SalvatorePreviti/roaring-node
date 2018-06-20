@@ -17,6 +17,8 @@ void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
 
   ctorInstanceTemplate->SetAccessor(v8::Symbol::GetIterator(isolate), iterator_getter);
+  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "done"), done_getter);
+  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "value"), value_getter);
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "next", next);
 
@@ -93,6 +95,21 @@ void setReturnValueToIteratorResult(const v8::FunctionCallbackInfo<v8::Value> & 
   obj->Set(v8::String::NewFromUtf8(isolate, "value"), v8::Uint32::NewFromUnsigned(isolate, value));
   obj->Set(v8::String::NewFromUtf8(isolate, "done"), v8::Boolean::New(isolate, false));
   info.GetReturnValue().Set(obj);
+}
+
+void RoaringBitmap32Iterator::done_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  const RoaringBitmap32Iterator * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.Holder());
+  info.GetReturnValue().Set(instance->it.parent == nullptr || instance->it.has_value);
+}
+
+void RoaringBitmap32Iterator::value_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+  const RoaringBitmap32Iterator * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.Holder());
+  if (instance->it.has_value) {
+    info.GetReturnValue().Set(instance->it.current_value);
+  }
 }
 
 void RoaringBitmap32Iterator::next(const v8::FunctionCallbackInfo<v8::Value> & info) {
