@@ -1,94 +1,96 @@
-#include "../v8utils.h"
+#include "../v8utils/v8utils.h"
 
 #include "../RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
-#include "../TypedArrays.h"
 #include "RoaringBitmap32.h"
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
 
-Nan::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
-Nan::Persistent<v8::Function> RoaringBitmap32::constructor;
+v8::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
+v8::Persistent<v8::Function> RoaringBitmap32::constructor;
 
 uint8_t roaring_bitmap_zero[sizeof(roaring_bitmap_t)] = {0};
 
 void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
-  auto className = Nan::New("RoaringBitmap32").ToLocalChecked();
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::HandleScope scope(isolate);
 
-  v8::Local<v8::FunctionTemplate> ctor = Nan::New<v8::FunctionTemplate>(RoaringBitmap32::New);
-  RoaringBitmap32::constructorTemplate.Reset(ctor);
+  v8::Local<v8::String> className = v8::String::NewFromUtf8(isolate, "RoaringBitmap32");
+
+  v8::Local<v8::FunctionTemplate> ctor = v8::FunctionTemplate::New(isolate, RoaringBitmap32::New);
+  RoaringBitmap32::constructorTemplate.Reset(isolate, ctor);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
 
-  auto ctorInstanceTemplate = ctor->InstanceTemplate();
+  v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
 
-  Nan::SetAccessor(ctorInstanceTemplate, Nan::New("isEmpty").ToLocalChecked(), isEmpty_getter);
-  Nan::SetAccessor(ctorInstanceTemplate, Nan::New("size").ToLocalChecked(), size_getter);
+  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "isEmpty"), isEmpty_getter);
+  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "size"), size_getter);
+  ctorInstanceTemplate->SetAccessor(v8::Symbol::GetIterator(isolate), iterator_getter);
 
-  Nan::SetNamedPropertyHandler(ctorInstanceTemplate, namedPropertyGetter);
-
-  Nan::SetPrototypeMethod(ctor, "minimum", minimum);
-  Nan::SetPrototypeMethod(ctor, "maximum", maximum);
-  Nan::SetPrototypeMethod(ctor, "contains", has);
-  Nan::SetPrototypeMethod(ctor, "has", has);
-  Nan::SetPrototypeMethod(ctor, "containsRange", hasRange);
-  Nan::SetPrototypeMethod(ctor, "hasRange", hasRange);
-  Nan::SetPrototypeMethod(ctor, "copyFrom", copyFrom);
-  Nan::SetPrototypeMethod(ctor, "add", add);
-  Nan::SetPrototypeMethod(ctor, "tryAdd", tryAdd);
-  Nan::SetPrototypeMethod(ctor, "addMany", addMany);
-  Nan::SetPrototypeMethod(ctor, "remove", remove);
-  Nan::SetPrototypeMethod(ctor, "removeMany", removeMany);
-  Nan::SetPrototypeMethod(ctor, "delete", removeChecked);
-  Nan::SetPrototypeMethod(ctor, "clear", clear);
-  Nan::SetPrototypeMethod(ctor, "orInPlace", addMany);
-  Nan::SetPrototypeMethod(ctor, "andNotInPlace", removeMany);
-  Nan::SetPrototypeMethod(ctor, "andInPlace", andInPlace);
-  Nan::SetPrototypeMethod(ctor, "xorInPlace", xorInPlace);
-  Nan::SetPrototypeMethod(ctor, "isSubset", isSubset);
-  Nan::SetPrototypeMethod(ctor, "isStrictSubset", isStrictSubset);
-  Nan::SetPrototypeMethod(ctor, "isEqual", isEqual);
-  Nan::SetPrototypeMethod(ctor, "intersects", intersects);
-  Nan::SetPrototypeMethod(ctor, "andCardinality", andCardinality);
-  Nan::SetPrototypeMethod(ctor, "orCardinality", orCardinality);
-  Nan::SetPrototypeMethod(ctor, "andNotCardinality", andNotCardinality);
-  Nan::SetPrototypeMethod(ctor, "xorCardinality", xorCardinality);
-  Nan::SetPrototypeMethod(ctor, "jaccardIndex", jaccardIndex);
-  Nan::SetPrototypeMethod(ctor, "flipRange", flipRange);
-  Nan::SetPrototypeMethod(ctor, "addRange", addRange);
-  Nan::SetPrototypeMethod(ctor, "removeRunCompression", removeRunCompression);
-  Nan::SetPrototypeMethod(ctor, "runOptimize", runOptimize);
-  Nan::SetPrototypeMethod(ctor, "shrinkToFit", shrinkToFit);
-  Nan::SetPrototypeMethod(ctor, "rank", rank);
-  Nan::SetPrototypeMethod(ctor, "select", select);
-  Nan::SetPrototypeMethod(ctor, "toUint32Array", toUint32Array);
-  Nan::SetPrototypeMethod(ctor, "toArray", toArray);
-  Nan::SetPrototypeMethod(ctor, "toSet", toSet);
-  Nan::SetPrototypeMethod(ctor, "toJSON", toArray);
-  Nan::SetPrototypeMethod(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
-  Nan::SetPrototypeMethod(ctor, "serialize", serialize);
-  Nan::SetPrototypeMethod(ctor, "deserialize", deserialize);
-  Nan::SetPrototypeMethod(ctor, "clone", clone);
-  Nan::SetPrototypeMethod(ctor, "toString", toString);
-  Nan::SetPrototypeMethod(ctor, "contentToString", contentToString);
-  Nan::SetPrototypeMethod(ctor, "statistics", statistics);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "minimum", minimum);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "maximum", maximum);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "contains", has);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "has", has);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "containsRange", hasRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "hasRange", hasRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "copyFrom", copyFrom);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "add", add);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "tryAdd", tryAdd);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "addMany", addMany);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "remove", remove);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "removeMany", removeMany);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "delete", removeChecked);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "clear", clear);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "orInPlace", addMany);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "andNotInPlace", removeMany);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "andInPlace", andInPlace);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "xorInPlace", xorInPlace);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isSubset", isSubset);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSubset", isStrictSubset);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isEqual", isEqual);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "intersects", intersects);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "andCardinality", andCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "orCardinality", orCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "andNotCardinality", andNotCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "xorCardinality", xorCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "jaccardIndex", jaccardIndex);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "flipRange", flipRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "addRange", addRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "removeRunCompression", removeRunCompression);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "runOptimize", runOptimize);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "shrinkToFit", shrinkToFit);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "rank", rank);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "select", select);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32Array", toUint32Array);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toArray", toArray);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toSet", toSet);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toJSON", toArray);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "serialize", serialize);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "deserialize", deserialize);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "clone", clone);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toString", toString);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "contentToString", contentToString);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "statistics", statistics);
 
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
 
-  Nan::SetMethod(ctorObject, "deserialize", deserializeStatic);
-  Nan::SetMethod(ctorObject, "swap", swapStatic);
-  Nan::SetMethod(ctorObject, "and", andStatic);
-  Nan::SetMethod(ctorObject, "or", orStatic);
-  Nan::SetMethod(ctorObject, "xor", xorStatic);
-  Nan::SetMethod(ctorObject, "andNot", andNotStatic);
-  Nan::SetMethod(ctorObject, "orMany", orManyStatic);
+  NODE_SET_METHOD(ctorObject, "deserialize", deserializeStatic);
+  NODE_SET_METHOD(ctorObject, "and", andStatic);
+  NODE_SET_METHOD(ctorObject, "or", orStatic);
+  NODE_SET_METHOD(ctorObject, "xor", xorStatic);
+  NODE_SET_METHOD(ctorObject, "andNot", andNotStatic);
+  NODE_SET_METHOD(ctorObject, "orMany", orManyStatic);
 
-  ctorObject->Set(Nan::New("from").ToLocalChecked(), ctorFunction);
+  NODE_SET_METHOD(ctorObject, "swap", swapStatic);
 
-  v8utils::defineHiddenField(ctorObject, "default", ctorObject);
+  ctorObject->Set(v8::String::NewFromUtf8(isolate, "from"), ctorFunction);
+
+  v8utils::defineHiddenField(isolate, ctorObject, "default", ctorObject);
 
   exports->Set(className, ctorFunction);
-  constructor.Reset(ctorFunction);
+  constructor.Reset(isolate, ctorFunction);
 }
 
 RoaringBitmap32::RoaringBitmap32() : roaring(*((roaring_bitmap_t *)&roaring_bitmap_zero)) {
@@ -98,17 +100,20 @@ RoaringBitmap32::~RoaringBitmap32() {
   ra_clear(&roaring.high_low_container);
 }
 
-void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   if (!info.IsConstructCall()) {
-    v8::Local<v8::Function> cons = Nan::New(constructor);
+    v8::Local<v8::Function> cons = constructor.Get(isolate);
     if (info.Length() < 1) {
-      auto v = Nan::NewInstance(cons, 0, nullptr);
+      auto v = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
       if (!v.IsEmpty()) {
         info.GetReturnValue().Set(v.ToLocalChecked());
       }
     } else {
       v8::Local<v8::Value> argv[1] = {info[0]};
-      auto v = Nan::NewInstance(cons, 1, argv);
+      auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
       if (!v.IsEmpty()) {
         info.GetReturnValue().Set(v.ToLocalChecked());
       }
@@ -116,24 +121,22 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
     return;
   }
 
-  // create a new instance and wrap our javascript instance
   RoaringBitmap32 * instance = new RoaringBitmap32();
 
   if (!instance)
-    return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to create native roaring container").ToLocalChecked());
+    return v8utils::throwError("RoaringBitmap32::ctor - failed to create native roaring container");
 
   bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
 
   if (!hasParameter) {
     if (!ra_init(&instance->roaring.high_low_container)) {
       delete instance;
-      return Nan::ThrowError(Nan::New("RoaringBitmap32::ctor - failed to initialize native roaring container").ToLocalChecked());
+      return v8utils::throwError("RoaringBitmap32::ctor - failed to initialize native roaring container");
     }
   }
 
-  instance->Wrap(info.Holder());
+  instance->Wrap(isolate, info.Holder());
 
-  // return the wrapped javascript instance
   info.GetReturnValue().Set(info.Holder());
 
   if (hasParameter) {
@@ -145,50 +148,68 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   }
 }
 
-NAN_PROPERTY_GETTER(RoaringBitmap32::namedPropertyGetter) {
-  if (property->IsSymbol()) {
-    if (Nan::Equals(property, v8::Symbol::GetIterator(info.GetIsolate())).FromJust()) {
-      auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
-      auto iter_template = Nan::New<v8::FunctionTemplate>();
-      Nan::SetCallHandler(iter_template,
-          [](const Nan::FunctionCallbackInfo<v8::Value> & info) {
-            v8::Local<v8::Function> cons = Nan::New(RoaringBitmap32Iterator::constructor);
-            v8::Local<v8::Value> argv[1] = {info.This()};
-            auto resultMaybe = Nan::NewInstance(cons, 1, argv);
-            if (!resultMaybe.IsEmpty())
-              info.GetReturnValue().Set(resultMaybe.ToLocalChecked());
-          },
-          Nan::New<v8::External>(self));
-      info.GetReturnValue().Set(iter_template->GetFunction());
-    }
-  }
+void RoaringBitmap32::iterator_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+
+  v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
+      [](const v8::FunctionCallbackInfo<v8::Value> & info) {
+        v8::Isolate * isolate = info.GetIsolate();
+        v8::HandleScope scope(isolate);
+        v8::Local<v8::Function> cons = RoaringBitmap32Iterator::constructor.Get(isolate);
+        v8::Local<v8::Value> argv[1] = {info.Holder()};
+        auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
+        if (!resultMaybe.IsEmpty())
+          info.GetReturnValue().Set(resultMaybe.ToLocalChecked());
+      },
+      v8::External::New(isolate, self));
+
+  info.GetReturnValue().Set(iterTemplate->GetFunction());
 }
 
-NAN_PROPERTY_GETTER(RoaringBitmap32::size_getter) {
-  const RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
-  auto size = roaring_bitmap_get_cardinality(&self->roaring);
+void RoaringBitmap32::size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  const RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
+  if (!self) {
+    return info.GetReturnValue().Set((uint32_t)0);
+  }
+
+  size_t size = roaring_bitmap_get_cardinality(&self->roaring);
   if (size <= 0xFFFFFFFF) {
-    info.GetReturnValue().Set((uint32_t)size);
-  } else {
-    info.GetReturnValue().Set((double)size);
+    return info.GetReturnValue().Set((uint32_t)size);
   }
+
+  info.GetReturnValue().Set((double)size);
 }
 
-NAN_PROPERTY_GETTER(RoaringBitmap32::isEmpty_getter) {
-  const RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
-  info.GetReturnValue().Set(roaring_bitmap_is_empty(&self->roaring));
+void RoaringBitmap32::isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  const RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
+  info.GetReturnValue().Set(self && roaring_bitmap_is_empty(&self->roaring));
 }
 
-void RoaringBitmap32::has(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::has(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   if (info.Length() < 1 || !info[0]->IsUint32()) {
     info.GetReturnValue().Set(false);
   } else {
-    const RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
+    const RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
     info.GetReturnValue().Set(roaring_bitmap_contains(&self->roaring, info[0]->Uint32Value()));
   }
 }
 
-void RoaringBitmap32::hasRange(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::hasRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   if (info.Length() < 2 || !info[0]->IsNumber() || !info[1]->IsNumber()) {
     return info.GetReturnValue().Set(false);
   }
@@ -213,109 +234,145 @@ void RoaringBitmap32::hasRange(const Nan::FunctionCallbackInfo<v8::Value> & info
     return info.GetReturnValue().Set(false);
   }
 
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
   info.GetReturnValue().Set(roaring_bitmap_contains_range(&self->roaring, minInteger, maxInteger));
 }
 
-void RoaringBitmap32::minimum(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::minimum(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   return info.GetReturnValue().Set(roaring_bitmap_minimum(&self->roaring));
 }
 
-void RoaringBitmap32::maximum(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::maximum(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   return info.GetReturnValue().Set(roaring_bitmap_maximum(&self->roaring));
 }
 
-void RoaringBitmap32::rank(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::rank(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   if (info.Length() < 1 || !info[0]->IsUint32()) {
     return info.GetReturnValue().Set(0);
   }
 
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set((double)roaring_bitmap_rank(&self->roaring, info[0]->Uint32Value()));
 }
 
-void RoaringBitmap32::select(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::select(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   if (info.Length() < 1 || !info[0]->IsUint32()) {
-    return info.GetReturnValue().Set(Nan::Undefined());
+    return info.GetReturnValue().Set(v8::Undefined(isolate));
   }
 
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
   uint32_t element;
   if (roaring_bitmap_select(&self->roaring, info[0]->Uint32Value(), &element)) {
     return info.GetReturnValue().Set(element);
   }
 
-  return info.GetReturnValue().Set(Nan::Undefined());
+  return info.GetReturnValue().Set(v8::Undefined(isolate));
 }
 
-void RoaringBitmap32::removeRunCompression(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::removeRunCompression(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set(roaring_bitmap_remove_run_compression(&self->roaring));
 }
 
-void RoaringBitmap32::runOptimize(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::runOptimize(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set(roaring_bitmap_run_optimize(&self->roaring));
 }
 
-void RoaringBitmap32::shrinkToFit(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::shrinkToFit(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set((double)roaring_bitmap_shrink_to_fit(&self->roaring));
 }
 
-void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
   auto size = roaring_bitmap_get_cardinality(&self->roaring);
 
   if (size >= 0xFFFFFFFF) {
-    return Nan::ThrowError(Nan::New("RoaringBitmap32::toUint32Array - array too big").ToLocalChecked());
+    return v8utils::throwError("RoaringBitmap32::toUint32Array - array too big");
   }
 
-  v8::Local<v8::Value> argv[1] = {Nan::New((uint32_t)size)};
-  auto typedArrayMaybe = Nan::NewInstance(TypedArrays::Uint32Array_ctor.Get(info.GetIsolate()), 1, argv);
+  v8::Local<v8::Value> argv[1] = {v8::Uint32::NewFromUnsigned(isolate, (uint32_t)size)};
+  auto typedArrayMaybe = TypedArrays::Uint32Array_ctor.Get(isolate)->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (typedArrayMaybe.IsEmpty())
     return;
 
   auto typedArray = typedArrayMaybe.ToLocalChecked();
 
   if (size != 0) {
-    Nan::TypedArrayContents<uint32_t> typedArrayContent(typedArray);
-    if (!typedArrayContent.length() || !*typedArrayContent)
-      return Nan::ThrowError(Nan::New("RoaringBitmap32::toUint32Array - failed to allocate").ToLocalChecked());
+    const v8utils::TypedArrayContent<uint32_t> typedArrayContent(isolate, typedArray);
+    if (!typedArrayContent.length || !typedArrayContent.data)
+      return v8utils::throwError("RoaringBitmap32::toUint32Array - failed to allocate");
 
-    roaring_bitmap_to_uint32_array(&self->roaring, *typedArrayContent);
+    roaring_bitmap_to_uint32_array(&self->roaring, typedArrayContent.data);
   }
 
   info.GetReturnValue().Set(typedArray);
 }
 
-void RoaringBitmap32::toArray(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::toArray(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   v8::Local<v8::Value> argv[1] = {info.Holder()};
   info.GetReturnValue().Set(TypedArrays::Array_from.Get(info.GetIsolate())->Call(TypedArrays::Array.Get(info.GetIsolate()), 1, argv));
 }
 
-void RoaringBitmap32::toSet(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Local<v8::Value> argv[1] = {info.This()};
-  auto v = Nan::NewInstance(TypedArrays::Set_ctor.Get(info.GetIsolate()), 1, argv);
+void RoaringBitmap32::toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::Value> argv[1] = {info.Holder()};
+  auto v = TypedArrays::Set_ctor.Get(isolate)->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (!v.IsEmpty()) {
     info.GetReturnValue().Set(v.ToLocalChecked());
   }
 }
 
-void RoaringBitmap32::toString(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::toString(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   std::string result("RoaringBitmap32:");
   result += std::to_string(self ? roaring_bitmap_get_cardinality(&self->roaring) : 0);
-  info.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+  info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, result.c_str()));
 }
 
-void RoaringBitmap32::contentToString(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::contentToString(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   struct iter_data {
     std::string str;
     char first_char = '[';
@@ -348,37 +405,43 @@ void RoaringBitmap32::contentToString(const Nan::FunctionCallbackInfo<v8::Value>
   }
   iterData.str += ']';
 
-  info.GetReturnValue().Set(Nan::New(iterData.str).ToLocalChecked());
+  info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, iterData.str.c_str()));
 }
 
-void RoaringBitmap32::clone(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Local<v8::Function> cons = Nan::New(constructor);
+void RoaringBitmap32::clone(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
 
   v8::Local<v8::Value> argv[1] = {info.Holder()};
-  auto v = Nan::NewInstance(cons, 1, argv);
+  auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (!v.IsEmpty()) {
     info.GetReturnValue().Set(v.ToLocalChecked());
   }
 }
 
-void RoaringBitmap32::statistics(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+void RoaringBitmap32::statistics(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   roaring_statistics_t stats;
   roaring_bitmap_statistics(&self->roaring, &stats);
-  auto result = Nan::New<v8::Object>();
-  result->Set(Nan::New<v8::String>("containers").ToLocalChecked(), Nan::New(stats.n_containers));
-  result->Set(Nan::New<v8::String>("arrayContainers").ToLocalChecked(), Nan::New(stats.n_array_containers));
-  result->Set(Nan::New<v8::String>("runContainers").ToLocalChecked(), Nan::New(stats.n_run_containers));
-  result->Set(Nan::New<v8::String>("bitsetContainers").ToLocalChecked(), Nan::New(stats.n_bitset_containers));
-  result->Set(Nan::New<v8::String>("valuesInArrayContainers").ToLocalChecked(), Nan::New(stats.n_values_array_containers));
-  result->Set(Nan::New<v8::String>("valuesInRunContainers").ToLocalChecked(), Nan::New(stats.n_values_run_containers));
-  result->Set(Nan::New<v8::String>("valuesInBitsetContainers").ToLocalChecked(), Nan::New(stats.n_values_bitset_containers));
-  result->Set(Nan::New<v8::String>("bytesInArrayContainers").ToLocalChecked(), Nan::New(stats.n_bytes_array_containers));
-  result->Set(Nan::New<v8::String>("bytesInRunContainers").ToLocalChecked(), Nan::New(stats.n_bytes_run_containers));
-  result->Set(Nan::New<v8::String>("bytesInBitsetContainers").ToLocalChecked(), Nan::New(stats.n_bytes_bitset_containers));
-  result->Set(Nan::New<v8::String>("maxValue").ToLocalChecked(), Nan::New(stats.max_value));
-  result->Set(Nan::New<v8::String>("minValue").ToLocalChecked(), Nan::New(stats.min_value));
-  result->Set(Nan::New<v8::String>("sumOfAllValues").ToLocalChecked(), Nan::New((double)stats.sum_value));
-  result->Set(Nan::New<v8::String>("size").ToLocalChecked(), Nan::New((double)stats.cardinality));
+  auto result = v8::Object::New(isolate);
+  result->Set(v8::String::NewFromUtf8(isolate, "containers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "arrayContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "runContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bitsetContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInArrayContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_values_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInRunContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_values_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInBitsetContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_values_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInArrayContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInRunContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInBitsetContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "maxValue"), v8::Uint32::NewFromUnsigned(isolate, stats.max_value));
+  result->Set(v8::String::NewFromUtf8(isolate, "minValue"), v8::Uint32::NewFromUnsigned(isolate, stats.min_value));
+  result->Set(v8::String::NewFromUtf8(isolate, "sumOfAllValues"), v8::Number::New(isolate, (double)stats.sum_value));
+  result->Set(v8::String::NewFromUtf8(isolate, "size"), v8::Number::New(isolate, (double)stats.cardinality));
   info.GetReturnValue().Set(result);
 }

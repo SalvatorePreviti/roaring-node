@@ -58,6 +58,7 @@
     "exception": "cpp",
     "stdexcept": "cpp",
     "typeinfo": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "cmath": "cpp"
   }
 }

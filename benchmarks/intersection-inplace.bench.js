@@ -44,7 +44,7 @@ bench.suite('intersection (in place)', suite => {
       s2 = new RoaringBitmap32(b2)
     },
     fn() {
-      s2.andInPlace(s2)
+      s2.andInPlace(s1)
     }
   })
 })
