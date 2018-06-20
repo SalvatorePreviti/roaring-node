@@ -34,7 +34,7 @@ void RoaringBitmap32::serialize(const Nan::FunctionCallbackInfo<v8::Value> & inf
 
   if (portable) {
     auto typedArray = TypedArrays::bufferAllocUnsafe(info.GetIsolate(), portablesize);
-    v8utils::TypedArrayContent<uint8_t> buf(isolate, typedArray);
+    const v8utils::TypedArrayContent<uint8_t> buf(isolate, typedArray);
     if (!buf.length || !buf.data)
       return v8utils::throwError("RoaringBitmap32::serialize - failed to allocate");
 
@@ -46,7 +46,7 @@ void RoaringBitmap32::serialize(const Nan::FunctionCallbackInfo<v8::Value> & inf
 
     if (portablesize < sizeasarray || sizeasarray >= MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES - 1) {
       auto typedArray = TypedArrays::bufferAllocUnsafe(isolate, portablesize + 1);
-      v8utils::TypedArrayContent<uint8_t> buf(isolate, typedArray);
+      const v8utils::TypedArrayContent<uint8_t> buf(isolate, typedArray);
       if (!buf.length || !buf.data)
         return v8utils::throwError("RoaringBitmap32::serialize - failed to allocate");
 
@@ -55,7 +55,7 @@ void RoaringBitmap32::serialize(const Nan::FunctionCallbackInfo<v8::Value> & inf
       info.GetReturnValue().Set(typedArray);
     } else {
       auto typedArray = TypedArrays::bufferAllocUnsafe(isolate, (size_t)sizeasarray + 1);
-      v8utils::TypedArrayContent<uint8_t> buf(isolate, typedArray);
+      const v8utils::TypedArrayContent<uint8_t> buf(isolate, typedArray);
       if (!buf.length || !buf.data)
         return v8utils::throwError("RoaringBitmap32::serialize - failed to allocate");
 
@@ -103,7 +103,7 @@ void RoaringBitmap32::deserializeInner(const Nan::FunctionCallbackInfo<v8::Value
 
   bool portable = info.Length() > 1 && info[1]->IsTrue();
 
-  v8utils::TypedArrayContent<uint8_t> typedArray(isolate, info[0]);
+  const v8utils::TypedArrayContent<uint8_t> typedArray(isolate, info[0]);
   auto bufLen = typedArray.length;
   if (bufLen == 0) {
     roaring_bitmap_t newRoaring;

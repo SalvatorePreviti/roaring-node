@@ -295,7 +295,7 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
   auto typedArray = typedArrayMaybe.ToLocalChecked();
 
   if (size != 0) {
-    v8utils::TypedArrayContent<uint32_t> typedArrayContent(isolate, typedArray);
+    const v8utils::TypedArrayContent<uint32_t> typedArrayContent(isolate, typedArray);
     if (!typedArrayContent.length || !typedArrayContent.data)
       return v8utils::throwError("RoaringBitmap32::toUint32Array - failed to allocate");
 

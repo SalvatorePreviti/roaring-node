@@ -39,7 +39,6 @@ namespace v8utils {
 
     inline TypedArrayContent(v8::Isolate * isolate, v8::Local<v8::Value> from) : length(0), data(NULL) {
       v8::HandleScope scope(isolate);
-
       if (from->IsArrayBufferView()) {
         v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
         this->length = array->ByteLength() / sizeof(T);
