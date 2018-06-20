@@ -91,7 +91,7 @@ void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> &
 
 void RoaringBitmap32Iterator::next(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32Iterator * instance = Nan::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.This());
+  RoaringBitmap32Iterator * instance = Nan::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.Holder());
 
   if (!instance || !instance->it.has_value) {
     return setReturnValueToIteratorResult(info);

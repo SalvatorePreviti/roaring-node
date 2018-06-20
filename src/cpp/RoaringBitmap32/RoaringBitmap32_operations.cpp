@@ -9,7 +9,7 @@ void RoaringBitmap32::add(const Nan::FunctionCallbackInfo<v8::Value> & info) {
 
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   roaring_bitmap_add(&self->roaring, info[0]->Uint32Value());
-  return info.GetReturnValue().Set(info.This());
+  return info.GetReturnValue().Set(info.Holder());
 }
 
 void RoaringBitmap32::tryAdd(const Nan::FunctionCallbackInfo<v8::Value> & info) {
@@ -97,7 +97,7 @@ void RoaringBitmap32::addMany(const Nan::FunctionCallbackInfo<v8::Value> & info)
   if (info.Length() > 0) {
     RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
     roaringAddMany(info.GetIsolate(), self, info[0]);
-    return info.GetReturnValue().Set(info.This());
+    return info.GetReturnValue().Set(info.Holder());
   }
   return v8utils::throwTypeError("Uint32Array, RoaringBitmap32 or Iterable<number> expected");
 }
@@ -109,12 +109,12 @@ void RoaringBitmap32::removeMany(const Nan::FunctionCallbackInfo<v8::Value> & in
     if (RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(arg)) {
       RoaringBitmap32 * other = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
       roaring_bitmap_andnot_inplace(&self->roaring, &other->roaring);
-      return info.GetReturnValue().Set(info.This());
+      return info.GetReturnValue().Set(info.Holder());
     } else {
       RoaringBitmap32 tmp;
       roaringAddMany(info.GetIsolate(), &tmp, arg);
       roaring_bitmap_andnot_inplace(&self->roaring, &tmp.roaring);
-      return info.GetReturnValue().Set(info.This());
+      return info.GetReturnValue().Set(info.Holder());
     }
   }
 
@@ -128,12 +128,12 @@ void RoaringBitmap32::andInPlace(const Nan::FunctionCallbackInfo<v8::Value> & in
     if (RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(arg)) {
       RoaringBitmap32 * other = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
       roaring_bitmap_and_inplace(&self->roaring, &other->roaring);
-      return info.GetReturnValue().Set(info.This());
+      return info.GetReturnValue().Set(info.Holder());
     } else {
       RoaringBitmap32 tmp;
       roaringAddMany(info.GetIsolate(), &tmp, arg);
       roaring_bitmap_and_inplace(&self->roaring, &tmp.roaring);
-      return info.GetReturnValue().Set(info.This());
+      return info.GetReturnValue().Set(info.Holder());
     }
   }
 
@@ -147,12 +147,12 @@ void RoaringBitmap32::xorInPlace(const Nan::FunctionCallbackInfo<v8::Value> & in
     if (RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(arg)) {
       RoaringBitmap32 * other = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
       roaring_bitmap_xor_inplace(&self->roaring, &other->roaring);
-      return info.GetReturnValue().Set(info.This());
+      return info.GetReturnValue().Set(info.Holder());
     } else {
       RoaringBitmap32 tmp;
       roaringAddMany(info.GetIsolate(), &tmp, arg);
       roaring_bitmap_xor_inplace(&self->roaring, &tmp.roaring);
-      return info.GetReturnValue().Set(info.This());
+      return info.GetReturnValue().Set(info.Holder());
     }
   }
 
