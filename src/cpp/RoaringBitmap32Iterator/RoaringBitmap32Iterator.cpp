@@ -90,7 +90,6 @@ void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> &
 }
 
 void RoaringBitmap32Iterator::next(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32Iterator * instance = Nan::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.Holder());
 
   if (!instance || !instance->it.has_value) {
@@ -101,12 +100,12 @@ void RoaringBitmap32Iterator::next(const Nan::FunctionCallbackInfo<v8::Value> & 
     roaring_init_iterator(&instance->roaring->roaring, &instance->it);
   } else if (!roaring_advance_uint32_iterator(&instance->it)) {
     instance->it.has_value = false;
-    instance->bitmap.Reset(isolate, v8::Null(isolate));
+    instance->bitmap.Reset();
     return setReturnValueToIteratorResult(info);
   }
 
   if (!instance->it.has_value) {
-    instance->bitmap.Reset(isolate, v8::Null(isolate));
+    instance->bitmap.Reset();
     return setReturnValueToIteratorResult(info);
   }
 
@@ -137,4 +136,5 @@ RoaringBitmap32Iterator::RoaringBitmap32Iterator() : roaring(nullptr) {
 }
 
 RoaringBitmap32Iterator::~RoaringBitmap32Iterator() {
+  this->bitmap.Reset();
 }
