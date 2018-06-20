@@ -84,7 +84,7 @@ void RoaringBitmap32::deserializeInner(const Nan::FunctionCallbackInfo<v8::Value
   if (isStatic) {
     v8::Local<v8::Function> cons = constructor.Get(isolate);
 
-    auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
+    auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
     if (resultMaybe.IsEmpty())
       return;
 

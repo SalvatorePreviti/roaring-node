@@ -34,12 +34,12 @@ void RoaringBitmap32Iterator::New(const Nan::FunctionCallbackInfo<v8::Value> & i
   if (!info.IsConstructCall()) {
     v8::Local<v8::Function> cons = constructor.Get(isolate);
     if (info.Length() < 1) {
-      auto v = Nan::NewInstance(cons, 0, nullptr);
+      auto v = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
       if (!v.IsEmpty())
         info.GetReturnValue().Set(v.ToLocalChecked());
     } else {
       v8::Local<v8::Value> argv[1] = {info[0]};
-      auto v = Nan::NewInstance(cons, 1, argv);
+      auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
       if (!v.IsEmpty())
         info.GetReturnValue().Set(v.ToLocalChecked());
     }
@@ -75,17 +75,17 @@ void RoaringBitmap32Iterator::New(const Nan::FunctionCallbackInfo<v8::Value> & i
 
 void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  auto obj = Nan::New<v8::Object>();
+  auto obj = v8::Object::New(isolate);
   obj->Set(v8::String::NewFromUtf8(isolate, "value"), Nan::Undefined());
-  obj->Set(v8::String::NewFromUtf8(isolate, "done"), Nan::New<v8::Boolean>(true));
+  obj->Set(v8::String::NewFromUtf8(isolate, "done"), v8::Boolean::New(isolate, true));
   info.GetReturnValue().Set(obj);
 }
 
 void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> & info, uint32_t value) {
   v8::Isolate * isolate = info.GetIsolate();
-  auto obj = Nan::New<v8::Object>();
+  auto obj = v8::Object::New(isolate);
   obj->Set(v8::String::NewFromUtf8(isolate, "value"), Nan::New<v8::Uint32>(value));
-  obj->Set(v8::String::NewFromUtf8(isolate, "done"), Nan::New<v8::Boolean>(false));
+  obj->Set(v8::String::NewFromUtf8(isolate, "done"), v8::Boolean::New(isolate, false));
   info.GetReturnValue().Set(obj);
 }
 

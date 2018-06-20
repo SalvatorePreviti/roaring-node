@@ -105,13 +105,13 @@ void RoaringBitmap32::New(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   if (!info.IsConstructCall()) {
     v8::Local<v8::Function> cons = constructor.Get(isolate);
     if (info.Length() < 1) {
-      auto v = Nan::NewInstance(cons, 0, nullptr);
+      auto v = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
       if (!v.IsEmpty()) {
         info.GetReturnValue().Set(v.ToLocalChecked());
       }
     } else {
       v8::Local<v8::Value> argv[1] = {info[0]};
-      auto v = Nan::NewInstance(cons, 1, argv);
+      auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
       if (!v.IsEmpty()) {
         info.GetReturnValue().Set(v.ToLocalChecked());
       }
@@ -276,6 +276,7 @@ void RoaringBitmap32::shrinkToFit(const Nan::FunctionCallbackInfo<v8::Value> & i
 }
 
 void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
   auto size = roaring_bitmap_get_cardinality(&self->roaring);
@@ -285,7 +286,7 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
   }
 
   v8::Local<v8::Value> argv[1] = {Nan::New((uint32_t)size)};
-  auto typedArrayMaybe = Nan::NewInstance(TypedArrays::Uint32Array_ctor.Get(info.GetIsolate()), 1, argv);
+  auto typedArrayMaybe = TypedArrays::Uint32Array_ctor.Get(isolate)->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (typedArrayMaybe.IsEmpty())
     return;
 
@@ -308,8 +309,9 @@ void RoaringBitmap32::toArray(const Nan::FunctionCallbackInfo<v8::Value> & info)
 }
 
 void RoaringBitmap32::toSet(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   v8::Local<v8::Value> argv[1] = {info.This()};
-  auto v = Nan::NewInstance(TypedArrays::Set_ctor.Get(info.GetIsolate()), 1, argv);
+  auto v = TypedArrays::Set_ctor.Get(isolate)->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (!v.IsEmpty()) {
     info.GetReturnValue().Set(v.ToLocalChecked());
   }
@@ -366,7 +368,7 @@ void RoaringBitmap32::clone(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   v8::Local<v8::Function> cons = constructor.Get(isolate);
 
   v8::Local<v8::Value> argv[1] = {info.Holder()};
-  auto v = Nan::NewInstance(cons, 1, argv);
+  auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (!v.IsEmpty()) {
     info.GetReturnValue().Set(v.ToLocalChecked());
   }
@@ -377,7 +379,7 @@ void RoaringBitmap32::statistics(const Nan::FunctionCallbackInfo<v8::Value> & in
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   roaring_statistics_t stats;
   roaring_bitmap_statistics(&self->roaring, &stats);
-  auto result = Nan::New<v8::Object>();
+  auto result = v8::Object::New(isolate);
   result->Set(v8::String::NewFromUtf8(isolate, "containers"), Nan::New(stats.n_containers));
   result->Set(v8::String::NewFromUtf8(isolate, "arrayContainers"), Nan::New(stats.n_array_containers));
   result->Set(v8::String::NewFromUtf8(isolate, "runContainers"), Nan::New(stats.n_run_containers));

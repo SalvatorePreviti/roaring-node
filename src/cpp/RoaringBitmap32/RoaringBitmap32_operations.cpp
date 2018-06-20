@@ -273,7 +273,7 @@ void RoaringBitmap32::andStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
 
   v8::Local<v8::Function> cons = constructor.Get(isolate);
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
+  auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty())
     return;
 
@@ -304,7 +304,7 @@ void RoaringBitmap32::orStatic(const Nan::FunctionCallbackInfo<v8::Value> & info
 
   v8::Local<v8::Function> cons = constructor.Get(isolate);
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
+  auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty())
     return;
 
@@ -335,7 +335,7 @@ void RoaringBitmap32::xorStatic(const Nan::FunctionCallbackInfo<v8::Value> & inf
 
   v8::Local<v8::Function> cons = constructor.Get(isolate);
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
+  auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty())
     return;
 
@@ -366,7 +366,7 @@ void RoaringBitmap32::andNotStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
 
   v8::Local<v8::Function> cons = constructor.Get(isolate);
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
+  auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty())
     return;
 
@@ -396,7 +396,7 @@ void orManyStaticImpl(const Nan::FunctionCallbackInfo<v8::Value> & info, T & arr
     }
 
     v8::Local<v8::Value> argv[] = {info[0]};
-    auto v = Nan::NewInstance(cons, 1, argv);
+    auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
     if (!v.IsEmpty()) {
       info.GetReturnValue().Set(v.ToLocalChecked());
     }
@@ -423,7 +423,7 @@ void orManyStaticImpl(const Nan::FunctionCallbackInfo<v8::Value> & info, T & arr
     x[i] = &p->roaring;
   }
 
-  auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
+  auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty()) {
     free(x);
     return;
@@ -453,7 +453,7 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
   v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
 
   if (length == 0) {
-    auto v = Nan::NewInstance(constructor.Get(isolate), 0, nullptr);
+    auto v = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
     if (!v.IsEmpty()) {
       info.GetReturnValue().Set(v.ToLocalChecked());
     }
@@ -467,7 +467,7 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
       size_t arrayLength = array->Length();
 
       if (arrayLength == 0) {
-        auto v = Nan::NewInstance(cons, 0, nullptr);
+        auto v = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
         if (!v.IsEmpty()) {
           info.GetReturnValue().Set(v.ToLocalChecked());
         }
@@ -481,7 +481,7 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
         }
 
         v8::Local<v8::Value> argv[] = {item};
-        auto v = Nan::NewInstance(cons, 1, argv);
+        auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
         if (!v.IsEmpty()) {
           info.GetReturnValue().Set(v.ToLocalChecked());
         }
@@ -506,7 +506,7 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
         x[i] = &p->roaring;
       }
 
-      auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
+      auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
       if (resultMaybe.IsEmpty()) {
         free(x);
         return;
@@ -533,7 +533,7 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
       }
 
       v8::Local<v8::Value> argv[] = {info[0]};
-      auto v = Nan::NewInstance(cons, 1, argv);
+      auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
       if (!v.IsEmpty()) {
         info.GetReturnValue().Set(v.ToLocalChecked());
       }
@@ -556,7 +556,7 @@ void RoaringBitmap32::orManyStatic(const Nan::FunctionCallbackInfo<v8::Value> & 
       x[i] = &p->roaring;
     }
 
-    auto resultMaybe = Nan::NewInstance(cons, 0, nullptr);
+    auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
     if (resultMaybe.IsEmpty()) {
       free(x);
       return;
