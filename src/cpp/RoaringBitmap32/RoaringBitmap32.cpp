@@ -285,7 +285,7 @@ void RoaringBitmap32::toUint32Array(const Nan::FunctionCallbackInfo<v8::Value> &
     return v8utils::throwError("RoaringBitmap32::toUint32Array - array too big");
   }
 
-  v8::Local<v8::Value> argv[1] = {Nan::New((uint32_t)size)};
+  v8::Local<v8::Value> argv[1] = {v8::Uint32::NewFromUnsigned(isolate, (uint32_t)size)};
   auto typedArrayMaybe = TypedArrays::Uint32Array_ctor.Get(isolate)->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (typedArrayMaybe.IsEmpty())
     return;
@@ -380,18 +380,18 @@ void RoaringBitmap32::statistics(const Nan::FunctionCallbackInfo<v8::Value> & in
   roaring_statistics_t stats;
   roaring_bitmap_statistics(&self->roaring, &stats);
   auto result = v8::Object::New(isolate);
-  result->Set(v8::String::NewFromUtf8(isolate, "containers"), Nan::New(stats.n_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "arrayContainers"), Nan::New(stats.n_array_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "runContainers"), Nan::New(stats.n_run_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "bitsetContainers"), Nan::New(stats.n_bitset_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "valuesInArrayContainers"), Nan::New(stats.n_values_array_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "valuesInRunContainers"), Nan::New(stats.n_values_run_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "valuesInBitsetContainers"), Nan::New(stats.n_values_bitset_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "bytesInArrayContainers"), Nan::New(stats.n_bytes_array_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "bytesInRunContainers"), Nan::New(stats.n_bytes_run_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "bytesInBitsetContainers"), Nan::New(stats.n_bytes_bitset_containers));
-  result->Set(v8::String::NewFromUtf8(isolate, "maxValue"), Nan::New(stats.max_value));
-  result->Set(v8::String::NewFromUtf8(isolate, "minValue"), Nan::New(stats.min_value));
+  result->Set(v8::String::NewFromUtf8(isolate, "containers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "arrayContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "runContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bitsetContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInArrayContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_values_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInRunContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_values_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInBitsetContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_values_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInArrayContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInRunContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInBitsetContainers"), v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "maxValue"), v8::Uint32::NewFromUnsigned(isolate, stats.max_value));
+  result->Set(v8::String::NewFromUtf8(isolate, "minValue"), v8::Uint32::NewFromUnsigned(isolate, stats.min_value));
   result->Set(v8::String::NewFromUtf8(isolate, "sumOfAllValues"), v8::Number::New(isolate, (double)stats.sum_value));
   result->Set(v8::String::NewFromUtf8(isolate, "size"), v8::Number::New(isolate, (double)stats.cardinality));
   info.GetReturnValue().Set(result);

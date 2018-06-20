@@ -75,7 +75,7 @@ void RoaringBitmap32Iterator::New(const Nan::FunctionCallbackInfo<v8::Value> & i
 
 void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  auto obj = v8::Object::New(isolate);
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
   obj->Set(v8::String::NewFromUtf8(isolate, "value"), Nan::Undefined());
   obj->Set(v8::String::NewFromUtf8(isolate, "done"), v8::Boolean::New(isolate, true));
   info.GetReturnValue().Set(obj);
@@ -83,8 +83,8 @@ void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> &
 
 void setReturnValueToIteratorResult(const Nan::FunctionCallbackInfo<v8::Value> & info, uint32_t value) {
   v8::Isolate * isolate = info.GetIsolate();
-  auto obj = v8::Object::New(isolate);
-  obj->Set(v8::String::NewFromUtf8(isolate, "value"), Nan::New<v8::Uint32>(value));
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
+  obj->Set(v8::String::NewFromUtf8(isolate, "value"), v8::Uint32::NewFromUnsigned(isolate, value));
   obj->Set(v8::String::NewFromUtf8(isolate, "done"), v8::Boolean::New(isolate, false));
   info.GetReturnValue().Set(obj);
 }
