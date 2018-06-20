@@ -14,21 +14,20 @@ v8::Persistent<v8::Object> TypedArrays::Set;
 v8::Persistent<v8::Function> TypedArrays::Set_ctor;
 
 void TypedArrays::initTypedArrays(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
-  auto uint32Array = Nan::Get(global, v8::String::NewFromUtf8(isolate, "Uint32Array")).ToLocalChecked()->ToObject();
+  auto uint32Array = global->Get(v8::String::NewFromUtf8(isolate, "Uint32Array"))->ToObject();
   TypedArrays::Uint32Array.Reset(isolate, uint32Array);
   TypedArrays::Uint32Array_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array));
-  TypedArrays::Uint32Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(Nan::Get(uint32Array, v8::String::NewFromUtf8(isolate, "from")).ToLocalChecked()));
+  TypedArrays::Uint32Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(v8::String::NewFromUtf8(isolate, "from"))));
 
-  auto buffer = Nan::Get(global, v8::String::NewFromUtf8(isolate, "Buffer")).ToLocalChecked()->ToObject();
+  auto buffer = global->Get(v8::String::NewFromUtf8(isolate, "Buffer"))->ToObject();
   TypedArrays::Buffer.Reset(isolate, buffer);
-  TypedArrays::Buffer_allocUnsafe.Reset(
-      isolate, v8::Local<v8::Function>::Cast(Nan::Get(buffer, v8::String::NewFromUtf8(isolate, "allocUnsafe")).ToLocalChecked()));
+  TypedArrays::Buffer_allocUnsafe.Reset(isolate, v8::Local<v8::Function>::Cast(buffer->Get(v8::String::NewFromUtf8(isolate, "allocUnsafe"))));
 
-  auto array = Nan::Get(global, v8::String::NewFromUtf8(isolate, "Array")).ToLocalChecked()->ToObject();
+  auto array = global->Get(v8::String::NewFromUtf8(isolate, "Array"))->ToObject();
   TypedArrays::Array.Reset(isolate, array);
-  TypedArrays::Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(Nan::Get(array, v8::String::NewFromUtf8(isolate, "from")).ToLocalChecked()));
+  TypedArrays::Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(array->Get(v8::String::NewFromUtf8(isolate, "from"))));
 
-  auto set = Nan::Get(global, v8::String::NewFromUtf8(isolate, "Set")).ToLocalChecked()->ToObject();
+  auto set = global->Get(v8::String::NewFromUtf8(isolate, "Set"))->ToObject();
   TypedArrays::Set.Reset(isolate, set);
   TypedArrays::Set_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(set));
 }
@@ -55,7 +54,7 @@ namespace v8utils {
     v8::PropertyDescriptor propertyDescriptor(value, false);
     propertyDescriptor.set_configurable(false);
     propertyDescriptor.set_enumerable(false);
-    target->DefineProperty(Nan::GetCurrentContext(), v8::String::NewFromUtf8(isolate, name), propertyDescriptor).ToChecked();
+    target->DefineProperty(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, name), propertyDescriptor).ToChecked();
   }
 
   void defineReadonlyField(v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
@@ -63,7 +62,7 @@ namespace v8utils {
     v8::PropertyDescriptor propertyDescriptor(value, false);
     propertyDescriptor.set_configurable(false);
     propertyDescriptor.set_enumerable(true);
-    target->DefineProperty(Nan::GetCurrentContext(), v8::String::NewFromUtf8(isolate, name), propertyDescriptor).ToChecked();
+    target->DefineProperty(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, name), propertyDescriptor).ToChecked();
   }
 
   void defineHiddenFunction(v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback) {

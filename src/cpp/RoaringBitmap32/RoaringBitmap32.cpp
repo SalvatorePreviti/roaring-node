@@ -154,17 +154,20 @@ NAN_PROPERTY_GETTER(RoaringBitmap32::namedPropertyGetter) {
   if (property->IsSymbol()) {
     if (Nan::Equals(property, v8::Symbol::GetIterator(isolate)).FromJust()) {
       auto self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.This());
-      auto iter_template = Nan::New<v8::FunctionTemplate>();
-      Nan::SetCallHandler(iter_template,
-          [](const Nan::FunctionCallbackInfo<v8::Value> & info) {
-            v8::Local<v8::Function> cons = RoaringBitmap32Iterator::constructor.Get(v8::Isolate::GetCurrent());
+
+      v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
+          [](const v8::FunctionCallbackInfo<v8::Value> & info) {
+            v8::Isolate * isolate = info.GetIsolate();
+            v8::HandleScope scope(isolate);
+            v8::Local<v8::Function> cons = RoaringBitmap32Iterator::constructor.Get(isolate);
             v8::Local<v8::Value> argv[1] = {info.This()};
-            auto resultMaybe = Nan::NewInstance(cons, 1, argv);
+            auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
             if (!resultMaybe.IsEmpty())
               info.GetReturnValue().Set(resultMaybe.ToLocalChecked());
           },
-          Nan::New<v8::External>(self));
-      info.GetReturnValue().Set(iter_template->GetFunction());
+          v8::External::New(isolate, self));
+
+      info.GetReturnValue().Set(iterTemplate->GetFunction());
     }
   }
 }
