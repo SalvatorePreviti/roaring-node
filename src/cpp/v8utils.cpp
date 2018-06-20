@@ -13,21 +13,21 @@ Nan::Persistent<v8::Function> TypedArrays::Array_from;
 Nan::Persistent<v8::Object> TypedArrays::Set;
 Nan::Persistent<v8::Function> TypedArrays::Set_ctor;
 
-void TypedArrays::initTypedArrays(const v8::Local<v8::Object> & global) {
-  auto uint32Array = Nan::Get(global, Nan::New("Uint32Array").ToLocalChecked()).ToLocalChecked()->ToObject();
+void TypedArrays::initTypedArrays(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
+  auto uint32Array = Nan::Get(global, v8::String::NewFromUtf8(isolate, "Uint32Array")).ToLocalChecked()->ToObject();
   TypedArrays::Uint32Array.Reset(uint32Array);
   TypedArrays::Uint32Array_ctor.Reset(v8::Local<v8::Function>::Cast(uint32Array));
-  TypedArrays::Uint32Array_from.Reset(v8::Local<v8::Function>::Cast(Nan::Get(uint32Array, Nan::New("from").ToLocalChecked()).ToLocalChecked()));
+  TypedArrays::Uint32Array_from.Reset(v8::Local<v8::Function>::Cast(Nan::Get(uint32Array, v8::String::NewFromUtf8(isolate, "from")).ToLocalChecked()));
 
-  auto buffer = Nan::Get(global, Nan::New("Buffer").ToLocalChecked()).ToLocalChecked()->ToObject();
+  auto buffer = Nan::Get(global, v8::String::NewFromUtf8(isolate, "Buffer")).ToLocalChecked()->ToObject();
   TypedArrays::Buffer.Reset(buffer);
-  TypedArrays::Buffer_allocUnsafe.Reset(v8::Local<v8::Function>::Cast(Nan::Get(buffer, Nan::New("allocUnsafe").ToLocalChecked()).ToLocalChecked()));
+  TypedArrays::Buffer_allocUnsafe.Reset(v8::Local<v8::Function>::Cast(Nan::Get(buffer, v8::String::NewFromUtf8(isolate, "allocUnsafe")).ToLocalChecked()));
 
-  auto array = Nan::Get(global, Nan::New("Array").ToLocalChecked()).ToLocalChecked()->ToObject();
+  auto array = Nan::Get(global, v8::String::NewFromUtf8(isolate, "Array")).ToLocalChecked()->ToObject();
   TypedArrays::Array.Reset(array);
-  TypedArrays::Array_from.Reset(v8::Local<v8::Function>::Cast(Nan::Get(array, Nan::New("from").ToLocalChecked()).ToLocalChecked()));
+  TypedArrays::Array_from.Reset(v8::Local<v8::Function>::Cast(Nan::Get(array, v8::String::NewFromUtf8(isolate, "from")).ToLocalChecked()));
 
-  auto set = Nan::Get(global, Nan::New("Set").ToLocalChecked()).ToLocalChecked()->ToObject();
+  auto set = Nan::Get(global, v8::String::NewFromUtf8(isolate, "Set")).ToLocalChecked()->ToObject();
   TypedArrays::Set.Reset(set);
   TypedArrays::Set_ctor.Reset(v8::Local<v8::Function>::Cast(set));
 }

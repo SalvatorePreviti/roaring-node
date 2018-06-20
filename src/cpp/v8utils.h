@@ -18,7 +18,7 @@ class TypedArrays {
   static Nan::Persistent<v8::Object> Set;
   static Nan::Persistent<v8::Function> Set_ctor;
 
-  static void initTypedArrays(const v8::Local<v8::Object> & global);
+  static void initTypedArrays(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
 
   static v8::Local<v8::Value> bufferAllocUnsafe(v8::Isolate * isolate, size_t size);
 };
@@ -30,26 +30,28 @@ namespace v8utils {
 
   template <typename T>
   void defineHiddenField(const T & target, const char * name, const v8::Local<v8::Value> & value) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
     v8::PropertyDescriptor propertyDescriptor(value, false);
     propertyDescriptor.set_configurable(false);
     propertyDescriptor.set_enumerable(false);
-    target->DefineProperty(Nan::GetCurrentContext(), Nan::New(name).ToLocalChecked(), propertyDescriptor).ToChecked();
+    target->DefineProperty(Nan::GetCurrentContext(), v8::String::NewFromUtf8(isolate, name), propertyDescriptor).ToChecked();
   }
 
   template <typename T>
   void defineReadonlyField(const T & target, const char * name, const v8::Local<v8::Value> & value) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
     v8::PropertyDescriptor propertyDescriptor(value, false);
     propertyDescriptor.set_configurable(false);
     propertyDescriptor.set_enumerable(true);
-    target->DefineProperty(Nan::GetCurrentContext(), Nan::New(name).ToLocalChecked(), propertyDescriptor).ToChecked();
+    target->DefineProperty(Nan::GetCurrentContext(), v8::String::NewFromUtf8(isolate, name), propertyDescriptor).ToChecked();
   }
 
   template <typename T, template <typename> class HandleType>
-  inline void defineHiddenFunction(HandleType<T> recv, const char * name, Nan::FunctionCallback callback) {
-    Nan::HandleScope scope;
-    v8::Local<v8::FunctionTemplate> t = Nan::New<v8::FunctionTemplate>(callback);
-    v8::Local<v8::String> fn_name = Nan::New(name).ToLocalChecked();
-    t->SetClassName(fn_name);
+  void defineHiddenFunction(HandleType<T> recv, const char * name, v8::FunctionCallback callback) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    v8::HandleScope scope(isolate);
+    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
+    t->SetClassName(v8::String::NewFromUtf8(isolate, name));
     defineHiddenField(recv, name, t->GetFunction());
   }
 

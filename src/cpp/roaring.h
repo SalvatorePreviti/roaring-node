@@ -11,6 +11,10 @@
 
 #include "CRoaringUnityBuild/roaring.h"
 
+#define ROARING_VERSION_STRING_TOK(x, y) #x
+#define ROARING_VERSION_STRING_BUILD(x) ROARING_VERSION_STRING_TOK(x)
+#define ROARING_VERSION_STRING ((ROARING_VERSION_STRING_BUILD(ROARING_VERSION)) + 2)
+
 #undef printf
 #undef fprintf
 

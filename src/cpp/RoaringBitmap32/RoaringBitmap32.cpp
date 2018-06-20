@@ -11,7 +11,9 @@ Nan::Persistent<v8::Function> RoaringBitmap32::constructor;
 uint8_t roaring_bitmap_zero[sizeof(roaring_bitmap_t)] = {0};
 
 void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
-  auto className = Nan::New("RoaringBitmap32").ToLocalChecked();
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+
+  v8::Local<v8::String> className = v8::String::NewFromUtf8(isolate, "RoaringBitmap32");
 
   v8::Local<v8::FunctionTemplate> ctor = Nan::New<v8::FunctionTemplate>(RoaringBitmap32::New);
   RoaringBitmap32::constructorTemplate.Reset(ctor);
@@ -20,8 +22,8 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   auto ctorInstanceTemplate = ctor->InstanceTemplate();
 
-  Nan::SetAccessor(ctorInstanceTemplate, Nan::New("isEmpty").ToLocalChecked(), isEmpty_getter);
-  Nan::SetAccessor(ctorInstanceTemplate, Nan::New("size").ToLocalChecked(), size_getter);
+  Nan::SetAccessor(ctorInstanceTemplate, v8::String::NewFromUtf8(isolate, "isEmpty"), isEmpty_getter);
+  Nan::SetAccessor(ctorInstanceTemplate, v8::String::NewFromUtf8(isolate, "size"), size_getter);
 
   Nan::SetNamedPropertyHandler(ctorInstanceTemplate, namedPropertyGetter);
 
@@ -83,7 +85,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   NODE_SET_METHOD(ctorObject, "swap", swapStatic);
 
-  ctorObject->Set(Nan::New("from").ToLocalChecked(), ctorFunction);
+  ctorObject->Set(v8::String::NewFromUtf8(isolate, "from"), ctorFunction);
 
   v8utils::defineHiddenField(ctorObject, "default", ctorObject);
 
@@ -362,23 +364,24 @@ void RoaringBitmap32::clone(const Nan::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void RoaringBitmap32::statistics(const Nan::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   roaring_statistics_t stats;
   roaring_bitmap_statistics(&self->roaring, &stats);
   auto result = Nan::New<v8::Object>();
-  result->Set(Nan::New<v8::String>("containers").ToLocalChecked(), Nan::New(stats.n_containers));
-  result->Set(Nan::New<v8::String>("arrayContainers").ToLocalChecked(), Nan::New(stats.n_array_containers));
-  result->Set(Nan::New<v8::String>("runContainers").ToLocalChecked(), Nan::New(stats.n_run_containers));
-  result->Set(Nan::New<v8::String>("bitsetContainers").ToLocalChecked(), Nan::New(stats.n_bitset_containers));
-  result->Set(Nan::New<v8::String>("valuesInArrayContainers").ToLocalChecked(), Nan::New(stats.n_values_array_containers));
-  result->Set(Nan::New<v8::String>("valuesInRunContainers").ToLocalChecked(), Nan::New(stats.n_values_run_containers));
-  result->Set(Nan::New<v8::String>("valuesInBitsetContainers").ToLocalChecked(), Nan::New(stats.n_values_bitset_containers));
-  result->Set(Nan::New<v8::String>("bytesInArrayContainers").ToLocalChecked(), Nan::New(stats.n_bytes_array_containers));
-  result->Set(Nan::New<v8::String>("bytesInRunContainers").ToLocalChecked(), Nan::New(stats.n_bytes_run_containers));
-  result->Set(Nan::New<v8::String>("bytesInBitsetContainers").ToLocalChecked(), Nan::New(stats.n_bytes_bitset_containers));
-  result->Set(Nan::New<v8::String>("maxValue").ToLocalChecked(), Nan::New(stats.max_value));
-  result->Set(Nan::New<v8::String>("minValue").ToLocalChecked(), Nan::New(stats.min_value));
-  result->Set(Nan::New<v8::String>("sumOfAllValues").ToLocalChecked(), Nan::New((double)stats.sum_value));
-  result->Set(Nan::New<v8::String>("size").ToLocalChecked(), Nan::New((double)stats.cardinality));
+  result->Set(v8::String::NewFromUtf8(isolate, "containers"), Nan::New(stats.n_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "arrayContainers"), Nan::New(stats.n_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "runContainers"), Nan::New(stats.n_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bitsetContainers"), Nan::New(stats.n_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInArrayContainers"), Nan::New(stats.n_values_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInRunContainers"), Nan::New(stats.n_values_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "valuesInBitsetContainers"), Nan::New(stats.n_values_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInArrayContainers"), Nan::New(stats.n_bytes_array_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInRunContainers"), Nan::New(stats.n_bytes_run_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "bytesInBitsetContainers"), Nan::New(stats.n_bytes_bitset_containers));
+  result->Set(v8::String::NewFromUtf8(isolate, "maxValue"), Nan::New(stats.max_value));
+  result->Set(v8::String::NewFromUtf8(isolate, "minValue"), Nan::New(stats.min_value));
+  result->Set(v8::String::NewFromUtf8(isolate, "sumOfAllValues"), v8::Number::New(isolate, (double)stats.sum_value));
+  result->Set(v8::String::NewFromUtf8(isolate, "size"), v8::Number::New(isolate, (double)stats.cardinality));
   info.GetReturnValue().Set(result);
 }

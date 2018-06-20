@@ -4,33 +4,39 @@
 #include "RoaringBitmap32/RoaringBitmap32.h"
 #include "RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
 
-void initTypes(const Nan::FunctionCallbackInfo<v8::Value> & info) {
-  TypedArrays::initTypedArrays(info[0]->ToObject());
+void initTypes(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+  TypedArrays::initTypedArrays(isolate, info[0]->ToObject());
 }
 
 void InitModule(v8::Local<v8::Object> exports) {
-  TypedArrays::initTypedArrays(Nan::GetCurrentContext()->Global());
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::HandleScope scope(isolate);
+
+  TypedArrays::initTypedArrays(isolate, Nan::GetCurrentContext()->Global());
 
   v8utils::defineHiddenFunction(exports, "_initTypes", initTypes);
+
   v8utils::defineHiddenField(exports, "default", exports);
-  v8utils::defineReadonlyField(exports, "CRoaringVersion",
-      Nan::New(std::to_string(ROARING_VERSION_MAJOR) + "." + std::to_string(ROARING_VERSION_MINOR) + "." + std::to_string(ROARING_VERSION_REVISION))
-          .ToLocalChecked());
+
+  v8utils::defineReadonlyField(exports, "CRoaringVersion", v8::String::NewFromUtf8(isolate, ROARING_VERSION_STRING));
 
 #ifdef USESSE4
-  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(true));
+  v8utils::defineReadonlyField(exports, "SSE42", v8::Boolean::New(isolate, true));
 #ifdef USEAVX
-  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(true));
-  v8utils::defineReadonlyField(exports, "instructionSet", Nan::New("AVX2").ToLocalChecked());
+  v8utils::defineReadonlyField(exports, "AVX2", v8::Boolean::New(isolate, true));
+  v8utils::defineReadonlyField(exports, "instructionSet", v8::String::NewFromUtf8(isolate, "AVX2"));
 #else
-  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(false));
-  v8utils::defineReadonlyField(exports, "instructionSet", Nan::New("SSE42").ToLocalChecked());
+  v8utils::defineReadonlyField(exports, "AVX2", v8::Boolean::New(isolate, false));
+  v8utils::defineReadonlyField(exports, "instructionSet", v8::String::NewFromUtf8(isolate, "SSE42"));
 #endif
 
 #else
-  v8utils::defineReadonlyField(exports, "SSE42", Nan::New(false));
-  v8utils::defineReadonlyField(exports, "AVX2", Nan::New(false));
-  v8utils::defineReadonlyField(exports, "instructionSet", Nan::New("PLAIN").ToLocalChecked());
+
+  v8utils::defineReadonlyField(exports, "SSE42", v8::Boolean::New(isolate, false));
+  v8utils::defineReadonlyField(exports, "AVX2", v8::Boolean::New(isolate, false));
+  v8utils::defineReadonlyField(exports, "instructionSet", v8::String::NewFromUtf8(isolate, "PLAIN"));
 #endif
 
   RoaringBitmap32::Init(exports);
