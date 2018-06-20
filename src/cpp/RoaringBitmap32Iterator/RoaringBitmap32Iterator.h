@@ -16,7 +16,7 @@ class RoaringBitmap32Iterator : public v8utils::ObjectWrap {
   static void New(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void next(const v8::FunctionCallbackInfo<v8::Value> & info);
 
-  static NAN_PROPERTY_GETTER(namedPropertyGetter);
+  static void iterator_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info);
 
   RoaringBitmap32Iterator();
   virtual ~RoaringBitmap32Iterator();

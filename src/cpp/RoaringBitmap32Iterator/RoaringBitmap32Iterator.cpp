@@ -16,7 +16,9 @@ void RoaringBitmap32Iterator::Init(v8::Local<v8::Object> exports) {
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
 
-  Nan::SetNamedPropertyHandler(ctor->InstanceTemplate(), namedPropertyGetter);
+  v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
+
+  ctorInstanceTemplate->SetAccessor(v8::Symbol::GetIterator(isolate), iterator_getter);
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "next", next);
 
@@ -121,24 +123,20 @@ void RoaringBitmap32Iterator::next(const v8::FunctionCallbackInfo<v8::Value> & i
   return setReturnValueToIteratorResult(info, instance->it.current_value);
 }
 
-NAN_PROPERTY_GETTER(RoaringBitmap32Iterator::namedPropertyGetter) {
+void RoaringBitmap32Iterator::iterator_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  if (property->IsSymbol()) {
-    if (property->Equals(v8::Symbol::GetIterator(isolate))) {
-      RoaringBitmap32 * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  RoaringBitmap32 * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
-      v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
-          [](const v8::FunctionCallbackInfo<v8::Value> & info) {
-            v8::HandleScope scope(info.GetIsolate());
-            info.GetReturnValue().Set(info.Holder());
-          },
-          v8::External::New(isolate, instance));
+  v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
+      [](const v8::FunctionCallbackInfo<v8::Value> & info) {
+        v8::HandleScope scope(info.GetIsolate());
+        info.GetReturnValue().Set(info.Holder());
+      },
+      v8::External::New(isolate, instance));
 
-      info.GetReturnValue().Set(iterTemplate->GetFunction());
-    }
-  }
+  info.GetReturnValue().Set(iterTemplate->GetFunction());
 }
 
 RoaringBitmap32Iterator::RoaringBitmap32Iterator() : roaring(nullptr) {

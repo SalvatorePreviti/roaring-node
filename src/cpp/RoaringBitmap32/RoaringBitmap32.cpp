@@ -23,10 +23,9 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
 
-  Nan::SetAccessor(ctorInstanceTemplate, v8::String::NewFromUtf8(isolate, "isEmpty"), isEmpty_getter);
-  Nan::SetAccessor(ctorInstanceTemplate, v8::String::NewFromUtf8(isolate, "size"), size_getter);
-
-  Nan::SetNamedPropertyHandler(ctorInstanceTemplate, namedPropertyGetter);
+  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "isEmpty"), isEmpty_getter);
+  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "size"), size_getter);
+  ctorInstanceTemplate->SetAccessor(v8::Symbol::GetIterator(isolate), iterator_getter);
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "minimum", minimum);
   NODE_SET_PROTOTYPE_METHOD(ctor, "maximum", maximum);
@@ -122,7 +121,6 @@ void RoaringBitmap32::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
     return;
   }
 
-  // create a new instance and wrap our javascript instance
   RoaringBitmap32 * instance = new RoaringBitmap32();
 
   if (!instance)
@@ -139,7 +137,6 @@ void RoaringBitmap32::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
   instance->Wrap(isolate, info.Holder());
 
-  // return the wrapped javascript instance
   info.GetReturnValue().Set(info.Holder());
 
   if (hasParameter) {
@@ -151,43 +148,50 @@ void RoaringBitmap32::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   }
 }
 
-NAN_PROPERTY_GETTER(RoaringBitmap32::namedPropertyGetter) {
+void RoaringBitmap32::iterator_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
 
-  if (property->IsSymbol()) {
-    if (property->Equals(v8::Symbol::GetIterator(isolate))) {
-      auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
-      v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
-          [](const v8::FunctionCallbackInfo<v8::Value> & info) {
-            v8::Isolate * isolate = info.GetIsolate();
-            v8::HandleScope scope(isolate);
-            v8::Local<v8::Function> cons = RoaringBitmap32Iterator::constructor.Get(isolate);
-            v8::Local<v8::Value> argv[1] = {info.Holder()};
-            auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
-            if (!resultMaybe.IsEmpty())
-              info.GetReturnValue().Set(resultMaybe.ToLocalChecked());
-          },
-          v8::External::New(isolate, self));
+  v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
+      [](const v8::FunctionCallbackInfo<v8::Value> & info) {
+        v8::Isolate * isolate = info.GetIsolate();
+        v8::HandleScope scope(isolate);
+        v8::Local<v8::Function> cons = RoaringBitmap32Iterator::constructor.Get(isolate);
+        v8::Local<v8::Value> argv[1] = {info.Holder()};
+        auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
+        if (!resultMaybe.IsEmpty())
+          info.GetReturnValue().Set(resultMaybe.ToLocalChecked());
+      },
+      v8::External::New(isolate, self));
 
-      info.GetReturnValue().Set(iterTemplate->GetFunction());
-    }
-  }
+  info.GetReturnValue().Set(iterTemplate->GetFunction());
 }
 
-NAN_PROPERTY_GETTER(RoaringBitmap32::size_getter) {
+void RoaringBitmap32::size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   const RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
-  auto size = roaring_bitmap_get_cardinality(&self->roaring);
+  if (!self) {
+    return info.GetReturnValue().Set((uint32_t)0);
+  }
+
+  size_t size = roaring_bitmap_get_cardinality(&self->roaring);
   if (size <= 0xFFFFFFFF) {
-    info.GetReturnValue().Set((uint32_t)size);
-  } else {
-    info.GetReturnValue().Set((double)size);
+    return info.GetReturnValue().Set((uint32_t)size);
   }
+
+  info.GetReturnValue().Set((double)size);
 }
 
-NAN_PROPERTY_GETTER(RoaringBitmap32::isEmpty_getter) {
+void RoaringBitmap32::isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
   const RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
-  info.GetReturnValue().Set(roaring_bitmap_is_empty(&self->roaring));
+  info.GetReturnValue().Set(self && roaring_bitmap_is_empty(&self->roaring));
 }
 
 void RoaringBitmap32::has(const v8::FunctionCallbackInfo<v8::Value> & info) {

@@ -17,10 +17,6 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
 
   static void Init(v8::Local<v8::Object> exports);
 
-  static NAN_PROPERTY_GETTER(namedPropertyGetter);
-  static NAN_PROPERTY_GETTER(isEmpty_getter);
-  static NAN_PROPERTY_GETTER(size_getter);
-
   static void New(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void has(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void hasRange(const v8::FunctionCallbackInfo<v8::Value> & info);
@@ -75,6 +71,10 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
   static void toString(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void contentToString(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void statistics(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+  static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+  static void iterator_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info);
 
   RoaringBitmap32();
 
