@@ -8,7 +8,7 @@
 class RoaringBitmap32;
 class RoaringBitmap32Iterator;
 
-class RoaringBitmap32 : public Nan::ObjectWrap {
+class RoaringBitmap32 : public v8utils::ObjectWrap {
  public:
   roaring_bitmap_t roaring;
 

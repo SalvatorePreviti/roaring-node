@@ -76,4 +76,17 @@ namespace v8utils {
     defineHiddenField(isolate, target, name, t->GetFunction());
   }
 
+  ObjectWrap::~ObjectWrap() {
+    if (!persistent.IsEmpty()) {
+      persistent.ClearWeak();
+      persistent.Reset();
+    }
+  }
+
+  void ObjectWrap::WeakCallback(v8::WeakCallbackInfo<ObjectWrap> const & info) {
+    ObjectWrap * wrap = info.GetParameter();
+    wrap->persistent.Reset();
+    delete wrap;
+  }
+
 }  // namespace v8utils

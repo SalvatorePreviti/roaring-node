@@ -47,6 +47,28 @@ namespace v8utils {
     }
   };
 
+  class ObjectWrap {
+   public:
+    v8::Persistent<v8::Object> persistent;
+
+    inline void Wrap(v8::Isolate * isolate, v8::Local<v8::Object> object) {
+      object->SetAlignedPointerInInternalField(0, this);
+      persistent.Reset(isolate, object);
+      persistent.SetWeak(this, WeakCallback, v8::WeakCallbackType::kParameter);
+      persistent.MarkIndependent();
+    }
+
+    template <class T>
+    inline static T * Unwrap(v8::Local<v8::Object> object) {
+      return (T *)(object->GetAlignedPointerFromInternalField(0));
+    }
+
+   protected:
+    virtual ~ObjectWrap();
+
+    static void WeakCallback(v8::WeakCallbackInfo<ObjectWrap> const & info);
+  };
+
 }  // namespace v8utils
 
 #endif

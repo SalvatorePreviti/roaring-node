@@ -9,7 +9,7 @@ void RoaringBitmap32::getSerializationSizeInBytes(const v8::FunctionCallbackInfo
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   bool portable = info.Length() > 0 && info[0]->IsTrue();
 
   auto portablesize = roaring_bitmap_portable_size_in_bytes(&self->roaring);
@@ -32,7 +32,7 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  RoaringBitmap32 * self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
   bool portable = info.Length() > 0 && info[0]->IsTrue();
   auto portablesize = roaring_bitmap_portable_size_in_bytes(&self->roaring);
@@ -99,9 +99,9 @@ void RoaringBitmap32::deserializeInner(const v8::FunctionCallbackInfo<v8::Value>
     auto result = resultMaybe.ToLocalChecked();
 
     info.GetReturnValue().Set(result);
-    self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+    self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
   } else {
-    self = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+    self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   }
 
   if (!self) {

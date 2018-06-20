@@ -54,7 +54,7 @@ void RoaringBitmap32Iterator::New(const v8::FunctionCallbackInfo<v8::Value> & in
     if (!RoaringBitmap32::constructorTemplate.Get(info.GetIsolate())->HasInstance(info[0])) {
       return v8utils::throwTypeError("RoaringBitmap32Iterator::ctor - argument must be of type RoaringBitmap32");
     }
-    roaring = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+    roaring = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
   }
 
   RoaringBitmap32Iterator * instance = new RoaringBitmap32Iterator();
@@ -64,7 +64,7 @@ void RoaringBitmap32Iterator::New(const v8::FunctionCallbackInfo<v8::Value> & in
 
   auto holder = info.Holder();
 
-  instance->Wrap(holder);
+  instance->Wrap(isolate, holder);
 
   if (roaring) {
     instance->roaring = roaring;
@@ -99,7 +99,7 @@ void RoaringBitmap32Iterator::next(const v8::FunctionCallbackInfo<v8::Value> & i
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  RoaringBitmap32Iterator * instance = Nan::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.Holder());
+  RoaringBitmap32Iterator * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32Iterator>(info.Holder());
 
   if (!instance || !instance->it.has_value) {
     return setReturnValueToIteratorResult(info);
@@ -127,7 +127,7 @@ NAN_PROPERTY_GETTER(RoaringBitmap32Iterator::namedPropertyGetter) {
 
   if (property->IsSymbol()) {
     if (property->Equals(v8::Symbol::GetIterator(isolate))) {
-      RoaringBitmap32 * instance = Nan::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+      RoaringBitmap32 * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
       v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
           [](const v8::FunctionCallbackInfo<v8::Value> & info) {

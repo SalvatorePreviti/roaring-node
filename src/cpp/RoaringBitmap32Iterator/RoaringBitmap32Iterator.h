@@ -3,7 +3,7 @@
 
 #include "../RoaringBitmap32/RoaringBitmap32.h"
 
-class RoaringBitmap32Iterator : public Nan::ObjectWrap {
+class RoaringBitmap32Iterator : public v8utils::ObjectWrap {
  public:
   roaring_uint32_iterator_t it;
   RoaringBitmap32 * roaring;
