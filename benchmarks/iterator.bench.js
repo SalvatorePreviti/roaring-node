@@ -21,12 +21,6 @@ bench.suite('iterator', suite => {
     return n
   }
 
-  x = data
-  suite.benchmark('Uint32Array', loop)
-
-  x = Array.from(data)
-  suite.benchmark('Array', loop)
-
   x = new Set(data)
   suite.benchmark('Set', loop)
 

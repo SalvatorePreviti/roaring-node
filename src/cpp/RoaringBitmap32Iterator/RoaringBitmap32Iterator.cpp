@@ -170,16 +170,6 @@ void RoaringBitmap32Iterator::New(const v8::FunctionCallbackInfo<v8::Value> & in
   info.GetReturnValue().Set(holder);
 }
 
-void setReturnValueToIteratorResult(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
-  v8::Local<v8::Object> obj = v8::Object::New(isolate);
-  obj->Set(v8::String::NewFromUtf8(isolate, "value"), v8::Undefined(isolate));
-  obj->Set(v8::String::NewFromUtf8(isolate, "done"), v8::Boolean::New(isolate, true));
-  info.GetReturnValue().Set(obj);
-}
-
 void RoaringBitmap32Iterator::next(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
