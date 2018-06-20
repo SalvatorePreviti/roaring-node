@@ -47,7 +47,6 @@
   },
   "homepage": "https://github.com/SalvatorePreviti/roaring-node#readme",
   "dependencies": {
-    "nan": "^2.10.0",
     "prebuild-install": "^4.0.0"
   },
   "devDependencies": {

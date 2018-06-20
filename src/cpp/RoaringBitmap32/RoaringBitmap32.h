@@ -1,9 +1,9 @@
 #ifndef __ROARINGBITMAP32__H__
 #define __ROARINGBITMAP32__H__
 
-#include <nan.h>
 #include <cmath>
 #include "../roaring.h"
+#include "../v8utils/v8utils.h"
 
 class RoaringBitmap32;
 class RoaringBitmap32Iterator;

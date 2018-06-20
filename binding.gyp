@@ -7,12 +7,11 @@
       "target_name": "roaring",
       "cflags": ["-O3", "-std=c99"],
       "cflags_cc": ["-O3", "-std=c++11"],
-      "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
       "defines": ["DISABLEAVX"],
       "sources": [
         "src/cpp/roaring.c",
         "src/cpp/module.cpp",
-        "src/cpp/v8utils.cpp",
+        "src/cpp/v8utils/v8utils.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
@@ -29,7 +28,7 @@
           {
             "target_name": "cpuinfo",
             "cflags": ["-O3"],
-            "cflags_cc": ["-O3"],
+            "cflags_cc": ["-O3", "-std=c++11"],
             "sources": ["src/cpuinfo/cpuinfo.cpp"]
           },
           {
@@ -41,11 +40,10 @@
               "GCC_ENABLE_SSE42_EXTENSIONS": "YES",
               "OTHER_CFLAGS": ["-msse4.2"]
             },
-            "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
             "sources": [
               "src/cpp/roaring.c",
               "src/cpp/module.cpp",
-              "src/cpp/v8utils.cpp",
+              "src/cpp/v8utils/v8utils.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
@@ -68,11 +66,10 @@
                 "AdditionalOptions": ["/arch:AVX2"]
               }
             },
-            "include_dirs": ["src", "<!(node -e \"require('nan')\")"],
             "sources": [
               "src/cpp/roaring.c",
               "src/cpp/module.cpp",
-              "src/cpp/v8utils.cpp",
+              "src/cpp/v8utils/v8utils.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",

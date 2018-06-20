@@ -1,5 +1,4 @@
 #include "roaring.h"
-#include "v8utils.h"
 
 #include "RoaringBitmap32/RoaringBitmap32.h"
 #include "RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"

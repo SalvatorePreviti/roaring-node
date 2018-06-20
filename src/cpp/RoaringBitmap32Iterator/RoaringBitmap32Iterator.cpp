@@ -1,7 +1,5 @@
-#include "../v8utils.h"
-
-#include "../RoaringBitmap32/RoaringBitmap32.h"
 #include "RoaringBitmap32Iterator.h"
+#include "../RoaringBitmap32/RoaringBitmap32.h"
 
 v8::Persistent<v8::FunctionTemplate> RoaringBitmap32Iterator::constructorTemplate;
 v8::Persistent<v8::Function> RoaringBitmap32Iterator::constructor;

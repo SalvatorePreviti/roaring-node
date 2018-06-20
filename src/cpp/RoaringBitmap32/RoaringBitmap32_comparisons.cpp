@@ -1,5 +1,3 @@
-#include "../v8utils.h"
-
 #include "RoaringBitmap32.h"
 
 void RoaringBitmap32::isSubset(const v8::FunctionCallbackInfo<v8::Value> & info) {

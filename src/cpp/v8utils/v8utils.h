@@ -1,7 +1,7 @@
 #ifndef __V8UTILS__H__
 #define __V8UTILS__H__
 
-#include <nan.h>
+#include <node.h>
 
 class TypedArrays {
  public:
