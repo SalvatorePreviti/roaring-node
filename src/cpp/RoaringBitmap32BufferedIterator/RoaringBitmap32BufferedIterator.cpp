@@ -83,6 +83,7 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
   instance->Wrap(isolate, holder);
 
   instance->bitmap.Reset(isolate, info[0]->ToObject());
+  instance->buffer.Reset(isolate, bufferObject->ToObject());
 
   roaring_init_iterator(&roaring->roaring, &instance->it);
 

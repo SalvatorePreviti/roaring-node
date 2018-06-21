@@ -11,7 +11,7 @@ bench.suite('iterator', suite => {
     data[i] = 3 * i + 5
   }
 
-  suite.scope(() => {
+  /*suite.scope(() => {
     const x = new Set(data)
     suite.benchmark('Set', () => {
       let n = 0
@@ -20,7 +20,7 @@ bench.suite('iterator', suite => {
       }
       return n
     })
-  })
+  })*/
 
   suite.scope(() => {
     const x = new RoaringBitmap32(data)
