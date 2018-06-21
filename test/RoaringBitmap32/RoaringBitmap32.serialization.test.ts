@@ -52,7 +52,7 @@ describe('RoaringBitmap32 serialization', () => {
         }
         total += size
       }
-      expect(total).toBe(436164)
+      expect(total).toBe(68031)
     })
   })
 
