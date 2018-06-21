@@ -11,21 +11,27 @@ bench.suite('iterator', suite => {
     data[i] = 3 * i + 5
   }
 
-  let x
+  suite.scope(() => {
+    const x = new Set(data)
+    suite.benchmark('Set', () => {
+      let n = 0
+      for (const j of x) {
+        n += j
+      }
+      return n
+    })
+  })
 
-  function loop() {
-    let n = 0
-    for (const j of x) {
-      n += j
-    }
-    return n
-  }
-
-  x = new Set(data)
-  suite.benchmark('Set', loop)
-
-  x = new RoaringBitmap32(data)
-  suite.benchmark('RoaringBitmap32', loop)
+  suite.scope(() => {
+    const x = new RoaringBitmap32(data)
+    suite.benchmark('RoaringBitmap32', () => {
+      let n = 0
+      for (const j of x) {
+        n += j
+      }
+      return n
+    })
+  })
 })
 
 if (require.main === module) {

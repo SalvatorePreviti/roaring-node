@@ -14,38 +14,45 @@ bench.suite('intersection (in place)', suite => {
     b2[i] = 6 * i + 5
   }
 
-  let s1, s2
-
-  s1 = new Set(b1)
-  suite.benchmark('Set', {
-    setup() {
-      s2 = new Set(b2)
-    },
-    fn() {
-      for (const j of s1) {
-        s2.delete(j)
+  suite.scope(() => {
+    const s1 = new Set(b1)
+    let s2
+    suite.benchmark('Set', {
+      setup() {
+        s2 = new Set(b2)
+      },
+      fn() {
+        for (const j of s1) {
+          s2.delete(j)
+        }
       }
-    }
+    })
   })
 
-  s1 = new FastBitSet(b1)
-  suite.benchmark('FastBitSet', {
-    setup() {
-      s2 = new FastBitSet(b2)
-    },
-    fn() {
-      s2.intersection(s1)
-    }
+  suite.scope(() => {
+    const s1 = new FastBitSet(b1)
+    let s2
+    suite.benchmark('FastBitSet', {
+      setup() {
+        s2 = new FastBitSet(b2)
+      },
+      fn() {
+        s2.intersection(s1)
+      }
+    })
   })
 
-  s1 = new RoaringBitmap32(b1)
-  suite.benchmark('RoaringBitmap32', {
-    setup() {
-      s2 = new RoaringBitmap32(b2)
-    },
-    fn() {
-      s2.andInPlace(s1)
-    }
+  suite.scope(() => {
+    const s1 = new RoaringBitmap32(b1)
+    let s2
+    suite.benchmark('RoaringBitmap32', {
+      setup() {
+        s2 = new RoaringBitmap32(b2)
+      },
+      fn() {
+        s2.andInPlace(s1)
+      }
+    })
   })
 })
 

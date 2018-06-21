@@ -47,30 +47,45 @@ class BenchSuite {
     this.details.push(text)
   }
 
+  scope(fn) {
+    return fn()
+  }
+
   benchmark(name, fn) {
-    let b
-
-    if (typeof fn === 'function') {
-      Object.defineProperty(fn, 'name', { value: `${this.name}:${fn.name || name}`, configurable: true, writable: true })
-      b = new Benchmark({ name, fn, async: false })
-    } else {
-      b = new Benchmark({ name, fn: fn.fn, async: false })
+    if (typeof global.gc === 'function') {
+      global.gc()
     }
 
-    if (typeof fn.setup === 'function') {
-      b.on('start cycle', () => {
-        fn.setup(this)
-      })
-    }
+    {
+      let b
 
-    b.on('complete', () => {
-      if (b.error) {
-        this.hasErrors = true
+      if (typeof fn === 'function') {
+        Object.defineProperty(fn, 'name', { value: `${this.name}:${fn.name || name}`, configurable: true, writable: true })
+        b = new Benchmark({ name, fn, async: false })
+      } else {
+        b = new Benchmark({ name, fn: fn.fn, async: false })
       }
-      pushBenchResult(this.results, b)
-    })
 
-    b.run()
+      if (typeof fn.setup === 'function') {
+        b.on('start cycle', () => {
+          fn.setup(this)
+        })
+      }
+
+      b.on('complete', () => {
+        if (b.error) {
+          this.hasErrors = true
+        }
+        pushBenchResult(this.results, b)
+      })
+
+      b.run()
+    }
+
+    if (typeof global.gc === 'function') {
+      global.gc()
+    }
+
     return this
   }
 }

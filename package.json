@@ -13,8 +13,8 @@
     "recompile": "node-gyp rebuild -j 12",
     "test": "jest",
     "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json **/*.ts --exclude **/node_modules/** --exclude **/test/**",
-    "benchmarks": "node ./scripts/benchmarks.js",
-    "benchmarks/": "node ./scripts/benchmarks.js"
+    "benchmarks": "node --expose-gc ./scripts/benchmarks.js",
+    "benchmarks/": "node --expose-gc ./scripts/benchmarks.js"
   },
   "repository": {
     "type": "git",

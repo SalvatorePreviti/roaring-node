@@ -14,38 +14,42 @@ bench.suite('intersection size', suite => {
     b2[i] = 6 * i + 5
   }
 
-  let s1, s2
-
-  s1 = new Set(b1)
-  s2 = new Set(b2)
-  suite.benchmark('Set', () => {
-    let answer = 0
-    if (s2.size > s1.size) {
-      for (const j of s1) {
-        if (s2.has(j)) {
-          answer++
+  suite.scope(() => {
+    const s1 = new Set(b1)
+    const s2 = new Set(b2)
+    suite.benchmark('Set', () => {
+      let answer = 0
+      if (s2.size > s1.size) {
+        for (const j of s1) {
+          if (s2.has(j)) {
+            answer++
+          }
+        }
+      } else {
+        for (const j of s2.values()) {
+          if (s1.has(j)) {
+            answer++
+          }
         }
       }
-    } else {
-      for (const j of s2.values()) {
-        if (s1.has(j)) {
-          answer++
-        }
-      }
-    }
-    return answer
+      return answer
+    })
   })
 
-  s1 = new FastBitSet(b1)
-  s2 = new FastBitSet(b2)
-  suite.benchmark('FastBitSet', () => {
-    s1.intersection_size(s2)
+  suite.scope(() => {
+    const s1 = new FastBitSet(b1)
+    const s2 = new FastBitSet(b2)
+    suite.benchmark('FastBitSet', () => {
+      return s1.intersection_size(s2)
+    })
   })
 
-  s1 = new RoaringBitmap32(b1)
-  s2 = new RoaringBitmap32(b2)
-  suite.benchmark('RoaringBitmap32', () => {
-    s1.andCardinality(s2)
+  suite.scope(() => {
+    const s1 = new RoaringBitmap32(b1)
+    const s2 = new RoaringBitmap32(b2)
+    suite.benchmark('RoaringBitmap32', () => {
+      return s1.andCardinality(s2)
+    })
   })
 })
 

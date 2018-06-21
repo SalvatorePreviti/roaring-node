@@ -14,38 +14,45 @@ bench.suite('union (in place)', suite => {
     b2[i] = 6 * i + 5
   }
 
-  let s1, s2
-
-  s1 = new Set(b1)
-  suite.benchmark('Set', {
-    setup() {
-      s2 = new Set(b2)
-    },
-    fn() {
-      for (const j of s1) {
-        s2.add(j)
+  suite.scope(() => {
+    const s1 = new Set(b1)
+    let s2
+    suite.benchmark('Set', {
+      setup() {
+        s2 = new Set(b2)
+      },
+      fn() {
+        for (const j of s1) {
+          s2.add(j)
+        }
       }
-    }
+    })
   })
 
-  s1 = new FastBitSet(b1)
-  suite.benchmark('FastBitSet', {
-    setup() {
-      s2 = new FastBitSet(b2)
-    },
-    fn() {
-      s2.union(s1)
-    }
+  suite.scope(() => {
+    const s1 = new FastBitSet(b1)
+    let s2
+    suite.benchmark('FastBitSet', {
+      setup() {
+        s2 = new FastBitSet(b2)
+      },
+      fn() {
+        s2.union(s1)
+      }
+    })
   })
 
-  s1 = new RoaringBitmap32(b1)
-  suite.benchmark('RoaringBitmap32', {
-    setup() {
-      s2 = new RoaringBitmap32(b2)
-    },
-    fn() {
-      s2.orInPlace(s2)
-    }
+  suite.scope(() => {
+    const s1 = new RoaringBitmap32(b1)
+    let s2
+    suite.benchmark('RoaringBitmap32', {
+      setup() {
+        s2 = new RoaringBitmap32(b2)
+      },
+      fn() {
+        s2.orInPlace(s1)
+      }
+    })
   })
 })
 
