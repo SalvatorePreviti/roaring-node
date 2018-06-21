@@ -381,27 +381,29 @@ describe('RoaringBitmap32 basic', () => {
     })
   })
 
-  describe('supports subclassing', () => {
-    class Subclass extends RoaringBitmap32 {
-      public func(): void {
-        this.add(1)
-        this.addMany([3, 4])
-      }
-
-      public add(value: number): this {
-        super.add(value)
-        super.add(value + 1)
-        return this
-      }
-    }
-
-    const instance = new Subclass()
-    expect(instance).toBeInstanceOf(RoaringBitmap32)
-    instance.func()
-    expect(instance.toArray()).toEqual([1, 2, 3, 4])
-  })
-
   describe('functions are protected against illegal invocations', () => {
+    it('allows subclassing', () => {
+      class Subclass extends RoaringBitmap32 {
+        public func(): void {
+          this.add(1)
+          this.addMany([3, 4])
+        }
+
+        public add(value: number): this {
+          super.add(value)
+          super.add(value + 1)
+          return this
+        }
+      }
+
+      const instance = new Subclass()
+      expect(instance).toBeInstanceOf(RoaringBitmap32)
+      instance.func()
+      expect(instance.toArray()).toEqual([1, 2, 3, 4])
+      instance.add(4)
+      expect(instance.toArray()).toEqual([1, 2, 3, 4, 5])
+    })
+
     it('throws with prototype.add direct call', () => {
       expect(() => {
         RoaringBitmap32.prototype.add(123)
