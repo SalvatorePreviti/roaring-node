@@ -60,5 +60,6 @@
     "typeinfo": "cpp",
     "algorithm": "cpp",
     "cmath": "cpp"
-  }
+  },
+  "python.linting.enabled": false
 }
