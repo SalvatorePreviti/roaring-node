@@ -34,6 +34,7 @@
     "mocha-no-side-effect-code": false,
     "match-default-export-name": false,
     "switch-default": false,
-    "switch-final-break": false
+    "switch-final-break": false,
+    "unified-signatures": false
   }
 }

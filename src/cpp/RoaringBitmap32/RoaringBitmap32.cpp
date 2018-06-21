@@ -1,6 +1,5 @@
 #include "../v8utils/v8utils.h"
 
-#include "../RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
 #include "RoaringBitmap32.h"
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
@@ -22,9 +21,6 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   ctor->SetClassName(className);
 
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
-
-  ctorInstanceTemplate->SetAccessor(v8::Symbol::GetIterator(isolate), iterator_getter, nullptr, v8::Local<v8::Value>(),
-      (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING), (v8::PropertyAttribute)(v8::ReadOnly | v8::DontEnum));
 
   ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "isEmpty"), isEmpty_getter, nullptr, v8::Local<v8::Value>(),
       (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING), (v8::PropertyAttribute)(v8::ReadOnly));
@@ -151,27 +147,6 @@ void RoaringBitmap32::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
       instance->addMany(info);
     }
   }
-}
-
-void RoaringBitmap32::iterator_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
-  auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-
-  v8::Local<v8::FunctionTemplate> iterTemplate = v8::FunctionTemplate::New(isolate,
-      [](const v8::FunctionCallbackInfo<v8::Value> & info) {
-        v8::Isolate * isolate = info.GetIsolate();
-        v8::HandleScope scope(isolate);
-        v8::Local<v8::Function> cons = RoaringBitmap32Iterator::constructor.Get(isolate);
-        v8::Local<v8::Value> argv[1] = {info.Holder()};
-        auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
-        if (!resultMaybe.IsEmpty())
-          info.GetReturnValue().Set(resultMaybe.ToLocalChecked());
-      },
-      v8::External::New(isolate, self));
-
-  info.GetReturnValue().Set(iterTemplate->GetFunction());
 }
 
 void RoaringBitmap32::size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {

@@ -18,14 +18,7 @@ describe('RoaringBitmap32Iterator', () => {
       expect(iter).toBeInstanceOf(RoaringBitmap32Iterator)
     })
 
-    it('can be called as a normal function', () => {
-      const iter = (RoaringBitmap32Iterator as any)()
-      expect(iter).toBeInstanceOf(RoaringBitmap32Iterator)
-    })
-
     it('throws an exception if called with a non RoaringBitmap32', () => {
-      expect(() => new RoaringBitmap32Iterator(null as any)).toThrowError()
-      expect(() => new RoaringBitmap32Iterator(undefined as any)).toThrowError()
       expect(() => new RoaringBitmap32Iterator(123 as any)).toThrowError()
       expect(() => new RoaringBitmap32Iterator([123] as any)).toThrowError()
     })
@@ -92,6 +85,126 @@ describe('RoaringBitmap32Iterator', () => {
       const iter = new RoaringBitmap32Iterator(new RoaringBitmap32([123, 456, 789]))
       const values = Array.from(iter)
       expect(values).toEqual([123, 456, 789])
+    })
+  })
+
+  describe('buffer (number)', () => {
+    it('iterates, buffer 1, bitmap 0', () => {
+      const bitmap = new RoaringBitmap32()
+      const iterator = new RoaringBitmap32Iterator(bitmap, 1)
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+    })
+
+    it('iterates, buffer 2, bitmap 0', () => {
+      const bitmap = new RoaringBitmap32()
+      const iterator = new RoaringBitmap32Iterator(bitmap, 2)
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+    })
+
+    it('iterates, buffer 1, bitmap 1', () => {
+      const bitmap = new RoaringBitmap32([5])
+      const iterator = new RoaringBitmap32Iterator(bitmap, 1)
+      expect(iterator.next()).toEqual({ value: 5, done: false })
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+    })
+
+    it('iterates, buffer 2, bitmap 1', () => {
+      const bitmap = new RoaringBitmap32([5])
+      const iterator = new RoaringBitmap32Iterator(bitmap, 2)
+      expect(iterator.next()).toEqual({ value: 5, done: false })
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+    })
+
+    it('iterates, buffer 1, bitmap 3', () => {
+      const bitmap = new RoaringBitmap32([5, 7, 9])
+      const iterator = new RoaringBitmap32Iterator(bitmap, 1)
+      expect(iterator.next()).toEqual({ value: 5, done: false })
+      expect(iterator.next()).toEqual({ value: 7, done: false })
+      expect(iterator.next()).toEqual({ value: 9, done: false })
+    })
+
+    it('iterates, buffer 2, bitmap 3', () => {
+      const bitmap = new RoaringBitmap32([5, 7, 9])
+      const iterator = new RoaringBitmap32Iterator(bitmap, 2)
+      expect(iterator.next()).toEqual({ value: 5, done: false })
+      expect(iterator.next()).toEqual({ value: 7, done: false })
+      expect(iterator.next()).toEqual({ value: 9, done: false })
+    })
+  })
+
+  describe('buffer (Uint32Array)', () => {
+    it('iterates, buffer 1, bitmap 0', () => {
+      const bitmap = new RoaringBitmap32()
+      const buffer = new Uint32Array(1)
+      const iterator = new RoaringBitmap32Iterator(bitmap, buffer)
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(Array.from(buffer)).toEqual([0])
+    })
+
+    it('iterates, buffer 2, bitmap 0', () => {
+      const bitmap = new RoaringBitmap32()
+      const buffer = new Uint32Array(2)
+      const iterator = new RoaringBitmap32Iterator(bitmap, buffer)
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(Array.from(buffer)).toEqual([0, 0])
+    })
+
+    it('iterates, buffer 1, bitmap 1', () => {
+      const bitmap = new RoaringBitmap32([5])
+      const buffer = new Uint32Array(1)
+      const iterator = new RoaringBitmap32Iterator(bitmap, buffer)
+      expect(buffer[0]).toBe(0)
+      expect(iterator.next()).toEqual({ value: 5, done: false })
+      expect(buffer[0]).toBe(5)
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(buffer[0]).toBe(5)
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(buffer[0]).toBe(5)
+    })
+
+    it('iterates, buffer 2, bitmap 1', () => {
+      const bitmap = new RoaringBitmap32([5])
+      const buffer = new Uint32Array(2)
+      const iterator = new RoaringBitmap32Iterator(bitmap, buffer)
+      expect(Array.from(buffer)).toEqual([0, 0])
+      expect(iterator.next()).toEqual({ value: 5, done: false })
+      expect(Array.from(buffer)).toEqual([5, 0])
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(Array.from(buffer)).toEqual([5, 0])
+      expect(iterator.next()).toEqual({ value: undefined, done: true })
+      expect(Array.from(buffer)).toEqual([5, 0])
+    })
+
+    it('iterates, buffer 1, bitmap 3', () => {
+      const bitmap = new RoaringBitmap32([5, 7, 9])
+      const buffer = new Uint32Array(1)
+      const iterator = new RoaringBitmap32Iterator(bitmap, buffer)
+      expect(buffer[0]).toBe(0)
+      expect(iterator.next()).toEqual({ value: 5, done: false })
+      expect(buffer[0]).toBe(5)
+      expect(iterator.next()).toEqual({ value: 7, done: false })
+      expect(buffer[0]).toBe(7)
+      expect(iterator.next()).toEqual({ value: 9, done: false })
+      expect(buffer[0]).toBe(9)
+    })
+
+    it('iterates, buffer 2, bitmap 3', () => {
+      const bitmap = new RoaringBitmap32([5, 7, 9])
+      const buffer = new Uint32Array(2)
+      const iterator = new RoaringBitmap32Iterator(bitmap, buffer)
+      expect(Array.from(buffer)).toEqual([0, 0])
+      expect(iterator.next()).toEqual({ value: 5, done: false })
+      expect(Array.from(buffer)).toEqual([5, 7])
+      expect(iterator.next()).toEqual({ value: 7, done: false })
+      expect(Array.from(buffer)).toEqual([5, 7])
+      expect(iterator.next()).toEqual({ value: 9, done: false })
+      expect(buffer[0]).toBe(9)
     })
   })
 

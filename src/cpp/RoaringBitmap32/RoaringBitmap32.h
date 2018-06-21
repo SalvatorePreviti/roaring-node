@@ -6,7 +6,6 @@
 #include "../v8utils/v8utils.h"
 
 class RoaringBitmap32;
-class RoaringBitmap32Iterator;
 
 class RoaringBitmap32 : public v8utils::ObjectWrap {
  public:
@@ -74,7 +73,6 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
 
   static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
   static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-  static void iterator_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info);
 
   RoaringBitmap32();
 
