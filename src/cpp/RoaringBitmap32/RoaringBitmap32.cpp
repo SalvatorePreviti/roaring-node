@@ -150,12 +150,9 @@ void RoaringBitmap32::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void RoaringBitmap32::size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   const RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
   if (!self) {
-    return info.GetReturnValue().Set((uint32_t)0);
+    return info.GetReturnValue().Set(0U);
   }
 
   size_t size = roaring_bitmap_get_cardinality(&self->roaring);
@@ -167,17 +164,11 @@ void RoaringBitmap32::size_getter(v8::Local<v8::String> property, const v8::Prop
 }
 
 void RoaringBitmap32::isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   const RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<const RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set(self && roaring_bitmap_is_empty(&self->roaring));
 }
 
 void RoaringBitmap32::has(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   if (info.Length() < 1 || !info[0]->IsUint32()) {
     info.GetReturnValue().Set(false);
   } else {
@@ -187,9 +178,6 @@ void RoaringBitmap32::has(const v8::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void RoaringBitmap32::hasRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   if (info.Length() < 2 || !info[0]->IsNumber() || !info[1]->IsNumber()) {
     return info.GetReturnValue().Set(false);
   }
@@ -220,25 +208,16 @@ void RoaringBitmap32::hasRange(const v8::FunctionCallbackInfo<v8::Value> & info)
 }
 
 void RoaringBitmap32::minimum(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   return info.GetReturnValue().Set(roaring_bitmap_minimum(&self->roaring));
 }
 
 void RoaringBitmap32::maximum(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   return info.GetReturnValue().Set(roaring_bitmap_maximum(&self->roaring));
 }
 
 void RoaringBitmap32::rank(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   if (info.Length() < 1 || !info[0]->IsUint32()) {
     return info.GetReturnValue().Set(0);
   }
@@ -248,11 +227,8 @@ void RoaringBitmap32::rank(const v8::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void RoaringBitmap32::select(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   if (info.Length() < 1 || !info[0]->IsUint32()) {
-    return info.GetReturnValue().Set(v8::Undefined(isolate));
+    return;
   }
 
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
@@ -261,30 +237,19 @@ void RoaringBitmap32::select(const v8::FunctionCallbackInfo<v8::Value> & info) {
   if (roaring_bitmap_select(&self->roaring, info[0]->Uint32Value(), &element)) {
     return info.GetReturnValue().Set(element);
   }
-
-  return info.GetReturnValue().Set(v8::Undefined(isolate));
 }
 
 void RoaringBitmap32::removeRunCompression(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set(roaring_bitmap_remove_run_compression(&self->roaring));
 }
 
 void RoaringBitmap32::runOptimize(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set(roaring_bitmap_run_optimize(&self->roaring));
 }
 
 void RoaringBitmap32::shrinkToFit(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set((double)roaring_bitmap_shrink_to_fit(&self->roaring));
 }
