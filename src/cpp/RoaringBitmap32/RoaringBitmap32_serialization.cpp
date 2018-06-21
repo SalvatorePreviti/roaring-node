@@ -1,4 +1,3 @@
-#include "../RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
 #include "RoaringBitmap32.h"
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF

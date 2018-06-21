@@ -94,21 +94,6 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
   info.GetReturnValue().Set(holder);
 }
 
-uint32_t RoaringBitmap32BufferedIterator::fillBuffer(const v8utils::TypedArrayContent<uint32_t> bufferContent) {
-  uint32_t index = 0;
-  if (bufferContent.length != 0) {
-    while (index < bufferContent.length && this->it.has_value) {
-      bufferContent.data[index++] = this->it.current_value;
-      roaring_advance_uint32_iterator(&this->it);
-    }
-    if (index == 0) {
-      this->bitmap.Reset();
-      this->buffer.Reset();
-    }
-  }
-  return index;
-}
-
 void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);

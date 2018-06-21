@@ -21,8 +21,25 @@ class RoaringBitmap32BufferedIterator : public v8utils::ObjectWrap {
   virtual ~RoaringBitmap32BufferedIterator();
 
  private:
-  uint32_t fillBuffer(const v8utils::TypedArrayContent<uint32_t> bufferContent);
+  uint32_t fillBuffer(const v8utils::TypedArrayContent<uint32_t> & bufferContent);
   static v8::Persistent<v8::String> nPropertyName;
 };
+
+inline uint32_t RoaringBitmap32BufferedIterator::fillBuffer(const v8utils::TypedArrayContent<uint32_t> & bufferContent) {
+  uint32_t n = 0;
+  const uint32_t length = bufferContent.length;
+  if (length != 0) {
+    uint32_t * const data = bufferContent.data;
+    while (n < length && this->it.has_value) {
+      data[n++] = this->it.current_value;
+      roaring_advance_uint32_iterator(&this->it);
+    }
+    if (n == 0) {
+      this->bitmap.Reset();
+      this->buffer.Reset();
+    }
+  }
+  return n;
+}
 
 #endif

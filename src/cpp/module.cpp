@@ -2,7 +2,6 @@
 
 #include "RoaringBitmap32/RoaringBitmap32.h"
 #include "RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.h"
-#include "RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
 
 void initTypes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
@@ -38,7 +37,6 @@ void InitModule(v8::Local<v8::Object> exports) {
   v8utils::defineReadonlyField(isolate, exports, "CRoaringVersion", v8::String::NewFromUtf8(isolate, ROARING_VERSION_STRING));
 
   RoaringBitmap32::Init(exports);
-  RoaringBitmap32Iterator::Init(exports);
   RoaringBitmap32BufferedIterator::Init(exports);
 }
 

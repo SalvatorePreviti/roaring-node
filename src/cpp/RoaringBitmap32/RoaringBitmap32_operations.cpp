@@ -1,4 +1,3 @@
-#include "../RoaringBitmap32Iterator/RoaringBitmap32Iterator.h"
 #include "RoaringBitmap32.h"
 
 void RoaringBitmap32::add(const v8::FunctionCallbackInfo<v8::Value> & info) {
