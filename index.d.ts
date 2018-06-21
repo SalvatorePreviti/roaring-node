@@ -586,6 +586,17 @@ declare class RoaringBitmap32Iterator implements IterableIterator<number> {
   private static readonly default: typeof RoaringBitmap32Iterator
 
   /**
+   * Property: Contains the current value the iterator is pointing at.
+   * Is undefined until the first next() is called or if iteration is completed.
+   */
+  public readonly value: number | undefined
+
+  /**
+   * Property: Is true if the iterator is done iterating.
+   */
+  public readonly done: boolean
+
+  /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
    * @param roaringBitmap32 The roaring bitmap to iterate
    */

@@ -7,8 +7,8 @@ const N = 256 * 256
 bench.suite('union (in place)', suite => {
   suite.detail(`${N} elements`)
 
-  const b1 = new Uint32Array(N * 2)
-  const b2 = new Uint32Array(N * 2)
+  const b1 = new Uint32Array(N)
+  const b2 = new Uint32Array(N)
   for (let i = 0; i < N; i++) {
     b1[i] = 3 * i + 5
     b2[i] = 6 * i + 5

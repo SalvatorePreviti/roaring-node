@@ -19,6 +19,7 @@ BinPackArguments: true
 MaxEmptyLinesToKeep: 1
 BreakConstructorInitializers: AfterColon
 DisableFormat: false
+IndentPPDirectives: AfterHash
 
 ---
 Language: JavaScript

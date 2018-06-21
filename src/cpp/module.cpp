@@ -19,15 +19,15 @@ void InitModule(v8::Local<v8::Object> exports) {
   v8utils::defineHiddenField(isolate, exports, "default", exports);
 
 #ifdef USESSE4
-#ifdef USEAVX
+#  ifdef USEAVX
   v8utils::defineReadonlyField(isolate, exports, "SSE42", v8::Boolean::New(isolate, true));
   v8utils::defineReadonlyField(isolate, exports, "AVX2", v8::Boolean::New(isolate, true));
   v8utils::defineReadonlyField(isolate, exports, "instructionSet", v8::String::NewFromUtf8(isolate, "AVX2"));
-#else
+#  else
   v8utils::defineReadonlyField(isolate, exports, "SSE42", v8::Boolean::New(isolate, true));
   v8utils::defineReadonlyField(isolate, exports, "AVX2", v8::Boolean::New(isolate, false));
   v8utils::defineReadonlyField(isolate, exports, "instructionSet", v8::String::NewFromUtf8(isolate, "SSE42"));
-#endif
+#  endif
 #else
   v8utils::defineReadonlyField(isolate, exports, "SSE42", v8::Boolean::New(isolate, false));
   v8utils::defineReadonlyField(isolate, exports, "AVX2", v8::Boolean::New(isolate, false));

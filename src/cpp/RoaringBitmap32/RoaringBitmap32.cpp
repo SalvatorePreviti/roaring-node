@@ -23,9 +23,14 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
 
-  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "isEmpty"), isEmpty_getter);
-  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "size"), size_getter);
-  ctorInstanceTemplate->SetAccessor(v8::Symbol::GetIterator(isolate), iterator_getter);
+  ctorInstanceTemplate->SetAccessor(v8::Symbol::GetIterator(isolate), iterator_getter, nullptr, v8::Local<v8::Value>(),
+      (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING), (v8::PropertyAttribute)(v8::ReadOnly | v8::DontEnum));
+
+  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "isEmpty"), isEmpty_getter, nullptr, v8::Local<v8::Value>(),
+      (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING), (v8::PropertyAttribute)(v8::ReadOnly));
+
+  ctorInstanceTemplate->SetAccessor(v8::String::NewFromUtf8(isolate, "size"), size_getter, nullptr, v8::Local<v8::Value>(),
+      (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING), (v8::PropertyAttribute)(v8::ReadOnly));
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "minimum", minimum);
   NODE_SET_PROTOTYPE_METHOD(ctor, "maximum", maximum);
