@@ -586,21 +586,26 @@ declare class RoaringBitmap32Iterator implements IterableIterator<number> {
   private static readonly default: typeof RoaringBitmap32Iterator
 
   /**
-   * Property: Contains the current value the iterator is pointing at.
-   * Is undefined until the first next() is called or if iteration is completed.
-   */
-  public readonly value: number | undefined
-
-  /**
-   * Property: Is true if the iterator is done iterating.
-   */
-  public readonly done: boolean
-
-  /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
+   * It allocates a small temporary buffer for speedup.
    * @param roaringBitmap32 The roaring bitmap to iterate
    */
   public constructor(roaringBitmap32?: RoaringBitmap32)
+
+  /**
+   * Creates a new iterator able to iterate a RoaringBitmap32.
+   * It allocates a small temporary buffer of the given size for speedup.
+   * @param roaringBitmap32 The roaring bitmap to iterate
+   * @param bufferSize Buffer size to allocate, must be an integer greater than 0
+   */
+  public constructor(roaringBitmap32: RoaringBitmap32, bufferSize: number)
+
+  /**
+   * Creates a new iterator able to iterate a RoaringBitmap32 using the given temporary buffer.
+   * @param roaringBitmap32 The roaring bitmap to iterate
+   * @param buffer The temporary buffer. Length must be greater than 0.
+   */
+  public constructor(roaringBitmap32: RoaringBitmap32, buffer: Uint32Array)
 
   /**
    * Returns this.

@@ -9,7 +9,6 @@
       "cflags_cc": ["-O3", "-std=c++11"],
       "defines": ["DISABLEAVX"],
       "sources": [
-        "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp",
         "src/cpp/roaring.c",
         "src/cpp/module.cpp",
         "src/cpp/v8utils/v8utils.cpp",
@@ -17,7 +16,7 @@
         "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32_serialization.cpp",
-        "src/cpp/RoaringBitmap32Iterator/RoaringBitmap32Iterator.cpp"
+        "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp"
       ]
     }
   ],
@@ -42,7 +41,6 @@
               "OTHER_CFLAGS": ["-msse4.2"]
             },
             "sources": [
-              "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp",
               "src/cpp/roaring.c",
               "src/cpp/module.cpp",
               "src/cpp/v8utils/v8utils.cpp",
@@ -50,7 +48,7 @@
               "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_serialization.cpp",
-              "src/cpp/RoaringBitmap32Iterator/RoaringBitmap32Iterator.cpp"
+              "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp"
             ]
           },
           {
@@ -69,7 +67,6 @@
               }
             },
             "sources": [
-              "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp",
               "src/cpp/roaring.c",
               "src/cpp/module.cpp",
               "src/cpp/v8utils/v8utils.cpp",
@@ -77,7 +74,7 @@
               "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_serialization.cpp",
-              "src/cpp/RoaringBitmap32Iterator/RoaringBitmap32Iterator.cpp"
+              "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp"
             ]
           }
         ]
