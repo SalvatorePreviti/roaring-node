@@ -122,58 +122,66 @@ Platform : Darwin 17.6.0 x64
 CPU      : Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz AVX2
 Cores    : 4 physical - 8 logical
 Memory   : 16.00 GB
-NodeJS   : v10.4.1 - V8 v6.7.288.45-node.7
+NodeJS   : v10.5.0 - V8 v6.7.288.46-node.8
 
-* running 7 files...
-
-• suite intersection size
-  262144 elements
-  ✔ Set                   27.28 ops/sec  ±3.47%  48 runs  -99.99%
-  ✔ FastBitSet        15,679.60 ops/sec  ±1.28%  85 runs  -94.24%
-  ✔ RoaringBitmap32  272,094.19 ops/sec  ±2.59%  84 runs  fastest
-  ➔ Fastest is RoaringBitmap32
+* running 8 files...
 
 • suite intersection (in place)
   65536 elements
-  ✔ Set                  167.73 ops/sec  ±2.72%  63 runs  -99.98%
-  ✔ FastBitSet        96,202.22 ops/sec  ±1.46%  84 runs  -87.21%
-  ✔ RoaringBitmap32  752,431.87 ops/sec  ±2.20%  86 runs  fastest
+  ✔ Set                  174.83 ops/sec  ±1.78%  61 runs  -99.97%
+  ✔ FastBitSet        87,348.23 ops/sec  ±1.95%  81 runs  -87.09%
+  ✔ RoaringBitmap32  676,713.04 ops/sec  ±1.55%  84 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
 • suite intersection (new)
   1048576 elements
-  ✔ Set                  3.35 ops/sec   ±7.93%  13 runs  -99.89%
-  ✔ FastBitSet       1,293.11 ops/sec   ±1.72%  73 runs  -59.18%
-  ✔ RoaringBitmap32  3,168.09 ops/sec  ±14.80%  45 runs  fastest
+  ✔ Set                  3.36 ops/sec   ±4.14%  13 runs  -99.87%
+  ✔ FastBitSet       1,165.11 ops/sec   ±1.43%  78 runs  -53.56%
+  ✔ RoaringBitmap32  2,508.67 ops/sec  ±22.68%  44 runs  fastest
   ➔ Fastest is RoaringBitmap32
+
+• suite add
+  65535 elements
+  ✔ Set.add                                370.50 ops/sec  ±1.19%  75 runs  -82.46%
+  ✔ RoaringBitmap32.add                    497.47 ops/sec  ±2.08%  79 runs  -76.45%
+  ✔ RoaringBitmap32.addMany Array        1,518.58 ops/sec  ±1.80%  78 runs  -28.11%
+  ✔ RoaringBitmap32.addMany Uint32Array  2,112.26 ops/sec  ±3.32%  71 runs  fastest
+  ➔ Fastest is RoaringBitmap32.addMany Uint32Array
 
 • suite iterator
   65536 elements
-  ✔ Set              1,319.00 ops/sec  ±2.73%  77 runs  fastest
-  ✔ RoaringBitmap32    819.99 ops/sec  ±1.62%  85 runs  -37.83%
+  ✔ Set              1,365.34 ops/sec  ±2.37%  82 runs  fastest
+  ✔ RoaringBitmap32    754.09 ops/sec  ±2.47%  78 runs  -44.77%
   ➔ Fastest is Set
+
+• suite intersection size
+  262144 elements
+  ✔ Set                   23.68 ops/sec  ±5.57%  42 runs  -99.99%
+  ✔ FastBitSet        14,501.31 ops/sec  ±0.98%  83 runs  -94.10%
+  ✔ RoaringBitmap32  245,786.86 ops/sec  ±2.21%  82 runs  fastest
+  ➔ Fastest is RoaringBitmap32
 
 • suite union (in place)
   65536 elements
-  ✔ Set                  178.46 ops/sec  ±6.78%  56 runs  -99.98%
-  ✔ FastBitSet       165,018.35 ops/sec  ±2.98%  82 runs  -78.42%
-  ✔ RoaringBitmap32  764,569.51 ops/sec  ±1.06%  84 runs  fastest
-  ➔ Fastest is RoaringBitmap32
-
-• suite union (new)
-  1048576 elements
-  ✔ Set                  1.94 ops/sec  ±10.25%  10 runs  -99.89%
-  ✔ FastBitSet         683.17 ops/sec   ±2.93%  82 runs  -61.29%
-  ✔ RoaringBitmap32  1,764.68 ops/sec  ±18.80%  47 runs  fastest
+  ✔ Set                  228.73 ops/sec  ±3.27%  63 runs  -99.97%
+  ✔ FastBitSet       153,633.79 ops/sec  ±2.79%  80 runs  -80.39%
+  ✔ RoaringBitmap32  783,632.01 ops/sec  ±0.63%  89 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
 • suite union size
   262144 elements
-  ✔ Set                   17.78 ops/sec  ±2.82%  33 runs  -99.99%
-  ✔ FastBitSet         8,967.53 ops/sec  ±1.02%  91 runs  -96.34%
-  ✔ RoaringBitmap32  245,088.00 ops/sec  ±3.66%  74 runs  fastest
+  ✔ Set                   17.87 ops/sec  ±2.03%  47 runs  -99.99%
+  ✔ FastBitSet         7,699.76 ops/sec  ±2.28%  83 runs  -97.03%
+  ✔ RoaringBitmap32  258,921.56 ops/sec  ±1.29%  86 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite union (new)
+  1048576 elements
+  ✔ Set                  1.78 ops/sec   ±3.62%   9 runs  -99.90%
+  ✔ FastBitSet         682.05 ops/sec   ±1.17%  83 runs  -60.95%
+  ✔ RoaringBitmap32  1,746.45 ops/sec  ±15.85%  46 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
 
-* completed: 44943.901ms
+* completed: 54273.887ms
 ```
