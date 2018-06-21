@@ -380,4 +380,57 @@ describe('RoaringBitmap32 basic', () => {
       expect(rb5.toArray()).toEqual(rb1.toArray())
     })
   })
+
+  describe('supports subclassing', () => {
+    class Subclass extends RoaringBitmap32 {
+      public func(): void {
+        this.add(1)
+        this.addMany([3, 4])
+      }
+
+      public add(value: number): this {
+        super.add(value)
+        super.add(value + 1)
+        return this
+      }
+    }
+
+    const instance = new Subclass()
+    expect(instance).toBeInstanceOf(RoaringBitmap32)
+    instance.func()
+    expect(instance.toArray()).toEqual([1, 2, 3, 4])
+  })
+
+  describe('functions are protected against illegal invocations', () => {
+    it('throws with prototype.add direct call', () => {
+      expect(() => {
+        RoaringBitmap32.prototype.add(123)
+      }).toThrow()
+    })
+
+    it('throws with prototype.add.call on null', () => {
+      expect(() => {
+        RoaringBitmap32.prototype.add.call(null, 123)
+      }).toThrow()
+    })
+
+    it('throws with prototype.add.call on a wrong object', () => {
+      expect(() => {
+        RoaringBitmap32.prototype.add.call({}, 123)
+      }).toThrow()
+    })
+
+    it('throws when calling on the wrong native object', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(() => {
+        bitmap.add.call(bitmap[Symbol.iterator](), 123)
+      }).toThrow()
+    })
+
+    it('allows prototype.add.call on the right object', () => {
+      const bitmap = new RoaringBitmap32()
+      RoaringBitmap32.prototype.add.call(bitmap, 123)
+      expect(bitmap.toArray()).toEqual([123])
+    })
+  })
 })
