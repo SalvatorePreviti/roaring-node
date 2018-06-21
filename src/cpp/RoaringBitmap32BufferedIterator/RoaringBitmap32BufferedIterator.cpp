@@ -5,6 +5,7 @@
 
 v8::Persistent<v8::FunctionTemplate> RoaringBitmap32BufferedIterator::constructorTemplate;
 v8::Persistent<v8::Function> RoaringBitmap32BufferedIterator::constructor;
+v8::Persistent<v8::String> RoaringBitmap32BufferedIterator::nPropertyName;
 
 RoaringBitmap32BufferedIterator::RoaringBitmap32BufferedIterator() {
   this->it.parent = nullptr;
@@ -19,6 +20,8 @@ RoaringBitmap32BufferedIterator::~RoaringBitmap32BufferedIterator() {
 void RoaringBitmap32BufferedIterator::Init(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
+
+  nPropertyName.Reset(isolate, v8::String::NewFromUtf8(isolate, "n"));
 
   auto className = v8::String::NewFromUtf8(isolate, "RoaringBitmap32BufferedIterator");
 
@@ -72,8 +75,6 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
     return v8utils::throwTypeError("RoaringBitmap32BufferedIterator::ctor - invalid Uint32Array buffer");
   }
 
-  holder->Set(v8::String::NewFromUtf8(isolate, "buffer"), bufferObject);
-
   RoaringBitmap32BufferedIterator * instance = new RoaringBitmap32BufferedIterator();
   if (!instance) {
     return v8utils::throwError("RoaringBitmap32BufferedIterator::ctor - allocation failed");
@@ -85,7 +86,26 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
 
   roaring_init_iterator(&roaring->roaring, &instance->it);
 
+  uint32_t n = instance->fillBuffer(bufferContent);
+
+  holder->Set(nPropertyName.Get(isolate), v8::Uint32::NewFromUnsigned(isolate, n));
+
   info.GetReturnValue().Set(holder);
+}
+
+uint32_t RoaringBitmap32BufferedIterator::fillBuffer(const v8utils::TypedArrayContent<uint32_t> bufferContent) {
+  uint32_t index = 0;
+  if (bufferContent.length != 0) {
+    while (index < bufferContent.length && this->it.has_value) {
+      bufferContent.data[index++] = this->it.current_value;
+      roaring_advance_uint32_iterator(&this->it);
+    }
+    if (index == 0) {
+      this->bitmap.Reset();
+      this->buffer.Reset();
+    }
+  }
+  return index;
 }
 
 void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -96,17 +116,7 @@ void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Va
 
   v8utils::TypedArrayContent<uint32_t> bufferContent(isolate, instance->buffer.Get(isolate));
 
-  uint32_t index = 0;
-  if (bufferContent.length != 0) {
-    while (index < bufferContent.length && instance->it.has_value) {
-      bufferContent.data[index++] = instance->it.current_value;
-      roaring_advance_uint32_iterator(&instance->it);
-    }
-    if (index == 0) {
-      instance->bitmap.Reset();
-      instance->buffer.Reset();
-    }
-  }
+  uint32_t n = instance->fillBuffer(bufferContent);
 
-  info.GetReturnValue().Set(v8::Uint32::NewFromUnsigned(isolate, index));
+  info.GetReturnValue().Set(v8::Uint32::NewFromUnsigned(isolate, n));
 }

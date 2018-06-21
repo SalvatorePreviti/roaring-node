@@ -21,6 +21,8 @@ class RoaringBitmap32BufferedIterator : public v8utils::ObjectWrap {
   virtual ~RoaringBitmap32BufferedIterator();
 
  private:
+  uint32_t fillBuffer(const v8utils::TypedArrayContent<uint32_t> bufferContent);
+  static v8::Persistent<v8::String> nPropertyName;
 };
 
 #endif
