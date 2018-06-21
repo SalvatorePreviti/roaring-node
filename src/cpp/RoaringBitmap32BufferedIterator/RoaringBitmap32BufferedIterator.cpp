@@ -104,5 +104,5 @@ void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Va
 
   uint32_t n = instance->fillBuffer(bufferContent);
 
-  info.GetReturnValue().Set(v8::Uint32::NewFromUnsigned(isolate, n));
+  info.GetReturnValue().Set(n);
 }
