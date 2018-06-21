@@ -2,6 +2,7 @@
 #define __V8UTILS__H__
 
 #include <node.h>
+#include <string>
 
 class TypedArrays {
  public:
