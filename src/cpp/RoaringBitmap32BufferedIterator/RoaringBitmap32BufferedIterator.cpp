@@ -70,7 +70,7 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
     return v8utils::throwTypeError("RoaringBitmap32BufferedIterator::ctor - second argument must be of type Uint32Array");
   }
 
-  v8utils::TypedArrayContent<uint32_t> bufferContent(isolate, bufferObject);
+  const v8utils::TypedArrayContent<uint32_t> bufferContent(isolate, bufferObject);
   if (!bufferContent.data || bufferContent.length < 1) {
     return v8utils::throwTypeError("RoaringBitmap32BufferedIterator::ctor - invalid Uint32Array buffer");
   }
@@ -82,12 +82,13 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
 
   instance->Wrap(isolate, holder);
 
-  instance->bitmap.Reset(isolate, info[0]->ToObject());
-  instance->buffer.Reset(isolate, bufferObject->ToObject());
-
   roaring_init_iterator(&roaring->roaring, &instance->it);
 
-  uint32_t n = instance->fillBuffer(bufferContent);
+  uint32_t n = roaring_read_uint32_iterator(&instance->it, bufferContent.data, bufferContent.length);
+  if (n != 0) {
+    instance->bitmap.Reset(isolate, info[0]->ToObject());
+    instance->buffer.Reset(isolate, bufferObject->ToObject());
+  }
 
   holder->Set(nPropertyName.Get(isolate), v8::Uint32::NewFromUnsigned(isolate, n));
 
@@ -99,10 +100,19 @@ void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Va
   v8::HandleScope scope(isolate);
 
   RoaringBitmap32BufferedIterator * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32BufferedIterator>(info.Holder());
+  const v8utils::TypedArrayContent<uint32_t> bufferContent(isolate, instance->buffer.Get(isolate));
 
-  v8utils::TypedArrayContent<uint32_t> bufferContent(isolate, instance->buffer.Get(isolate));
+  uint32_t n;
 
-  uint32_t n = instance->fillBuffer(bufferContent);
+  if (bufferContent.length == 0) {
+    n = 0;
+  } else {
+    n = roaring_read_uint32_iterator(&instance->it, bufferContent.data, bufferContent.length);
+    if (n == 0) {
+      instance->bitmap.Reset();
+      instance->buffer.Reset();
+    }
+  }
 
   info.GetReturnValue().Set(n);
 }
