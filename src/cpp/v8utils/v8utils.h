@@ -4,7 +4,7 @@
 #include <node.h>
 #include <string>
 
-class TypedArrays {
+class JSTypes {
  public:
   static v8::Persistent<v8::Object> Array;
   static v8::Persistent<v8::Function> Array_from;
@@ -19,12 +19,16 @@ class TypedArrays {
   static v8::Persistent<v8::Object> Set;
   static v8::Persistent<v8::Function> Set_ctor;
 
-  static void initTypedArrays(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
+  static void initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
 
   static v8::Local<v8::Value> bufferAllocUnsafe(v8::Isolate * isolate, size_t size);
 };
 
 namespace v8utils {
+
+  template <typename T>
+  inline void ignoreMaybeResult(v8::Maybe<T>) {
+  }
 
   void throwError(const char * message);
   void throwTypeError(const char * message);

@@ -57,6 +57,7 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
 
   static void deserialize(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void andStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void orStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
@@ -80,6 +81,10 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
 
  private:
   static void deserializeInner(const v8::FunctionCallbackInfo<v8::Value> & info, bool isStatic);
+  static uint8_t roaring_bitmap_zero[sizeof(roaring_bitmap_t)];
+  static const char * doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t & newRoaring);
+
+  friend struct DeserializeWorker;
 };
 
 #endif

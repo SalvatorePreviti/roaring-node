@@ -34,7 +34,7 @@ void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & 
       roaring_bitmap_or_inplace(&self->roaring, &other->roaring);
     } else {
       v8::Local<v8::Value> argv[] = {arg};
-      auto t = TypedArrays::Uint32Array_from.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv);
+      auto t = JSTypes::Uint32Array_from.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv);
       if (!t.IsEmpty()) {
         const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, t);
         roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
@@ -81,7 +81,7 @@ void RoaringBitmap32::copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info)
       } else {
         v8::Local<v8::Value> argv[] = {arg};
         const v8utils::TypedArrayContent<uint32_t> typedArray(
-            isolate, TypedArrays::Uint32Array_from.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv));
+            isolate, JSTypes::Uint32Array_from.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv));
         RoaringBitmap32::clear(info);
         roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
       }

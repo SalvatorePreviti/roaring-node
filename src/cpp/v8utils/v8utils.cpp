@@ -1,42 +1,42 @@
 #include "v8utils.h"
 
-v8::Persistent<v8::Object> TypedArrays::Uint32Array;
-v8::Persistent<v8::Function> TypedArrays::Uint32Array_ctor;
-v8::Persistent<v8::Function> TypedArrays::Uint32Array_from;
+v8::Persistent<v8::Object> JSTypes::Uint32Array;
+v8::Persistent<v8::Function> JSTypes::Uint32Array_ctor;
+v8::Persistent<v8::Function> JSTypes::Uint32Array_from;
 
-v8::Persistent<v8::Object> TypedArrays::Buffer;
-v8::Persistent<v8::Function> TypedArrays::Buffer_allocUnsafe;
+v8::Persistent<v8::Object> JSTypes::Buffer;
+v8::Persistent<v8::Function> JSTypes::Buffer_allocUnsafe;
 
-v8::Persistent<v8::Object> TypedArrays::Array;
-v8::Persistent<v8::Function> TypedArrays::Array_from;
+v8::Persistent<v8::Object> JSTypes::Array;
+v8::Persistent<v8::Function> JSTypes::Array_from;
 
-v8::Persistent<v8::Object> TypedArrays::Set;
-v8::Persistent<v8::Function> TypedArrays::Set_ctor;
+v8::Persistent<v8::Object> JSTypes::Set;
+v8::Persistent<v8::Function> JSTypes::Set_ctor;
 
-void TypedArrays::initTypedArrays(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
+void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
   v8::HandleScope scope(isolate);
 
   auto uint32Array = global->Get(v8::String::NewFromUtf8(isolate, "Uint32Array"))->ToObject();
-  TypedArrays::Uint32Array.Reset(isolate, uint32Array);
-  TypedArrays::Uint32Array_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array));
-  TypedArrays::Uint32Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(v8::String::NewFromUtf8(isolate, "from"))));
+  JSTypes::Uint32Array.Reset(isolate, uint32Array);
+  JSTypes::Uint32Array_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array));
+  JSTypes::Uint32Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(v8::String::NewFromUtf8(isolate, "from"))));
 
   auto buffer = global->Get(v8::String::NewFromUtf8(isolate, "Buffer"))->ToObject();
-  TypedArrays::Buffer.Reset(isolate, buffer);
-  TypedArrays::Buffer_allocUnsafe.Reset(isolate, v8::Local<v8::Function>::Cast(buffer->Get(v8::String::NewFromUtf8(isolate, "allocUnsafe"))));
+  JSTypes::Buffer.Reset(isolate, buffer);
+  JSTypes::Buffer_allocUnsafe.Reset(isolate, v8::Local<v8::Function>::Cast(buffer->Get(v8::String::NewFromUtf8(isolate, "allocUnsafe"))));
 
   auto array = global->Get(v8::String::NewFromUtf8(isolate, "Array"))->ToObject();
-  TypedArrays::Array.Reset(isolate, array);
-  TypedArrays::Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(array->Get(v8::String::NewFromUtf8(isolate, "from"))));
+  JSTypes::Array.Reset(isolate, array);
+  JSTypes::Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(array->Get(v8::String::NewFromUtf8(isolate, "from"))));
 
   auto set = global->Get(v8::String::NewFromUtf8(isolate, "Set"))->ToObject();
-  TypedArrays::Set.Reset(isolate, set);
-  TypedArrays::Set_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(set));
+  JSTypes::Set.Reset(isolate, set);
+  JSTypes::Set_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(set));
 }
 
-v8::Local<v8::Value> TypedArrays::bufferAllocUnsafe(v8::Isolate * isolate, size_t size) {
+v8::Local<v8::Value> JSTypes::bufferAllocUnsafe(v8::Isolate * isolate, size_t size) {
   v8::Local<v8::Value> argv[] = {v8::Number::New(isolate, (double)size)};
-  return TypedArrays::Buffer_allocUnsafe.Get(isolate)->Call(TypedArrays::Uint32Array.Get(isolate), 1, argv);
+  return JSTypes::Buffer_allocUnsafe.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv);
 }
 
 namespace v8utils {

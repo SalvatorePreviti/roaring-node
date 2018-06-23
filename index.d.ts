@@ -86,6 +86,54 @@ export class RoaringBitmap32 implements Iterable<number> {
   public static deserialize(serialized: Uint8Array, portable?: boolean): RoaringBitmap32
 
   /**
+   * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+   * Returns a Promise that resolves to a new RoaringBitmap32 instance.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @static
+   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {boolean} [portable] If false (default), optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
+   * @memberof RoaringBitmap32
+   */
+  public static deserializeAsync(serialized: Uint8Array, portable?: boolean): Promise<RoaringBitmap32>
+
+  /**
+   * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+   * When deserialization is completed or failed, the given callback will be executed.
+   *
+   * This overload deserialize using the non portable format.
+   *
+   * @static
+   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the non portable serialized data.
+   * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
+   * @returns {void}
+   * @memberof RoaringBitmap32
+   */
+  public static deserializeAsync(serialized: Uint8Array, callback: (error: Error | null, bitmap: RoaringBitmap32 | undefined) => void): void
+
+  /**
+   * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+   * When deserialization is completed or failed, the given callback will be executed.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @static
+   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the.
+   * @param {boolean} [portable] If false (default), optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @returns {void}
+   * @memberof RoaringBitmap32
+   */
+  public static deserializeAsync(
+    serialized: Uint8Array,
+    portable: boolean,
+    callback: (error: Error | null, bitmap?: RoaringBitmap32 | undefined) => void
+  ): void
+
+  /**
    * Swaps the content of two RoaringBitmap32 instances.
    *
    * @static
