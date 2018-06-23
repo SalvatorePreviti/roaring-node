@@ -216,6 +216,11 @@ describe('RoaringBitmap32Iterator', () => {
       expect(typeof iterator.next).toBe('function')
     })
 
+    it('has both [Symbol.iterator] and iterator', () => {
+      const bitmap = new RoaringBitmap32()
+      expect(bitmap.iterator).toBe(bitmap[Symbol.iterator])
+    })
+
     it('returns an empty iterator for an empty bitmap', () => {
       const bitmap = new RoaringBitmap32()
       const iterator = bitmap[Symbol.iterator]()

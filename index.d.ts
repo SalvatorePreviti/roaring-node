@@ -166,12 +166,21 @@ export class RoaringBitmap32 implements Iterable<number> {
   public static orMany(...values: RoaringBitmap32[]): RoaringBitmap32
 
   /**
-   * Gets a new iterator able to iterate all values in the set in order.
+   * [Symbol.iterator]() Gets a new iterator able to iterate all values in the set in order.
    *
    * @returns {RoaringBitmap32Iterator} A new iterator
    * @memberof RoaringBitmap32
    */
   public [Symbol.iterator](): RoaringBitmap32Iterator
+
+  /**
+   * Gets a new iterator able to iterate all values in the set in order.
+   * Same as [Symbol.iterator]()
+   *
+   * @returns {RoaringBitmap32Iterator} A new iterator
+   * @memberof RoaringBitmap32
+   */
+  public iterator(): RoaringBitmap32Iterator
 
   /**
    * Gets the minimum value in the set.
