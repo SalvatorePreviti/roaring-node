@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "allowJs": false,
+    "checkJs": false,
+    "noEmit": true,
     "allowSyntheticDefaultImports": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

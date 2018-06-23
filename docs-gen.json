@@ -1,0 +1,7 @@
+{
+  "project": ".",
+  "entryFile": "index.d.ts",
+  "output": "documentation",
+  "externalPackage": "@types/node",
+  "excludePrivateApi": true
+}

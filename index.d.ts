@@ -1,22 +1,72 @@
 /**
+ * # roaring
+ *
+ * Port of [Roaring Bitmaps](http://roaringbitmap.org) for NodeJS as a native addon.
+ *
+ * It is interoperable with other implementations via the [Roaring format](https://github.com/RoaringBitmap/RoaringFormatSpec/).
+ *
+ * Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
+ *
+ * For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10.0, use [roaring-aws](https://www.npmjs.com/package/roaring-aws).
+ *
+ * It takes advantage of AVX2 or SSE4.2 instructions on 64 bit platforms that supports it.
+ * - To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_AVX2 to 'true' before requiring this package.
+ * - To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring this package.
+ *
+ * ## Installation
+ *
+ * `npm install --save roaring`
+ *
+ * ## References
+ *
+ * - This package - <https://www.npmjs.com/package/roaring>
+ * - Source code and build tools for this package - <https://github.com/SalvatorePreviti/roaring-node>
+ * - Roaring Bitmaps - <http://roaringbitmap.org/>
+ * - Portable Roaring bitmaps in C - <https://github.com/RoaringBitmap/CRoaring>
+ * - Portable Roaring bitmaps in C (unity build) - https://github.com/lemire/CRoaringUnityBuild
+ *
+ * ## Licenses
+ *
+ * - This package is provided as open source software using Apache License.
+ * - CRoaring is provided as open source software using Apache License.
+ *
+ * ## Example:
+ *
+ * `const RoaringBitmap32 = require('roaring/RoaringBitmap32')`
+ * `const bitmap = new RoaringBitmap32([1, 2, 3])`
+ * `bitmap.add(9)`
+ * `console.log(bitmap.contentToString())`
+ *
+ * @author Salvatore Previti
+ * @module roaring
+ */
+
+/*
+Copyright 2018 Salvatore Previti
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/**
  * Roaring bitmap that supports 32 bit unsigned integers.
  *
  * See http://roaringbitmap.org/
  * See https://github.com/SalvatorePreviti/roaring-node
  *
- * Example:
- *
- * ```
- * const RoaringBitmap32 = require('roaring/RoaringBitmap32')
- * const bitmap = new RoaringBitmap32([1, 2, 3])
- * bitmap.add(9)
- * console.log(bitmap.contentToString())
- * ```
- *
  * @class RoaringBitmap32
  * @implements {Iterable<number>}
  */
-declare class RoaringBitmap32 implements Iterable<number> {
+export class RoaringBitmap32 implements Iterable<number> {
   // Allows: import RoaringBitmap32 from 'roaring/RoaringBitmap32'
   private static readonly default: typeof RoaringBitmap32
 
@@ -691,7 +741,7 @@ declare class RoaringBitmap32 implements Iterable<number> {
  * @class RoaringBitmap32Iterator
  * @implements {IterableIterator<number>}
  */
-declare class RoaringBitmap32Iterator implements IterableIterator<number> {
+export class RoaringBitmap32Iterator implements IterableIterator<number> {
   // Allows: import RoaringBitmap32Iterator from 'roaring/RoaringBitmap32Iterator'
   private static readonly default: typeof RoaringBitmap32Iterator
 
@@ -741,89 +791,59 @@ declare class RoaringBitmap32Iterator implements IterableIterator<number> {
 }
 
 /**
- * Roaring main module
+ * Property: The instruction set supported and currently used by the underlying CRoraring library.
+ * Possible values are:
+ *  - 'AVX2' - Advanced Vector Extensions 2
+ *  - 'SSE42' - Streaming SIMD Extensions 4.2
+ *  - 'PLAIN' - no special instruction set
  *
- * @class RoaringModule
+ * @constant
+ * @type {('AVX2' | 'SSE42' | 'PLAIN')}
+ * @memberof RoaringModule
  */
-declare class RoaringModule {
-  /**
-   * Roaring bitmap that supports 32 bit unsigned integers.
-   *
-   * See http://roaringbitmap.org/
-   *
-   * @type {typeof RoaringBitmap32}
-   * @memberof RoaringModule
-   */
-  public readonly RoaringBitmap32: typeof RoaringBitmap32
-
-  /**
-   * Iterator class for RoaringBitmap32
-   *
-   * @type {typeof RoaringBitmap32Iterator}
-   * @memberof RoaringModule
-   */
-  public readonly RoaringBitmap32Iterator: typeof RoaringBitmap32Iterator
-
-  /**
-   * Property: The version of the CRoaring libary as a string.
-   * Example: "0.2.42"
-   *
-   * @type {string} The version of the CRoaring libary as a string. Example: "0.2.42"
-   * @memberof RoaringModule
-   */
-  public readonly CRoaringVersion: string
-
-  /**
-   * Property: Indicates wether Streaming SIMD Extensions 4.2 instruction set is supported and currently used by the underlying CRoaring library.
-   *
-   * @type {boolean} True if SSE4.2 is supported, false if not.
-   * @memberof RoaringModule
-   */
-  public readonly SSE42: boolean
-
-  /**
-   * Property: Indicates wether Advanced Vector Extensions 2 instruction set is supported and currently used by the underlying CRoaring library.
-   *
-   * @type {boolean} True if AVX2 is supported, false if not.
-   * @memberof RoaringModule
-   */
-  public readonly AVX2: boolean
-
-  /**
-   * Property: The instruction set supported and currently used by the underlying CRoraring library.
-   * Possible values are:
-   *  - 'AVX2' - Advanced Vector Extensions 2
-   *  - 'SSE42' - Streaming SIMD Extensions 4.2
-   *  - 'PLAIN' - no special instruction set
-   *
-   * @type {('AVX2' | 'SSE42' | 'PLAIN')}
-   * @memberof RoaringModule
-   */
-  public readonly instructionSet: 'AVX2' | 'SSE42' | 'PLAIN'
-
-  /**
-   * Property: The version of the roaring npm package as a string.
-   * Example: "0.2.2"
-   *
-   * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
-   * @memberof RoaringModule
-   */
-  public readonly PackageVersion: string
-
-  // Allows: import roaring from 'roaring'
-  private readonly default: RoaringModule
-}
+export const instructionSet: 'AVX2' | 'SSE42' | 'PLAIN'
 
 /**
- * roaring module
+ * Property: Indicates wether Streaming SIMD Extensions 4.2 instruction set is supported and currently used by the underlying CRoaring library.
  *
- * @type {RoaringModule}
+ * @constant
+ * @type {boolean} True if SSE4.2 is supported, false if not.
+ * @memberof RoaringModule
  */
-declare const roaring: RoaringModule
+export const SSE42: boolean
 
 /**
- * roaring module
+ * Property: Indicates wether Advanced Vector Extensions 2 instruction set is supported and currently used by the underlying CRoaring library.
  *
- * @type {RoaringModule}
+ * @constant
+ * @type {boolean} True if AVX2 is supported, false if not.
+ * @memberof RoaringModule
  */
-export = roaring
+export const AVX2: boolean
+
+/**
+ * Property: The version of the CRoaring libary as a string.
+ * Example: "0.2.42"
+ *
+ * @constant
+ * @type {string} The version of the CRoaring libary as a string. Example: "0.2.42"
+ * @memberof RoaringModule
+ */
+export const CRoaringVersion: string
+
+/**
+ * Property: The version of the roaring npm package as a string.
+ * Example: "0.2.2"
+ *
+ * @constant
+ * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
+ * @memberof RoaringModule
+ */
+export const PackageVersion: string
+
+import roaring = require('./')
+
+export default roaring
+
+// tslint:disable-next-line:no-empty-interface
+declare interface Buffer extends Uint8Array {}

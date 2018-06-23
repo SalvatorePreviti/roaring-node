@@ -17,21 +17,20 @@ npm install --save roaring
 
 ## References
 
-This package - <https://www.npmjs.com/package/roaring>
-
-Source code and build tools for this package - <https://github.com/SalvatorePreviti/roaring-node>
-
-Roaring Bitmaps - <http://roaringbitmap.org/>
-
-Portable Roaring bitmaps in C - <https://github.com/RoaringBitmap/CRoaring>
-
-Portable Roaring bitmaps in C (unity build) - https://github.com/lemire/CRoaringUnityBuild
+- This package - <https://www.npmjs.com/package/roaring>
+- Source code and build tools for this package - <https://github.com/SalvatorePreviti/roaring-node>
+- Roaring Bitmaps - <http://roaringbitmap.org/>
+- Portable Roaring bitmaps in C - <https://github.com/RoaringBitmap/CRoaring>
+- Portable Roaring bitmaps in C (unity build) - https://github.com/lemire/CRoaringUnityBuild
 
 # Licenses
 
 - This package is provided as open source software using Apache License.
-
 - CRoaring is provided as open source software using Apache License.
+
+# API
+
+See the [API documentation](documentation/api/index.d.md)
 
 # Code sample:
 
@@ -77,14 +76,6 @@ console.log('serialized:', serialized.toString('base64'))
 console.log('deserialized:', RoaringBitmap32.deserialize(serialized).toArray())
 ```
 
-# API
-
-See the [TypeScript definition file](https://github.com/SalvatorePreviti/roaring-node/blob/master/index.d.ts)
-
-To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_AVX2 to 'true' before requiring this package.
-
-To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring this package.
-
 # Development, local building
 
 Clone the repository and install all the dependencies
@@ -103,10 +94,22 @@ npm install
 npm run recompile
 ```
 
+After a full recomple, is possible to compile only changed files:
+
+```
+npm run compile
+```
+
 ### To run the unit test
 
 ```
 npm test
+```
+
+### To regenerate the API documentation
+
+```
+npm run doc
 ```
 
 ### To run the performance benchmarks
