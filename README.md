@@ -79,7 +79,7 @@ console.log('deserialized:', RoaringBitmap32.deserialize(serialized).toArray())
 
 # API
 
-See the .d.ts declaration files and check the source code at <https://github.com/SalvatorePreviti/roaring-node>
+See the [TypeScript definition file](https://github.com/SalvatorePreviti/roaring-node/blob/master/index.d.ts)
 
 To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_AVX2 to 'true' before requiring this package.
 
