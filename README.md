@@ -32,6 +32,9 @@ npm install --save roaring
 
 See the [API documentation](documentation/api/index.d.md)
 
+- To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_AVX2 to 'true' before requiring this package.
+- To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring this package.
+
 # Code sample:
 
 ```javascript

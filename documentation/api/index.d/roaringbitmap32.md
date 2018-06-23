@@ -63,47 +63,10 @@
 
 # RoaringBitmap32
 
-# roaring
-
-Port of [Roaring Bitmaps](http://roaringbitmap.org) for NodeJS as a native addon.
-
-It is interoperable with other implementations via the [Roaring format](https://github.com/RoaringBitmap/RoaringFormatSpec/).
-
-Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
-
-For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10.0, use [roaring-aws](https://www.npmjs.com/package/roaring-aws).
-
-It takes advantage of AVX2 or SSE4.2 instructions on 64 bit platforms that supports it.
-- To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_AVX2 to 'true' before requiring this package.
-- To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring this package.
-
-## Installation
-
-`npm install --save roaring`
-
-## References
-
-- This package - <https://www.npmjs.com/package/roaring>
-- Source code and build tools for this package - <https://github.com/SalvatorePreviti/roaring-node>
-- Roaring Bitmaps - <http://roaringbitmap.org/>
-- Portable Roaring bitmaps in C - <https://github.com/RoaringBitmap/CRoaring>
-- Portable Roaring bitmaps in C (unity build) - https://github.com/lemire/CRoaringUnityBuild
-
-## Licenses
-
-- This package is provided as open source software using Apache License.
-- CRoaring is provided as open source software using Apache License.
-
-## Example:
-
-`const RoaringBitmap32 = require('roaring/RoaringBitmap32')`
-`const bitmap = new RoaringBitmap32([1, 2, 3])`
-`bitmap.add(9)`
-`console.log(bitmap.contentToString())`
 Roaring bitmap that supports 32 bit unsigned integers.
 
-See http://roaringbitmap.org/
-See https://github.com/SalvatorePreviti/roaring-node
+- See http://roaringbitmap.org/
+- See https://github.com/SalvatorePreviti/roaring-node
 
 ```typescript
 class RoaringBitmap32 implements Iterable<number>
