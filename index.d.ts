@@ -172,9 +172,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    *
-   * Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in a parallel thread.
-   *
-   * Deserialization in the parallel thread will be executed in sequence, if one fails, all fails.
+   * Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in multiple parallel threads.
    *
    * Returns a Promise that resolves to an array of new RoaringBitmap32 instance.
    *
@@ -191,9 +189,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    *
-   * Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in a parallel thread.
-   *
-   * Deserialization in the parallel thread will be executed in sequence, if one fails, all fails.
+   * Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in multiple parallel threads.
    *
    * When deserialization is completed or failed, the given callback will be executed.
    *
