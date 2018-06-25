@@ -339,7 +339,7 @@ void RoaringBitmap32::deserializeManyStaticAsync(const v8::FunctionCallbackInfo<
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::EscapableHandleScope scope(isolate);
 
-  if (info.Length() != 0 || !info[0]->IsArray()) {
+  if (info.Length() < 1 || !info[0]->IsArray()) {
     return v8utils::throwTypeError("RoaringBitmap32::deserializeManyAsync requires an array as first argument");
   }
 

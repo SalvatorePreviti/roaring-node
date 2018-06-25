@@ -106,7 +106,6 @@ export class RoaringBitmap32 implements Iterable<number> {
   public static fromArrayAsync(values: Iterable<number> | null | undefined, callback: RoaringBitmap32Callback): void
 
   /**
-   *
    * Deserializes the bitmap from an Uint8Array or a Buffer.
    *
    * Returns a new RoaringBitmap32 instance.
@@ -124,7 +123,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    *
-   * Deserializes the bitmap from an Uint8Array or a Buffer asynchronously in a parallel thread.
+   * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
    *
    * Returns a Promise that resolves to a new RoaringBitmap32 instance.
    *
@@ -141,7 +140,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    *
-   * Deserializes the bitmap from an Uint8Array or a Buffer asynchronously in a parallel thread.
+   * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
    *
    * When deserialization is completed or failed, the given callback will be executed.
    *
@@ -152,6 +151,24 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @memberof RoaringBitmap32
    */
   public static deserializeAsync(serialized: Uint8Array, callback: RoaringBitmap32Callback): void
+
+  /**
+   *
+   * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+   *
+   * When deserialization is completed or failed, the given callback will be executed.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @static
+   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the.
+   * @param {boolean} [portable] If false (default), optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {RoaringBitmap32Callback} callback The callback to execute when the operation completes.
+   * @returns {void}
+   * @memberof RoaringBitmap32
+   */
+  public static deserializeAsync(serialized: Uint8Array, portable: boolean, callback: RoaringBitmap32Callback): void
 
   /**
    *
@@ -187,6 +204,29 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @memberof RoaringBitmap32
    */
   public static deserializeManyAsync(serialized: (Uint8Array | null | undefined)[], callback: RoaringBitmap32ArrayCallback): void
+
+  /**
+   *
+   * Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in a parallel thread.
+   *
+   * Deserialization in the parallel thread will be executed in sequence, if one fails, all fails.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * When deserialization is completed or failed, the given callback will be executed.
+   *
+   * @static
+   * @param {Uint8Array[]} serialized An array of Uint8Array or node Buffers that contains the non portable serialized data.
+   * @param {RoaringBitmap32ArrayCallback} callback The callback to execute when the operation completes.
+   * @returns {void}
+   * @memberof RoaringBitmap32
+   */
+  public static deserializeManyAsync(
+    serialized: (Uint8Array | null | undefined)[],
+    portable: boolean,
+    callback: RoaringBitmap32ArrayCallback
+  ): void
 
   /**
    * Swaps the content of two RoaringBitmap32 instances.

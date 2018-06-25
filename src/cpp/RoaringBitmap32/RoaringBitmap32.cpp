@@ -132,7 +132,7 @@ void RoaringBitmap32::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * instance = new RoaringBitmap32();
 
   if (!instance)
-    return v8utils::throwError("RoaringBitmap32::ctor - failed to create native roaring container");
+    return v8utils::throwError("RoaringBitmap32::ctor - failed to create native RoaringBitmap32 instance");
 
   bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
 
@@ -263,10 +263,6 @@ void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & 
 
   auto size = roaring_bitmap_get_cardinality(&self->roaring);
 
-  if (size >= 0xFFFFFFFF) {
-    return v8utils::throwError("RoaringBitmap32::toUint32Array - array too big");
-  }
-
   v8::Local<v8::Value> argv[1] = {v8::Uint32::NewFromUnsigned(isolate, (uint32_t)size)};
   auto typedArrayMaybe = JSTypes::Uint32Array_ctor.Get(isolate)->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (typedArrayMaybe.IsEmpty())
@@ -277,7 +273,7 @@ void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & 
   if (size != 0) {
     const v8utils::TypedArrayContent<uint32_t> typedArrayContent(typedArray);
     if (!typedArrayContent.length || !typedArrayContent.data)
-      return v8utils::throwError("RoaringBitmap32::toUint32Array - failed to allocate");
+      return v8utils::throwError("RoaringBitmap32::toUint32Array - failed to allocate memory");
 
     roaring_bitmap_to_uint32_array(&self->roaring, typedArrayContent.data);
   }
