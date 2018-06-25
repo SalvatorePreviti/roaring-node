@@ -1,10 +1,8 @@
 {
-  "target_defaults": {
-    "default_configuration": "Release"
-  },
   "targets": [
     {
       "target_name": "roaring",
+      "default_configuration": "Release",
       "cflags": ["-O3", "-std=c99"],
       "cflags_cc": ["-O3", "-std=c++11"],
       "defines": ["DISABLEAVX"],
@@ -27,12 +25,14 @@
         "targets": [
           {
             "target_name": "cpuinfo",
+            "default_configuration": "Release",
             "cflags": ["-O3"],
             "cflags_cc": ["-O3", "-std=c++11"],
             "sources": ["src/cpuinfo/cpuinfo.cpp"]
           },
           {
             "target_name": "roaring-sse42",
+            "default_configuration": "Release",
             "cflags": ["-O3", "-std=c99", "-msse4.2"],
             "cflags_cc": ["-O3", "-std=c++11", "-msse4.2"],
             "defines": ["DISABLEAVX", "__POPCNT__", "__SSE4_2__"],
@@ -53,6 +53,7 @@
           },
           {
             "target_name": "roaring-avx2",
+            "default_configuration": "Release",
             "cflags": ["-O3", "-std=c99", "-mavx2"],
             "cflags_cc": ["-O3", "-std=c++11", "-mavx2"],
             "defines": ["USEAVX", "__POPCNT__", "__SSE4_2__"],

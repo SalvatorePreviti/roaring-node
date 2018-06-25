@@ -3,6 +3,7 @@
 
 #include <node.h>
 #include <uv.h>
+#include <cmath>
 #include <string>
 
 class JSTypes {
@@ -26,6 +27,8 @@ class JSTypes {
 };
 
 namespace v8utils {
+
+  uint32_t getCpusCount();
 
   template <typename T>
   inline void ignoreMaybeResult(v8::Maybe<T>) {
@@ -53,15 +56,17 @@ namespace v8utils {
       set(from);
     }
 
-    inline void set(v8::Local<v8::Value> from) {
+    inline bool set(v8::Local<v8::Value> from) {
       if (!from.IsEmpty() && from->IsArrayBufferView()) {
         v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
         this->length = array->ByteLength() / sizeof(T);
         this->data = (T *)((char *)(array->Buffer()->GetContents().Data()) + array->ByteOffset());
-      } else {
-        this->length = 0;
-        this->data = nullptr;
+        return true;
       }
+
+      this->length = 0;
+      this->data = nullptr;
+      return false;
     }
   };
 
@@ -129,14 +134,42 @@ namespace v8utils {
    private:
     uv_work_t _task;
     volatile const_char_ptr_t _error;
+    volatile bool _completed;
     v8::Persistent<v8::Function> _callback;
     v8::Persistent<v8::Promise::Resolver> _resolver;
 
     v8::Local<v8::Value> _invokeDone();
+    virtual bool _start();
     static void _complete(AsyncWorker * worker);
     static void _resolveOrReject(AsyncWorker * worker);
     static void _work(uv_work_t * request);
     static void _done(uv_work_t * request, int status);
+
+    friend class ParallelAsyncWorker;
+  };
+
+  class ParallelAsyncWorker : public AsyncWorker {
+   public:
+    uint32_t loopCount;
+    uint32_t concurrency;
+
+    ParallelAsyncWorker(v8::Isolate * isolate);
+    virtual ~ParallelAsyncWorker();
+
+   protected:
+    virtual void work();
+
+    virtual void parallelWork(uint32_t index) = 0;
+
+   private:
+    uv_work_t * _tasks;
+    volatile int32_t _pendingTasks;
+    volatile uint32_t _currentIndex;
+
+    virtual bool _start();
+
+    static void _parallelWork(uv_work_t * request);
+    static void _parallelDone(uv_work_t * request, int status);
   };
 
 }  // namespace v8utils
