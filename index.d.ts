@@ -187,7 +187,7 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @returns {Promise<RoaringBitmap32[]>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserializeManyAsync(serialized: (Uint8Array | null | undefined)[], portable?: boolean): Promise<RoaringBitmap32[]>
+  public static deserializeParallelAsync(serialized: (Uint8Array | null | undefined)[], portable?: boolean): Promise<RoaringBitmap32[]>
 
   /**
    *
@@ -203,7 +203,7 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @returns {void}
    * @memberof RoaringBitmap32
    */
-  public static deserializeManyAsync(serialized: (Uint8Array | null | undefined)[], callback: RoaringBitmap32ArrayCallback): void
+  public static deserializeParallelAsync(serialized: (Uint8Array | null | undefined)[], callback: RoaringBitmap32ArrayCallback): void
 
   /**
    *
@@ -222,7 +222,7 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @returns {void}
    * @memberof RoaringBitmap32
    */
-  public static deserializeManyAsync(
+  public static deserializeParallelAsync(
     serialized: (Uint8Array | null | undefined)[],
     portable: boolean,
     callback: RoaringBitmap32ArrayCallback

@@ -239,17 +239,17 @@ void RoaringBitmap32::deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::
   info.GetReturnValue().Set(scope.Escape(returnValue));
 }
 
-class DeserializeManyWorkerItem {
+class DeserializeParallelWorkerItem {
  public:
   roaring_bitmap_t bitmap;
   v8::Persistent<v8::Value> bufferPersistent;
   v8utils::TypedArrayContent<uint8_t> buffer;
   bool moved;
 
-  DeserializeManyWorkerItem() : bitmap(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)), moved(false) {
+  DeserializeParallelWorkerItem() : bitmap(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)), moved(false) {
   }
 
-  ~DeserializeManyWorkerItem() {
+  ~DeserializeParallelWorkerItem() {
     bufferPersistent.Reset();
     if (!moved) {
       ra_clear(&bitmap.high_low_container);
@@ -267,43 +267,36 @@ class DeserializeManyWorkerItem {
   }
 };
 
-class DeserializeManyWorker : public v8utils::AsyncWorker {
+class DeserializeParallelWorker : public v8utils::ParallelAsyncWorker {
  public:
   v8::Persistent<v8::Value> bufferPersistent;
 
   bool portable;
-  uint32_t itemsCount;
-  DeserializeManyWorkerItem * items;
+  DeserializeParallelWorkerItem * items;
 
-  DeserializeManyWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate), portable(false), itemsCount(0), items(nullptr) {
+  DeserializeParallelWorker(v8::Isolate * isolate) : v8utils::ParallelAsyncWorker(isolate), portable(false), items(nullptr) {
   }
 
-  virtual ~DeserializeManyWorker() {
+  virtual ~DeserializeParallelWorker() {
     if (items != nullptr) {
       delete[] items;
     }
   }
 
  protected:
-  virtual void work() {
-    const bool portable = this->portable;
-    const uint32_t itemsCount = this->itemsCount;
-    DeserializeManyWorkerItem * items = this->items;
-    for (uint32_t i = 0; i != itemsCount; ++i) {
-      DeserializeManyWorkerItem & item = items[i];
-      const char * error = RoaringBitmap32::doDeserialize(item.buffer, portable, item.bitmap);
-      if (error != nullptr) {
-        this->setError(error);
-        break;
-      }
+  virtual void parallelWork(uint32_t index) {
+    DeserializeParallelWorkerItem & item = items[index];
+    const char * error = RoaringBitmap32::doDeserialize(item.buffer, portable, item.bitmap);
+    if (error != nullptr) {
+      this->setError(error);
     }
   }
 
   virtual v8::Local<v8::Value> done() {
     v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
 
-    const uint32_t itemsCount = this->itemsCount;
-    DeserializeManyWorkerItem * items = this->items;
+    const uint32_t itemsCount = this->loopCount;
+    DeserializeParallelWorkerItem * items = this->items;
 
     v8::MaybeLocal<v8::Array> resultArrayMaybe = v8::Array::New(isolate, itemsCount);
     if (resultArrayMaybe.IsEmpty()) {
@@ -323,7 +316,7 @@ class DeserializeManyWorker : public v8utils::AsyncWorker {
 
       RoaringBitmap32 * unwrapped = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(instance);
 
-      DeserializeManyWorkerItem & item = items[i];
+      DeserializeParallelWorkerItem & item = items[i];
 
       unwrapped->roaring = std::move(item.bitmap);
       item.moved = true;
@@ -335,12 +328,12 @@ class DeserializeManyWorker : public v8utils::AsyncWorker {
   }
 };
 
-void RoaringBitmap32::deserializeManyStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32::deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::EscapableHandleScope scope(isolate);
 
   if (info.Length() < 1 || !info[0]->IsArray()) {
-    return v8utils::throwTypeError("RoaringBitmap32::deserializeManyAsync requires an array as first argument");
+    return v8utils::throwTypeError("RoaringBitmap32::deserializeParallelAsync requires an array as first argument");
   }
 
   v8::Handle<v8::Array> array = v8::Local<v8::Array>::Cast(info[0]);
@@ -348,27 +341,27 @@ void RoaringBitmap32::deserializeManyStaticAsync(const v8::FunctionCallbackInfo<
   uint32_t length = array->Length();
 
   if (length > 0x01FFFFFF) {
-    return v8utils::throwTypeError("RoaringBitmap32::deserializeManyAsync - array too big");
+    return v8utils::throwTypeError("RoaringBitmap32::deserializeParallelAsync - array too big");
   }
 
-  DeserializeManyWorker * worker = new DeserializeManyWorker(isolate);
+  DeserializeParallelWorker * worker = new DeserializeParallelWorker(isolate);
   if (worker == nullptr) {
     return v8utils::throwError("Failed to allocate async worker");
   }
 
-  DeserializeManyWorkerItem * items = length ? new DeserializeManyWorkerItem[length]() : nullptr;
+  DeserializeParallelWorkerItem * items = length ? new DeserializeParallelWorkerItem[length]() : nullptr;
   if (items == nullptr && length != 0) {
     delete worker;
     return v8utils::throwError("Failed to allocate async worker memory");
   }
   worker->items = items;
-  worker->itemsCount = length;
+  worker->loopCount = length;
 
   for (uint32_t i = 0; i != length; ++i) {
     v8::Local<v8::Value> v = array->Get(i);
     if (!v->IsNullOrUndefined() && !items[i].setBuffer(isolate, v)) {
       delete worker;
-      return v8utils::throwTypeError("RoaringBitmap32::deserializeManyAsync - Array must contains only Uint8Array or Buffer elements");
+      return v8utils::throwTypeError("RoaringBitmap32::deserializeParallelAsync - Array must contains only Uint8Array or Buffer elements");
     }
   }
 

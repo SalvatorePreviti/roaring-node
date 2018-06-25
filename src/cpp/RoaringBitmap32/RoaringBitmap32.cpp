@@ -82,7 +82,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_METHOD(ctorObject, "fromArrayAsync", fromArrayStaticAsync);
   NODE_SET_METHOD(ctorObject, "deserialize", deserializeStatic);
   NODE_SET_METHOD(ctorObject, "deserializeAsync", deserializeStaticAsync);
-  NODE_SET_METHOD(ctorObject, "deserializeManyAsync", deserializeManyStaticAsync);
+  NODE_SET_METHOD(ctorObject, "deserializeParallelAsync", deserializeParallelStaticAsync);
   NODE_SET_METHOD(ctorObject, "and", andStatic);
   NODE_SET_METHOD(ctorObject, "or", orStatic);
   NODE_SET_METHOD(ctorObject, "xor", xorStatic);

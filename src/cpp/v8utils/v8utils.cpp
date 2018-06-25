@@ -1,4 +1,7 @@
 #include "v8utils.h"
+#include "atomic.h"
+
+/////////////// JSTypes ///////////////
 
 v8::Persistent<v8::Object> JSTypes::Uint32Array;
 v8::Persistent<v8::Function> JSTypes::Uint32Array_ctor;
@@ -39,7 +42,28 @@ v8::Local<v8::Value> JSTypes::bufferAllocUnsafe(v8::Isolate * isolate, size_t si
   return JSTypes::Buffer_allocUnsafe.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv);
 }
 
+/////////////// v8utils ///////////////
+
 namespace v8utils {
+
+  static uint32_t _cpusCountCache = 0;
+
+  uint32_t getCpusCount() {
+    uint32_t result = _cpusCountCache;
+    if (result != 0) {
+      return result;
+    }
+
+    uv_cpu_info_t * tmp = nullptr;
+    int count = 0;
+    uv_cpu_info(&tmp, &count);
+    if (tmp) {
+      uv_free_cpu_info(tmp, count);
+    }
+    result = count <= 0 ? 1 : (uint32_t)count;
+    _cpusCountCache = result;
+    return result;
+  }
 
   void throwError(const char * message) {
     v8::Isolate * isolate = v8::Isolate::GetCurrent();
@@ -93,7 +117,7 @@ namespace v8utils {
 
   /////////////// AsyncWorker ///////////////
 
-  AsyncWorker::AsyncWorker(v8::Isolate * isolate) : isolate(isolate), _error(nullptr) {
+  AsyncWorker::AsyncWorker(v8::Isolate * isolate) : isolate(isolate), _error(nullptr), _completed(false) {
     _task.data = this;
   }
 
@@ -107,6 +131,15 @@ namespace v8utils {
       return false;
     }
     _callback.Reset(isolate, v8::Local<v8::Function>::Cast(callback));
+    return true;
+  }
+
+  bool AsyncWorker::_start() {
+    if (uv_queue_work(uv_default_loop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
+      setError("Error starting async thread");
+      return false;
+    }
+
     return true;
   }
 
@@ -129,15 +162,13 @@ namespace v8utils {
       worker->_resolver.Reset(isolate, resolver);
     }
 
-    if (uv_queue_work(uv_default_loop(), &worker->_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
-      worker->setError("Error starting async thread");
-      _complete(worker);
+    if (!worker->_start()) {
+      _resolveOrReject(worker);
     }
 
     return returnValue;
   }
 
-  // Called after the thread completes.
   v8::Local<v8::Value> AsyncWorker::done() {
     return v8::Local<v8::Value>();
   }
@@ -192,6 +223,12 @@ namespace v8utils {
   }
 
   void AsyncWorker::_resolveOrReject(AsyncWorker * worker) {
+    if (worker->_completed) {
+      return;
+    }
+
+    worker->_completed = true;
+
     v8::Isolate * isolate = worker->isolate;
     v8::HandleScope scope(isolate);
 
@@ -223,6 +260,103 @@ namespace v8utils {
     v8::Isolate * isolate = worker->isolate;
     _resolveOrReject(worker);
     isolate->RunMicrotasks();
+  }
+
+  /////////////// ParallelAsyncWorker ///////////////
+
+  ParallelAsyncWorker::ParallelAsyncWorker(v8::Isolate * isolate) :
+      AsyncWorker(isolate),
+      loopCount(0),
+      concurrency(0),
+      _tasks(nullptr),
+      _tasksCount(0),
+      _tasksCompleted(0),
+      _currentIndex(0) {
+  }
+
+  ParallelAsyncWorker::~ParallelAsyncWorker() {
+    if (_tasks != nullptr) {
+      delete[] _tasks;
+    }
+  }
+
+  void ParallelAsyncWorker::work() {
+    const uint32_t c = loopCount;
+    for (uint32_t i = 0; i != c && !hasError() && !_completed; ++i) {
+      parallelWork(i);
+    }
+  }
+
+  bool ParallelAsyncWorker::_start() {
+    if (concurrency == 0) {
+      concurrency = getCpusCount();
+    }
+
+    uint32_t tasksCount = std::min(concurrency, loopCount);
+
+    if (tasksCount <= 1) {
+      return AsyncWorker::_start();
+    }
+
+    uv_work_t * tasks = new uv_work_t[tasksCount]();
+    if (tasks == nullptr) {
+      this->setError("Failed to allocate memory");
+      return false;
+    }
+
+    _tasks = tasks;
+    _tasksCount = tasksCount;
+
+    for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
+      tasks[taskIndex].data = this;
+    }
+
+    for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
+      if (uv_queue_work(uv_default_loop(), &tasks[taskIndex], ParallelAsyncWorker::_parallelWork, ParallelAsyncWorker::_parallelDone) != 0) {
+        setError("Error starting async parallel task");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  void ParallelAsyncWorker::_parallelWork(uv_work_t * request) {
+    ParallelAsyncWorker * worker = static_cast<ParallelAsyncWorker *>(request->data);
+
+    uint32_t loopCount = worker->loopCount;
+    for (;;) {
+      if (worker->_completed || worker->hasError()) {
+        break;
+      }
+      const uint32_t prevIndex = worker->_currentIndex;
+      const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
+      if (index >= loopCount || index < prevIndex) {
+        break;
+      }
+      worker->parallelWork(index);
+    }
+  }
+
+  void ParallelAsyncWorker::_parallelDone(uv_work_t * request, int status) {
+    ParallelAsyncWorker * worker = static_cast<ParallelAsyncWorker *>(request->data);
+
+    if (worker->_completed) {
+      worker->isolate->RunMicrotasks();
+      return;
+    }
+
+    if (worker->hasError()) {
+      _complete(worker);
+      return;
+    }
+
+    if (++worker->_tasksCompleted >= worker->_tasksCount) {
+      _complete(worker);
+      return;
+    }
+
+    worker->isolate->RunMicrotasks();
   }
 
 }  // namespace v8utils
