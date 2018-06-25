@@ -43,7 +43,7 @@ void RoaringBitmap32BufferedIterator::Init(v8::Local<v8::Object> exports) {
 
 void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
+  v8::EscapableHandleScope scope(isolate);
 
   if (!info.IsConstructCall()) {
     return v8utils::throwTypeError("RoaringBitmap32BufferedIterator::ctor - needs to be called with new");
@@ -92,7 +92,7 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
 
   holder->Set(nPropertyName.Get(isolate), v8::Uint32::NewFromUnsigned(isolate, n));
 
-  info.GetReturnValue().Set(holder);
+  info.GetReturnValue().Set(scope.Escape(holder));
 }
 
 void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
