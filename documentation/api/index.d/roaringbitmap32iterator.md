@@ -6,8 +6,8 @@
         * [constructor(roaringBitmap32, bufferSize)][Constructor-2]
         * [constructor(roaringBitmap32, buffer)][Constructor-3]
     * Methods
-        * [__@iterator()][MethodDeclaration-13]
-        * [next()][MethodDeclaration-14]
+        * [__@iterator()][MethodDeclaration-15]
+        * [next()][MethodDeclaration-16]
 
 # RoaringBitmap32Iterator
 
@@ -110,6 +110,6 @@ IteratorResult<number>
 [ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [Constructor-3]: roaringbitmap32iterator.md#constructorroaringbitmap32-buffer
 [ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-13]: roaringbitmap32iterator.md#__iterator
+[MethodDeclaration-15]: roaringbitmap32iterator.md#__iterator
 [ClassDeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
-[MethodDeclaration-14]: roaringbitmap32iterator.md#next
+[MethodDeclaration-16]: roaringbitmap32iterator.md#next

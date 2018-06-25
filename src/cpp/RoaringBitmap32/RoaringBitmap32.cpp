@@ -7,7 +7,7 @@
 v8::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
 v8::Persistent<v8::Function> RoaringBitmap32::constructor;
 
-uint8_t RoaringBitmap32::roaring_bitmap_zero[sizeof(roaring_bitmap_t)] = {0};
+const uint8_t RoaringBitmap32::roaring_bitmap_zero[sizeof(roaring_bitmap_t)] = {0};
 
 void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
@@ -77,6 +77,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
 
+  NODE_SET_METHOD(ctorObject, "fromArrayAsync", fromArrayStaticAsync);
   NODE_SET_METHOD(ctorObject, "deserialize", deserializeStatic);
   NODE_SET_METHOD(ctorObject, "deserializeAsync", deserializeStaticAsync);
   NODE_SET_METHOD(ctorObject, "and", andStatic);
@@ -84,7 +85,6 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_METHOD(ctorObject, "xor", xorStatic);
   NODE_SET_METHOD(ctorObject, "andNot", andNotStatic);
   NODE_SET_METHOD(ctorObject, "orMany", orManyStatic);
-
   NODE_SET_METHOD(ctorObject, "swap", swapStatic);
 
   ctorObject->Set(v8::String::NewFromUtf8(isolate, "from"), ctorFunction);
@@ -272,7 +272,7 @@ void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & 
   auto typedArray = typedArrayMaybe.ToLocalChecked();
 
   if (size != 0) {
-    const v8utils::TypedArrayContent<uint32_t> typedArrayContent(isolate, typedArray);
+    const v8utils::TypedArrayContent<uint32_t> typedArrayContent(typedArray);
     if (!typedArrayContent.length || !typedArrayContent.data)
       return v8utils::throwError("RoaringBitmap32::toUint32Array - failed to allocate");
 

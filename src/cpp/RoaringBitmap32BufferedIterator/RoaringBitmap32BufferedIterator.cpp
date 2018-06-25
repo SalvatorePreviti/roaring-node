@@ -70,7 +70,7 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
     return v8utils::throwTypeError("RoaringBitmap32BufferedIterator::ctor - second argument must be of type Uint32Array");
   }
 
-  const v8utils::TypedArrayContent<uint32_t> bufferContent(isolate, bufferObject);
+  const v8utils::TypedArrayContent<uint32_t> bufferContent(bufferObject);
   if (!bufferContent.data || bufferContent.length < 1) {
     return v8utils::throwTypeError("RoaringBitmap32BufferedIterator::ctor - invalid Uint32Array buffer");
   }
@@ -100,7 +100,7 @@ void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Va
   v8::HandleScope scope(isolate);
 
   RoaringBitmap32BufferedIterator * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32BufferedIterator>(info.Holder());
-  const v8utils::TypedArrayContent<uint32_t> bufferContent(isolate, instance->buffer.Get(isolate));
+  const v8utils::TypedArrayContent<uint32_t> bufferContent(instance->buffer.Get(isolate));
 
   uint32_t n;
 

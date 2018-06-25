@@ -18,4 +18,18 @@
 #undef printf
 #undef fprintf
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// TODO: remove this once latest version is merged in CRoaringUnityBuild
+bool roaring_bitmap_add_checked(roaring_bitmap_t * r, uint32_t val);
+
+// TODO: remove this once latest version is merged in CRoaringUnityBuild
+bool roaring_bitmap_remove_checked(roaring_bitmap_t * r, uint32_t val);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

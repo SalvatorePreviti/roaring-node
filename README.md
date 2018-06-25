@@ -123,67 +123,73 @@ npm run doc
 npm run benchmarks
 ```
 
-It will produce a result similar to this one
+It will produce a result similar to this one:
 
 ```
+Platform : Darwin 17.6.0 x64
+CPU      : Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz AVX2
+Cores    : 4 physical - 8 logical
+Memory   : 16.00 GB
+NodeJS   : v10.5.0 - V8 v6.7.288.46-node.8
+
 * running 8 files...
 
 • suite intersection (in place)
   65536 elements
-  ✔ Set                  169.10 ops/sec  ±3.13%  67 runs  -99.97%
-  ✔ FastBitSet        91,214.07 ops/sec  ±1.46%  82 runs  -85.97%
-  ✔ RoaringBitmap32  650,052.15 ops/sec  ±2.10%  81 runs  fastest
+  ✔ Set                  175.80 ops/sec  ±4.53%  65 runs  -99.98%
+  ✔ FastBitSet        97,245.74 ops/sec  ±2.68%  84 runs  -86.38%
+  ✔ RoaringBitmap32  714,009.57 ops/sec  ±3.33%  82 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
 • suite intersection (new)
   1048576 elements
-  ✔ Set                  3.27 ops/sec  ±5.91%  13 runs  -99.89%
-  ✔ FastBitSet       1,166.72 ops/sec  ±1.58%  75 runs  -60.79%
-  ✔ RoaringBitmap32  2,975.23 ops/sec  ±7.54%  45 runs  fastest
+  ✔ Set                  3.45 ops/sec   ±6.51%  13 runs  -99.84%
+  ✔ FastBitSet       1,322.72 ops/sec   ±1.13%  80 runs  -39.01%
+  ✔ RoaringBitmap32  2,168.88 ops/sec  ±18.13%  28 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
 • suite add
   65535 elements
-  ✔ Set.add                                358.58 ops/sec  ±1.97%  74 runs  -84.40%
-  ✔ RoaringBitmap32.add                    517.55 ops/sec  ±1.43%  84 runs  -77.48%
-  ✔ RoaringBitmap32.addMany Array        1,493.05 ops/sec  ±2.80%  68 runs  -35.05%
-  ✔ RoaringBitmap32.addMany Uint32Array  2,298.67 ops/sec  ±2.69%  80 runs  fastest
+  ✔ Set.add                                368.42 ops/sec  ±2.80%  74 runs  -85.49%
+  ✔ RoaringBitmap32.tryAdd                 509.60 ops/sec  ±2.96%  84 runs  -79.92%
+  ✔ RoaringBitmap32.add                    521.23 ops/sec  ±3.52%  79 runs  -79.47%
+  ✔ RoaringBitmap32.addMany Array        1,266.89 ops/sec  ±4.03%  79 runs  -50.09%
+  ✔ RoaringBitmap32.addMany Uint32Array  2,538.37 ops/sec  ±3.68%  79 runs  fastest
   ➔ Fastest is RoaringBitmap32.addMany Uint32Array
 
 • suite iterator
   65536 elements
-  ✔ Set              1,261.89 ops/sec  ±2.75%  78 runs  fastest
-  ✔ RoaringBitmap32  1,128.76 ops/sec  ±1.38%  86 runs  -10.55%
+  ✔ Set              1,512.74 ops/sec  ±2.01%  84 runs  fastest
+  ✔ RoaringBitmap32  1,150.85 ops/sec  ±2.91%  84 runs  -23.92%
   ➔ Fastest is Set
 
 • suite intersection size
   262144 elements
-  ✔ Set                   27.67 ops/sec  ±6.66%  48 runs  -99.99%
-  ✔ FastBitSet        13,570.44 ops/sec  ±2.99%  79 runs  -94.43%
-  ✔ RoaringBitmap32  243,806.65 ops/sec  ±1.54%  84 runs  fastest
+  ✔ Set                   26.43 ops/sec  ±7.18%  48 runs  -99.99%
+  ✔ FastBitSet        15,046.39 ops/sec  ±2.46%  85 runs  -94.33%
+  ✔ RoaringBitmap32  265,435.07 ops/sec  ±2.46%  84 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
 • suite union (in place)
   65536 elements
-  ✔ Set                  236.20 ops/sec  ±4.55%  62 runs  -99.97%
-  ✔ FastBitSet       160,878.99 ops/sec  ±1.89%  82 runs  -79.51%
-  ✔ RoaringBitmap32  785,224.19 ops/sec  ±0.77%  90 runs  fastest
+  ✔ Set                  304.50 ops/sec  ±2.66%  67 runs  -99.97%
+  ✔ FastBitSet       149,467.73 ops/sec  ±1.18%  73 runs  -83.36%
+  ✔ RoaringBitmap32  898,339.76 ops/sec  ±2.26%  84 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
 • suite union size
   262144 elements
-  ✔ Set                   17.51 ops/sec  ±1.53%  47 runs  -99.99%
-  ✔ FastBitSet         7,640.01 ops/sec  ±3.44%  78 runs  -97.16%
-  ✔ RoaringBitmap32  268,799.73 ops/sec  ±2.91%  82 runs  fastest
+  ✔ Set                   18.56 ops/sec  ±1.87%  37 runs  -99.99%
+  ✔ FastBitSet         8,286.87 ops/sec  ±1.52%  87 runs  -97.18%
+  ✔ RoaringBitmap32  294,325.10 ops/sec  ±2.19%  85 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
 • suite union (new)
   1048576 elements
-  ✔ Set                  1.84 ops/sec  ±8.47%   9 runs  -99.91%
-  ✔ FastBitSet         650.20 ops/sec  ±1.74%  79 runs  -67.31%
-  ✔ RoaringBitmap32  1,989.16 ops/sec  ±9.84%  47 runs  fastest
+  ✔ Set                  1.86 ops/sec   ±8.48%   9 runs  -99.90%
+  ✔ FastBitSet         717.62 ops/sec   ±1.48%  86 runs  -61.25%
+  ✔ RoaringBitmap32  1,852.03 ops/sec  ±13.50%  48 runs  fastest
   ➔ Fastest is RoaringBitmap32
 
-
-* completed: 53770.260ms
+* completed: 54213.010ms
 ```
