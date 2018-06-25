@@ -3,6 +3,7 @@
 * [index.d.ts][SourceFile-0]
     * Types
         * [RoaringBitmap32Callback][TypeAliasDeclaration-0]
+        * [RoaringBitmap32ArrayCallback][TypeAliasDeclaration-1]
     * Variables
         * [instructionSet][VariableDeclaration-0]
         * [SSE42][VariableDeclaration-1]
@@ -23,6 +24,18 @@ type RoaringBitmap32Callback = (error: Error | null, bitmap: RoaringBitmap32 | u
 **Type**
 
 (error: Error | null, bitmap: RoaringBitmap32 | undefined) => void
+
+----------
+
+### RoaringBitmap32ArrayCallback
+
+```typescript
+type RoaringBitmap32ArrayCallback = (error: Error | null, bitmap: RoaringBitmap32[] | undefined) => void;
+```
+
+**Type**
+
+(error: Error | null, bitmap: RoaringBitmap32[] | undefined) => void
 
 ## Classes
 
@@ -119,6 +132,7 @@ string
 
 [SourceFile-0]: index.d.md#indexdts
 [TypeAliasDeclaration-0]: index.d.md#roaringbitmap32callback
+[TypeAliasDeclaration-1]: index.d.md#roaringbitmap32arraycallback
 [ClassDeclaration-0]: index.d/roaringbitmap32.md#roaringbitmap32
 [ClassDeclaration-1]: index.d/roaringbitmap32iterator.md#roaringbitmap32iterator
 [VariableDeclaration-0]: index.d.md#instructionset
