@@ -1,4 +1,5 @@
 #include "v8utils.h"
+#include <iostream>
 #include "atomic.h"
 
 /////////////// JSTypes ///////////////
@@ -269,8 +270,7 @@ namespace v8utils {
       loopCount(0),
       concurrency(0),
       _tasks(nullptr),
-      _tasksCount(0),
-      _tasksCompleted(0),
+      _pendingTasks(0),
       _currentIndex(0) {
   }
 
@@ -305,7 +305,6 @@ namespace v8utils {
     }
 
     _tasks = tasks;
-    _tasksCount = tasksCount;
 
     for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
       tasks[taskIndex].data = this;
@@ -314,21 +313,20 @@ namespace v8utils {
     for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
       if (uv_queue_work(uv_default_loop(), &tasks[taskIndex], ParallelAsyncWorker::_parallelWork, ParallelAsyncWorker::_parallelDone) != 0) {
         setError("Error starting async parallel task");
-        return false;
+        break;
+      } else {
+        ++_pendingTasks;
       }
     }
 
-    return true;
+    return _pendingTasks > 0;
   }
 
   void ParallelAsyncWorker::_parallelWork(uv_work_t * request) {
     ParallelAsyncWorker * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     uint32_t loopCount = worker->loopCount;
-    for (;;) {
-      if (worker->_completed || worker->hasError()) {
-        break;
-      }
+    while (!worker->hasError() && !worker->_completed) {
       const uint32_t prevIndex = worker->_currentIndex;
       const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
       if (index >= loopCount || index < prevIndex) {
@@ -346,12 +344,7 @@ namespace v8utils {
       return;
     }
 
-    if (worker->hasError()) {
-      _complete(worker);
-      return;
-    }
-
-    if (++worker->_tasksCompleted >= worker->_tasksCount) {
+    if (--worker->_pendingTasks <= 0) {
       _complete(worker);
       return;
     }

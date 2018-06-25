@@ -2,9 +2,11 @@
 #define __ROARING_ATOMIC__H__
 
 #ifdef _MSC_VER
-#  define atomicIncrement32(volatile_uint32_ptr) InterlockedIncrement(volatile_uint32_ptr)
+#  define atomicIncrement32(ptr) InterlockedIncrement(ptr)
+#  define atomicDecrement32(ptr) InterlockedDecrement(ptr)
 #else
-#  define atomicIncrement32(volatile_uint32_ptr) __sync_add_and_fetch(volatile_uint32_ptr, 1)
+#  define atomicIncrement32(ptr) __sync_add_and_fetch(ptr, 1)
+#  define atomicDecrement32(ptr) __sync_sub_and_fetch(ptr, 1)
 #endif
 
 #endif

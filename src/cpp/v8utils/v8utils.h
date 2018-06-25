@@ -163,8 +163,7 @@ namespace v8utils {
 
    private:
     uv_work_t * _tasks;
-    uint32_t _tasksCount;
-    volatile uint32_t _tasksCompleted;
+    volatile int32_t _pendingTasks;
     volatile uint32_t _currentIndex;
 
     virtual bool _start();
