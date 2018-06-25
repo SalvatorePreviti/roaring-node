@@ -57,7 +57,11 @@ describe('RoaringBitmap32 deserializeManyAsync', () => {
     it('deserializes multiple buffers (non portable)', async () => {
       const sources = []
       for (let i = 0; i < 10; ++i) {
-        sources.push(new RoaringBitmap32([i, i + 10, i * 10000, i * 999999]))
+        const array = [i, i + 10, i * 10000, i * 999999]
+        for (let j = 0; j < i; ++j) {
+          array.push(j)
+        }
+        sources.push(new RoaringBitmap32(array))
       }
 
       const result = await RoaringBitmap32.deserializeManyAsync(sources.map(x => x.serialize()))
@@ -70,7 +74,11 @@ describe('RoaringBitmap32 deserializeManyAsync', () => {
     it('deserializes multiple buffers (portable)', async () => {
       const sources = []
       for (let i = 0; i < 10; ++i) {
-        sources.push(new RoaringBitmap32([i, i + 10, i * 10000, i * 999999]))
+        const array = [i, i + 10, i * 10000, i * 999999]
+        for (let j = 0; j < i; ++j) {
+          array.push(j)
+        }
+        sources.push(new RoaringBitmap32(array))
       }
 
       const result = await RoaringBitmap32.deserializeManyAsync(sources.map(x => x.serialize(true)), true)
