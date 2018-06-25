@@ -22,6 +22,7 @@ limitations under the License.
  *
  * @class RoaringBitmap32
  * @implements {Iterable<number>}
+ * @author Salvatore Previti
  */
 export class RoaringBitmap32 implements Iterable<number> {
   // Allows: import RoaringBitmap32 from 'roaring/RoaringBitmap32'
@@ -45,7 +46,9 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Creates an instance of RoaringBitmap32.
+   *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
+   *
    * Is even faster if the given argument is a RoaringBitmap32 (performs a fast copy).
    *
    * @param {Iterable<number>} [values]
@@ -55,7 +58,9 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Creates an instance of RoaringBitmap32 from the given Iterable.
+   *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
+   *
    * Is optimized if the given argument is a RoaringBitmap32 (performs a fast copy).
    *
    * @static
@@ -67,9 +72,11 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
-   * Is faster to pass a Uint32Array instance instead of an array or an iterable.
+   *
    * If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+   *
    * NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
+   *
    * Returns a Promise that resolves to a new RoaringBitmap32 instance.
    *
    * @static
@@ -81,9 +88,11 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
-   * Is faster to pass a Uint32Array instance instead of an array or an iterable.
+   *
    * If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+   *
    * NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
+   *
    * When deserialization is completed or failed, the given callback will be executed.
    *
    * @static
@@ -96,6 +105,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.
+   *
    * Returns a new RoaringBitmap32 instance.
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -111,6 +121,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+   *
    * Returns a Promise that resolves to a new RoaringBitmap32 instance.
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -126,6 +137,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+   *
    * When deserialization is completed or failed, the given callback will be executed.
    *
    * @static
@@ -138,6 +150,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+   *
    * When deserialization is completed or failed, the given callback will be executed.
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -168,6 +181,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns a new RoaringBitmap32 with the intersection (and) between the given two bitmaps.
+   *
    * The provided bitmaps are not modified.
    *
    * @static
@@ -180,6 +194,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns a new RoaringBitmap32 with the union (or) of the two given bitmaps.
+   *
    * The provided bitmaps are not modified.
    *
    * @static
@@ -192,6 +207,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns a new RoaringBitmap32 with the symmetric union (xor) between the two given bitmaps.
+   *
    * The provided bitmaps are not modified.
    *
    * @static
@@ -204,6 +220,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns a new RoaringBitmap32 with the difference (and not) between the two given bitmaps.
+   *
    * The provided bitmaps are not modified.
    *
    * @static
@@ -216,6 +233,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Performs a union between all the given array of RoaringBitmap32 instances.
+   *
    * This function is faster than calling or multiple times.
    *
    * @static
@@ -227,6 +245,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Performs a union between all the given RoaringBitmap32 instances.
+   *
    * This function is faster than calling or multiple times.
    *
    * @static
@@ -246,6 +265,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Gets a new iterator able to iterate all values in the set in order.
+   *
    * Same as [Symbol.iterator]()
    *
    * @returns {RoaringBitmap32Iterator} A new iterator
@@ -290,7 +310,9 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Overwrite the content of this bitmap copying it from an Iterable or another RoaringBitmap32.
+   *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
+   *
    * Is even faster if a RoaringBitmap32 instance is used (it performs a simple copy).
    *
    * @param {Iterable<number>} values The new values or a RoaringBitmap32 instance.
@@ -309,6 +331,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Tries to add a single value to the set.
+   *
    * Returns true if the value was added during this call, false if already existing or not a valid unsigned integer 32.
    *
    * @param {number} value The value to add. Must be a valid 32 bit unsigned integer.
@@ -319,9 +342,13 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Adds multiple values to the set.
+   *
    * Faster than calling add() multiple times.
+   *
    * It is faster to insert sorted or partially sorted values.
+   *
    * Is faster to use Uint32Array instead of arrays or iterables.
+   *
    * Is optimized if the argument is an instance of RoaringBitmap32 (it performs an OR union).
    *
    * @param {Iterable<number>} values An iterable of values to insert.
@@ -332,6 +359,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Removes a value from the set.
+   *
    * Returns true if the value was removed during this call, false if not.
    *
    * @param value The unsigned 32 bit integer to remove.
@@ -348,8 +376,11 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Removes multiple values from the set.
+   *
    * Faster than calling remove() multiple times.
+   *
    * Is faster to use Uint32Array instead of arrays or iterables.
+   *
    * This function is optimized if the argument is an instance of RoaringBitmap32 (it performs an AND NOT operation).
    *
    * @param values An iterable of values to remove.
@@ -359,8 +390,10 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Negates (in place) the roaring bitmap within a specified interval: [rangeStart, rangeEnd).
+   *
    * First element is included, last element is excluded.
    * The number of negated values is rangeEnd - rangeStart.
+   *
    * Areas outside the range are passed through unchanged.
    *
    * @param rangeStart The start index. Trimmed to 0.
@@ -370,8 +403,10 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Adds all the values in the interval: [rangeStart, rangeEnd).
+   *
    * First element is included, last element is excluded.
    * The number of added values is rangeEnd - rangeStart.
+   *
    * Areas outside the range are passed through unchanged.
    *
    * @param {number} rangeStart The start index. Trimmed to 0.
@@ -389,10 +424,11 @@ export class RoaringBitmap32 implements Iterable<number> {
   public clear(): void
 
   /**
-   * Performs an union in place ("this = this OR values").
+   * Performs an union in place ("this = this OR values"), same as addMany.
+   *
    * Is faster to use Uint32Array instead of arrays or iterables.
+   *
    * This function is optimized if the argument is an instance of RoaringBitmap32.
-   * Same as addMany.
    *
    *
    * @param {Iterable<number>} values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
@@ -402,10 +438,11 @@ export class RoaringBitmap32 implements Iterable<number> {
   public orInPlace(values: Iterable<number>): this
 
   /**
-   * Performs a AND NOT operation in place ("this = this AND NOT values").
+   * Performs a AND NOT operation in place ("this = this AND NOT values"), same as removeMany.
+   *
    * Is faster to use Uint32Array instead of arrays or iterables.
+   *
    * This function is optimized if the argument is an instance of RoaringBitmap32.
-   * Same as removeMany.
    *
    * @param {Iterable<number>} values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
    * @returns {this} This RoaringBitmap32 instance.
@@ -416,8 +453,11 @@ export class RoaringBitmap32 implements Iterable<number> {
   /**
    * Performs the intersection (and) between the current bitmap and the provided bitmap,
    * writing the result in the current bitmap.
+   *
    * Is faster to use Uint32Array instead of arrays or iterables.
+   *
    * This function is optimized if the argument is an instance of RoaringBitmap32.
+   *
    * The provided bitmap is not modified.
    *
    * @param {Iterable<number>} values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
@@ -429,8 +469,11 @@ export class RoaringBitmap32 implements Iterable<number> {
   /**
    * Performs the symmetric union (xor) between the current bitmap and the provided bitmap,
    * writing the result in the current bitmap.
+   *
    * Is faster to use Uint32Array instead of arrays or iterables.
+   *
    * This function is optimized if the argument is an instance of RoaringBitmap32.
+   *
    * The provided bitmap is not modified.
    *
    * @param {Iterable<number>} values A RoaringBitmap32 instance or an iterable of unsigned 32 bit integers.
@@ -441,6 +484,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Checks wether this set is a subset or the same as the given set.
+   *
    * Returns false also if the given argument is not a RoaringBitmap32 instance.
    *
    * @param {RoaringBitmap32} other The other set.
@@ -451,7 +495,9 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Checks wether this set is a strict subset of the given set.
+   *
    * Returns false if the sets are the same.
+   *
    * Returns false also if the given argument is not a RoaringBitmap32 instance.
    *
    * @param {RoaringBitmap32} other The other RoaringBitmap32 instance.
@@ -462,6 +508,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Checks wether this set is equal to another set.
+   *
    * Returns false also if the given argument is not a RoaringBitmap32 instance.
    *
    * @param {RoaringBitmap32} other The other set to compare for equality.
@@ -472,7 +519,9 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Check whether the two bitmaps intersect.
+   *
    * Returns true if there is at least one item in common, false if not.
+   *
    * Returns false also if the given argument is not a RoaringBitmap32 instance.
    *
    * @param {RoaringBitmap32} other The other set to compare for intersection.
@@ -483,6 +532,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Computes the size of the intersection between two bitmaps (the number of values in common).
+   *
    * Returns -1 if the given argument is not a RoaringBitmap32 instance.
    *
    * @param {RoaringBitmap32} other The other set to compare for intersection.
@@ -493,6 +543,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Computes the size of the union between two bitmaps.
+   *
    * Returns -1 if the given argument is not a RoaringBitmap32 instance.
    *
    * @param {RoaringBitmap32} other The other set to compare for intersection.
@@ -503,6 +554,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Computes the size of the difference (andnot) between two bitmaps.
+   *
    * Returns -1 if the given argument is not a RoaringBitmap32 instance.
    *
    * @param {RoaringBitmap32} other The other set to compare for intersection.
@@ -513,6 +565,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Computes the size of the symmetric difference (xor) between two bitmaps.
+   *
    * Returns -1 if the given argument is not a RoaringBitmap32 instance.
    *
    * @param {RoaringBitmap32} other The other set to compare for intersection.
@@ -524,6 +577,7 @@ export class RoaringBitmap32 implements Iterable<number> {
   /**
    * Computes the Jaccard index between two bitmaps.
    * (Also known as the Tanimoto distance or the Jaccard similarity coefficient).
+   *
    * See https://en.wikipedia.org/wiki/Jaccard_index
    *
    * The Jaccard index is undefined if both bitmaps are empty.
@@ -538,6 +592,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Remove run-length encoding even when it is more space efficient.
+   *
    * Return whether a change was applied.
    *
    * @returns {boolean} True if a change was applied, false if not.
@@ -548,7 +603,9 @@ export class RoaringBitmap32 implements Iterable<number> {
   /**
    * Convert array and bitmap containers to run containers when it is more efficient;
    * also convert from run containers when more space efficient.
+   *
    * Returns true if the bitmap has at least one run container.
+   *
    * Additional savings might be possible by calling shrinkToFit().
    *
    * @returns {boolean} True if the bitmap has at least one run container.
@@ -558,6 +615,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * If needed, reallocate memory to shrink the memory usage.
+   *
    * Returns the number of bytes saved.
    *
    * @returns {number} The number of bytes saved.
@@ -577,6 +635,7 @@ export class RoaringBitmap32 implements Iterable<number> {
   /**
    * If the size of the roaring bitmap is strictly greater than rank,
    * then this function returns the element of given rank.
+   *
    * Otherwise, it returns undefined.
    *
    * @param {number} rank The rank, an unsigned 32 bit integer.
@@ -587,8 +646,11 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Creates a new Uint32Array and fills it with all the values in the bitmap.
+   *
    * The returned array may be very big, up to 4 gigabytes.
+   *
    * Use this function only when you know what you are doing.
+   *
    * This function is faster than calling new Uint32Array(bitmap);
    *
    * @returns A new Uint32Array instance containing all the items in the set in order.
@@ -598,6 +660,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Creates a new plain JS array and fills it with all the values in the bitmap.
+   *
    * The returned array may be very big, use this function only when you know what you are doing.
    *
    * @returns {number[]}  A new plain JS array that contains all the items in the set in order.
@@ -607,6 +670,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Creates a new plain JS Set<number> and fills it with all the values in the bitmap.
+   *
    * The returned set may be very big, use this function only when you know what you are doing.
    *
    * @returns {Set<number>} A new plain JS array that contains all the items in the set in order.
@@ -616,6 +680,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns a plain JS array with all the values in the bitmap.
+   *
    * Used by JSON.stringify to serialize this bitmap as an array.
    *
    * @returns {number[]} A new plain JS array that contains all the items in the set in order.
@@ -660,8 +725,7 @@ export class RoaringBitmap32 implements Iterable<number> {
   public deserialize(serialized: Uint8Array, portable?: boolean): void
 
   /**
-   * Returns a new RoaringBitmap32 that is a copy of this bitmap.
-   * Same as new RoaringBitmap32(copy)
+   * Returns a new RoaringBitmap32 that is a copy of this bitmap, same as new RoaringBitmap32(copy)
    *
    * @returns {RoaringBitmap32} A cloned RoaringBitmap32 instance
    * @memberof RoaringBitmap32
@@ -670,6 +734,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns "RoaringBitmap32(size)".
+   *
    * To have a standard string representation of the content as a string, call contentToString() instead.
    *
    * @returns {string} "RoaringBitmap32(size)"
@@ -679,6 +744,7 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns a standard string representation of the content of this RoaringBitmap32 instance. It may return a very long string.
+   *
    * Default max length is 32000 characters, everything after maxLength is truncated (ellipsis added).
    *
    * @param {number} [maxLength] Approximate maximum length of the string. Default is 32000. Ellipsis will be added if the string is longer.
@@ -797,6 +863,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
+   *
    * It allocates a small temporary buffer of the given size for speedup.
    *
    * @param {RoaringBitmap32} roaringBitmap32 The roaring bitmap to iterate
@@ -824,6 +891,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
 
   /**
    * Returns the next element in the iterator.
+   *
    * For performance reasons, this function returns always the same instance.
    *
    * @returns {IteratorResult<number>} The next result.
