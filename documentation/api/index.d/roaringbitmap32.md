@@ -82,7 +82,9 @@ class RoaringBitmap32 implements Iterable<number>
 ### constructor(values)
 
 Creates an instance of RoaringBitmap32.
+
 Is faster to pass a Uint32Array instance instead of an array or an iterable.
+
 Is even faster if the given argument is a RoaringBitmap32 (performs a fast copy).
 
 ```typescript
@@ -100,7 +102,9 @@ public constructor(values?: Iterable<number> | undefined<number>);
 ### from(values)
 
 Creates an instance of RoaringBitmap32 from the given Iterable.
+
 Is faster to pass a Uint32Array instance instead of an array or an iterable.
+
 Is optimized if the given argument is a RoaringBitmap32 (performs a fast copy).
 
 ```typescript
@@ -122,14 +126,18 @@ public static from(values: Iterable<number>): RoaringBitmap32;
 ### fromArrayAsync(values)
 
 Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
-Is faster to pass a Uint32Array instance instead of an array or an iterable.
+
 If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+
 NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
+
 Returns a Promise that resolves to a new RoaringBitmap32 instance.
 Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
-Is faster to pass a Uint32Array instance instead of an array or an iterable.
+
 If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+
 NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
+
 When deserialization is completed or failed, the given callback will be executed.
 
 ```typescript
@@ -151,14 +159,18 @@ Promise<[RoaringBitmap32][ClassDeclaration-0]>
 ### fromArrayAsync(values, callback)
 
 Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
-Is faster to pass a Uint32Array instance instead of an array or an iterable.
+
 If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+
 NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
+
 Returns a Promise that resolves to a new RoaringBitmap32 instance.
 Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
-Is faster to pass a Uint32Array instance instead of an array or an iterable.
+
 If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+
 NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
+
 When deserialization is completed or failed, the given callback will be executed.
 
 ```typescript
@@ -181,6 +193,7 @@ void
 ### deserialize(serialized, portable)
 
 Deserializes the bitmap from an Uint8Array or a Buffer.
+
 Returns a new RoaringBitmap32 instance.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -230,13 +243,16 @@ void
 ### deserializeAsync(serialized, portable)
 
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 Returns a Promise that resolves to a new RoaringBitmap32 instance.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 When deserialization is completed or failed, the given callback will be executed.
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 When deserialization is completed or failed, the given callback will be executed.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -262,13 +278,16 @@ Promise<[RoaringBitmap32][ClassDeclaration-0]>
 ### deserializeAsync(serialized, callback)
 
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 Returns a Promise that resolves to a new RoaringBitmap32 instance.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 When deserialization is completed or failed, the given callback will be executed.
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 When deserialization is completed or failed, the given callback will be executed.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -294,13 +313,16 @@ void
 ### deserializeAsync(serialized, portable, callback)
 
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 Returns a Promise that resolves to a new RoaringBitmap32 instance.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 When deserialization is completed or failed, the given callback will be executed.
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
+
 When deserialization is completed or failed, the given callback will be executed.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
@@ -348,6 +370,7 @@ void
 ### and(a, b)
 
 Returns a new RoaringBitmap32 with the intersection (and) between the given two bitmaps.
+
 The provided bitmaps are not modified.
 
 ```typescript
@@ -370,6 +393,7 @@ public static and(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32;
 ### or(a, b)
 
 Returns a new RoaringBitmap32 with the union (or) of the two given bitmaps.
+
 The provided bitmaps are not modified.
 
 ```typescript
@@ -392,6 +416,7 @@ public static or(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32;
 ### xor(a, b)
 
 Returns a new RoaringBitmap32 with the symmetric union (xor) between the two given bitmaps.
+
 The provided bitmaps are not modified.
 
 ```typescript
@@ -414,6 +439,7 @@ public static xor(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32;
 ### andNot(a, b)
 
 Returns a new RoaringBitmap32 with the difference (and not) between the two given bitmaps.
+
 The provided bitmaps are not modified.
 
 ```typescript
@@ -436,8 +462,10 @@ public static andNot(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32;
 ### orMany(values)
 
 Performs a union between all the given array of RoaringBitmap32 instances.
+
 This function is faster than calling or multiple times.
 Performs a union between all the given RoaringBitmap32 instances.
+
 This function is faster than calling or multiple times.
 
 ```typescript
@@ -459,8 +487,10 @@ public static orMany(values: RoaringBitmap32[]): RoaringBitmap32;
 ### orMany(values)
 
 Performs a union between all the given array of RoaringBitmap32 instances.
+
 This function is faster than calling or multiple times.
 Performs a union between all the given RoaringBitmap32 instances.
+
 This function is faster than calling or multiple times.
 
 ```typescript
@@ -496,6 +526,7 @@ public __@iterator(): RoaringBitmap32Iterator;
 ### iterator()
 
 Gets a new iterator able to iterate all values in the set in order.
+
 Same as [Symbol.iterator]()
 
 ```typescript
@@ -580,7 +611,9 @@ boolean
 ### copyFrom(values)
 
 Overwrite the content of this bitmap copying it from an Iterable or another RoaringBitmap32.
+
 Is faster to pass a Uint32Array instance instead of an array or an iterable.
+
 Is even faster if a RoaringBitmap32 instance is used (it performs a simple copy).
 
 ```typescript
@@ -622,6 +655,7 @@ public add(value: number): RoaringBitmap32;
 ### tryAdd(value)
 
 Tries to add a single value to the set.
+
 Returns true if the value was added during this call, false if already existing or not a valid unsigned integer 32.
 
 ```typescript
@@ -643,9 +677,13 @@ boolean
 ### addMany(values)
 
 Adds multiple values to the set.
+
 Faster than calling add() multiple times.
+
 It is faster to insert sorted or partially sorted values.
+
 Is faster to use Uint32Array instead of arrays or iterables.
+
 Is optimized if the argument is an instance of RoaringBitmap32 (it performs an OR union).
 
 ```typescript
@@ -667,6 +705,7 @@ public addMany(values: Iterable<number>): RoaringBitmap32;
 ### delete(value)
 
 Removes a value from the set.
+
 Returns true if the value was removed during this call, false if not.
 
 ```typescript
@@ -708,8 +747,11 @@ void
 ### removeMany(values)
 
 Removes multiple values from the set.
+
 Faster than calling remove() multiple times.
+
 Is faster to use Uint32Array instead of arrays or iterables.
+
 This function is optimized if the argument is an instance of RoaringBitmap32 (it performs an AND NOT operation).
 
 ```typescript
@@ -731,8 +773,10 @@ public removeMany(values: Iterable<number>): RoaringBitmap32;
 ### flipRange(rangeStart, rangeEnd)
 
 Negates (in place) the roaring bitmap within a specified interval: [rangeStart, rangeEnd).
+
 First element is included, last element is excluded.
 The number of negated values is rangeEnd - rangeStart.
+
 Areas outside the range are passed through unchanged.
 
 ```typescript
@@ -755,8 +799,10 @@ void
 ### addRange(rangeStart, rangeEnd)
 
 Adds all the values in the interval: [rangeStart, rangeEnd).
+
 First element is included, last element is excluded.
 The number of added values is rangeEnd - rangeStart.
+
 Areas outside the range are passed through unchanged.
 
 ```typescript
@@ -793,10 +839,11 @@ void
 
 ### orInPlace(values)
 
-Performs an union in place ("this = this OR values").
+Performs an union in place ("this = this OR values"), same as addMany.
+
 Is faster to use Uint32Array instead of arrays or iterables.
+
 This function is optimized if the argument is an instance of RoaringBitmap32.
-Same as addMany.
 
 ```typescript
 public orInPlace(values: Iterable<number>): RoaringBitmap32;
@@ -816,10 +863,11 @@ public orInPlace(values: Iterable<number>): RoaringBitmap32;
 
 ### andNotInPlace(values)
 
-Performs a AND NOT operation in place ("this = this AND NOT values").
+Performs a AND NOT operation in place ("this = this AND NOT values"), same as removeMany.
+
 Is faster to use Uint32Array instead of arrays or iterables.
+
 This function is optimized if the argument is an instance of RoaringBitmap32.
-Same as removeMany.
 
 ```typescript
 public andNotInPlace(values: Iterable<number>): RoaringBitmap32;
@@ -841,8 +889,11 @@ public andNotInPlace(values: Iterable<number>): RoaringBitmap32;
 
 Performs the intersection (and) between the current bitmap and the provided bitmap,
 writing the result in the current bitmap.
+
 Is faster to use Uint32Array instead of arrays or iterables.
+
 This function is optimized if the argument is an instance of RoaringBitmap32.
+
 The provided bitmap is not modified.
 
 ```typescript
@@ -865,8 +916,11 @@ public andInPlace(values: Iterable<number>): RoaringBitmap32;
 
 Performs the symmetric union (xor) between the current bitmap and the provided bitmap,
 writing the result in the current bitmap.
+
 Is faster to use Uint32Array instead of arrays or iterables.
+
 This function is optimized if the argument is an instance of RoaringBitmap32.
+
 The provided bitmap is not modified.
 
 ```typescript
@@ -888,6 +942,7 @@ public xorInPlace(values: Iterable<number>): RoaringBitmap32;
 ### isSubset(other)
 
 Checks wether this set is a subset or the same as the given set.
+
 Returns false also if the given argument is not a RoaringBitmap32 instance.
 
 ```typescript
@@ -909,7 +964,9 @@ boolean
 ### isStrictSubset(other)
 
 Checks wether this set is a strict subset of the given set.
+
 Returns false if the sets are the same.
+
 Returns false also if the given argument is not a RoaringBitmap32 instance.
 
 ```typescript
@@ -931,6 +988,7 @@ boolean
 ### isEqual(other)
 
 Checks wether this set is equal to another set.
+
 Returns false also if the given argument is not a RoaringBitmap32 instance.
 
 ```typescript
@@ -952,7 +1010,9 @@ boolean
 ### intersects(other)
 
 Check whether the two bitmaps intersect.
+
 Returns true if there is at least one item in common, false if not.
+
 Returns false also if the given argument is not a RoaringBitmap32 instance.
 
 ```typescript
@@ -974,6 +1034,7 @@ boolean
 ### andCardinality(other)
 
 Computes the size of the intersection between two bitmaps (the number of values in common).
+
 Returns -1 if the given argument is not a RoaringBitmap32 instance.
 
 ```typescript
@@ -995,6 +1056,7 @@ number
 ### orCardinality(other)
 
 Computes the size of the union between two bitmaps.
+
 Returns -1 if the given argument is not a RoaringBitmap32 instance.
 
 ```typescript
@@ -1016,6 +1078,7 @@ number
 ### andNotCardinality(other)
 
 Computes the size of the difference (andnot) between two bitmaps.
+
 Returns -1 if the given argument is not a RoaringBitmap32 instance.
 
 ```typescript
@@ -1037,6 +1100,7 @@ number
 ### xorCardinality(other)
 
 Computes the size of the symmetric difference (xor) between two bitmaps.
+
 Returns -1 if the given argument is not a RoaringBitmap32 instance.
 
 ```typescript
@@ -1059,6 +1123,7 @@ number
 
 Computes the Jaccard index between two bitmaps.
 (Also known as the Tanimoto distance or the Jaccard similarity coefficient).
+
 See https://en.wikipedia.org/wiki/Jaccard_index
 
 The Jaccard index is undefined if both bitmaps are empty.
@@ -1084,6 +1149,7 @@ number
 ### removeRunCompression()
 
 Remove run-length encoding even when it is more space efficient.
+
 Return whether a change was applied.
 
 ```typescript
@@ -1100,7 +1166,9 @@ boolean
 
 Convert array and bitmap containers to run containers when it is more efficient;
 also convert from run containers when more space efficient.
+
 Returns true if the bitmap has at least one run container.
+
 Additional savings might be possible by calling shrinkToFit().
 
 ```typescript
@@ -1116,6 +1184,7 @@ boolean
 ### shrinkToFit()
 
 If needed, reallocate memory to shrink the memory usage.
+
 Returns the number of bytes saved.
 
 ```typescript
@@ -1152,6 +1221,7 @@ number
 
 If the size of the roaring bitmap is strictly greater than rank,
 then this function returns the element of given rank.
+
 Otherwise, it returns undefined.
 
 ```typescript
@@ -1173,8 +1243,11 @@ number | undefined
 ### toUint32Array()
 
 Creates a new Uint32Array and fills it with all the values in the bitmap.
+
 The returned array may be very big, up to 4 gigabytes.
+
 Use this function only when you know what you are doing.
+
 This function is faster than calling new Uint32Array(bitmap);
 
 ```typescript
@@ -1190,6 +1263,7 @@ Uint32Array
 ### toArray()
 
 Creates a new plain JS array and fills it with all the values in the bitmap.
+
 The returned array may be very big, use this function only when you know what you are doing.
 
 ```typescript
@@ -1205,6 +1279,7 @@ number[]
 ### toSet()
 
 Creates a new plain JS Set<number> and fills it with all the values in the bitmap.
+
 The returned set may be very big, use this function only when you know what you are doing.
 
 ```typescript
@@ -1220,6 +1295,7 @@ Set<number>
 ### toJSON()
 
 Returns a plain JS array with all the values in the bitmap.
+
 Used by JSON.stringify to serialize this bitmap as an array.
 
 ```typescript
@@ -1280,8 +1356,7 @@ public serialize(portable?: boolean | undefined): Buffer;
 
 ### clone()
 
-Returns a new RoaringBitmap32 that is a copy of this bitmap.
-Same as new RoaringBitmap32(copy)
+Returns a new RoaringBitmap32 that is a copy of this bitmap, same as new RoaringBitmap32(copy)
 
 ```typescript
 public clone(): RoaringBitmap32;
@@ -1296,6 +1371,7 @@ public clone(): RoaringBitmap32;
 ### toString()
 
 Returns "RoaringBitmap32(size)".
+
 To have a standard string representation of the content as a string, call contentToString() instead.
 
 ```typescript
@@ -1311,6 +1387,7 @@ string
 ### contentToString(maxLength)
 
 Returns a standard string representation of the content of this RoaringBitmap32 instance. It may return a very long string.
+
 Default max length is 32000 characters, everything after maxLength is truncated (ellipsis added).
 
 ```typescript

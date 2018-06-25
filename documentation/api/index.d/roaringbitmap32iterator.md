@@ -22,6 +22,7 @@ class RoaringBitmap32Iterator implements IterableIterator<number>
 
 Creates a new iterator able to iterate a RoaringBitmap32.
 Creates a new iterator able to iterate a RoaringBitmap32.
+
 It allocates a small temporary buffer of the given size for speedup.
 Creates a new iterator able to iterate a RoaringBitmap32 using the given temporary buffer.
 
@@ -41,6 +42,7 @@ public constructor(roaringBitmap32?: RoaringBitmap32 | undefined);
 
 Creates a new iterator able to iterate a RoaringBitmap32.
 Creates a new iterator able to iterate a RoaringBitmap32.
+
 It allocates a small temporary buffer of the given size for speedup.
 Creates a new iterator able to iterate a RoaringBitmap32 using the given temporary buffer.
 
@@ -61,6 +63,7 @@ public constructor(roaringBitmap32: RoaringBitmap32, bufferSize: number);
 
 Creates a new iterator able to iterate a RoaringBitmap32.
 Creates a new iterator able to iterate a RoaringBitmap32.
+
 It allocates a small temporary buffer of the given size for speedup.
 Creates a new iterator able to iterate a RoaringBitmap32 using the given temporary buffer.
 
@@ -94,6 +97,7 @@ public __@iterator(): RoaringBitmap32Iterator;
 ### next()
 
 Returns the next element in the iterator.
+
 For performance reasons, this function returns always the same instance.
 
 ```typescript
