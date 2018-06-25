@@ -175,22 +175,28 @@ void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & in
   info.GetReturnValue().Set(scope.Escape(holder));
 }
 
-struct DeserializeWorker : public RoaringBitmap32FactoryAsyncWorker {
+class DeserializeWorker : public RoaringBitmap32FactoryAsyncWorker {
  public:
   v8::Persistent<v8::Value> bufferPersistent;
-  const v8utils::TypedArrayContent<uint8_t> buffer;
-
+  v8utils::TypedArrayContent<uint8_t> buffer;
   bool portable;
 
-  DeserializeWorker(v8::Isolate * isolate, v8::Local<v8::Value> buffer) :
-      RoaringBitmap32FactoryAsyncWorker(isolate),
-      bufferPersistent(isolate, buffer),
-      buffer(buffer),
-      portable(false) {
+  DeserializeWorker(v8::Isolate * isolate) : RoaringBitmap32FactoryAsyncWorker(isolate), portable(false) {
   }
 
   virtual ~DeserializeWorker() {
     bufferPersistent.Reset();
+  }
+
+  bool setBuffer(v8::Local<v8::Value> buffer) {
+    if (buffer.IsEmpty() || (!buffer->IsUint8Array() && !buffer->IsInt8Array() && !buffer->IsUint8ClampedArray())) {
+      return false;
+    }
+    bufferPersistent.Reset(isolate, buffer);
+    if (!this->buffer.set(buffer)) {
+      return false;
+    }
+    return true;
   }
 
  protected:
@@ -203,12 +209,167 @@ void RoaringBitmap32::deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::EscapableHandleScope scope(isolate);
 
-  if (info.Length() == 0 || (!info[0]->IsUint8Array() && !info[0]->IsInt8Array() && !info[0]->IsUint8ClampedArray()))
-    return v8utils::throwTypeError("RoaringBitmap32::deserializeAsync first argument must be Uint8Array or Buffer");
+  DeserializeWorker * worker = new DeserializeWorker(isolate);
+  if (worker == nullptr) {
+    return v8utils::throwError("RoaringBitmap32::deserializeAsync - Failed to allocate async worker");
+  }
 
-  DeserializeWorker * worker = new DeserializeWorker(isolate, info[0]);
+  if (info.Length() <= 0 || !worker->setBuffer(info[0])) {
+    delete worker;
+    return v8utils::throwTypeError("RoaringBitmap32::deserializeAsync - first argument must be Uint8Array or Buffer");
+  }
+
+  if (info.Length() >= 2) {
+    if (info[1]->IsFunction()) {
+      worker->setCallback(info[1]);
+      if (info.Length() >= 3 && info[2]->IsTrue()) {
+        worker->portable = true;
+      }
+    } else {
+      if (info[1]->IsTrue()) {
+        worker->portable = true;
+      }
+      if (info.Length() >= 3 && info[2]->IsFunction()) {
+        worker->setCallback(info[2]);
+      }
+    }
+  }
+
+  v8::Local<v8::Value> returnValue = v8utils::AsyncWorker::run(worker);
+  info.GetReturnValue().Set(scope.Escape(returnValue));
+}
+
+class DeserializeManyWorkerItem {
+ public:
+  roaring_bitmap_t bitmap;
+  v8::Persistent<v8::Value> bufferPersistent;
+  v8utils::TypedArrayContent<uint8_t> buffer;
+  bool moved;
+
+  DeserializeManyWorkerItem() : bitmap(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)), moved(false) {
+  }
+
+  ~DeserializeManyWorkerItem() {
+    bufferPersistent.Reset();
+    if (!moved) {
+      ra_clear(&bitmap.high_low_container);
+    }
+  }
+
+  bool setBuffer(v8::Isolate * isolate, v8::Local<v8::Value> buffer) {
+    if (buffer.IsEmpty() || (!buffer->IsUint8Array() && !buffer->IsInt8Array() && !buffer->IsUint8ClampedArray())) {
+      return false;
+    }
+    if (!this->buffer.set(buffer)) {
+      return false;
+    }
+    return true;
+  }
+};
+
+class DeserializeManyWorker : public v8utils::AsyncWorker {
+ public:
+  v8::Persistent<v8::Value> bufferPersistent;
+
+  bool portable;
+  uint32_t itemsCount;
+  DeserializeManyWorkerItem * items;
+
+  DeserializeManyWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate), portable(false), itemsCount(0), items(nullptr) {
+  }
+
+  virtual ~DeserializeManyWorker() {
+    if (items != nullptr) {
+      delete[] items;
+    }
+  }
+
+ protected:
+  virtual void work() {
+    const bool portable = this->portable;
+    const uint32_t itemsCount = this->itemsCount;
+    DeserializeManyWorkerItem * items = this->items;
+    for (uint32_t i = 0; i != itemsCount; ++i) {
+      DeserializeManyWorkerItem & item = items[i];
+      const char * error = RoaringBitmap32::doDeserialize(item.buffer, portable, item.bitmap);
+      if (error != nullptr) {
+        this->setError(error);
+        break;
+      }
+    }
+  }
+
+  virtual v8::Local<v8::Value> done() {
+    v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
+
+    const uint32_t itemsCount = this->itemsCount;
+    DeserializeManyWorkerItem * items = this->items;
+
+    v8::MaybeLocal<v8::Array> resultArrayMaybe = v8::Array::New(isolate, itemsCount);
+    if (resultArrayMaybe.IsEmpty()) {
+      return empty();
+    }
+
+    v8::Local<v8::Array> resultArray = resultArrayMaybe.ToLocalChecked();
+    v8::Local<v8::Context> currentContext = isolate->GetCurrentContext();
+
+    for (uint32_t i = 0; i != itemsCount; ++i) {
+      v8::MaybeLocal<v8::Object> instanceMaybe = cons->NewInstance(currentContext, 0, nullptr);
+      if (instanceMaybe.IsEmpty()) {
+        return empty();
+      }
+
+      v8::Local<v8::Object> instance = instanceMaybe.ToLocalChecked();
+
+      RoaringBitmap32 * unwrapped = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(instance);
+
+      DeserializeManyWorkerItem & item = items[i];
+
+      unwrapped->roaring = std::move(item.bitmap);
+      item.moved = true;
+
+      resultArray->Set(i, instance);
+    }
+
+    return resultArray;
+  }
+};
+
+void RoaringBitmap32::deserializeManyStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::EscapableHandleScope scope(isolate);
+
+  if (info.Length() != 0 || !info[0]->IsArray()) {
+    return v8utils::throwTypeError("RoaringBitmap32::deserializeManyAsync requires an array as first argument");
+  }
+
+  v8::Handle<v8::Array> array = v8::Local<v8::Array>::Cast(info[0]);
+
+  uint32_t length = array->Length();
+
+  if (length > 0x01FFFFFF) {
+    return v8utils::throwTypeError("RoaringBitmap32::deserializeManyAsync - array too big");
+  }
+
+  DeserializeManyWorker * worker = new DeserializeManyWorker(isolate);
   if (worker == nullptr) {
     return v8utils::throwError("Failed to allocate async worker");
+  }
+
+  DeserializeManyWorkerItem * items = length ? new DeserializeManyWorkerItem[length]() : nullptr;
+  if (items == nullptr && length != 0) {
+    delete worker;
+    return v8utils::throwError("Failed to allocate async worker memory");
+  }
+  worker->items = items;
+  worker->itemsCount = length;
+
+  for (uint32_t i = 0; i != length; ++i) {
+    v8::Local<v8::Value> v = array->Get(i);
+    if (!v->IsNullOrUndefined() && !items[i].setBuffer(isolate, v)) {
+      delete worker;
+      return v8utils::throwTypeError("RoaringBitmap32::deserializeManyAsync - Array must contains only Uint8Array or Buffer elements");
+    }
   }
 
   if (info.Length() >= 2) {

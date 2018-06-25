@@ -4,6 +4,8 @@
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
 
+//////////// RoaringBitmap32 ////////////
+
 v8::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
 v8::Persistent<v8::Function> RoaringBitmap32::constructor;
 
@@ -80,6 +82,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_METHOD(ctorObject, "fromArrayAsync", fromArrayStaticAsync);
   NODE_SET_METHOD(ctorObject, "deserialize", deserializeStatic);
   NODE_SET_METHOD(ctorObject, "deserializeAsync", deserializeStaticAsync);
+  NODE_SET_METHOD(ctorObject, "deserializeManyAsync", deserializeManyStaticAsync);
   NODE_SET_METHOD(ctorObject, "and", andStatic);
   NODE_SET_METHOD(ctorObject, "or", orStatic);
   NODE_SET_METHOD(ctorObject, "xor", xorStatic);
@@ -392,4 +395,37 @@ void RoaringBitmap32::statistics(const v8::FunctionCallbackInfo<v8::Value> & inf
   result->Set(v8::String::NewFromUtf8(isolate, "sumOfAllValues"), v8::Number::New(isolate, (double)stats.sum_value));
   result->Set(v8::String::NewFromUtf8(isolate, "size"), v8::Number::New(isolate, (double)stats.cardinality));
   info.GetReturnValue().Set(scope.Escape(result));
+}
+
+//////////// RoaringBitmap32FactoryAsyncWorker ////////////
+
+RoaringBitmap32FactoryAsyncWorker::RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate) :
+    v8utils::AsyncWorker(isolate),
+    bitmap(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)),
+    bitmapMoved(false) {
+}
+
+RoaringBitmap32FactoryAsyncWorker::~RoaringBitmap32FactoryAsyncWorker() {
+  if (!bitmapMoved) {
+    ra_clear(&bitmap.high_low_container);
+  }
+}
+
+v8::Local<v8::Value> RoaringBitmap32FactoryAsyncWorker::done() {
+  v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
+
+  v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+  if (resultMaybe.IsEmpty()) {
+    ra_clear(&bitmap.high_low_container);
+    return empty();
+  }
+
+  v8::Local<v8::Object> result = resultMaybe.ToLocalChecked();
+
+  RoaringBitmap32 * unwrapped = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+
+  unwrapped->roaring = std::move(bitmap);
+  bitmapMoved = true;
+
+  return result;
 }

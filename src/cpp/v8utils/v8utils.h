@@ -53,15 +53,17 @@ namespace v8utils {
       set(from);
     }
 
-    inline void set(v8::Local<v8::Value> from) {
+    inline bool set(v8::Local<v8::Value> from) {
       if (!from.IsEmpty() && from->IsArrayBufferView()) {
         v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
         this->length = array->ByteLength() / sizeof(T);
         this->data = (T *)((char *)(array->Buffer()->GetContents().Data()) + array->ByteOffset());
-      } else {
-        this->length = 0;
-        this->data = nullptr;
+        return true;
       }
+
+      this->length = 0;
+      this->data = nullptr;
+      return false;
     }
   };
 
