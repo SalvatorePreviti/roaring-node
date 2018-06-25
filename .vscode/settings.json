@@ -63,7 +63,8 @@
     "hash_map": "cpp",
     "list": "cpp",
     "unordered_map": "cpp",
-    "hashtable": "cpp"
+    "hashtable": "cpp",
+    "__hash_table": "cpp"
   },
   "python.linting.enabled": false
 }

@@ -1,5 +1,84 @@
 #include "RoaringBitmap32.h"
 
+inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Local<v8::Value> arg, bool replace = false) {
+  if (arg.IsEmpty()) {
+    return false;
+  }
+
+  if (arg->IsNullOrUndefined()) {
+    if (replace && self->roaring.high_low_container.containers != nullptr) {
+      roaring_bitmap_clear(&self->roaring);
+    }
+    return true;
+  }
+
+  if (!arg->IsObject()) {
+    return false;
+  }
+
+  if (arg->IsUint32Array() || arg->IsInt32Array()) {
+    if (replace && self->roaring.high_low_container.containers != nullptr) {
+      roaring_bitmap_clear(&self->roaring);
+    }
+    const v8utils::TypedArrayContent<uint32_t> typedArray(arg);
+    roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
+    return true;
+  }
+
+  if (RoaringBitmap32::constructorTemplate.Get(isolate)->HasInstance(arg)) {
+    RoaringBitmap32 * other = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
+    if (other && self != other) {
+      if (replace || self->roaring.high_low_container.containers == nullptr) {
+        if (self->roaring.high_low_container.containers != nullptr) {
+          roaring_bitmap_clear(&self->roaring);
+        }
+        bool is_ok = ra_copy(&other->roaring.high_low_container, &self->roaring.high_low_container, other->roaring.copy_on_write);
+        if (!is_ok) {
+          v8utils::throwError("RoaringBitmap32 - Failed to copy bitmap");
+        }
+      } else {
+        roaring_bitmap_or_inplace(&self->roaring, &other->roaring);
+      }
+    }
+    return true;
+  }
+
+  v8::Local<v8::Value> argv[] = {arg};
+  auto t = JSTypes::Uint32Array_from.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv);
+  if (t.IsEmpty()) {
+    return false;
+  }
+
+  const v8utils::TypedArrayContent<uint32_t> typedArray(t);
+  if (replace) {
+    roaring_bitmap_clear(&self->roaring);
+  }
+  roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
+  return true;
+}
+
+void RoaringBitmap32::copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+  if (info.Length() == 0 || !roaringAddMany(isolate, self, info[0], true)) {
+    return v8utils::throwError("RoaringBitmap32::copyFrom expects a RoaringBitmap32, an Uint32Array or an Iterable");
+  }
+}
+
+void RoaringBitmap32::addMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::EscapableHandleScope scope(isolate);
+  if (info.Length() > 0) {
+    RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+    if (roaringAddMany(info.GetIsolate(), self, info[0])) {
+      return info.GetReturnValue().Set(scope.Escape(info.Holder()));
+    }
+  }
+  return v8utils::throwTypeError("Uint32Array, RoaringBitmap32 or Iterable<number> expected");
+}
+
 void RoaringBitmap32::add(const v8::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() < 1 || !info[0]->IsUint32())
     return v8utils::throwTypeError("RoaringBitmap32::add - 32 bit unsigned integer expected");
@@ -15,92 +94,7 @@ void RoaringBitmap32::tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
-  auto oldSize = roaring_bitmap_get_cardinality(&self->roaring);
-  roaring_bitmap_add(&self->roaring, info[0]->Uint32Value());
-  return info.GetReturnValue().Set(oldSize != roaring_bitmap_get_cardinality(&self->roaring));
-}
-
-template <typename TArg>
-void roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, const TArg & arg) {
-  if (arg->IsUint32Array() || arg->IsInt32Array()) {
-    const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
-    roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
-    return;
-  }
-
-  if (arg->IsObject() && !arg->IsNull()) {
-    if (RoaringBitmap32::constructorTemplate.Get(isolate)->HasInstance(arg)) {
-      RoaringBitmap32 * other = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
-      roaring_bitmap_or_inplace(&self->roaring, &other->roaring);
-    } else {
-      v8::Local<v8::Value> argv[] = {arg};
-      auto t = JSTypes::Uint32Array_from.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv);
-      if (!t.IsEmpty()) {
-        const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, t);
-        roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
-      }
-    }
-
-    return;
-  }
-
-  return v8utils::throwTypeError("Uint32Array, RoaringBitmap32 or Iterable<number> expected");
-}
-
-void RoaringBitmap32::copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-
-  if (info.Length() > 0) {
-    auto const & arg = info[0];
-
-    RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-
-    if (arg->IsUint32Array() || arg->IsInt32Array()) {
-      const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
-      RoaringBitmap32::clear(info);
-      roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
-      return;
-    }
-
-    if (arg->IsObject() && !arg->IsNull()) {
-      if (RoaringBitmap32::constructorTemplate.Get(isolate)->HasInstance(arg)) {
-        RoaringBitmap32 * other = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(arg->ToObject());
-
-        if (self == other) {
-          return;
-        }
-
-        ra_clear(&self->roaring.high_low_container);
-        bool is_ok = ra_copy(&other->roaring.high_low_container, &self->roaring.high_low_container, other->roaring.copy_on_write);
-        if (!is_ok) {
-          return v8utils::throwError("RoaringBitmap32::copyFrom failed to copy");
-        }
-
-        self->roaring.copy_on_write = other->roaring.copy_on_write;
-      } else {
-        v8::Local<v8::Value> argv[] = {arg};
-        const v8utils::TypedArrayContent<uint32_t> typedArray(
-            isolate, JSTypes::Uint32Array_from.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv));
-        RoaringBitmap32::clear(info);
-        roaring_bitmap_add_many(&self->roaring, typedArray.length, typedArray.data);
-      }
-    }
-    return;
-  }
-
-  return v8utils::throwTypeError("Uint32Array, RoaringBitmap32 or Iterable<number> expected");
-}
-
-void RoaringBitmap32::addMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::EscapableHandleScope scope(isolate);
-  if (info.Length() > 0) {
-    RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-    roaringAddMany(info.GetIsolate(), self, info[0]);
-    return info.GetReturnValue().Set(scope.Escape(info.Holder()));
-  }
-  return v8utils::throwTypeError("Uint32Array, RoaringBitmap32 or Iterable<number> expected");
+  info.GetReturnValue().Set(roaring_bitmap_add_checked(&self->roaring, info[0]->Uint32Value()));
 }
 
 void RoaringBitmap32::removeMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -116,9 +110,10 @@ void RoaringBitmap32::removeMany(const v8::FunctionCallbackInfo<v8::Value> & inf
       return info.GetReturnValue().Set(scope.Escape(info.Holder()));
     } else {
       RoaringBitmap32 tmp;
-      roaringAddMany(info.GetIsolate(), &tmp, arg);
-      roaring_bitmap_andnot_inplace(&self->roaring, &tmp.roaring);
-      return info.GetReturnValue().Set(scope.Escape(info.Holder()));
+      if (roaringAddMany(info.GetIsolate(), &tmp, arg)) {
+        roaring_bitmap_andnot_inplace(&self->roaring, &tmp.roaring);
+        return info.GetReturnValue().Set(scope.Escape(info.Holder()));
+      }
     }
   }
 
@@ -138,9 +133,10 @@ void RoaringBitmap32::andInPlace(const v8::FunctionCallbackInfo<v8::Value> & inf
       return info.GetReturnValue().Set(scope.Escape(info.Holder()));
     } else {
       RoaringBitmap32 tmp;
-      roaringAddMany(info.GetIsolate(), &tmp, arg);
-      roaring_bitmap_and_inplace(&self->roaring, &tmp.roaring);
-      return info.GetReturnValue().Set(scope.Escape(info.Holder()));
+      if (roaringAddMany(info.GetIsolate(), &tmp, arg)) {
+        roaring_bitmap_and_inplace(&self->roaring, &tmp.roaring);
+        return info.GetReturnValue().Set(scope.Escape(info.Holder()));
+      }
     }
   }
 
@@ -181,13 +177,7 @@ void RoaringBitmap32::removeChecked(const v8::FunctionCallbackInfo<v8::Value> & 
     info.GetReturnValue().Set(false);
   } else {
     RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-    auto oldSize = roaring_bitmap_get_cardinality(&self->roaring);
-    if (oldSize == 0) {
-      info.GetReturnValue().Set(false);
-    } else {
-      roaring_bitmap_remove(&self->roaring, info[0]->Uint32Value());
-      info.GetReturnValue().Set(oldSize != roaring_bitmap_get_cardinality(&self->roaring));
-    }
+    info.GetReturnValue().Set(roaring_bitmap_remove_checked(&self->roaring, info[0]->Uint32Value()));
   }
 }
 
@@ -598,4 +588,67 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
 
     info.GetReturnValue().Set(scope.Escape(result));
   }
+}
+
+struct FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
+ public:
+  v8::Persistent<v8::Value> argPersistent;
+  v8utils::TypedArrayContent<uint32_t> buffer;
+
+  FromArrayAsyncWorker(v8::Isolate * isolate) : RoaringBitmap32FactoryAsyncWorker(isolate) {
+  }
+
+  virtual ~FromArrayAsyncWorker() {
+    argPersistent.Reset();
+  }
+
+ protected:
+  virtual void work() {
+    roaring_bitmap_add_many(&bitmap, buffer.length, buffer.data);
+  }
+};
+
+void RoaringBitmap32::fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::EscapableHandleScope scope(isolate);
+
+  v8::Local<v8::Value> arg;
+
+  if (info.Length() >= 1) {
+    arg = info[0];
+  }
+
+  FromArrayAsyncWorker * worker = new FromArrayAsyncWorker(isolate);
+  if (worker == nullptr) {
+    return v8utils::throwError("Failed to allocate async worker");
+  }
+
+  if (!arg->IsNullOrUndefined() && !arg->IsFunction()) {
+    if (arg->IsUint32Array() || arg->IsInt32Array()) {
+      worker->buffer.set(arg);
+      const v8utils::TypedArrayContent<uint32_t> typedArray(arg);
+    } else if (arg->IsObject()) {
+      if (RoaringBitmap32::constructorTemplate.Get(isolate)->HasInstance(arg)) {
+        return v8utils::throwTypeError("RoaringBitmap32::fromArrayAsync cannot be called with a RoaringBitmap32 instance");
+      } else {
+        v8::Local<v8::Value> argv[] = {arg};
+        arg = JSTypes::Uint32Array_from.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv);
+        if (arg.IsEmpty()) {
+          return;
+        }
+        worker->buffer.set(arg);
+      }
+    }
+
+    worker->argPersistent.Reset(isolate, arg);
+  }
+
+  if (info.Length() >= 2 && info[1]->IsFunction()) {
+    worker->setCallback(info[1]);
+  } else if (info.Length() >= 1 && info[0]->IsFunction()) {
+    worker->setCallback(info[0]);
+  }
+
+  v8::Local<v8::Value> returnValue = v8utils::AsyncWorker::run(worker);
+  info.GetReturnValue().Set(scope.Escape(returnValue));
 }

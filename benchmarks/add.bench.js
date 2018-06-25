@@ -29,6 +29,20 @@ bench.suite('add', suite => {
 
   suite.scope(() => {
     let x
+    suite.benchmark('RoaringBitmap32.tryAdd', {
+      setup() {
+        x = new RoaringBitmap32()
+      },
+      fn() {
+        for (let i = 0; i < N; ++i) {
+          x.tryAdd(data[i])
+        }
+      }
+    })
+  })
+
+  suite.scope(() => {
+    let x
     suite.benchmark('RoaringBitmap32.add', {
       setup() {
         x = new RoaringBitmap32()

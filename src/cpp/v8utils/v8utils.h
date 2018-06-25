@@ -43,15 +43,24 @@ namespace v8utils {
     size_t length;
     T * data;
 
+    inline TypedArrayContent() : length(0), data(nullptr) {
+    }
+
     inline TypedArrayContent(TypedArrayContent<T> & copy) : length(copy.length), data(copy.data) {
     }
 
-    inline TypedArrayContent(v8::Isolate * isolate, v8::Local<v8::Value> from) : length(0), data(NULL) {
-      v8::HandleScope scope(isolate);
+    inline TypedArrayContent(v8::Local<v8::Value> from) {
+      set(from);
+    }
+
+    inline void set(v8::Local<v8::Value> from) {
       if (!from.IsEmpty() && from->IsArrayBufferView()) {
         v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
         this->length = array->ByteLength() / sizeof(T);
         this->data = (T *)((char *)(array->Buffer()->GetContents().Data()) + array->ByteOffset());
+      } else {
+        this->length = 0;
+        this->data = nullptr;
       }
     }
   };

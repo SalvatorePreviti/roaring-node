@@ -1,4 +1,4 @@
-import RoaringBitmap32 from '../../RoaringBitmap32'
+import RoaringBitmap32 = require('../../RoaringBitmap32')
 
 describe('RoaringBitmap32 operations', () => {
   describe('add, has', () => {
@@ -378,77 +378,109 @@ describe('RoaringBitmap32 operations', () => {
   })
 
   describe('copyFrom', () => {
-    it('does nothing when copying self (empty)', () => {
-      const bitmap = new RoaringBitmap32()
-      bitmap.copyFrom(bitmap)
-      expect(bitmap.size).toBe(0)
-      expect(bitmap.isEmpty).toBe(true)
+    describe('to an empty bitmap', () => {
+      it('does nothing when copying (undefined)', () => {
+        const bitmap = new RoaringBitmap32()
+        bitmap.copyFrom(undefined)
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
+
+      it('does nothing when copying (null)', () => {
+        const bitmap = new RoaringBitmap32()
+        bitmap.copyFrom(null)
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
+
+      it('does nothing when copying self (empty)', () => {
+        const bitmap = new RoaringBitmap32()
+        bitmap.copyFrom(bitmap)
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
+
+      it('does nothing when copying an empty array', () => {
+        const bitmap = new RoaringBitmap32()
+        bitmap.copyFrom([])
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
+
+      it('does nothing when copying an empty Uint32Array', () => {
+        const bitmap = new RoaringBitmap32()
+        bitmap.copyFrom(new Uint32Array([]))
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
+
+      it('does nothing when copying an empty Int32Array', () => {
+        const bitmap = new RoaringBitmap32()
+        bitmap.copyFrom(new Int32Array([]))
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
+
+      it('does nothing when copying an empty RoaringBitmap32', () => {
+        const bitmap = new RoaringBitmap32()
+        bitmap.copyFrom(new RoaringBitmap32())
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
     })
 
-    it('does nothing when copying an empty array', () => {
-      const bitmap = new RoaringBitmap32()
-      bitmap.copyFrom([])
-      expect(bitmap.size).toBe(0)
-      expect(bitmap.isEmpty).toBe(true)
-    })
+    describe('to a bitmap with content', () => {
+      it('clears if passed undefined', () => {
+        const bitmap = new RoaringBitmap32([1, 2, 3])
+        bitmap.copyFrom(undefined)
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
 
-    it('does nothing when copying an empty Uint32Array', () => {
-      const bitmap = new RoaringBitmap32()
-      bitmap.copyFrom(new Uint32Array([]))
-      expect(bitmap.size).toBe(0)
-      expect(bitmap.isEmpty).toBe(true)
-    })
+      it('clears if passed null', () => {
+        const bitmap = new RoaringBitmap32([1, 2, 3])
+        bitmap.copyFrom(null)
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
 
-    it('does nothing when copying an empty Int32Array', () => {
-      const bitmap = new RoaringBitmap32()
-      bitmap.copyFrom(new Int32Array([]))
-      expect(bitmap.size).toBe(0)
-      expect(bitmap.isEmpty).toBe(true)
-    })
+      it('clears if passed an empty array', () => {
+        const bitmap = new RoaringBitmap32([1, 2, 3])
+        bitmap.copyFrom([])
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
 
-    it('does nothing when copying an empty RoaringBitmap32', () => {
-      const bitmap = new RoaringBitmap32()
-      bitmap.copyFrom(new RoaringBitmap32())
-      expect(bitmap.size).toBe(0)
-      expect(bitmap.isEmpty).toBe(true)
-    })
+      it('clears if passed an empty RoaringBitmap32', () => {
+        const bitmap = new RoaringBitmap32([1, 2, 3])
+        bitmap.copyFrom(new RoaringBitmap32())
+        expect(bitmap.size).toBe(0)
+        expect(bitmap.isEmpty).toBe(true)
+      })
 
-    it('clears if passed an empty array', () => {
-      const bitmap = new RoaringBitmap32([1, 2, 3])
-      bitmap.copyFrom([])
-      expect(bitmap.size).toBe(0)
-      expect(bitmap.isEmpty).toBe(true)
-    })
+      it('replace with the given values (array)', () => {
+        const bitmap = new RoaringBitmap32([1, 2, 3])
+        bitmap.copyFrom([4, 6, 8, 10])
+        expect(bitmap.toArray()).toEqual([4, 6, 8, 10])
+      })
 
-    it('clears if passed an empty RoaringBitmap32', () => {
-      const bitmap = new RoaringBitmap32([1, 2, 3])
-      bitmap.copyFrom(new RoaringBitmap32())
-      expect(bitmap.size).toBe(0)
-      expect(bitmap.isEmpty).toBe(true)
-    })
+      it('replace with the given values (Uint32Array)', () => {
+        const bitmap = new RoaringBitmap32([1, 2, 3])
+        bitmap.copyFrom(new Uint32Array([4, 6, 8, 10]))
+        expect(bitmap.toArray()).toEqual([4, 6, 8, 10])
+      })
 
-    it('replace with the given values (array)', () => {
-      const bitmap = new RoaringBitmap32([1, 2, 3])
-      bitmap.copyFrom([4, 6, 8, 10])
-      expect(bitmap.toArray()).toEqual([4, 6, 8, 10])
-    })
+      it('replace with the given values (Int32Array)', () => {
+        const bitmap = new RoaringBitmap32([1, 2, 3])
+        bitmap.copyFrom(new Int32Array([4, 6, 8, 10]))
+        expect(bitmap.toArray()).toEqual([4, 6, 8, 10])
+      })
 
-    it('replace with the given values (Uint32Array)', () => {
-      const bitmap = new RoaringBitmap32([1, 2, 3])
-      bitmap.copyFrom(new Uint32Array([4, 6, 8, 10]))
-      expect(bitmap.toArray()).toEqual([4, 6, 8, 10])
-    })
-
-    it('replace with the given values (Int32Array)', () => {
-      const bitmap = new RoaringBitmap32([1, 2, 3])
-      bitmap.copyFrom(new Int32Array([4, 6, 8, 10]))
-      expect(bitmap.toArray()).toEqual([4, 6, 8, 10])
-    })
-
-    it('replace with the given values (bitmap)', () => {
-      const bitmap = new RoaringBitmap32([1, 2, 3])
-      bitmap.copyFrom(new RoaringBitmap32([4, 6, 8, 10]))
-      expect(bitmap.toArray()).toEqual([4, 6, 8, 10])
+      it('replace with the given values (bitmap)', () => {
+        const bitmap = new RoaringBitmap32([1, 2, 3])
+        bitmap.copyFrom(new RoaringBitmap32([4, 6, 8, 10]))
+        expect(bitmap.toArray()).toEqual([4, 6, 8, 10])
+      })
     })
   })
 })
