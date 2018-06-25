@@ -1526,12 +1526,12 @@ string
 Returns an object that contains statistic information about this RoaringBitmap32 instance.
 
 ```typescript
-public statistics(): { containers: number; arrayContainers: number; runContainers: number; bitsetContainers: number; valuesInArrayContainers: number; valuesInRunContainers: number; valuesInBitsetContainers: number; bytesInArrayContainers: number; bytesInRunContainers: number; bytesInBitsetContainers: number; maxValue: number; minValue: number; sumOfAllValues: number; size: number; };
+public statistics(): RoaringBitmap32Statistics;
 ```
 
 **Return type**
 
-{ containers: number; arrayContainers: number; runContainers: number; bitsetContainers: number; valuesInArrayContainers: number; valuesInRunContainers: number; valuesInBitsetContainers: number; bytesInArrayContainers: number; bytesInRunContainers: number; bytesInBitsetContainers: number; maxValue: number; minValue: number; sumOfAllValues: number; size: number; }
+[RoaringBitmap32Statistics][InterfaceDeclaration-1]
 
 ## Properties
 
@@ -1673,5 +1673,6 @@ boolean
 [MethodDeclaration-61]: roaringbitmap32.md#tostring
 [MethodDeclaration-62]: roaringbitmap32.md#contenttostringmaxlength
 [MethodDeclaration-63]: roaringbitmap32.md#statistics
+[InterfaceDeclaration-1]: ../index.d.md#roaringbitmap32statistics
 [PropertyDeclaration-0]: roaringbitmap32.md#size
 [PropertyDeclaration-1]: roaringbitmap32.md#isempty

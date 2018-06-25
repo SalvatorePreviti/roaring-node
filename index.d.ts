@@ -20,6 +20,7 @@ limitations under the License.
  * - See http://roaringbitmap.org/
  * - See https://github.com/SalvatorePreviti/roaring-node
  *
+ * @export
  * @class RoaringBitmap32
  * @implements {Iterable<number>}
  * @author Salvatore Previti
@@ -810,97 +811,17 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Returns an object that contains statistic information about this RoaringBitmap32 instance.
+   *
+   * @returns {RoaringBitmap32Statistics} An object containing several statistics for the bitmap.
+   * @memberof RoaringBitmap32
    */
-  public statistics(): {
-    /**
-     * Number of containers.
-     * @type {number}
-     */
-    containers: number
-
-    /**
-     * Number of array containers.
-     * @type {number}
-     */
-    arrayContainers: number
-
-    /**
-     * Number of run containers.
-     * @type {number}
-     */
-    runContainers: number
-
-    /**
-     * Number of bitmap containers.
-     * @type {number}
-     */
-    bitsetContainers: number
-
-    /**
-     * Number of values in array containers.
-     * @type {number}
-     */
-    valuesInArrayContainers: number
-
-    /**
-     * Number of values in run containers.
-     * @type {number}
-     */
-    valuesInRunContainers: number
-
-    /**
-     * Number of values in  bitmap containers.
-     * @type {number}
-     */
-    valuesInBitsetContainers: number
-
-    /**
-     * Number of allocated bytes in array containers.
-     * @type {number}
-     */
-    bytesInArrayContainers: number
-
-    /**
-     * Number of allocated bytes in run containers.
-     * @type {number}
-     */
-    bytesInRunContainers: number
-
-    /**
-     * Number of allocated bytes in bitmap containers.
-     * @type {number}
-     */
-    bytesInBitsetContainers: number
-
-    /**
-     * The maximal value.
-     * @type {number}
-     */
-    maxValue: number
-
-    /**
-     * The minimal value.
-     * @type {number}
-     */
-    minValue: number
-
-    /**
-     * The sum of all values
-     * @type {number}
-     */
-    sumOfAllValues: number
-
-    /**
-     * Total number of values stored in the bitmap
-     * @type {number}
-     */
-    size: number
-  }
+  public statistics(): RoaringBitmap32Statistics
 }
 
 /**
  * Iterator for RoaringBitmap32
  *
+ * @export
  * @class RoaringBitmap32Iterator
  * @implements {IterableIterator<number>}
  */
@@ -956,12 +877,105 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
 }
 
 /**
+ * Object returned by RoaringBitmap32 statistics() method
+ *
+ * @export
+ * @interface RoaringBitmap32Statistics
+ */
+export interface RoaringBitmap32Statistics {
+  /**
+   * Number of containers.
+   * @type {number}
+   */
+  containers: number
+
+  /**
+   * Number of array containers.
+   * @type {number}
+   */
+  arrayContainers: number
+
+  /**
+   * Number of run containers.
+   * @type {number}
+   */
+  runContainers: number
+
+  /**
+   * Number of bitmap containers.
+   * @type {number}
+   */
+  bitsetContainers: number
+
+  /**
+   * Number of values in array containers.
+   * @type {number}
+   */
+  valuesInArrayContainers: number
+
+  /**
+   * Number of values in run containers.
+   * @type {number}
+   */
+  valuesInRunContainers: number
+
+  /**
+   * Number of values in  bitmap containers.
+   * @type {number}
+   */
+  valuesInBitsetContainers: number
+
+  /**
+   * Number of allocated bytes in array containers.
+   * @type {number}
+   */
+  bytesInArrayContainers: number
+
+  /**
+   * Number of allocated bytes in run containers.
+   * @type {number}
+   */
+  bytesInRunContainers: number
+
+  /**
+   * Number of allocated bytes in bitmap containers.
+   * @type {number}
+   */
+  bytesInBitsetContainers: number
+
+  /**
+   * The maximal value.
+   * @type {number}
+   */
+  maxValue: number
+
+  /**
+   * The minimal value.
+   * @type {number}
+   */
+  minValue: number
+
+  /**
+   * The sum of all values
+   * @type {number}
+   */
+  sumOfAllValues: number
+
+  /**
+   * Total number of values stored in the bitmap
+   * @type {number}
+   */
+  size: number
+}
+
+/**
  * Property: The instruction set supported and currently used by the underlying CRoraring library.
  * Possible values are:
  *  - 'AVX2' - Advanced Vector Extensions 2
  *  - 'SSE42' - Streaming SIMD Extensions 4.2
  *  - 'PLAIN' - no special instruction set
  *
+ * @export
  * @constant
  * @type {('AVX2' | 'SSE42' | 'PLAIN')}
  * @memberof RoaringModule
@@ -971,6 +985,7 @@ export const instructionSet: 'AVX2' | 'SSE42' | 'PLAIN'
 /**
  * Property: Indicates wether Streaming SIMD Extensions 4.2 instruction set is supported and currently used by the underlying CRoaring library.
  *
+ * @export
  * @constant
  * @type {boolean} True if SSE4.2 is supported, false if not.
  * @memberof RoaringModule
@@ -980,6 +995,7 @@ export const SSE42: boolean
 /**
  * Property: Indicates wether Advanced Vector Extensions 2 instruction set is supported and currently used by the underlying CRoaring library.
  *
+ * @export
  * @constant
  * @type {boolean} True if AVX2 is supported, false if not.
  * @memberof RoaringModule
@@ -990,6 +1006,7 @@ export const AVX2: boolean
  * Property: The version of the CRoaring libary as a string.
  * Example: "0.2.42"
  *
+ * @export
  * @constant
  * @type {string} The version of the CRoaring libary as a string. Example: "0.2.42"
  * @memberof RoaringModule
@@ -1000,6 +1017,7 @@ export const CRoaringVersion: string
  * Property: The version of the roaring npm package as a string.
  * Example: "0.2.2"
  *
+ * @export
  * @constant
  * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
  * @memberof RoaringModule

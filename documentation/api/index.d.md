@@ -1,6 +1,8 @@
 # Table of contents
 
 * [index.d.ts][SourceFile-0]
+    * Interfaces
+        * [RoaringBitmap32Statistics][InterfaceDeclaration-1]
     * Types
         * [RoaringBitmap32Callback][TypeAliasDeclaration-0]
         * [RoaringBitmap32ArrayCallback][TypeAliasDeclaration-1]
@@ -12,6 +14,50 @@
         * [PackageVersion][VariableDeclaration-4]
 
 # index.d.ts
+
+## Interfaces
+
+### RoaringBitmap32Statistics
+
+Object returned by RoaringBitmap32 statistics() method
+
+```typescript
+interface RoaringBitmap32Statistics {
+    containers: number;
+    arrayContainers: number;
+    runContainers: number;
+    bitsetContainers: number;
+    valuesInArrayContainers: number;
+    valuesInRunContainers: number;
+    valuesInBitsetContainers: number;
+    bytesInArrayContainers: number;
+    bytesInRunContainers: number;
+    bytesInBitsetContainers: number;
+    maxValue: number;
+    minValue: number;
+    sumOfAllValues: number;
+    size: number;
+}
+```
+
+**Properties**
+
+| Name                     | Type   | Optional | Description                                     |
+| ------------------------ | ------ | -------- | ----------------------------------------------- |
+| containers               | number | false    | Number of containers.                           |
+| arrayContainers          | number | false    | Number of array containers.                     |
+| runContainers            | number | false    | Number of run containers.                       |
+| bitsetContainers         | number | false    | Number of bitmap containers.                    |
+| valuesInArrayContainers  | number | false    | Number of values in array containers.           |
+| valuesInRunContainers    | number | false    | Number of values in run containers.             |
+| valuesInBitsetContainers | number | false    | Number of values in  bitmap containers.         |
+| bytesInArrayContainers   | number | false    | Number of allocated bytes in array containers.  |
+| bytesInRunContainers     | number | false    | Number of allocated bytes in run containers.    |
+| bytesInBitsetContainers  | number | false    | Number of allocated bytes in bitmap containers. |
+| maxValue                 | number | false    | The maximal value.                              |
+| minValue                 | number | false    | The minimal value.                              |
+| sumOfAllValues           | number | false    | The sum of all values                           |
+| size                     | number | false    | Total number of values stored in the bitmap     |
 
 ## Types
 
@@ -131,6 +177,7 @@ var PackageVersion: string;
 string
 
 [SourceFile-0]: index.d.md#indexdts
+[InterfaceDeclaration-1]: index.d.md#roaringbitmap32statistics
 [TypeAliasDeclaration-0]: index.d.md#roaringbitmap32callback
 [TypeAliasDeclaration-1]: index.d.md#roaringbitmap32arraycallback
 [ClassDeclaration-0]: index.d/roaringbitmap32.md#roaringbitmap32
