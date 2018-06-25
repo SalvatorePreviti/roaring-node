@@ -89,7 +89,8 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
   ctorObject->Set(v8::String::NewFromUtf8(isolate, "from"), ctorFunction);
 
-  v8utils::defineHiddenField(isolate, ctorObject, "default", ctorObject);
+  v8utils::defineHiddenField(isolate, ctorObject, "default", ctorFunction);
+  v8utils::defineHiddenField(isolate, ctorObject, "RoaringBitmap32", ctorFunction);
 
   exports->Set(className, ctorFunction);
   constructor.Reset(isolate, ctorFunction);
