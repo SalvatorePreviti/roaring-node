@@ -5,8 +5,8 @@
         * [constructor(values)][Constructor-0]
     * Methods
         * [from(values)][MethodDeclaration-0]
-        * [fromAsync(values)][MethodDeclaration-1]
-        * [fromAsync(values, callback)][MethodDeclaration-2]
+        * [fromArrayAsync(values)][MethodDeclaration-1]
+        * [fromArrayAsync(values, callback)][MethodDeclaration-2]
         * [deserialize(serialized, portable)][MethodDeclaration-3]
         * [deserialize(serialized, portable)][MethodDeclaration-56]
         * [deserializeAsync(serialized, portable)][MethodDeclaration-4]
@@ -119,22 +119,28 @@ public static from(values: Iterable<number>): RoaringBitmap32;
 
 ----------
 
-### fromAsync(values)
+### fromArrayAsync(values)
 
-Creates an instance of RoaringBitmap32 from the given Uint32Array asynchrnously in a parallel thread.
+Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
+Is faster to pass a Uint32Array instance instead of an array or an iterable.
+If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
 Returns a Promise that resolves to a new RoaringBitmap32 instance.
-Creates an instance of RoaringBitmap32 from the given Uint32Array asynchrnously in a parallel thread.
+Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
+Is faster to pass a Uint32Array instance instead of an array or an iterable.
+If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
 When deserialization is completed or failed, the given callback will be executed.
 
 ```typescript
-public static fromAsync(values: Uint32Array): Promise<RoaringBitmap32>;
+public static fromArrayAsync(values: Iterable<number> | null | undefined): Promise<RoaringBitmap32>;
 ```
 
 **Parameters**
 
-| Name   | Type        | Description        |
-| ------ | ----------- | ------------------ |
-| values | Uint32Array | The values to set. |
+| Name   | Type                                          | Description                                     |
+| ------ | --------------------------------------------- | ----------------------------------------------- |
+| values | Iterable<number> &#124; null &#124; undefined | The values to set. Cannot be a RoaringBitmap32. |
 
 **Return type**
 
@@ -142,23 +148,29 @@ Promise<[RoaringBitmap32][ClassDeclaration-0]>
 
 ----------
 
-### fromAsync(values, callback)
+### fromArrayAsync(values, callback)
 
-Creates an instance of RoaringBitmap32 from the given Uint32Array asynchrnously in a parallel thread.
+Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
+Is faster to pass a Uint32Array instance instead of an array or an iterable.
+If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
 Returns a Promise that resolves to a new RoaringBitmap32 instance.
-Creates an instance of RoaringBitmap32 from the given Uint32Array asynchrnously in a parallel thread.
+Creates an instance of RoaringBitmap32 from the given Iterable asynchrnously in a parallel thread.
+Is faster to pass a Uint32Array instance instead of an array or an iterable.
+If a plain array or a plain iterable is passed, a temporary Uint32Array will be created synchronously.
+NOTE: This method will throw a TypeError if a RoaringBitmap32 is passed as argument.
 When deserialization is completed or failed, the given callback will be executed.
 
 ```typescript
-public static fromAsync(values: Uint32Array, callback: RoaringBitmap32Callback): void;
+public static fromArrayAsync(values: Iterable<number> | null | undefined, callback: RoaringBitmap32Callback): void;
 ```
 
 **Parameters**
 
 | Name     | Type                                              | Description                                           |
 | -------- | ------------------------------------------------- | ----------------------------------------------------- |
-| values   | Uint32Array                                       | The values to set.                                    |
-| callback | [RoaringBitmap32Callback][InterfaceDeclaration-0] | The callback to execute when the operation completes. |
+| values   | Iterable<number> &#124; null &#124; undefined     | The values to set. Cannot be a RoaringBitmap32.       |
+| callback | [RoaringBitmap32Callback][TypeAliasDeclaration-0] | The callback to execute when the operation completes. |
 
 **Return type**
 
@@ -271,7 +283,7 @@ public static deserializeAsync(serialized: Uint8Array, callback: RoaringBitmap32
 | Name       | Type                                              | Description                                                                    |
 | ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
 | serialized | Uint8Array                                        | An Uint8Array or a node Buffer that contains the non portable serialized data. |
-| callback   | [RoaringBitmap32Callback][InterfaceDeclaration-0] | The callback to execute when the operation completes.                          |
+| callback   | [RoaringBitmap32Callback][TypeAliasDeclaration-0] | The callback to execute when the operation completes.                          |
 
 **Return type**
 
@@ -572,14 +584,14 @@ Is faster to pass a Uint32Array instance instead of an array or an iterable.
 Is even faster if a RoaringBitmap32 instance is used (it performs a simple copy).
 
 ```typescript
-public copyFrom(values: Iterable<number>): void;
+public copyFrom(values: Iterable<number> | null | undefined): void;
 ```
 
 **Parameters**
 
-| Name   | Type             | Description                                   |
-| ------ | ---------------- | --------------------------------------------- |
-| values | Iterable<number> | The new values or a RoaringBitmap32 instance. |
+| Name   | Type                                          | Description                                   |
+| ------ | --------------------------------------------- | --------------------------------------------- |
+| values | Iterable<number> &#124; null &#124; undefined | The new values or a RoaringBitmap32 instance. |
 
 **Return type**
 
@@ -1262,7 +1274,7 @@ public serialize(portable?: boolean | undefined): Buffer;
 
 **Return type**
 
-[Buffer][InterfaceDeclaration-1]
+[Buffer][InterfaceDeclaration-0]
 
 ----------
 
@@ -1361,17 +1373,17 @@ boolean
 [Constructor-0]: roaringbitmap32.md#constructorvalues
 [MethodDeclaration-0]: roaringbitmap32.md#fromvalues
 [ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-1]: roaringbitmap32.md#fromasyncvalues
+[MethodDeclaration-1]: roaringbitmap32.md#fromarrayasyncvalues
 [ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-2]: roaringbitmap32.md#fromasyncvalues-callback
-[InterfaceDeclaration-0]: ../index.d.md#roaringbitmap32callback
+[MethodDeclaration-2]: roaringbitmap32.md#fromarrayasyncvalues-callback
+[TypeAliasDeclaration-0]: ../index.d.md#roaringbitmap32callback
 [MethodDeclaration-3]: roaringbitmap32.md#deserializeserialized-portable
 [ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [MethodDeclaration-56]: roaringbitmap32.md#deserializeserialized-portable
 [MethodDeclaration-4]: roaringbitmap32.md#deserializeasyncserialized-portable
 [ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [MethodDeclaration-5]: roaringbitmap32.md#deserializeasyncserialized-callback
-[InterfaceDeclaration-0]: ../index.d.md#roaringbitmap32callback
+[TypeAliasDeclaration-0]: ../index.d.md#roaringbitmap32callback
 [MethodDeclaration-6]: roaringbitmap32.md#deserializeasyncserialized-portable-callback
 [MethodDeclaration-7]: roaringbitmap32.md#swapa-b
 [ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
@@ -1456,7 +1468,7 @@ boolean
 [MethodDeclaration-53]: roaringbitmap32.md#tojson
 [MethodDeclaration-54]: roaringbitmap32.md#getserializationsizeinbytesportable
 [MethodDeclaration-55]: roaringbitmap32.md#serializeportable
-[InterfaceDeclaration-1]: ../index.d.md#indexdts
+[InterfaceDeclaration-0]: ../index.d.md#indexdts
 [MethodDeclaration-57]: roaringbitmap32.md#clone
 [ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [MethodDeclaration-58]: roaringbitmap32.md#tostring

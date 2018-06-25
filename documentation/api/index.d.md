@@ -1,8 +1,8 @@
 # Table of contents
 
 * [index.d.ts][SourceFile-0]
-    * Interfaces
-        * [RoaringBitmap32Callback][InterfaceDeclaration-0]
+    * Types
+        * [RoaringBitmap32Callback][TypeAliasDeclaration-0]
     * Variables
         * [instructionSet][VariableDeclaration-0]
         * [SSE42][VariableDeclaration-1]
@@ -12,48 +12,17 @@
 
 # index.d.ts
 
-## Interfaces
+## Types
 
 ### RoaringBitmap32Callback
 
 ```typescript
-interface RoaringBitmap32Callback {
-    (error: Error, bitmal: undefined): void;
-    (error: null, bitmal: RoaringBitmap32): void;
-}
-```
-#### Call
-
-```typescript
-(error: Error, bitmal: undefined): void;
+type RoaringBitmap32Callback = (error: Error | null, bitmap: RoaringBitmap32 | undefined) => void;
 ```
 
-**Parameters**
+**Type**
 
-| Name   | Type      |
-| ------ | --------- |
-| error  | Error     |
-| bitmal | undefined |
-
-**Return type**
-
-void
-
-```typescript
-(error: null, bitmal: RoaringBitmap32): void;
-```
-
-**Parameters**
-
-| Name   | Type                                  |
-| ------ | ------------------------------------- |
-| error  | null                                  |
-| bitmal | [RoaringBitmap32][ClassDeclaration-0] |
-
-**Return type**
-
-void
-
+(error: Error | null, bitmap: RoaringBitmap32 | undefined) => void
 
 ## Classes
 
@@ -149,8 +118,7 @@ var PackageVersion: string;
 string
 
 [SourceFile-0]: index.d.md#indexdts
-[InterfaceDeclaration-0]: index.d.md#roaringbitmap32callback
-[ClassDeclaration-0]: index.d/roaringbitmap32.md#roaringbitmap32
+[TypeAliasDeclaration-0]: index.d.md#roaringbitmap32callback
 [ClassDeclaration-0]: index.d/roaringbitmap32.md#roaringbitmap32
 [ClassDeclaration-1]: index.d/roaringbitmap32iterator.md#roaringbitmap32iterator
 [VariableDeclaration-0]: index.d.md#instructionset
