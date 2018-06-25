@@ -59,7 +59,11 @@
     "stdexcept": "cpp",
     "typeinfo": "cpp",
     "algorithm": "cpp",
-    "cmath": "cpp"
+    "cmath": "cpp",
+    "hash_map": "cpp",
+    "list": "cpp",
+    "unordered_map": "cpp",
+    "hashtable": "cpp"
   },
   "python.linting.enabled": false
 }

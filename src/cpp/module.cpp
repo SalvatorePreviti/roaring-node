@@ -6,14 +6,14 @@
 void initTypes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
-  TypedArrays::initTypedArrays(isolate, info[0]->ToObject());
+  JSTypes::initJSTypes(isolate, info[0]->ToObject());
 }
 
 void InitModule(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
-  TypedArrays::initTypedArrays(isolate, isolate->GetCurrentContext()->Global());
+  JSTypes::initJSTypes(isolate, isolate->GetCurrentContext()->Global());
 
   v8utils::defineHiddenFunction(isolate, exports, "_initTypes", initTypes);
   v8utils::defineHiddenField(isolate, exports, "default", exports);

@@ -2,9 +2,10 @@
 #define __V8UTILS__H__
 
 #include <node.h>
+#include <uv.h>
 #include <string>
 
-class TypedArrays {
+class JSTypes {
  public:
   static v8::Persistent<v8::Object> Array;
   static v8::Persistent<v8::Function> Array_from;
@@ -19,12 +20,16 @@ class TypedArrays {
   static v8::Persistent<v8::Object> Set;
   static v8::Persistent<v8::Function> Set_ctor;
 
-  static void initTypedArrays(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
+  static void initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
 
   static v8::Local<v8::Value> bufferAllocUnsafe(v8::Isolate * isolate, size_t size);
 };
 
 namespace v8utils {
+
+  template <typename T>
+  inline void ignoreMaybeResult(v8::Maybe<T>) {
+  }
 
   void throwError(const char * message);
   void throwTypeError(const char * message);
@@ -37,6 +42,9 @@ namespace v8utils {
   struct TypedArrayContent {
     size_t length;
     T * data;
+
+    inline TypedArrayContent(TypedArrayContent<T> & copy) : length(copy.length), data(copy.data) {
+    }
 
     inline TypedArrayContent(v8::Isolate * isolate, v8::Local<v8::Value> from) : length(0), data(NULL) {
       v8::HandleScope scope(isolate);
@@ -68,6 +76,58 @@ namespace v8utils {
     virtual ~ObjectWrap();
 
     static void WeakCallback(v8::WeakCallbackInfo<ObjectWrap> const & info);
+  };
+
+  typedef const char * const_char_ptr_t;
+
+  class AsyncWorker {
+   public:
+    v8::Isolate * const isolate;
+
+    AsyncWorker(v8::Isolate * isolate);
+
+    virtual ~AsyncWorker();
+
+    bool setCallback(v8::Local<v8::Value> callback);
+
+    inline bool hasError() const {
+      return this->_error != nullptr;
+    }
+
+    inline void setError(const_char_ptr_t error) {
+      if (error != nullptr && this->_error == nullptr) {
+        this->_error = error;
+      }
+    }
+
+    inline void clearError() {
+      this->_error = nullptr;
+    }
+
+    static v8::Local<v8::Value> run(AsyncWorker * worker);
+
+   protected:
+    // Called in a thread to execute the workload
+    virtual void work() = 0;
+
+    // Called after the thread completes without errors.
+    virtual v8::Local<v8::Value> done();
+
+    inline v8::Local<v8::Value> empty() const {
+      return v8::Local<v8::Value>();
+    }
+
+   private:
+    uv_work_t _task;
+    volatile const_char_ptr_t _error;
+    v8::Persistent<v8::Function> _callback;
+    v8::Persistent<v8::Promise::Resolver> _resolver;
+
+    v8::Local<v8::Value> _invokeDone();
+    static void _complete(AsyncWorker * worker);
+    static void _resolveOrReject(AsyncWorker * worker);
+    static void _work(uv_work_t * request);
+    static void _done(uv_work_t * request, int status);
   };
 
 }  // namespace v8utils

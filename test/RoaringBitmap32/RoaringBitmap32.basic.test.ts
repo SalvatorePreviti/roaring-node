@@ -314,9 +314,9 @@ describe('RoaringBitmap32 basic', () => {
 
   describe('shrinkToFit', () => {
     it('shrinks some memory', () => {
-      const bitmap = new RoaringBitmap32()
-      expect(bitmap.shrinkToFit()).toBe(44)
-      expect(bitmap.shrinkToFit()).toBe(0)
+      const bitmap = new RoaringBitmap32([1, 2, 3])
+      bitmap.removeMany([1, 2, 3])
+      expect(bitmap.shrinkToFit()).toBeGreaterThan(0)
     })
   })
 
