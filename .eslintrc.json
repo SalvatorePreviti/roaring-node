@@ -1,13 +1,12 @@
 {
   "extends": ["eslint:recommended", "plugin:node/recommended", "prettier"],
-  "plugins": ["node", "import"],
+  "plugins": ["jest", "node", "import"],
   "parserOptions": {
     "ecmaVersion": 8,
     "ecmaFeatures": {
       "globalReturn": false,
       "generators": true,
-      "objectLiteralDuplicateProperties": false,
-      "experimentalObjectRestSpread": true
+      "objectLiteralDuplicateProperties": false
     },
     "sourceType": "module"
   },
@@ -104,7 +103,6 @@
   "overrides": [
     {
       "files": ["scripts/**/*.js"],
-      "plugins": [],
       "rules": {
         "node/no-unpublished-require": 0,
         "no-console": 0
@@ -112,7 +110,6 @@
     },
     {
       "files": ["test/**/*.js"],
-      "plugins": ["jest"],
       "env": {
         "jest/globals": true
       },
