@@ -99,7 +99,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   constructor.Reset(isolate, ctorFunction);
 }
 
-RoaringBitmap32::RoaringBitmap32() : roaring(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)) {
+RoaringBitmap32::RoaringBitmap32() : roaring(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)), version(0) {
 }
 
 RoaringBitmap32::~RoaringBitmap32() {
@@ -242,7 +242,11 @@ void RoaringBitmap32::select(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32::removeRunCompression(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-  info.GetReturnValue().Set(roaring_bitmap_remove_run_compression(&self->roaring));
+  bool removed = roaring_bitmap_remove_run_compression(&self->roaring);
+  if (removed) {
+    self->invalidate();
+  }
+  info.GetReturnValue().Set(removed);
 }
 
 void RoaringBitmap32::runOptimize(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -253,6 +257,7 @@ void RoaringBitmap32::runOptimize(const v8::FunctionCallbackInfo<v8::Value> & in
 void RoaringBitmap32::shrinkToFit(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
   info.GetReturnValue().Set((double)roaring_bitmap_shrink_to_fit(&self->roaring));
+  self->invalidate();
 }
 
 void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {

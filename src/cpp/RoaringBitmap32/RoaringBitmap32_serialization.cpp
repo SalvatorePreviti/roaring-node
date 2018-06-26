@@ -161,9 +161,9 @@ void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & in
   auto holder = info.Holder();
 
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(holder);
+  self->invalidate();
 
   const v8utils::TypedArrayContent<uint8_t> typedArray(info[0]);
-
   roaring_bitmap_t bitmap;
   const char * error = doDeserialize(typedArray, info.Length() > 1 && info[1]->IsTrue(), bitmap);
   if (error != nullptr) {
