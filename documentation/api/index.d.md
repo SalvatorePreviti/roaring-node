@@ -97,7 +97,10 @@ Roaring bitmap that supports 32 bit unsigned integers.
 
 ### [RoaringBitmap32Iterator][ClassDeclaration-1]
 
-Iterator for RoaringBitmap32
+Iterator for RoaringBitmap32.
+
+WARNING: Is not allowed to change the bitmap while iterating.
+The iterator may throw exception if the bitmap is changed during the iteration.
 
 
 ## Variables

@@ -59,8 +59,8 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
     return v8utils::throwTypeError("RoaringBitmap32BufferedIterator::ctor - first argument must be of type RoaringBitmap32");
   }
 
-  RoaringBitmap32 * roaring = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
-  if (!roaring) {
+  RoaringBitmap32 * bitmapInstance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info[0]->ToObject());
+  if (!bitmapInstance) {
     return v8utils::throwTypeError("RoaringBitmap32BufferedIterator::ctor - first argument must be of type RoaringBitmap32");
   }
 
@@ -82,12 +82,17 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
 
   instance->Wrap(isolate, holder);
 
-  roaring_init_iterator(&roaring->roaring, &instance->it);
+  roaring_init_iterator(&bitmapInstance->roaring, &instance->it);
 
   uint32_t n = roaring_read_uint32_iterator(&instance->it, bufferContent.data, bufferContent.length);
   if (n != 0) {
+    instance->bitmapInstance = bitmapInstance;
+    instance->bitmapVersion = bitmapInstance->version;
     instance->bitmap.Reset(isolate, info[0]->ToObject());
     instance->buffer.Reset(isolate, bufferObject->ToObject());
+    instance->bufferContent.set(bufferObject);
+  } else {
+    instance->bitmapInstance = nullptr;
   }
 
   holder->Set(nPropertyName.Get(isolate), v8::Uint32::NewFromUnsigned(isolate, n));
@@ -100,18 +105,23 @@ void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Va
   v8::HandleScope scope(isolate);
 
   RoaringBitmap32BufferedIterator * instance = v8utils::ObjectWrap::Unwrap<RoaringBitmap32BufferedIterator>(info.Holder());
-  const v8utils::TypedArrayContent<uint32_t> bufferContent(instance->buffer.Get(isolate));
 
-  uint32_t n;
+  RoaringBitmap32 * bitmapInstance = instance->bitmapInstance;
 
-  if (bufferContent.length == 0) {
-    n = 0;
-  } else {
-    n = roaring_read_uint32_iterator(&instance->it, bufferContent.data, bufferContent.length);
-    if (n == 0) {
-      instance->bitmap.Reset();
-      instance->buffer.Reset();
-    }
+  if (bitmapInstance == nullptr) {
+    return info.GetReturnValue().Set(0U);
+  }
+
+  if (bitmapInstance->version != instance->bitmapVersion) {
+    return v8utils::throwError("RoaringBitmap32 iterator - bitmap changed while iterating");
+  }
+
+  uint32_t n = roaring_read_uint32_iterator(&instance->it, instance->bufferContent.data, instance->bufferContent.length);
+  if (n == 0) {
+    instance->bitmapInstance = nullptr;
+    instance->bufferContent.reset();
+    instance->bitmap.Reset();
+    instance->buffer.Reset();
   }
 
   info.GetReturnValue().Set(n);

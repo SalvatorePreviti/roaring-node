@@ -56,6 +56,11 @@ namespace v8utils {
       set(from);
     }
 
+    inline void reset() {
+      this->length = 0;
+      this->data = nullptr;
+    }
+
     inline bool set(v8::Local<v8::Value> from) {
       if (!from.IsEmpty() && from->IsArrayBufferView()) {
         v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);

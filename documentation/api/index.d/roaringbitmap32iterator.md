@@ -11,7 +11,10 @@
 
 # RoaringBitmap32Iterator
 
-Iterator for RoaringBitmap32
+Iterator for RoaringBitmap32.
+
+WARNING: Is not allowed to change the bitmap while iterating.
+The iterator may throw exception if the bitmap is changed during the iteration.
 
 ```typescript
 class RoaringBitmap32Iterator implements IterableIterator<number>

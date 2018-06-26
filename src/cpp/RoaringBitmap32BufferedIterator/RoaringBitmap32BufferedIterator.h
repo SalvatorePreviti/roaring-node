@@ -6,6 +6,10 @@
 class RoaringBitmap32BufferedIterator : public v8utils::ObjectWrap {
  public:
   roaring_uint32_iterator_t it;
+  uint64_t bitmapVersion;
+  RoaringBitmap32 * bitmapInstance;
+  v8utils::TypedArrayContent<uint32_t> bufferContent;
+
   v8::Persistent<v8::Object> buffer;
   v8::Persistent<v8::Object> bitmap;
 

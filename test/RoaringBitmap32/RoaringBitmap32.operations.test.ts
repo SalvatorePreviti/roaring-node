@@ -87,7 +87,7 @@ describe('RoaringBitmap32 operations', () => {
   describe('clear', () => {
     it('clear does nothing on an empty bitmap', () => {
       const bitmap = new RoaringBitmap32()
-      expect(bitmap.clear()).toBe(undefined)
+      expect(bitmap.clear()).toBe(false)
       expect(bitmap.size).toBe(0)
       expect(bitmap.isEmpty).toBe(true)
     })

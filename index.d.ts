@@ -314,6 +314,9 @@ export class RoaringBitmap32 implements Iterable<number> {
   /**
    * [Symbol.iterator]() Gets a new iterator able to iterate all values in the set in order.
    *
+   * WARNING: Is not allowed to change the bitmap while iterating.
+   * The iterator may throw exception if the bitmap is changed during the iteration.
+   *
    * @returns {RoaringBitmap32Iterator} A new iterator
    * @memberof RoaringBitmap32
    */
@@ -321,6 +324,9 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Gets a new iterator able to iterate all values in the set in order.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating.
+   * The iterator may throw exception if the bitmap is changed during the iteration.
    *
    * Same as [Symbol.iterator]()
    *
@@ -473,11 +479,12 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Removes all values from the set.
-   * It frees resources, if needed you can use clear to free some memory before the garbage collector disposes this instance.
+   *
+   * It frees resources, you can use clear() to free some memory before the garbage collector disposes this instance.
    *
    * @memberof RoaringBitmap32
    */
-  public clear(): void
+  public clear(): boolean
 
   /**
    * Performs an union in place ("this = this OR values"), same as addMany.
@@ -819,7 +826,10 @@ export class RoaringBitmap32 implements Iterable<number> {
 }
 
 /**
- * Iterator for RoaringBitmap32
+ * Iterator for RoaringBitmap32.
+ *
+ * WARNING: Is not allowed to change the bitmap while iterating.
+ * The iterator may throw exception if the bitmap is changed during the iteration.
  *
  * @export
  * @class RoaringBitmap32Iterator

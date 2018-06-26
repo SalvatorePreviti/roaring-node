@@ -628,6 +628,9 @@ public static orMany(values: RoaringBitmap32[]): RoaringBitmap32;
 
 [Symbol.iterator]() Gets a new iterator able to iterate all values in the set in order.
 
+WARNING: Is not allowed to change the bitmap while iterating.
+The iterator may throw exception if the bitmap is changed during the iteration.
+
 ```typescript
 public __@iterator(): RoaringBitmap32Iterator;
 ```
@@ -641,6 +644,9 @@ public __@iterator(): RoaringBitmap32Iterator;
 ### iterator()
 
 Gets a new iterator able to iterate all values in the set in order.
+
+WARNING: Is not allowed to change the bitmap while iterating.
+The iterator may throw exception if the bitmap is changed during the iteration.
 
 Same as [Symbol.iterator]()
 
@@ -940,15 +946,16 @@ void
 ### clear()
 
 Removes all values from the set.
-It frees resources, if needed you can use clear to free some memory before the garbage collector disposes this instance.
+
+It frees resources, you can use clear() to free some memory before the garbage collector disposes this instance.
 
 ```typescript
-public clear(): void;
+public clear(): boolean;
 ```
 
 **Return type**
 
-void
+boolean
 
 ----------
 

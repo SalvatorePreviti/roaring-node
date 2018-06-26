@@ -10,6 +10,11 @@ class RoaringBitmap32;
 class RoaringBitmap32 : public v8utils::ObjectWrap {
  public:
   roaring_bitmap_t roaring;
+  uint64_t version;
+
+  inline void invalidate() {
+    ++version;
+  }
 
   static v8::Persistent<v8::FunctionTemplate> constructorTemplate;
   static v8::Persistent<v8::Function> constructor;
