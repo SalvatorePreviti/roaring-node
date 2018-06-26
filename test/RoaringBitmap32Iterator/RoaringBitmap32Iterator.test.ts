@@ -249,5 +249,25 @@ describe('RoaringBitmap32Iterator', () => {
         value: undefined
       })
     })
+
+    it('throws if the bitmap is changed while iterating', () => {
+      const bitmap = new RoaringBitmap32()
+      bitmap.addRange(0, 1050)
+
+      function doNothing(_v: any) {}
+
+      try {
+        let n = 0
+        for (const v of new RoaringBitmap32Iterator(bitmap, 256)) {
+          if (n++ === 0) {
+            bitmap.add(999999)
+          } else {
+            doNothing(v)
+          }
+        }
+      } catch (e) {
+        expect(e.message).toEqual('RoaringBitmap32 iterator - bitmap changed while iterating')
+      }
+    })
   })
 })
