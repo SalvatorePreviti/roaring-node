@@ -413,6 +413,7 @@ v8::Local<v8::Value> RoaringBitmap32FactoryAsyncWorker::done() {
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty()) {
     ra_clear(&bitmap.high_low_container);
+    bitmap.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
     return empty();
   }
 

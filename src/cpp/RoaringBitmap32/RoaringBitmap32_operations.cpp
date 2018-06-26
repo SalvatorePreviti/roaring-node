@@ -183,12 +183,8 @@ void RoaringBitmap32::removeChecked(const v8::FunctionCallbackInfo<v8::Value> & 
 
 void RoaringBitmap32::clear(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-  roaring_bitmap_t newRoaring;
-  if (!ra_init(&newRoaring.high_low_container)) {
-    return v8utils::throwError("RoaringBitmap32::clear - failed to initialize a new roaring container");
-  }
   ra_clear(&self->roaring.high_low_container);
-  self->roaring.high_low_container = std::move(newRoaring.high_low_container);
+  self->roaring.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
 }
 
 inline static bool getRangeOperationParameters(const v8::FunctionCallbackInfo<v8::Value> & info, uint64_t & minInteger, uint64_t & maxInteger) {
@@ -442,6 +438,7 @@ void orManyStaticImpl(const v8::FunctionCallbackInfo<v8::Value> & info, T & arra
   auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
   ra_clear(&self->roaring.high_low_container);
+  self->roaring.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
 
   roaring_bitmap_t * r = roaring_bitmap_or_many(length, x);
   if (r == nullptr) {
@@ -527,6 +524,7 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
       auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
       ra_clear(&self->roaring.high_low_container);
+      self->roaring.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
 
       roaring_bitmap_t * r = roaring_bitmap_or_many(arrayLength, x);
       if (r == nullptr) {
@@ -577,6 +575,7 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
     auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
     ra_clear(&self->roaring.high_low_container);
+    self->roaring.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
 
     roaring_bitmap_t * r = roaring_bitmap_or_many(length, x);
     if (r == nullptr) {
