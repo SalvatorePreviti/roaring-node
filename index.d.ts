@@ -473,11 +473,12 @@ export class RoaringBitmap32 implements Iterable<number> {
 
   /**
    * Removes all values from the set.
-   * It frees resources, if needed you can use clear to free some memory before the garbage collector disposes this instance.
+   *
+   * It frees resources, you can use clear() to free some memory before the garbage collector disposes this instance.
    *
    * @memberof RoaringBitmap32
    */
-  public clear(): void
+  public clear(): boolean
 
   /**
    * Performs an union in place ("this = this OR values"), same as addMany.
