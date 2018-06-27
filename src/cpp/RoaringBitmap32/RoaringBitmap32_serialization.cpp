@@ -97,12 +97,13 @@ const char * RoaringBitmap32::doDeserialize(const v8utils::TypedArrayContent<uin
         return "RoaringBitmap32::deserialize - corrupted data, wrong cardinality header";
       }
 
-      if (!ra_init(&bitmap.high_low_container)) {
-        return "RoaringBitmap32::deserialize - failed to initialize a new roaring container";
-      }
+      ra_clear(&bitmap.high_low_container);
+      bitmap.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
 
       const uint32_t * elems = (const uint32_t *)(bufaschar + 1 + sizeof(uint32_t));
       roaring_bitmap_add_many(&bitmap, card, elems);
+      roaring_bitmap_run_optimize(&bitmap);
+      roaring_bitmap_shrink_to_fit(&bitmap);
       return nullptr;
     }
 

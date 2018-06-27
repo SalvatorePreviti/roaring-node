@@ -634,6 +634,8 @@ struct FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
  protected:
   virtual void work() {
     roaring_bitmap_add_many(&bitmap, buffer.length, buffer.data);
+    roaring_bitmap_run_optimize(&bitmap);
+    roaring_bitmap_shrink_to_fit(&bitmap);
   }
 };
 
