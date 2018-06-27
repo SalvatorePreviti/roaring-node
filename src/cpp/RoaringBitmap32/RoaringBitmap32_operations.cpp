@@ -207,7 +207,7 @@ void RoaringBitmap32::clear(const v8::FunctionCallbackInfo<v8::Value> & info) {
     info.GetReturnValue().Set(false);
   } else {
     ra_clear(&self->roaring.high_low_container);
-    self->roaring.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
+    self->roaring.high_low_container = roaring_array_t{};
     self->invalidate();
     info.GetReturnValue().Set(true);
   }
@@ -468,7 +468,7 @@ void orManyStaticImpl(const v8::FunctionCallbackInfo<v8::Value> & info, T & arra
   auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
   ra_clear(&self->roaring.high_low_container);
-  self->roaring.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
+  self->roaring.high_low_container = roaring_array_t{};
 
   roaring_bitmap_t * r = roaring_bitmap_or_many(length, x);
   if (r == nullptr) {
@@ -554,7 +554,7 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
       auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
       ra_clear(&self->roaring.high_low_container);
-      self->roaring.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
+      self->roaring.high_low_container = roaring_array_t{};
 
       roaring_bitmap_t * r = roaring_bitmap_or_many(arrayLength, x);
       if (r == nullptr) {
@@ -605,7 +605,7 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
     auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
 
     ra_clear(&self->roaring.high_low_container);
-    self->roaring.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
+    self->roaring.high_low_container = roaring_array_t{};
 
     roaring_bitmap_t * r = roaring_bitmap_or_many(length, x);
     if (r == nullptr) {

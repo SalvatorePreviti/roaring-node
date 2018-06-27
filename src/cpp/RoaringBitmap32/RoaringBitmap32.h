@@ -87,8 +87,6 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
 
   virtual ~RoaringBitmap32();
 
-  static const uint8_t roaring_bitmap_zero[sizeof(roaring_bitmap_t)];
-
  private:
   static void deserializeInner(const v8::FunctionCallbackInfo<v8::Value> & info, bool isStatic);
   static const char * doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t & newRoaring);

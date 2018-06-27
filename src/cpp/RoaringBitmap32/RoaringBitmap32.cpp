@@ -9,8 +9,6 @@
 v8::Persistent<v8::FunctionTemplate> RoaringBitmap32::constructorTemplate;
 v8::Persistent<v8::Function> RoaringBitmap32::constructor;
 
-const uint8_t RoaringBitmap32::roaring_bitmap_zero[sizeof(roaring_bitmap_t)] = {0};
-
 void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
@@ -99,7 +97,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   constructor.Reset(isolate, ctorFunction);
 }
 
-RoaringBitmap32::RoaringBitmap32() : roaring(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)), version(0) {
+RoaringBitmap32::RoaringBitmap32() : roaring{}, version(0) {
 }
 
 RoaringBitmap32::~RoaringBitmap32() {
@@ -400,10 +398,7 @@ void RoaringBitmap32::statistics(const v8::FunctionCallbackInfo<v8::Value> & inf
 
 //////////// RoaringBitmap32FactoryAsyncWorker ////////////
 
-RoaringBitmap32FactoryAsyncWorker::RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate) :
-    v8utils::AsyncWorker(isolate),
-    bitmap(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)),
-    bitmapMoved(false) {
+RoaringBitmap32FactoryAsyncWorker::RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate), bitmap{}, bitmapMoved(false) {
 }
 
 RoaringBitmap32FactoryAsyncWorker::~RoaringBitmap32FactoryAsyncWorker() {
@@ -418,7 +413,7 @@ v8::Local<v8::Value> RoaringBitmap32FactoryAsyncWorker::done() {
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty()) {
     ra_clear(&bitmap.high_low_container);
-    bitmap.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
+    bitmap.high_low_container = roaring_array_t{};
     return empty();
   }
 

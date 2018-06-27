@@ -70,7 +70,7 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
 }
 
 const char * RoaringBitmap32::doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t & bitmap) {
-  bitmap = *((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero);
+  bitmap = roaring_bitmap_t{};
 
   auto bufLen = typedArray.length;
   const char * bufaschar = (const char *)typedArray.data;
@@ -96,9 +96,6 @@ const char * RoaringBitmap32::doDeserialize(const v8utils::TypedArrayContent<uin
       if (card * sizeof(uint32_t) + sizeof(uint32_t) + 1 != bufLen) {
         return "RoaringBitmap32::deserialize - corrupted data, wrong cardinality header";
       }
-
-      ra_clear(&bitmap.high_low_container);
-      bitmap.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
 
       const uint32_t * elems = (const uint32_t *)(bufaschar + 1 + sizeof(uint32_t));
       roaring_bitmap_add_many(&bitmap, card, elems);
@@ -140,7 +137,7 @@ void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty()) {
     ra_clear(&bitmap.high_low_container);
-    bitmap.high_low_container = ((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)->high_low_container;
+    bitmap.high_low_container = roaring_array_t{};
     return;
   }
 
@@ -163,7 +160,6 @@ void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & in
   auto holder = info.Holder();
 
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(holder);
-  self->invalidate();
 
   const v8utils::TypedArrayContent<uint8_t> typedArray(info[0]);
   roaring_bitmap_t bitmap;
@@ -172,6 +168,8 @@ void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & in
     return v8utils::throwError(error);
   }
 
+  self->invalidate();
+  ra_clear(&self->roaring.high_low_container);
   self->roaring.high_low_container = std::move(bitmap.high_low_container);
 
   info.GetReturnValue().Set(scope.Escape(holder));
@@ -248,7 +246,7 @@ class DeserializeParallelWorkerItem {
   v8utils::TypedArrayContent<uint8_t> buffer;
   bool moved;
 
-  DeserializeParallelWorkerItem() : bitmap(*((roaring_bitmap_t *)&RoaringBitmap32::roaring_bitmap_zero)), moved(false) {
+  DeserializeParallelWorkerItem() : bitmap{}, moved(false) {
   }
 
   ~DeserializeParallelWorkerItem() {
