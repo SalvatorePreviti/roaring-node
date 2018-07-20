@@ -2,6 +2,44 @@ import RoaringBitmap32 from '../../RoaringBitmap32'
 import RoaringBitmap32Iterator from '../../RoaringBitmap32Iterator'
 
 describe('RoaringBitmap32 ranges', () => {
+  describe('fromRange', () => {
+    it('returns an empty bitmap with invalid values', () => {
+      expect(RoaringBitmap32.fromRange(-1, -1).isEmpty).toBe(true)
+      expect(RoaringBitmap32.fromRange(89999999999, 99999999999).isEmpty).toBe(true)
+      expect(RoaringBitmap32.fromRange(0, 0).isEmpty).toBe(true)
+      expect(RoaringBitmap32.fromRange(20, 20).isEmpty).toBe(true)
+      expect(RoaringBitmap32.fromRange(null, 20).isEmpty).toBe(true)
+      expect(RoaringBitmap32.fromRange(undefined, 20).isEmpty).toBe(true)
+    })
+
+    it('works with range 0, 6', () => {
+      const bitmap = RoaringBitmap32.fromRange(0, 6)
+      expect(bitmap.size).toBe(6)
+      expect(bitmap.toArray()).toEqual([0, 1, 2, 3, 4, 5])
+    })
+
+    it('works with range 10, 16', () => {
+      const bitmap = RoaringBitmap32.fromRange(10, 16)
+      expect(bitmap.size).toBe(6)
+      expect(bitmap.toArray()).toEqual([10, 11, 12, 13, 14, 15])
+    })
+
+    it('works with range 100, 70000', () => {
+      const bitmap = RoaringBitmap32.fromRange(100, 70000)
+      expect(bitmap.size).toBe(69900)
+    })
+
+    it('works with step 2', () => {
+      const bitmap = RoaringBitmap32.fromRange(0, 20, 2)
+      expect(bitmap.toArray()).toEqual([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
+    })
+
+    it('works with step 5', () => {
+      const bitmap = RoaringBitmap32.fromRange(0, 53, 5)
+      expect(bitmap.toArray()).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50])
+    })
+  })
+
   describe('hasRange', () => {
     it('returns false for invalid values', () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5])
@@ -203,6 +241,29 @@ describe('RoaringBitmap32 ranges', () => {
       bitmap.addRange(4294967295, 4294967296)
       expect(iterator.next()).toEqual({ done: false, value: 4294967295 })
       expect(iterator.next()).toEqual({ done: true, value: undefined })
+    })
+  })
+
+  describe('removeRange', () => {
+    it('does nothing for invalid values', () => {
+      const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      const bitmap = new RoaringBitmap32(values)
+      bitmap.removeRange(null, 10)
+      bitmap.removeRange(undefined, 10)
+      bitmap.removeRange(-19, -10)
+      bitmap.removeRange(-10, -19)
+      bitmap.removeRange(10, 3)
+      bitmap.removeRange(0, 0)
+      bitmap.removeRange(5, 5)
+      bitmap.removeRange(5, undefined)
+      bitmap.removeRange(5, 'xxx' as any)
+      expect(bitmap.toArray()).toEqual(values)
+    })
+
+    it('removes a range', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+      bitmap.removeRange(3, 7)
+      expect(bitmap.toArray()).toEqual([1, 2, 7, 8, 9, 10])
     })
   })
 

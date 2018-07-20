@@ -32,8 +32,6 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(ctor, "maximum", maximum);
   NODE_SET_PROTOTYPE_METHOD(ctor, "contains", has);
   NODE_SET_PROTOTYPE_METHOD(ctor, "has", has);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "containsRange", hasRange);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "hasRange", hasRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "copyFrom", copyFrom);
   NODE_SET_PROTOTYPE_METHOD(ctor, "add", add);
   NODE_SET_PROTOTYPE_METHOD(ctor, "tryAdd", tryAdd);
@@ -55,8 +53,6 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(ctor, "andNotCardinality", andNotCardinality);
   NODE_SET_PROTOTYPE_METHOD(ctor, "xorCardinality", xorCardinality);
   NODE_SET_PROTOTYPE_METHOD(ctor, "jaccardIndex", jaccardIndex);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "flipRange", flipRange);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "addRange", addRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "removeRunCompression", removeRunCompression);
   NODE_SET_PROTOTYPE_METHOD(ctor, "runOptimize", runOptimize);
   NODE_SET_PROTOTYPE_METHOD(ctor, "shrinkToFit", shrinkToFit);
@@ -74,9 +70,16 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(ctor, "contentToString", contentToString);
   NODE_SET_PROTOTYPE_METHOD(ctor, "statistics", statistics);
 
+  NODE_SET_PROTOTYPE_METHOD(ctor, "containsRange", hasRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "hasRange", hasRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "flipRange", flipRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "addRange", addRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "removeRange", removeRange);
+
   auto ctorFunction = ctor->GetFunction();
   auto ctorObject = ctorFunction->ToObject();
 
+  NODE_SET_METHOD(ctorObject, "fromRange", fromRangeStatic);
   NODE_SET_METHOD(ctorObject, "fromArrayAsync", fromArrayStaticAsync);
   NODE_SET_METHOD(ctorObject, "deserialize", deserializeStatic);
   NODE_SET_METHOD(ctorObject, "deserializeAsync", deserializeStaticAsync);

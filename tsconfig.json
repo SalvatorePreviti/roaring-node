@@ -36,7 +36,7 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "target": "es2017"
+    "target": "esnext"
   },
   "exclude": ["node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*", "test/**/*"],
   "typeAcquisition": {

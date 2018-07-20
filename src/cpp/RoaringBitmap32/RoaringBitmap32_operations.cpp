@@ -262,6 +262,15 @@ void RoaringBitmap32::addRange(const v8::FunctionCallbackInfo<v8::Value> & info)
   }
 }
 
+void RoaringBitmap32::removeRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  uint64_t minInteger, maxInteger;
+  if (getRangeOperationParameters(info, minInteger, maxInteger)) {
+    RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+    roaring_bitmap_remove_range_closed(&self->roaring, (uint32_t)minInteger, (uint32_t)(maxInteger - 1));
+    self->invalidate();
+  }
+}
+
 void RoaringBitmap32::swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
@@ -477,6 +486,40 @@ void orManyStaticImpl(const v8::FunctionCallbackInfo<v8::Value> & info, T & arra
   }
 
   self->roaring.high_low_container = std::move(r->high_low_container);
+
+  info.GetReturnValue().Set(scope.Escape(result));
+}
+
+void RoaringBitmap32::fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::EscapableHandleScope scope(isolate);
+
+  v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
+
+  auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+  if (resultMaybe.IsEmpty()) {
+    return;
+  }
+
+  uint32_t step = 1;
+  if (info.Length() >= 3 && info[2]->IsUint32()) {
+    step = info[2]->Uint32Value();
+    if (step == 0) {
+      step = 1;
+    }
+  }
+
+  auto result = resultMaybe.ToLocalChecked();
+  auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+
+  uint64_t minInteger, maxInteger;
+  if (getRangeOperationParameters(info, minInteger, maxInteger)) {
+    roaring_bitmap_t * temp = roaring_bitmap_from_range(minInteger, maxInteger, step);
+    if (temp != nullptr) {
+      self->roaring = *temp;
+      free(temp);
+    }
+  }
 
   info.GetReturnValue().Set(scope.Escape(result));
 }

@@ -72,6 +72,19 @@ export class RoaringBitmap32 implements Iterable<number> {
   public static from(values: Iterable<number>): RoaringBitmap32
 
   /**
+   * Creates a new bitmap that contains all the values in the interval: [rangeStart, rangeEnd).
+   * Is possible to specify the step parameter to have a non contiguous range.
+   *
+   * @static
+   * @param {number} rangeStart The start index. Trimmed to 0.
+   * @param {number} rangeEnd The end index. Trimmed to 4294967297.
+   * @param {number} [step=1] The increment step, defaults to 1.
+   * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
+   * @memberof RoaringBitmap32
+   */
+  public static fromRange(rangeStart: number, rangeEnd: number, step?: number): RoaringBitmap32
+
+  /**
    *
    * Creates an instance of RoaringBitmap32 from the given Iterable asynchronously in a parallel thread.
    *
@@ -476,6 +489,19 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @memberof RoaringBitmap32
    */
   public addRange(rangeStart: number, rangeEnd: number): void
+
+  /**
+   * Removes all the values in the interval: [rangeStart, rangeEnd).
+   *
+   * First element is included, last element is excluded.
+   * The number of renived values is rangeEnd - rangeStart.
+   *
+   * Areas outside the range are passed through unchanged.
+   * @param {number} rangeStart The start index. Trimmed to 0.
+   * @param {number} rangeEnd The end index. Trimmed to 4294967297.
+   * @memberof RoaringBitmap32
+   */
+  public removeRange(rangeStart: number, rangeEnd: number): void
 
   /**
    * Removes all values from the set.

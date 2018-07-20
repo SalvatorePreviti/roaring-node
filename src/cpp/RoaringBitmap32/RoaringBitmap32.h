@@ -22,8 +22,14 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
   static void Init(v8::Local<v8::Object> exports);
 
   static void New(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void has(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void hasRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void flipRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void addRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void removeRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void has(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void add(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info);
@@ -45,8 +51,6 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
   static void andNotCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void xorCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void jaccardIndex(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void flipRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void addRange(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void rank(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void select(const v8::FunctionCallbackInfo<v8::Value> & info);
 
@@ -88,7 +92,6 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
   virtual ~RoaringBitmap32();
 
  private:
-  static void deserializeInner(const v8::FunctionCallbackInfo<v8::Value> & info, bool isStatic);
   static const char * doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t & newRoaring);
 
   friend class DeserializeWorker;
