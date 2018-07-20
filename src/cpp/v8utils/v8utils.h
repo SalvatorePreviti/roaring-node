@@ -3,6 +3,7 @@
 
 #include <node.h>
 #include <uv.h>
+#include <algorithm>
 #include <cmath>
 #include <string>
 

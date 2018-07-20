@@ -12,7 +12,7 @@
     "compile": "node-gyp build -j 12",
     "recompile": "node-gyp rebuild -j 12",
     "test": "jest",
-    "tslint": "node ./node_modules/tslint/lib/tslint-cli.js --project tsconfig.json --exclude **/node_modules/** --exclude **/test/**",
+    "tslint": "node ./node_modules/tslint/lib/tslintCli.js --project tsconfig.json --exclude **/node_modules/** --exclude **/test/**",
     "eslint": "node ./node_modules/eslint/bin/eslint.js .",
     "doc": "node ./node_modules/.bin/ts-docs-gen --config ./docs-gen.json",
     "benchmarks": "node --expose-gc ./scripts/benchmarks.js",
