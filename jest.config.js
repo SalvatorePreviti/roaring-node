@@ -42,6 +42,7 @@ if (projects.length === 1) {
   module.exports = defaultProject
 } else {
   defaultProject.displayName = 'PLAIN'
+
   module.exports = {
     projects
   }

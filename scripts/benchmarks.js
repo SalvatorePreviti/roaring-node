@@ -109,6 +109,7 @@ function run() {
 }
 
 module.exports = benchmarks
+
 benchmarks.run = run
 
 if (require.main === module) {

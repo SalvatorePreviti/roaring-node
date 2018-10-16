@@ -1,5 +1,5 @@
 {
-  "extends": ["eslint:recommended", "plugin:node/recommended", "prettier"],
+  "extends": ["eslint-config-quick"],
   "plugins": ["jest", "node", "import"],
   "parserOptions": {
     "ecmaVersion": 8,
@@ -11,94 +11,7 @@
     "sourceType": "module"
   },
   "rules": {
-    "valid-jsdoc": "warn",
-    "no-console": "warn",
-    "node/shebang": "off",
-    "prefer-template": "warn",
-    "prefer-const": "warn",
-    "object-shorthand": "warn",
-    "block-scoped-var": "warn",
-    "valid-typeof": "error",
-    "no-debugger": "warn",
-    "no-mixed-spaces-and-tabs": "off",
-    "no-empty": ["error", { "allowEmptyCatch": true }],
-    "no-constant-condition": ["error"],
-    "no-alert": "warn",
-    "array-callback-return": "error",
-    "no-const-assign": "error",
-    "no-dupe-keys": "error",
-    "dot-notation": "error",
-    "guard-for-in": "off",
-    "no-compare-neg-zero": "error",
-    "implicit-arrow-linebreak": "off",
-    "getter-return": [
-      "error",
-      {
-        "allowImplicit": true
-      }
-    ],
-    "eqeqeq": ["error", "smart"],
-    "no-caller": "error",
-    "no-else-return": "error",
-    "no-eval": "error",
-    "no-extend-native": "error",
-    "no-extra-bind": "error",
-    "no-implied-eval": "error",
-    "no-iterator": "error",
-    "no-labels": "error",
-    "no-lone-blocks": "error",
-    "no-multi-str": "error",
-    "no-new-func": "error",
-    "no-new-wrappers": "error",
-    "no-octal-escape": "error",
-    "no-proto": "error",
-    "no-return-await": "error",
-    "no-script-url": "error",
-    "no-self-compare": "error",
-    "no-sequences": "error",
-    "no-unmodified-loop-condition": "error",
-    "no-useless-call": "error",
-    "no-void": "error",
-    "operator-assignment": ["error", "always"],
-    "no-useless-return": "error",
-    "no-with": "error",
-    "vars-on-top": "error",
-    "quote-props": [
-      "error",
-      "as-needed",
-      {
-        "keywords": false,
-        "unnecessary": true,
-        "numbers": false
-      }
-    ],
-    "yoda": "error",
-    "no-undef-init": "error",
-    "no-use-before-define": [
-      "error",
-      {
-        "functions": false,
-        "classes": false
-      }
-    ],
-    "callback-return": "error",
-    "handle-callback-err": "error",
-    "no-buffer-constructor": "error",
-    "no-new-require": "error",
-    "no-path-concat": "error",
-    "no-duplicate-imports": "error",
-    "no-useless-computed-key": "error",
-    "no-useless-constructor": "error",
-    "no-useless-rename": "error",
-    "no-var": "error",
-    "prefer-arrow-callback": "error",
-    "prefer-numeric-literals": "error",
-    "prefer-spread": "error",
-    "prefer-rest-params": "error"
-  },
-  "env": {
-    "es6": true,
-    "node": true
+    "global-require": 0
   },
   "overrides": [
     {
