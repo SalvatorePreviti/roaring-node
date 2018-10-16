@@ -38,7 +38,7 @@
     "strictPropertyInitialization": true,
     "target": "esnext"
   },
-  "exclude": ["node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*", "test/**/*"],
+  "exclude": ["node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*"],
   "typeAcquisition": {
     "enable": true
   }

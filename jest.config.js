@@ -12,7 +12,7 @@ function testProject() {
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
     globals: {
       'ts-jest': {
-        tsConfigFile: './tsconfig.test.json'
+        tsConfig: './tsconfig.test.json'
       }
     }
   }

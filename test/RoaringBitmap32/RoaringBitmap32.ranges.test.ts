@@ -8,8 +8,8 @@ describe('RoaringBitmap32 ranges', () => {
       expect(RoaringBitmap32.fromRange(89999999999, 99999999999).isEmpty).toBe(true)
       expect(RoaringBitmap32.fromRange(0, 0).isEmpty).toBe(true)
       expect(RoaringBitmap32.fromRange(20, 20).isEmpty).toBe(true)
-      expect(RoaringBitmap32.fromRange(null, 20).isEmpty).toBe(true)
-      expect(RoaringBitmap32.fromRange(undefined, 20).isEmpty).toBe(true)
+      expect(RoaringBitmap32.fromRange(null as any, 20).isEmpty).toBe(true)
+      expect(RoaringBitmap32.fromRange(undefined as any, 20).isEmpty).toBe(true)
     })
 
     it('works with range 0, 6', () => {
@@ -248,14 +248,14 @@ describe('RoaringBitmap32 ranges', () => {
     it('does nothing for invalid values', () => {
       const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       const bitmap = new RoaringBitmap32(values)
-      bitmap.removeRange(null, 10)
-      bitmap.removeRange(undefined, 10)
+      bitmap.removeRange(null as any, 10)
+      bitmap.removeRange(undefined as any, 10)
       bitmap.removeRange(-19, -10)
       bitmap.removeRange(-10, -19)
       bitmap.removeRange(10, 3)
       bitmap.removeRange(0, 0)
       bitmap.removeRange(5, 5)
-      bitmap.removeRange(5, undefined)
+      bitmap.removeRange(5, undefined as any)
       bitmap.removeRange(5, 'xxx' as any)
       expect(bitmap.toArray()).toEqual(values)
     })
