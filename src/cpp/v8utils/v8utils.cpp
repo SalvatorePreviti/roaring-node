@@ -20,20 +20,20 @@ v8::Persistent<v8::Function> JSTypes::Set_ctor;
 void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
   v8::HandleScope scope(isolate);
 
-  auto uint32Array = global->Get(v8::String::NewFromUtf8(isolate, "Uint32Array"))->ToObject();
+  auto uint32Array = global->Get(v8::String::NewFromUtf8(isolate, "Uint32Array"))->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
   JSTypes::Uint32Array.Reset(isolate, uint32Array);
   JSTypes::Uint32Array_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array));
   JSTypes::Uint32Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(v8::String::NewFromUtf8(isolate, "from"))));
 
-  auto buffer = global->Get(v8::String::NewFromUtf8(isolate, "Buffer"))->ToObject();
+  auto buffer = global->Get(v8::String::NewFromUtf8(isolate, "Buffer"))->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
   JSTypes::Buffer.Reset(isolate, buffer);
   JSTypes::Buffer_allocUnsafe.Reset(isolate, v8::Local<v8::Function>::Cast(buffer->Get(v8::String::NewFromUtf8(isolate, "allocUnsafe"))));
 
-  auto array = global->Get(v8::String::NewFromUtf8(isolate, "Array"))->ToObject();
+  auto array = global->Get(v8::String::NewFromUtf8(isolate, "Array"))->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
   JSTypes::Array.Reset(isolate, array);
   JSTypes::Array_from.Reset(isolate, v8::Local<v8::Function>::Cast(array->Get(v8::String::NewFromUtf8(isolate, "from"))));
 
-  auto set = global->Get(v8::String::NewFromUtf8(isolate, "Set"))->ToObject();
+  auto set = global->Get(v8::String::NewFromUtf8(isolate, "Set"))->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
   JSTypes::Set.Reset(isolate, set);
   JSTypes::Set_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(set));
 }
@@ -206,7 +206,12 @@ namespace v8utils {
         if (result.IsEmpty() || result->IsNull() || result->IsUndefined()) {
           setError("Exception in async operation");
         } else if (!result->IsObject()) {
-          result = v8::Exception::Error(result->ToString());
+          v8::MaybeLocal<v8::String> message = result->ToString(isolate->GetCurrentContext());
+          if (message.IsEmpty()) {
+            result = v8::Exception::Error(v8::String::NewFromUtf8(isolate, "Operation failed"));
+          } else {
+            result = v8::Exception::Error(message.ToLocalChecked());
+          }
         }
       }
     }
