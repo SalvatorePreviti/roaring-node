@@ -152,7 +152,7 @@ void RoaringBitmap32::add(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::EscapableHandleScope scope(isolate);
 
   uint32_t v;
-  if (info.Length() < 1 || !info[0]->IsUint32() || !info[0]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
+  if (info.Length() < 1 || !info[0]->IsUint32() || !info[0]->Uint32Value(info.GetIsolate()->GetCurrentContext()).To(&v)) {
     return v8utils::throwTypeError("RoaringBitmap32::add - 32 bit unsigned integer expected");
   }
 
