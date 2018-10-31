@@ -6,7 +6,7 @@
 void initTypes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
-  JSTypes::initJSTypes(isolate, info[0]->ToObject());
+  JSTypes::initJSTypes(isolate, info[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked());
 }
 
 void InitModule(v8::Local<v8::Object> exports) {

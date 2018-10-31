@@ -11,9 +11,7 @@
         "src/cpp/module.cpp",
         "src/cpp/v8utils/v8utils.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
-        "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
-        "src/cpp/RoaringBitmap32/RoaringBitmap32_serialization.cpp",
         "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp"
       ]
     }
@@ -45,9 +43,7 @@
               "src/cpp/module.cpp",
               "src/cpp/v8utils/v8utils.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
-              "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
-              "src/cpp/RoaringBitmap32/RoaringBitmap32_serialization.cpp",
               "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp"
             ]
           },
@@ -72,9 +68,7 @@
               "src/cpp/module.cpp",
               "src/cpp/v8utils/v8utils.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
-              "src/cpp/RoaringBitmap32/RoaringBitmap32_comparisons.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32_operations.cpp",
-              "src/cpp/RoaringBitmap32/RoaringBitmap32_serialization.cpp",
               "src/cpp/RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.cpp"
             ]
           }
