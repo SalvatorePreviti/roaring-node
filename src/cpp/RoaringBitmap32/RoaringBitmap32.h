@@ -53,6 +53,7 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
   static void jaccardIndex(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void rank(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void select(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void rangeCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void removeRunCompression(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void runOptimize(const v8::FunctionCallbackInfo<v8::Value> & info);

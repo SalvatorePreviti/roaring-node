@@ -374,14 +374,24 @@ export class RoaringBitmap32 implements Iterable<number> {
   public has(value: number): boolean
 
   /**
-   * Check whether a range of values from range_start (included) to range_end (excluded) is present
+   * Check whether a range of values from rangeStart (included) to rangeEnd (excluded) is present
    *
-   * @param {number} rangeStart The start index.
-   * @param {number} rangeEnd The end index.
-   * @returns {boolean} True if the bitmap contains the whole range of values from range_start (included) to range_end (excluded), false if not.
+   * @param {number} rangeStart The start index (inclusive).
+   * @param {number} rangeEnd The end index (exclusive).
+   * @returns {boolean} True if the bitmap contains the whole range of values from rangeStart (included) to rangeEnd (excluded), false if not.
    * @memberof RoaringBitmap32
    */
   public hasRange(rangeStart: number, rangeEnd: number): boolean
+
+  /**
+   * Gets the cardinality (number of elements) between rangeStart (included) to rangeEnd (excluded) of the bitmap.
+   * Returns 0 if range is invalid or if no element was found in the given range.
+   *
+   * @param {number} rangeStart The start index (inclusive).
+   * @param {number} rangeEnd The end index (exclusive).
+   * @returns {number} The number of elements between rangeStart (included) to rangeEnd (excluded).
+   */
+  public rangeCardinality(rangeStart: number, rangeEnd: number): number
 
   /**
    * Overwrite the content of this bitmap copying it from an Iterable or another RoaringBitmap32.
