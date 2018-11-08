@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CRoaring official port for NodeJS",
   "main": "index.js",
   "types": "index.d.ts",
