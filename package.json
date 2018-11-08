@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CRoaring official port for NodeJS",
   "main": "index.js",
   "types": "index.d.ts",
@@ -60,7 +60,6 @@
     "benchmark": "^2.1.4",
     "chalk": "^2.4.1",
     "eslint": "^5.8.0",
-    "eslint-config-prettier": "^3.1.0",
     "eslint-config-quick": "^0.1.15",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-jest": "^22.0.0",

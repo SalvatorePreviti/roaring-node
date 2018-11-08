@@ -158,6 +158,34 @@ describe('RoaringBitmap32 ranges', () => {
     })
   })
 
+  describe('rangeCardinality', () => {
+    it('returns the valid size for the basic test', () => {
+      const s = 65536
+      const r = new RoaringBitmap32()
+      r.addRange(s * 2, s * 10)
+
+      // single container (minhb == maxhb)
+      expect(r.rangeCardinality(s * 2, s * 3)).toBe(s)
+      expect(r.rangeCardinality(s * 2 + 100, s * 3)).toBe(s - 100)
+      expect(r.rangeCardinality(s * 2, s * 3 - 200)).toBe(s - 200)
+      expect(r.rangeCardinality(s * 2 + 100, s * 3 - 200)).toBe(s - 300)
+      // multiple containers (maxhb > minhb)
+      expect(r.rangeCardinality(s * 2, s * 5)).toBe(s * 3)
+      expect(r.rangeCardinality(s * 2 + 100, s * 5)).toBe(s * 3 - 100)
+      expect(r.rangeCardinality(s * 2, s * 5 - 200)).toBe(s * 3 - 200)
+      expect(r.rangeCardinality(s * 2 + 100, s * 5 - 200)).toBe(s * 3 - 300)
+      // boundary checks
+      expect(r.rangeCardinality(s * 20, s * 21)).toBe(0)
+      expect(r.rangeCardinality(100, 100)).toBe(0)
+      expect(r.rangeCardinality(0, s * 7)).toBe(s * 5)
+      expect(r.rangeCardinality(s * 7, Number.MAX_SAFE_INTEGER)).toBe(s * 3)
+      // Extremes
+      expect(r.rangeCardinality(s * 7, Number.POSITIVE_INFINITY)).toBe(s * 3)
+      expect(r.rangeCardinality(-1, Number.POSITIVE_INFINITY)).toBe(r.size)
+      expect(r.rangeCardinality(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)).toBe(r.size)
+    })
+  })
+
   describe('addRange', () => {
     it('does nothing for invalid values', () => {
       const bitmap = new RoaringBitmap32([1, 2])
