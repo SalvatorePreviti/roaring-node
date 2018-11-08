@@ -161,27 +161,49 @@ void RoaringBitmap32::tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void RoaringBitmap32::removeMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  bool done = false;
+
   if (info.Length() > 0) {
     v8::Isolate * isolate = info.GetIsolate();
     auto const & arg = info[0];
     RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
-    RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, RoaringBitmap32::constructorTemplate, isolate);
-    if (other) {
-      roaring_bitmap_andnot_inplace(&self->roaring, &other->roaring);
+    if (arg->IsUint32Array() || arg->IsInt32Array()) {
+      const v8utils::TypedArrayContent<uint32_t> typedArray(arg);
+      roaring_bitmap_remove_many(&self->roaring, typedArray.length, typedArray.data);
       self->invalidate();
-      return info.GetReturnValue().Set(info.Holder());
+      done = true;
     } else {
-      RoaringBitmap32 tmp;
-      if (roaringAddMany(isolate, &tmp, arg)) {
-        roaring_bitmap_andnot_inplace(&self->roaring, &tmp.roaring);
+      RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, RoaringBitmap32::constructorTemplate, isolate);
+      if (other) {
+        roaring_bitmap_andnot_inplace(&self->roaring, &other->roaring);
         self->invalidate();
-        return info.GetReturnValue().Set(info.Holder());
+        done = true;
+      } else {
+        v8::Local<v8::Value> argv[] = {arg};
+        auto t = JSTypes::Uint32Array_from.Get(isolate)->Call(JSTypes::Uint32Array.Get(isolate), 1, argv);
+        if (!t.IsEmpty()) {
+          const v8utils::TypedArrayContent<uint32_t> typedArray(t);
+          roaring_bitmap_remove_many(&self->roaring, typedArray.length, typedArray.data);
+          self->invalidate();
+          done = true;
+        } else {
+          RoaringBitmap32 tmp;
+          if (roaringAddMany(isolate, &tmp, arg)) {
+            roaring_bitmap_andnot_inplace(&self->roaring, &tmp.roaring);
+            self->invalidate();
+            done = true;
+          }
+        }
       }
     }
   }
 
-  return v8utils::throwTypeError("Uint32Array, RoaringBitmap32 or Iterable<number> expected");
+  if (done) {
+    info.GetReturnValue().Set(info.Holder());
+  } else {
+    v8utils::throwTypeError("Uint32Array, RoaringBitmap32 or Iterable<number> expected");
+  }
 }
 
 void RoaringBitmap32::andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info) {
