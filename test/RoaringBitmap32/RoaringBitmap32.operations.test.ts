@@ -165,6 +165,12 @@ describe('RoaringBitmap32 operations', () => {
       bitmap.removeMany(new RoaringBitmap32([123, 5, 6]))
       expect(bitmap.toArray()).toEqual([1, 2, 3, 4])
     })
+
+    it('removeMany removes multiple items (Uint32Array)', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 123, 3, 4, 5, 6])
+      bitmap.removeMany(new Uint32Array([123, 5, 6]))
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4])
+    })
   })
 
   describe('andInPlace', () => {
