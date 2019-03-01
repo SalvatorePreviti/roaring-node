@@ -1,28 +1,25 @@
 #include "node.h"
 
-#if (!defined(DISABLE_X64)) && (defined(IS_X64) || defined(_M_X64) || defined(__x86_64__) || defined(_M_X64))
-#  define USECPUID
-#  if ((defined(_MSC_VER)) || (defined(__INTEL_COMPILER)))
-#    include <intrin.h>
-#  endif
+#if (!defined(DISABLE_X64)) && (defined(__x86_64__) || defined(IS_X64) || defined(_M_X64) || defined(_M_AMD64))
+#  define USE_CPUID 1
 #endif
 
-#ifdef USECPUID
-#  ifdef _MSC_VER
+#if defined(USE_CPUID) && defined(_MSC_VER)
+#  define USE_INTRIN_H 1
+#  include <immintrin.h>  // For _xgetbv()
+#  include <intrin.h>  // For __cpuid
+#endif
+
+#if defined(USE_INTRIN_H)
 inline static uint64_t xgetbv(uint32_t xcr) {
   return _xgetbv(xcr);
 }
-#  elif defined(__x86_64__)
-static uint64_t xgetbv(uint32_t xcr) {
+#elif defined(USE_CPUID)
+inline static uint64_t xgetbv(uint32_t xcr) {
   uint32_t eax, edx;
   __asm__(".byte 0x0f, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(xcr));
   return (uint64_t)(edx) << 32 | eax;
 }
-#  else
-static uint64_t xgetbv(uint32_t) {
-  return 0;
-}
-#  endif
 #else
 static uint64_t xgetbv(uint32_t) {
   return 0;
@@ -31,14 +28,10 @@ static uint64_t xgetbv(uint32_t) {
 
 inline static void _cpuid(unsigned int info[4U], const unsigned int info_type) {
   info[0] = info[1] = info[2] = info[3] = 0;
-#ifdef USECPUID
-#  ifdef _MSC_VER
+#ifdef USE_INTRIN_H
   __cpuid((int *)info, info_type);
-#  elif defined(__x86_64__)
+#elif defined(USE_CPUID)
   __asm__ __volatile__("xchgq %%rbx, %q1; cpuid; xchgq %%rbx, %q1" : "=a"(info[0]), "=&r"(info[1]), "=c"(info[2]), "=d"(info[3]) : "0"(info_type), "2"(0U));
-#  else
-  __asm__ __volatile__("cpuid" : "=a"(info[0]), "=b"(info[1]), "=c"(info[2]), "=d"(info[3]) : "0"(info_type), "2"(0U));
-#  endif
 #endif
 }
 
