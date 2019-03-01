@@ -11,29 +11,32 @@
 #endif
 
 #if defined(USE_INTRIN_H)
-inline static uint64_t xgetbv(uint32_t xcr) {
+static void _cpuid(uint32_t info[4U], const uint32_t info_type) {
+  info[0] = info[1] = info[2] = info[3] = 0;
+  __cpuid((int *)info, info_type);
+}
+static uint64_t xgetbv(uint32_t xcr) {
   return _xgetbv(xcr);
 }
 #elif defined(USE_CPUID)
-inline static uint64_t xgetbv(uint32_t xcr) {
-  uint32_t eax, edx;
+static void _cpuid(uint32_t info[4U], const uint32_t info_type) {
+  info[0] = info[1] = info[2] = info[3] = 0u;
+  __asm__ __volatile__("xchgq %%rbx, %q1; cpuid; xchgq %%rbx, %q1" : "=a"(info[0]), "=&r"(info[1]), "=c"(info[2]), "=d"(info[3]) : "0"(info_type), "2"(0U));
+}
+static uint64_t xgetbv(uint32_t xcr) {
+  uint32_t eax = 0u;
+  uint32_t edx = 0u;
   __asm__(".byte 0x0f, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(xcr));
   return (uint64_t)(edx) << 32 | eax;
 }
 #else
+static void _cpuid(uint32_t info[4U], const uint32_t info_type) {
+  info[0] = info[1] = info[2] = info[3] = 0;
+}
 static uint64_t xgetbv(uint32_t) {
   return 0;
 }
 #endif
-
-inline static void _cpuid(unsigned int info[4U], const unsigned int info_type) {
-  info[0] = info[1] = info[2] = info[3] = 0;
-#ifdef USE_INTRIN_H
-  __cpuid((int *)info, info_type);
-#elif defined(USE_CPUID)
-  __asm__ __volatile__("xchgq %%rbx, %q1; cpuid; xchgq %%rbx, %q1" : "=a"(info[0]), "=&r"(info[1]), "=c"(info[2]), "=d"(info[3]) : "0"(info_type), "2"(0U));
-#endif
-}
 
 const uint32_t AVX = 1u << 28;
 const uint32_t OSXSAVE = 1u << 27;
