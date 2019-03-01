@@ -7,6 +7,28 @@
 #  endif
 #endif
 
+#ifdef USECPUID
+#  ifdef _MSC_VER
+inline static uint64_t xgetbv(uint32_t xcr) {
+  return _xgetbv(xcr);
+}
+#  elif defined(__x86_64__)
+static uint64_t xgetbv(uint32_t xcr) {
+  uint32_t eax, edx;
+  __asm__(".byte 0x0f, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(xcr));
+  return (uint64_t)(edx) << 32 | eax;
+}
+#  else
+static uint64_t xgetbv(uint32_t) {
+  return 0;
+}
+#  endif
+#else
+static uint64_t xgetbv(uint32_t) {
+  return 0;
+}
+#endif
+
 inline static void _cpuid(unsigned int info[4U], const unsigned int info_type) {
   info[0] = info[1] = info[2] = info[3] = 0;
 #ifdef USECPUID
@@ -20,32 +42,63 @@ inline static void _cpuid(unsigned int info[4U], const unsigned int info_type) {
 #endif
 }
 
-inline static void getSupportedInstructions(bool & sse42, bool & avx2) {
-  unsigned int info[4];
-  _cpuid(info, 0x0);
+const uint32_t AVX = 1u << 28;
+const uint32_t OSXSAVE = 1u << 27;
+const uint32_t XSAVE = 1u << 26;
+const uint32_t XMM_STATE = 1u << 1;
+const uint32_t YMM_STATE = 1u << 2;
+const uint32_t SSE42_BITS = (1u << 20) | (1u << 23);
+const uint32_t AVX_BITS = AVX | OSXSAVE | XSAVE;
+const uint32_t AVX2_BITS = (1u << 5);
+const uint32_t XMM_YMM_STATE_BITS = XMM_STATE | YMM_STATE;
 
-  if (info[0] > 0) {
-    _cpuid(info, 0x00000001);
-    if ((info[2] & (1 << 20)) && (info[2] & (1 << 23))) {
-      sse42 = true;
+enum CPUIDRegister { eax = 0, ebx = 1, ecx = 2, edx = 3 };
+
+enum CPUSupport { cpu_none = 0, cpu_sse42 = 1, cpu_avx = 2, cpu_avx2 = 4 };
+
+inline static CPUSupport getSupportedInstructions() {
+  uint32_t regs[4];
+  _cpuid(regs, 0u);
+
+  uint32_t level = regs[eax];
+  if (!level) {
+    return cpu_none;
+  }
+
+  CPUSupport sse42 = cpu_none;
+  CPUSupport avx = cpu_none;
+  CPUSupport avx2 = cpu_none;
+
+  _cpuid(regs, 1u);
+  const uint32_t extensionBits = regs[ecx];
+
+  if ((extensionBits & SSE42_BITS) == SSE42_BITS) {
+    sse42 = cpu_sse42;
+  }
+
+  if (sse42 && (extensionBits & AVX_BITS) == AVX_BITS) {
+    // ensure the OS supports AVX (XSAVE of YMM registers)
+    if ((xgetbv(0) & XMM_YMM_STATE_BITS) == XMM_YMM_STATE_BITS) {
+      avx = cpu_avx;
     }
   }
 
-  if (sse42 && info[0] >= 7) {
-    _cpuid(info, 0x00000007);
-    avx2 = (info[1] & (1 << 5)) != 0;
+  if (avx && level >= 7u) {
+    _cpuid(regs, 7u);
+    if ((regs[ebx] & AVX2_BITS) == AVX2_BITS) {
+      avx2 = cpu_avx2;
+    }
   }
+
+  return static_cast<CPUSupport>(sse42 | avx | avx2);
 }
 
 void InitModule(v8::Local<v8::Object> exports) {
-  bool sse42 = false;
-  bool avx2 = false;
-
-  getSupportedInstructions(sse42, avx2);
+  CPUSupport support = getSupportedInstructions();
 
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  exports->Set(v8::String::NewFromUtf8(isolate, "SSE42"), v8::Boolean::New(isolate, sse42));
-  exports->Set(v8::String::NewFromUtf8(isolate, "AVX2"), v8::Boolean::New(isolate, avx2));
+  exports->Set(v8::String::NewFromUtf8(isolate, "SSE42"), v8::Boolean::New(isolate, (support & cpu_sse42) != 0));
+  exports->Set(v8::String::NewFromUtf8(isolate, "AVX2"), v8::Boolean::New(isolate, (support & cpu_avx2) != 0));
 }
 
 NODE_MODULE(roaring, InitModule);
