@@ -87,7 +87,7 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
         if (self->roaring.high_low_container.containers != nullptr) {
           roaring_bitmap_clear(&self->roaring);
         }
-        bool is_ok = ra_copy(&other->roaring.high_low_container, &self->roaring.high_low_container, other->roaring.copy_on_write);
+        bool is_ok = ra_copy(&other->roaring.high_low_container, &self->roaring.high_low_container, roaring_bitmap_get_copy_on_write(&other->roaring));
         if (!is_ok) {
           v8utils::throwError("RoaringBitmap32 - Failed to copy bitmap");
         }
