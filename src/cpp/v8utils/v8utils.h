@@ -37,10 +37,6 @@ namespace v8utils {
 
   void throwError(const char * message);
 
-  inline void throwError(const std::string & message) {
-    throwError(message.c_str());
-  }
-
   void throwTypeError(const char * message);
 
   inline void throwTypeError(const std::string & message) {

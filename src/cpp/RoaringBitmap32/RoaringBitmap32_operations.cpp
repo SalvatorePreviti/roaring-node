@@ -636,7 +636,7 @@ void RoaringBitmap32_opManyStatic(const char * opName,
       ra_clear(&self->roaring.high_low_container);
       self->roaring.high_low_container = roaring_array_t{};
 
-      roaring_bitmap_t * r = op(arrayLength, x);
+      roaring_bitmap_t * r = op((TSize)arrayLength, x);
       if (r == nullptr) {
         free(x);
         return v8utils::throwTypeError(std::string(opName) + " failed roaring allocation");
@@ -684,7 +684,7 @@ void RoaringBitmap32_opManyStatic(const char * opName,
     ra_clear(&self->roaring.high_low_container);
     self->roaring.high_low_container = roaring_array_t{};
 
-    roaring_bitmap_t * r = op(length, x);
+    roaring_bitmap_t * r = op((TSize)length, x);
     if (r == nullptr) {
       free(x);
       return v8utils::throwTypeError(std::string(opName) + " failed roaring allocation");
