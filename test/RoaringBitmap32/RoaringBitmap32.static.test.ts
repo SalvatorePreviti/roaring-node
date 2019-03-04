@@ -233,6 +233,63 @@ describe('RoaringBitmap32 static', () => {
     })
   })
 
+  describe('static xorMany', () => {
+    it('xorManys multiple bitmaps (spread arguments)', () => {
+      const bitmap = RoaringBitmap32.xorMany(
+        new RoaringBitmap32([3, 1, 2]),
+        new RoaringBitmap32([3, 2]),
+        new RoaringBitmap32([6, 7, 8]),
+        new RoaringBitmap32([7, 4])
+      )
+      expect(bitmap.toArray()).toEqual([1, 4, 6, 8])
+    })
+
+    it('xorManys multiple bitmaps (array)', () => {
+      const bitmap = RoaringBitmap32.xorMany([
+        new RoaringBitmap32([3, 1, 2]),
+        new RoaringBitmap32([3, 2]),
+        new RoaringBitmap32([6, 7, 8]),
+        new RoaringBitmap32([7, 4])
+      ])
+      expect(bitmap.toArray()).toEqual([1, 4, 6, 8])
+    })
+
+    it('creates an empty bitmap with no argument passed', () => {
+      const x = RoaringBitmap32.xorMany()
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with a single empty bitmap passed', () => {
+      const x = RoaringBitmap32.xorMany(new RoaringBitmap32())
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with a single empty bitmap passed as array', () => {
+      const x = RoaringBitmap32.xorMany([new RoaringBitmap32()])
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with multiple empty bitmap passed', () => {
+      const x = RoaringBitmap32.xorMany(new RoaringBitmap32(), new RoaringBitmap32(), new RoaringBitmap32())
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+
+    it('creates an empty bitmap with a multiple empty bitmap passed as array', () => {
+      const x = RoaringBitmap32.xorMany([new RoaringBitmap32(), new RoaringBitmap32(), new RoaringBitmap32()])
+      expect(x).toBeInstanceOf(RoaringBitmap32)
+      expect(x.size).toBe(0)
+      expect(x.isEmpty).toBe(true)
+    })
+  })
+
   describe('static swap', () => {
     it('swaps two empty bitmaps', () => {
       const a = new RoaringBitmap32()

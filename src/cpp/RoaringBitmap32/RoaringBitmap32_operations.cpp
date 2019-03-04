@@ -523,70 +523,6 @@ void RoaringBitmap32::andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & i
   info.GetReturnValue().Set(scope.Escape(result));
 }
 
-template <typename T, typename TLen>
-void orManyStaticImpl(const v8::FunctionCallbackInfo<v8::Value> & info, T & array, TLen length) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::EscapableHandleScope scope(isolate);
-
-  v8::Local<v8::FunctionTemplate> ctorType = RoaringBitmap32::constructorTemplate.Get(isolate);
-  v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
-
-  if (length == 1) {
-    if (!ctorType->HasInstance(info[0])) {
-      return v8utils::throwTypeError("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances");
-    }
-
-    v8::Local<v8::Value> argv[] = {info[0]};
-    auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
-    if (!v.IsEmpty()) {
-      info.GetReturnValue().Set(scope.Escape(v.ToLocalChecked()));
-    }
-    return;
-  }
-
-  for (TLen i = 0; i < length; ++i) {
-    if (!ctorType->HasInstance(info[i])) {
-      return v8utils::throwTypeError("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances");
-    }
-  }
-
-  const roaring_bitmap_t ** x = (const roaring_bitmap_t **)malloc(length * sizeof(roaring_bitmap_t *));
-  if (x == nullptr) {
-    return v8utils::throwTypeError("RoaringBitmap32::orMany failed allocation");
-  }
-
-  for (TLen i = 0; i < length; ++i) {
-    RoaringBitmap32 * p = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[i], isolate);
-    if (p == nullptr) {
-      free(x);
-      return v8utils::throwTypeError("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances");
-    }
-    x[i] = &p->roaring;
-  }
-
-  auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
-  if (resultMaybe.IsEmpty()) {
-    free(x);
-    return;
-  }
-
-  auto result = resultMaybe.ToLocalChecked();
-  auto self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
-
-  ra_clear(&self->roaring.high_low_container);
-  self->roaring.high_low_container = roaring_array_t{};
-
-  roaring_bitmap_t * r = roaring_bitmap_or_many(length, x);
-  if (r == nullptr) {
-    free(x);
-    return v8utils::throwTypeError("RoaringBitmap32::orMany failed roaring allocation");
-  }
-
-  self->roaring.high_low_container = std::move(r->high_low_container);
-
-  info.GetReturnValue().Set(scope.Escape(result));
-}
-
 void RoaringBitmap32::fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::EscapableHandleScope scope(isolate);
@@ -622,7 +558,10 @@ void RoaringBitmap32::fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> 
   info.GetReturnValue().Set(scope.Escape(result));
 }
 
-void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+template <typename TSize>
+void RoaringBitmap32_opManyStatic(const char * opName,
+    roaring_bitmap_t * op(TSize number, const roaring_bitmap_t ** x),
+    const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::EscapableHandleScope scope(isolate);
 
@@ -656,7 +595,7 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
       if (arrayLength == 1) {
         v8::Local<v8::Value> item = array->Get(0);
         if (!ctorType->HasInstance(item)) {
-          return v8utils::throwTypeError("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances");
+          return v8utils::throwTypeError(std::string(opName) + " accepts only RoaringBitmap32 instances");
         }
 
         v8::Local<v8::Value> argv[] = {item};
@@ -669,18 +608,18 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
 
       const roaring_bitmap_t ** x = (const roaring_bitmap_t **)malloc(arrayLength * sizeof(roaring_bitmap_t *));
       if (x == nullptr) {
-        return v8utils::throwTypeError("RoaringBitmap32::orMany failed allocation");
+        return v8utils::throwTypeError(std::string(opName) + " failed allocation");
       }
 
       for (size_t i = 0; i < arrayLength; ++i) {
         v8::Local<v8::Value> item = array->Get(i);
         if (!ctorType->HasInstance(item)) {
-          return v8utils::throwTypeError("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances");
+          return v8utils::throwTypeError(std::string(opName) + " accepts only RoaringBitmap32 instances");
         }
         RoaringBitmap32 * p = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(item, ctorType, isolate);
         if (p == nullptr) {
           free(x);
-          return v8utils::throwTypeError("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances");
+          return v8utils::throwTypeError(std::string(opName) + " accepts only RoaringBitmap32 instances");
         }
         x[i] = &p->roaring;
       }
@@ -697,10 +636,10 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
       ra_clear(&self->roaring.high_low_container);
       self->roaring.high_low_container = roaring_array_t{};
 
-      roaring_bitmap_t * r = roaring_bitmap_or_many(arrayLength, x);
+      roaring_bitmap_t * r = op(arrayLength, x);
       if (r == nullptr) {
         free(x);
-        return v8utils::throwTypeError("RoaringBitmap32::orMany failed roaring allocation");
+        return v8utils::throwTypeError(std::string(opName) + " failed roaring allocation");
       }
 
       self->roaring.high_low_container = std::move(r->high_low_container);
@@ -709,7 +648,7 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
 
     } else {
       if (!ctorType->HasInstance(info[0])) {
-        return v8utils::throwTypeError("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances");
+        return v8utils::throwTypeError(std::string(opName) + " accepts only RoaringBitmap32 instances");
       }
 
       v8::Local<v8::Value> argv[] = {info[0]};
@@ -721,14 +660,14 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
   } else {
     const roaring_bitmap_t ** x = (const roaring_bitmap_t **)malloc(length * sizeof(roaring_bitmap_t *));
     if (x == nullptr) {
-      return v8utils::throwTypeError("RoaringBitmap32::orMany failed allocation");
+      return v8utils::throwTypeError(std::string(opName) + " failed allocation");
     }
 
     for (int i = 0; i < length; ++i) {
       RoaringBitmap32 * p = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, i, ctorType);
       if (p == nullptr) {
         free(x);
-        return v8utils::throwTypeError("RoaringBitmap32::orMany accepts only RoaringBitmap32 instances");
+        return v8utils::throwTypeError(std::string(opName) + " accepts only RoaringBitmap32 instances");
       }
       x[i] = &p->roaring;
     }
@@ -745,16 +684,24 @@ void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
     ra_clear(&self->roaring.high_low_container);
     self->roaring.high_low_container = roaring_array_t{};
 
-    roaring_bitmap_t * r = roaring_bitmap_or_many(length, x);
+    roaring_bitmap_t * r = op(length, x);
     if (r == nullptr) {
       free(x);
-      return v8utils::throwTypeError("RoaringBitmap32::orMany failed roaring allocation");
+      return v8utils::throwTypeError(std::string(opName) + " failed roaring allocation");
     }
 
     self->roaring.high_low_container = std::move(r->high_low_container);
 
     info.GetReturnValue().Set(scope.Escape(result));
   }
+}
+
+void RoaringBitmap32::orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32_opManyStatic("RoaringBitmap32::orMany", roaring_bitmap_or_many_heap, info);
+}
+
+void RoaringBitmap32::xorManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32_opManyStatic("RoaringBitmap32::xorMany", roaring_bitmap_xor_many, info);
 }
 
 struct FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {

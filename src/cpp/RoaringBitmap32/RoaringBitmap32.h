@@ -77,6 +77,7 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
   static void xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void xorManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 

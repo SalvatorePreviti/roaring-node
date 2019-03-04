@@ -325,6 +325,30 @@ export class RoaringBitmap32 implements Iterable<number> {
   public static orMany(...values: RoaringBitmap32[]): RoaringBitmap32
 
   /**
+   * Performs a xor between all the given array of RoaringBitmap32 instances.
+   *
+   * This function is faster than calling xor multiple times.
+   *
+   * @static
+   * @param {RoaringBitmap32[]} values An array of RoaringBitmap32 instances to or together.
+   * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the xor of all the given bitmaps.
+   * @memberof RoaringBitmap32
+   */
+  public static xorMany(values: RoaringBitmap32[]): RoaringBitmap32
+
+  /**
+   * Performs a xor between all the given RoaringBitmap32 instances.
+   *
+   * This function is faster than calling xor multiple times.
+   *
+   * @static
+   * @param {...RoaringBitmap32[]} values The RoaringBitmap32 instances to or together.
+   * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the xor of all the given bitmaps.
+   * @memberof RoaringBitmap32
+   */
+  public static xorMany(...values: RoaringBitmap32[]): RoaringBitmap32
+
+  /**
    * [Symbol.iterator]() Gets a new iterator able to iterate all values in the set in order.
    *
    * WARNING: Is not allowed to change the bitmap while iterating.

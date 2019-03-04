@@ -17,6 +17,7 @@
   "files.associations": {
     ".envrc": "shellscript",
     "*.idl": "avro",
+    "*.less": "less",
     "roaring.c": "cpp",
     "__functional_03": "cpp",
     "functional": "cpp",
@@ -64,7 +65,22 @@
     "list": "cpp",
     "unordered_map": "cpp",
     "hashtable": "cpp",
-    "__hash_table": "cpp"
+    "__hash_table": "cpp",
+    "__debug": "cpp",
+    "__threading_support": "cpp",
+    "cctype": "cpp",
+    "cstdarg": "cpp",
+    "cstdint": "cpp",
+    "cstdio": "cpp",
+    "cstdlib": "cpp",
+    "cstring": "cpp",
+    "ctime": "cpp",
+    "cwchar": "cpp",
+    "cwctype": "cpp",
+    "iosfwd": "cpp",
+    "iostream": "cpp",
+    "mutex": "cpp",
+    "numeric": "cpp"
   },
   "python.linting.enabled": false
 }
