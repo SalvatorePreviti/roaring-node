@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "CRoaring official port for NodeJS",
   "main": "index.js",
   "types": "index.d.ts",
@@ -51,33 +51,32 @@
   },
   "homepage": "https://github.com/SalvatorePreviti/roaring-node#readme",
   "dependencies": {
-    "prebuild-install": "^5.2.1"
+    "prebuild-install": "^5.2.4"
   },
   "devDependencies": {
-    "@types/jest": "^23.3.9",
-    "@types/node": "^10.12.3",
-    "ajv": "^6.5.5",
+    "@types/jest": "^24.0.9",
+    "@types/node": "^11.9.6",
     "benchmark": "^2.1.4",
-    "chalk": "^2.4.1",
-    "eslint": "^5.8.0",
-    "eslint-config-quick": "^0.1.15",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jest": "^22.0.0",
-    "eslint-plugin-node": "^8.0.0",
+    "chalk": "^2.4.2",
+    "eslint": "^5.14.1",
+    "eslint-config-quick": "^0.1.23",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jest": "^22.3.0",
+    "eslint-plugin-node": "^8.0.1",
     "fastbitset": "^0.2.8",
-    "jest": "^23.6.0",
+    "jest": "^24.1.0",
     "physical-cpu-count": "^2.0.0",
     "prebuild": "^8.1.2",
-    "prettier": "^1.15.1",
+    "prettier": "^1.16.4",
     "ts-docs-gen": "^0.2.0",
-    "ts-jest": "^23.10.4",
+    "ts-jest": "^24.0.0",
     "tslib": "^1.9.3",
-    "tslint": "^5.11.0",
-    "tslint-config-prettier": "^1.15.0",
-    "tslint-config-quick": "^0.1.13",
+    "tslint": "^5.13.1",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-config-quick": "^0.1.17",
     "tslint-eslint-rules": "^5.4.0",
-    "tslint-microsoft-contrib": "^5.2.1",
+    "tslint-microsoft-contrib": "^6.0.0",
     "tslint-react": "^3.6.0",
-    "typescript": "^3.1.6"
+    "typescript": "^3.3.3333"
   }
 }

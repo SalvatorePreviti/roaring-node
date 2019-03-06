@@ -90,6 +90,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_METHOD(ctorObject, "xor", xorStatic);
   NODE_SET_METHOD(ctorObject, "andNot", andNotStatic);
   NODE_SET_METHOD(ctorObject, "orMany", orManyStatic);
+  NODE_SET_METHOD(ctorObject, "xorMany", xorManyStatic);
   NODE_SET_METHOD(ctorObject, "swap", swapStatic);
 
   ctorObject->Set(v8::String::NewFromUtf8(isolate, "from"), ctorFunction);

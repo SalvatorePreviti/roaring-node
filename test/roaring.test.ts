@@ -29,7 +29,7 @@ describe('roaring', () => {
     const values = roaring.CRoaringVersion.split('.')
     expect(values.length).toBe(3)
     for (let i = 0; i < 3; ++i) {
-      expect(Number.isInteger(Number.parseInt(values[i]))).toBe(true)
+      expect(Number.isInteger(Number.parseInt(values[i], 10))).toBe(true)
     }
   })
 
@@ -38,7 +38,7 @@ describe('roaring', () => {
     const values = roaring.CRoaringVersion.split('.')
     expect(values.length).toBe(3)
     for (let i = 0; i < 3; ++i) {
-      expect(Number.isInteger(Number.parseInt(values[i]))).toBe(true)
+      expect(Number.isInteger(Number.parseInt(values[i], 10))).toBe(true)
     }
   })
 

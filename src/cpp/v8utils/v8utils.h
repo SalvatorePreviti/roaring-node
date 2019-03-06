@@ -36,7 +36,12 @@ namespace v8utils {
   }
 
   void throwError(const char * message);
+
   void throwTypeError(const char * message);
+
+  inline void throwTypeError(const std::string & message) {
+    throwTypeError(message.c_str());
+  }
 
   void defineHiddenField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
   void defineReadonlyField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);

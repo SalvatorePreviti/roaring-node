@@ -77,6 +77,7 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
   static void xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void xorManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 
@@ -102,7 +103,7 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
 class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
  public:
   roaring_bitmap_t bitmap;
-  bool bitmapMoved;
+  volatile bool bitmapMoved;
 
   RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate);
   virtual ~RoaringBitmap32FactoryAsyncWorker();
