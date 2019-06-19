@@ -89,12 +89,26 @@ inline static CPUSupport getSupportedInstructions() {
   return static_cast<CPUSupport>(sse42 | avx | avx2);
 }
 
+template <typename T>
+inline void ignoreMaybeResult(v8::Maybe<T>) {
+}
+
 void InitModule(v8::Local<v8::Object> exports) {
   CPUSupport support = getSupportedInstructions();
 
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  exports->Set(v8::String::NewFromUtf8(isolate, "SSE42"), v8::Boolean::New(isolate, (support & cpu_sse42) != 0));
-  exports->Set(v8::String::NewFromUtf8(isolate, "AVX2"), v8::Boolean::New(isolate, (support & cpu_avx2) != 0));
+  auto context = isolate->GetCurrentContext();
+
+  auto stringSSE42 = v8::String::NewFromUtf8(isolate, "SSE42", v8::NewStringType::kInternalized);
+  auto stringAVX2 = v8::String::NewFromUtf8(isolate, "AVX2", v8::NewStringType::kInternalized);
+
+  if (!stringSSE42.IsEmpty()) {
+    ignoreMaybeResult(exports->Set(context, stringSSE42.ToLocalChecked(), v8::Boolean::New(isolate, (support & cpu_sse42) != 0)));
+  }
+
+  if (!stringAVX2.IsEmpty()) {
+    ignoreMaybeResult(exports->Set(context, stringAVX2.ToLocalChecked(), v8::Boolean::New(isolate, (support & cpu_avx2) != 0)));
+  }
 }
 
 NODE_MODULE(roaring, InitModule);

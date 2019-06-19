@@ -1,5 +1,6 @@
 # submodules
 
+ipch
 src/cpp/CRoaringUnityBuild/**/*
 
 # build output

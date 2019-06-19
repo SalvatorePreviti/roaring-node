@@ -80,7 +80,8 @@
     "iosfwd": "cpp",
     "iostream": "cpp",
     "mutex": "cpp",
-    "numeric": "cpp"
+    "numeric": "cpp",
+    "__errc": "cpp"
   },
   "python.linting.enabled": false
 }

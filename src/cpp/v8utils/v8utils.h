@@ -35,12 +35,12 @@ namespace v8utils {
   inline void ignoreMaybeResult(v8::Maybe<T>) {
   }
 
-  void throwError(const char * message);
+  void throwError(v8::Isolate * isolate, const char * message);
 
-  void throwTypeError(const char * message);
+  void throwTypeError(v8::Isolate * isolate, const char * message);
 
-  inline void throwTypeError(const std::string & message) {
-    throwTypeError(message.c_str());
+  inline void throwTypeError(v8::Isolate * isolate, const std::string & message) {
+    throwTypeError(isolate, message.c_str());
   }
 
   void defineHiddenField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
@@ -89,7 +89,6 @@ namespace v8utils {
       object->SetAlignedPointerInInternalField(0, this);
       persistent.Reset(isolate, object);
       persistent.SetWeak(this, WeakCallback, v8::WeakCallbackType::kParameter);
-      persistent.MarkIndependent();
     }
 
     template <class T>
