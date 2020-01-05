@@ -1,5 +1,5 @@
 {
-  "extends": ["eslint-config-quick"],
+  "extends": ["eslint-config-quick", "@acuris"],
   "plugins": ["jest", "node", "import"],
   "parserOptions": {
     "ecmaVersion": 8,
@@ -15,24 +15,9 @@
   },
   "overrides": [
     {
-      "files": ["scripts/**/*.js"],
+      "files": ["*.ts"],
       "rules": {
-        "node/no-unpublished-require": 0,
-        "no-console": 0
-      }
-    },
-    {
-      "files": ["test/**/*.js"],
-      "env": {
-        "jest/globals": true
-      },
-      "rules": {
-        "node/no-unpublished-require": 0,
-        "jest/no-disabled-tests": "warn",
-        "jest/no-focused-tests": "error",
-        "jest/no-identical-title": "error",
-        "jest/prefer-to-have-length": "warn",
-        "jest/valid-expect": "error"
+        "@typescript-eslint/no-throw-literal": 0
       }
     },
     {

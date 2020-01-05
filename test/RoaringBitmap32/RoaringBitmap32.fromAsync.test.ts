@@ -2,11 +2,11 @@ import RoaringBitmap32 = require('../../RoaringBitmap32')
 
 describe('RoaringBitmap32 fromAsync', () => {
   it('Throws when called with a RoaringBitmap32', async () => {
-    await expect(() => RoaringBitmap32.fromArrayAsync(new RoaringBitmap32())).toThrowError()
+    await expect(() => RoaringBitmap32.fromArrayAsync(new RoaringBitmap32())).toThrow()
   })
 
   it('Throws when called with a RoaringBitmap32', async () => {
-    await expect(() => RoaringBitmap32.fromArrayAsync(new RoaringBitmap32(), () => {})).toThrowError()
+    await expect(() => RoaringBitmap32.fromArrayAsync(new RoaringBitmap32(), () => {})).toThrow()
   })
 
   describe('awayt/async', () => {

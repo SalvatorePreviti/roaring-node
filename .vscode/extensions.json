@@ -1,3 +1,13 @@
 {
-  "recommendations": ["ms-vscode.cpptools", "eg2.tslint", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "xaver.clang-format"]
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "pflannery.vscode-versionlens",
+    "mauve.terraform",
+    "visualstudioexptteam.vscodeintellicode",
+    "donjayamanne.githistory",
+    "eamodio.gitlens",
+    "ms-vscode.cpptools",
+    "xaver.clang-format"
+  ]
 }

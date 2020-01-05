@@ -1,4 +1,5 @@
-import roaring from '../'
+import roaring from '..'
+
 import RoaringBitmap32 = require('../RoaringBitmap32')
 import RoaringBitmap32Iterator = require('../RoaringBitmap32Iterator')
 
@@ -27,7 +28,7 @@ describe('roaring', () => {
   it('has CRoaringVersion', () => {
     expect(typeof roaring.CRoaringVersion).toBe('string')
     const values = roaring.CRoaringVersion.split('.')
-    expect(values.length).toBe(3)
+    expect(values).toHaveLength(3)
     for (let i = 0; i < 3; ++i) {
       expect(Number.isInteger(Number.parseInt(values[i], 10))).toBe(true)
     }
@@ -36,7 +37,7 @@ describe('roaring', () => {
   it('has roaring PackageVersion', () => {
     expect(typeof roaring.PackageVersion).toBe('string')
     const values = roaring.CRoaringVersion.split('.')
-    expect(values.length).toBe(3)
+    expect(values).toHaveLength(3)
     for (let i = 0; i < 3; ++i) {
       expect(Number.isInteger(Number.parseInt(values[i], 10))).toBe(true)
     }

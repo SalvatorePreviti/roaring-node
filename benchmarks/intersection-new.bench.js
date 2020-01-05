@@ -1,7 +1,9 @@
 const bench = require('../scripts/benchmarks/bench')
 const roaring = require('../')
+
 const RoaringBitmap32 = roaring.RoaringBitmap32
 const FastBitSet = require('fastbitset')
+
 const N = 1024 * 1024
 
 bench.suite('intersection (new)', suite => {

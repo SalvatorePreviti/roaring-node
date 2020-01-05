@@ -1095,9 +1095,11 @@ export const CRoaringVersion: string
 export const PackageVersion: string
 
 import roaring = require('./')
+
 export default roaring
 
 export type RoaringBitmap32Callback = (error: Error | null, bitmap: RoaringBitmap32 | undefined) => void
+
 export type RoaringBitmap32ArrayCallback = (error: Error | null, bitmap: RoaringBitmap32[] | undefined) => void
 
 // tslint:disable-next-line:no-empty-interface

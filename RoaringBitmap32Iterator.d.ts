@@ -1,4 +1,4 @@
-import roaring from './'
+import roaring from '.'
 
 /**
  * Iterator class for RoaringBitmap32

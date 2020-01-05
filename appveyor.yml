@@ -20,7 +20,7 @@ install:
   - npm install
 
 test_script:
-  - npm run tslint
+  - npm run lint
   - npm test
 
 deploy_script:

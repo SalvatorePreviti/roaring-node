@@ -104,15 +104,15 @@ describe('RoaringBitmap32 operations', () => {
   describe('remove', () => {
     it('remove does nothing on an empty bitmap', () => {
       const bitmap = new RoaringBitmap32()
-      expect(bitmap.remove(19)).toBe(undefined)
+      expect(bitmap.remove(19)).toBeUndefined()
       expect(bitmap.size).toBe(0)
     })
 
     it('remove one item', () => {
       const bitmap = new RoaringBitmap32([1, 5, 6])
-      expect(bitmap.remove(5)).toBe(undefined)
+      expect(bitmap.remove(5)).toBeUndefined()
       expect(bitmap.toArray()).toEqual([1, 6])
-      expect(bitmap.remove(5)).toBe(undefined)
+      expect(bitmap.remove(5)).toBeUndefined()
       expect(bitmap.toArray()).toEqual([1, 6])
     })
   })

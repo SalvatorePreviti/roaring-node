@@ -1,5 +1,6 @@
 const bench = require('../scripts/benchmarks/bench')
 const roaring = require('../')
+
 const RoaringBitmap32 = roaring.RoaringBitmap32
 const N = 65536
 

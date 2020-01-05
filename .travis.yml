@@ -11,7 +11,7 @@ install:
 
 script:
   - set -e
-  - npm run tslint
+  - npm run lint
   - npm test
   - node ./scripts/prebuild
 

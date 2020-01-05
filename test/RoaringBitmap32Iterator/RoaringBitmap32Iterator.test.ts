@@ -19,8 +19,8 @@ describe('RoaringBitmap32Iterator', () => {
     })
 
     it('throws an exception if called with a non RoaringBitmap32', () => {
-      expect(() => new RoaringBitmap32Iterator(123 as any)).toThrowError()
-      expect(() => new RoaringBitmap32Iterator([123] as any)).toThrowError()
+      expect(() => new RoaringBitmap32Iterator(123 as any)).toThrow()
+      expect(() => new RoaringBitmap32Iterator([123] as any)).toThrow()
     })
   })
 
@@ -67,9 +67,7 @@ describe('RoaringBitmap32Iterator', () => {
 
     it('allows foreach (empty)', () => {
       const iter = new RoaringBitmap32Iterator()
-      for (const x of iter) {
-        throw new Error(`Should be empty but ${x} found`)
-      }
+      expect(iter.next()).toEqual({ done: true, value: undefined })
     })
 
     it('allows foreach (small array)', () => {
@@ -256,6 +254,7 @@ describe('RoaringBitmap32Iterator', () => {
 
       function doNothing(_v: any) {}
 
+      let error
       try {
         let n = 0
         for (const v of new RoaringBitmap32Iterator(bitmap, 256)) {
@@ -266,8 +265,9 @@ describe('RoaringBitmap32Iterator', () => {
           }
         }
       } catch (e) {
-        expect(e.message).toEqual('RoaringBitmap32 iterator - bitmap changed while iterating')
+        error = e
       }
+      expect(error.message).toEqual('RoaringBitmap32 iterator - bitmap changed while iterating')
     })
   })
 })

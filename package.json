@@ -1,27 +1,29 @@
 {
   "name": "roaring",
   "version": "1.0.5",
+  "private": false,
   "description": "CRoaring official port for NodeJS",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "typings": "index.d.ts",
-  "gypfile": true,
-  "scripts": {
-    "install": "prebuild-install || node-gyp rebuild -j 12",
-    "rebuild": "prebuild --compile",
-    "compile": "node-gyp build -j 12",
-    "recompile": "node-gyp rebuild -j 12",
-    "test": "jest",
-    "tslint": "node ./node_modules/tslint/lib/tslintCli.js --project tsconfig.json --exclude **/node_modules/** --exclude **/test/**",
-    "eslint": "node ./node_modules/eslint/bin/eslint.js .",
-    "doc": "node ./node_modules/.bin/ts-docs-gen --config ./docs-gen.json",
-    "benchmarks": "node --expose-gc ./scripts/benchmarks.js",
-    "benchmarks/": "node --expose-gc ./scripts/benchmarks.js"
+  "keywords": [
+    "CRoaring",
+    "Roaring",
+    "bitmaps"
+  ],
+  "license": "Apache-2.0",
+  "author": "Salvatore Previti",
+  "homepage": "https://github.com/SalvatorePreviti/roaring-node#readme",
+  "bugs": {
+    "url": "https://github.com/SalvatorePreviti/roaring/issues"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SalvatorePreviti/roaring-node.git"
   },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "typings": "index.d.ts",
   "files": [
     "src/cpp/**/*.*",
     "src/cpuinfo/**/*.*",
@@ -36,47 +38,63 @@
     "RoaringBitmap32Iterator.js",
     "RoaringBitmap32Iterator.d.ts"
   ],
-  "engines": {
-    "node": ">=8.0.0"
+  "scripts": {
+    "install": "prebuild-install || node-gyp rebuild -j 12",
+    "rebuild": "prebuild --compile",
+    "compile": "node-gyp build -j 12",
+    "recompile": "node-gyp rebuild -j 12",
+    "test": "jest",
+    "lint": "acuris-eslint",
+    "lint:fix": "acuris-eslint --fix",
+    "doc": "node ./node_modules/.bin/ts-docs-gen --config ./docs-gen.json",
+    "benchmarks": "node --expose-gc ./scripts/benchmarks.js",
+    "benchmarks/": "node --expose-gc ./scripts/benchmarks.js",
+    "acuris-eslint": "acuris-eslint"
   },
-  "keywords": [
-    "CRoaring",
-    "Roaring",
-    "bitmaps"
-  ],
-  "author": "Salvatore Previti",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/SalvatorePreviti/roaring/issues"
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   },
-  "homepage": "https://github.com/SalvatorePreviti/roaring-node#readme",
+  "lint-staged": {
+    "*.{js,jsx,json,ts,tsx}": [
+      "acuris-eslint --lint-staged --fix --max-warnings=0",
+      "git add"
+    ]
+  },
   "dependencies": {
-    "prebuild-install": "^5.3.2"
+    "prebuild-install": "^5.3.3"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.18",
-    "@types/node": "^12.7.12",
+    "@acuris/eslint-config": "^0.0.51",
+    "@babel/core": "^7.7.7",
+    "@babel/runtime": "^7.7.7",
+    "@types/jest": "^24.0.25",
+    "@types/node": "^13.1.4",
+    "@typescript-eslint/eslint-plugin": "^2.14.0",
+    "@typescript-eslint/parser": "^2.14.0",
+    "babel-eslint": "^10.0.3",
     "benchmark": "^2.1.4",
-    "chalk": "^2.4.2",
-    "eslint": "^6.5.1",
+    "chalk": "^3.0.0",
+    "eslint": "^6.8.0",
     "eslint-config-quick": "^0.1.23",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-jest": "^22.17.0",
-    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-jest": "^23.3.0",
+    "eslint-plugin-json": "^2.0.1",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-scope": "^5.0.0",
     "fastbitset": "^0.2.8",
+    "husky": "^3.1.0",
     "jest": "^24.9.0",
+    "lint-staged": "^9.5.0",
     "physical-cpu-count": "^2.0.0",
     "prebuild": "^9.1.1",
-    "prettier": "^1.18.2",
+    "prettier": "^1.19.1",
     "ts-docs-gen": "^0.2.0",
-    "ts-jest": "^24.1.0",
+    "ts-jest": "^24.2.0",
     "tslib": "^1.10.0",
-    "tslint": "^5.20.0",
-    "tslint-config-prettier": "^1.18.0",
-    "tslint-config-quick": "^0.1.17",
-    "tslint-eslint-rules": "^5.4.0",
-    "tslint-microsoft-contrib": "^6.2.0",
-    "tslint-react": "^4.1.0",
-    "typescript": "^3.6.3"
-  }
+    "typescript": "^3.7.4"
+  },
+  "gypfile": true
 }

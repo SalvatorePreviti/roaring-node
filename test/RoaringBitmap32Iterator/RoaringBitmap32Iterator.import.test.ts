@@ -8,7 +8,7 @@ describe('RoaringBitmap32Iterator import', () => {
   })
 
   it('supports typescript "import RoaringBitmap32Iterator from \'roaring/RoaringBitmap32Iterator\'" syntax', () => {
-    expect(RoaringBitmap32Iterator === require('../../RoaringBitmap32Iterator'))
+    expect(RoaringBitmap32Iterator === require('../../RoaringBitmap32Iterator')).toBe(true)
   })
 
   it('is a class', () => {

@@ -36,7 +36,11 @@ function promiseMap(collection, functor, concurrency) {
       doNext()
     }
 
-    while (running < concurrency && doNext());
+    for (;;) {
+      if (!(running < concurrency && doNext())) {
+        break
+      }
+    }
   })
 }
 

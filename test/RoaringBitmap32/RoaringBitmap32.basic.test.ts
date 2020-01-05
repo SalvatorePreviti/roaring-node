@@ -82,14 +82,14 @@ describe('RoaringBitmap32 basic', () => {
   describe('select', () => {
     it('returns undefined for invalid values on an empty bitmap', () => {
       const bitmap = new RoaringBitmap32()
-      expect(bitmap.select(null as any)).toBe(undefined)
-      expect(bitmap.select(undefined as any)).toBe(undefined)
-      expect(bitmap.select(-123 as any)).toBe(undefined)
-      expect(bitmap.select([123] as any)).toBe(undefined)
-      expect(bitmap.select(0)).toBe(undefined)
-      expect(bitmap.select(100)).toBe(undefined)
-      expect(bitmap.select(0x7fffffff)).toBe(undefined)
-      expect(bitmap.select(3)).toBe(undefined)
+      expect(bitmap.select(null as any)).toBeUndefined()
+      expect(bitmap.select(undefined as any)).toBeUndefined()
+      expect(bitmap.select(-123 as any)).toBeUndefined()
+      expect(bitmap.select([123] as any)).toBeUndefined()
+      expect(bitmap.select(0)).toBeUndefined()
+      expect(bitmap.select(100)).toBeUndefined()
+      expect(bitmap.select(0x7fffffff)).toBeUndefined()
+      expect(bitmap.select(3)).toBeUndefined()
     })
 
     it('returns the correct value', () => {
@@ -104,7 +104,7 @@ describe('RoaringBitmap32 basic', () => {
       expect(bitmap.select(7)).toBe(1000)
       expect(bitmap.select(8)).toBe(2000)
       expect(bitmap.select(9)).toBe(3000)
-      expect(bitmap.select(10)).toBe(undefined)
+      expect(bitmap.select(10)).toBeUndefined()
     })
   })
 
@@ -145,14 +145,14 @@ describe('RoaringBitmap32 basic', () => {
     it('returns an empty Uint32Array for an empty bitmap', () => {
       const a = new RoaringBitmap32().toUint32Array()
       expect(a).toBeInstanceOf(Uint32Array)
-      expect(a.length).toBe(0)
+      expect(a).toHaveLength(0)
     })
 
     it('returns an array with 1 element for 1 element', () => {
       const bitmap = new RoaringBitmap32([1])
       const x = bitmap.toUint32Array()
       expect(x).toBeInstanceOf(Uint32Array)
-      expect(x.length).toBe(1)
+      expect(x).toHaveLength(1)
       expect(Array.from(x)).toEqual([1])
     })
 
@@ -160,7 +160,7 @@ describe('RoaringBitmap32 basic', () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
       const x = bitmap.toUint32Array()
       expect(x).toBeInstanceOf(Uint32Array)
-      expect(x.length).toBe(6)
+      expect(x).toHaveLength(6)
       expect(Array.from(x)).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff])
     })
   })
