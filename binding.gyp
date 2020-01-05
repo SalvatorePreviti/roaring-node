@@ -52,7 +52,7 @@
             "default_configuration": "Release",
             "cflags": ["-O3", "-std=c99", "-mavx2"],
             "cflags_cc": ["-O3", "-std=c++11", "-mavx2"],
-            "defines": ["USEAVX", "__POPCNT__", "__SSE4_2__"],
+            "defines": ["USEAVX", "FORCE_AVX=ON", "__POPCNT__", "__SSE4_2__"],
             "xcode_settings": {
               "GCC_ENABLE_SSE42_EXTENSIONS": "YES",
               "CLANG_X86_VECTOR_INSTRUCTIONS": "avx2",
