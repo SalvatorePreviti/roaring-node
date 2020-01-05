@@ -2,7 +2,7 @@
 
 const systemInfo = require('./systemInfo')
 const promiseMap = require('./benchmarks/promiseMap')
-const chalk = require('chalk').default
+const chalk = require('chalk')
 const path = require('path')
 const fs = require('fs')
 const { fork } = require('child_process')

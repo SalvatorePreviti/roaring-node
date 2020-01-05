@@ -9,18 +9,18 @@
 
 class JSTypes {
  public:
-  static v8::Persistent<v8::Object> Array;
-  static v8::Persistent<v8::Function> Array_from;
+  static v8::Eternal<v8::Object> Array;
+  static v8::Eternal<v8::Function> Array_from;
 
-  static v8::Persistent<v8::Object> Buffer;
-  static v8::Persistent<v8::Function> Buffer_allocUnsafe;
+  static v8::Eternal<v8::Object> Buffer;
+  static v8::Eternal<v8::Function> Buffer_allocUnsafe;
 
-  static v8::Persistent<v8::Object> Uint32Array;
-  static v8::Persistent<v8::Function> Uint32Array_ctor;
-  static v8::Persistent<v8::Function> Uint32Array_from;
+  static v8::Eternal<v8::Object> Uint32Array;
+  static v8::Eternal<v8::Function> Uint32Array_ctor;
+  static v8::Eternal<v8::Function> Uint32Array_from;
 
-  static v8::Persistent<v8::Object> Set;
-  static v8::Persistent<v8::Function> Set_ctor;
+  static v8::Eternal<v8::Object> Set;
+  static v8::Eternal<v8::Function> Set_ctor;
 
   static void initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
 
@@ -83,14 +83,6 @@ namespace v8utils {
 
   class ObjectWrap {
    public:
-    v8::Persistent<v8::Object> persistent;
-
-    inline void Wrap(v8::Isolate * isolate, v8::Local<v8::Object> object) {
-      object->SetAlignedPointerInInternalField(0, this);
-      persistent.Reset(isolate, object);
-      persistent.SetWeak(this, WeakCallback, v8::WeakCallbackType::kParameter);
-    }
-
     template <class T>
     inline static T * Unwrap(v8::Local<v8::Object> object) {
       return (T *)(object->GetAlignedPointerFromInternalField(0));
@@ -116,6 +108,11 @@ namespace v8utils {
     }
 
     template <class T>
+    static T * TryUnwrap(const v8::Local<v8::Value> & value, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
+      return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
+    }
+
+    template <class T>
     static T * TryUnwrap(const v8::FunctionCallbackInfo<v8::Value> & info, int argumentIndex, const v8::Local<v8::FunctionTemplate> & ctorTemplate) {
       return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
     }
@@ -125,10 +122,10 @@ namespace v8utils {
       return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
     }
 
-   protected:
-    virtual ~ObjectWrap();
-
-    static void WeakCallback(v8::WeakCallbackInfo<ObjectWrap> const & info);
+    template <class T>
+    static T * TryUnwrap(const v8::FunctionCallbackInfo<v8::Value> & info, int argumentIndex, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate) {
+      return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
+    }
   };
 
   typedef const char * const_char_ptr_t;

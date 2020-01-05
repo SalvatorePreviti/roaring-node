@@ -7,17 +7,21 @@
 
 class RoaringBitmap32;
 
-class RoaringBitmap32 : public v8utils::ObjectWrap {
+class RoaringBitmap32 {
  public:
-  roaring_bitmap_t roaring;
+  union {
+    roaring_bitmap_t roaring;
+    RoaringBitmap32 * _nextFree;
+  };
   uint64_t version;
+  v8::Persistent<v8::Object> persistent;
 
   inline void invalidate() {
     ++version;
   }
 
-  static v8::Persistent<v8::FunctionTemplate> constructorTemplate;
-  static v8::Persistent<v8::Function> constructor;
+  static v8::Eternal<v8::FunctionTemplate> constructorTemplate;
+  static v8::Eternal<v8::Function> constructor;
 
   static void Init(v8::Local<v8::Object> exports);
 
@@ -90,10 +94,11 @@ class RoaringBitmap32 : public v8utils::ObjectWrap {
   static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
 
   RoaringBitmap32();
-
-  virtual ~RoaringBitmap32();
+  ~RoaringBitmap32();
 
  private:
+  void destroy();
+  static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
   static const char * doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t & newRoaring);
 
   friend class DeserializeWorker;

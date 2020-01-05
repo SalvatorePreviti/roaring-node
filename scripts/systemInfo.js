@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const chalk = require('chalk').default
+const chalk = require('chalk')
 const os = require('os')
 const instructionSet = require('../lib/instructionSet')
 

@@ -4,18 +4,18 @@
 
 /////////////// JSTypes ///////////////
 
-v8::Persistent<v8::Object> JSTypes::Uint32Array;
-v8::Persistent<v8::Function> JSTypes::Uint32Array_ctor;
-v8::Persistent<v8::Function> JSTypes::Uint32Array_from;
+v8::Eternal<v8::Object> JSTypes::Uint32Array;
+v8::Eternal<v8::Function> JSTypes::Uint32Array_ctor;
+v8::Eternal<v8::Function> JSTypes::Uint32Array_from;
 
-v8::Persistent<v8::Object> JSTypes::Buffer;
-v8::Persistent<v8::Function> JSTypes::Buffer_allocUnsafe;
+v8::Eternal<v8::Object> JSTypes::Buffer;
+v8::Eternal<v8::Function> JSTypes::Buffer_allocUnsafe;
 
-v8::Persistent<v8::Object> JSTypes::Array;
-v8::Persistent<v8::Function> JSTypes::Array_from;
+v8::Eternal<v8::Object> JSTypes::Array;
+v8::Eternal<v8::Function> JSTypes::Array_from;
 
-v8::Persistent<v8::Object> JSTypes::Set;
-v8::Persistent<v8::Function> JSTypes::Set_ctor;
+v8::Eternal<v8::Object> JSTypes::Set;
+v8::Eternal<v8::Function> JSTypes::Set_ctor;
 
 void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
   v8::HandleScope scope(isolate);
@@ -26,9 +26,9 @@ void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & g
                          ->ToObject(context)
                          .ToLocalChecked();
 
-  JSTypes::Uint32Array.Reset(isolate, uint32Array);
-  JSTypes::Uint32Array_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(uint32Array));
-  JSTypes::Uint32Array_from.Reset(isolate,
+  JSTypes::Uint32Array.Set(isolate, uint32Array);
+  JSTypes::Uint32Array_ctor.Set(isolate, v8::Local<v8::Function>::Cast(uint32Array));
+  JSTypes::Uint32Array_from.Set(isolate,
       v8::Local<v8::Function>::Cast(
           uint32Array->Get(context, v8::String::NewFromUtf8(isolate, "from", v8::NewStringType::kInternalized).ToLocalChecked()).ToLocalChecked()));
 
@@ -36,8 +36,8 @@ void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & g
                     .ToLocalChecked()
                     ->ToObject(context)
                     .ToLocalChecked();
-  JSTypes::Buffer.Reset(isolate, buffer);
-  JSTypes::Buffer_allocUnsafe.Reset(isolate,
+  JSTypes::Buffer.Set(isolate, buffer);
+  JSTypes::Buffer_allocUnsafe.Set(isolate,
       v8::Local<v8::Function>::Cast(
           buffer->Get(context, v8::String::NewFromUtf8(isolate, "allocUnsafe", v8::NewStringType::kInternalized).ToLocalChecked()).ToLocalChecked()));
 
@@ -45,8 +45,8 @@ void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & g
                    .ToLocalChecked()
                    ->ToObject(context)
                    .ToLocalChecked();
-  JSTypes::Array.Reset(isolate, array);
-  JSTypes::Array_from.Reset(isolate,
+  JSTypes::Array.Set(isolate, array);
+  JSTypes::Array_from.Set(isolate,
       v8::Local<v8::Function>::Cast(
           array->Get(context, v8::String::NewFromUtf8(isolate, "from", v8::NewStringType::kInternalized).ToLocalChecked()).ToLocalChecked()));
 
@@ -54,8 +54,8 @@ void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & g
                  .ToLocalChecked()
                  ->ToObject(context)
                  .ToLocalChecked();
-  JSTypes::Set.Reset(isolate, set);
-  JSTypes::Set_ctor.Reset(isolate, v8::Local<v8::Function>::Cast(set));
+  JSTypes::Set.Set(isolate, set);
+  JSTypes::Set_ctor.Set(isolate, v8::Local<v8::Function>::Cast(set));
 }
 
 v8::Local<v8::Value> JSTypes::bufferAllocUnsafe(v8::Isolate * isolate, size_t size) {
@@ -132,21 +132,6 @@ namespace v8utils {
     v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
     t->SetClassName(v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked());
     defineHiddenField(isolate, target, name, t->GetFunction(isolate->GetCurrentContext()).ToLocalChecked());
-  }
-
-  /////////////// ObjectWrap ///////////////
-
-  ObjectWrap::~ObjectWrap() {
-    if (!persistent.IsEmpty()) {
-      persistent.ClearWeak();
-      persistent.Reset();
-    }
-  }
-
-  void ObjectWrap::WeakCallback(v8::WeakCallbackInfo<ObjectWrap> const & info) {
-    ObjectWrap * wrap = info.GetParameter();
-    wrap->persistent.Reset();
-    delete wrap;
   }
 
   /////////////// AsyncWorker ///////////////

@@ -37,5 +37,8 @@
     "**/.eslintcache": true,
     "**/.cache": true,
     "**/.fuse_hidden*": true
+  },
+  "files.associations": {
+    "type_traits": "cpp"
   }
 }

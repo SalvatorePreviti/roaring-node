@@ -3,18 +3,26 @@
 
 ////////////// RoaringBitmap32BufferedIterator //////////////
 
-v8::Persistent<v8::FunctionTemplate> RoaringBitmap32BufferedIterator::constructorTemplate;
-v8::Persistent<v8::Function> RoaringBitmap32BufferedIterator::constructor;
-v8::Persistent<v8::String> RoaringBitmap32BufferedIterator::nPropertyName;
+v8::Eternal<v8::FunctionTemplate> RoaringBitmap32BufferedIterator::constructorTemplate;
+v8::Eternal<v8::Function> RoaringBitmap32BufferedIterator::constructor;
+v8::Eternal<v8::String> RoaringBitmap32BufferedIterator::nPropertyName;
 
 RoaringBitmap32BufferedIterator::RoaringBitmap32BufferedIterator() {
   this->it.parent = nullptr;
   this->it.has_value = false;
 }
 
-RoaringBitmap32BufferedIterator::~RoaringBitmap32BufferedIterator() {
+void RoaringBitmap32BufferedIterator::destroy() {
   this->bitmap.Reset();
   this->buffer.Reset();
+  if (!persistent.IsEmpty()) {
+    persistent.ClearWeak();
+    persistent.Reset();
+  }
+}
+
+RoaringBitmap32BufferedIterator::~RoaringBitmap32BufferedIterator() {
+  this->destroy();
 }
 
 void RoaringBitmap32BufferedIterator::Init(v8::Local<v8::Object> exports) {
@@ -28,14 +36,14 @@ void RoaringBitmap32BufferedIterator::Init(v8::Local<v8::Object> exports) {
     return v8utils::throwError(isolate, "Failed to instantiate RoaringBitmap32BufferedIterator");
   }
 
-  nPropertyName.Reset(isolate, stringN.ToLocalChecked());
+  nPropertyName.Set(isolate, stringN.ToLocalChecked());
 
   v8::Local<v8::FunctionTemplate> ctor = v8::FunctionTemplate::New(isolate, New);
 
   ctor->SetClassName(className.ToLocalChecked());
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
 
-  constructorTemplate.Reset(isolate, ctor);
+  constructorTemplate.Set(isolate, ctor);
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "fill", fill);
 
@@ -46,13 +54,13 @@ void RoaringBitmap32BufferedIterator::Init(v8::Local<v8::Object> exports) {
   }
 
   auto ctorFunctionChecked = ctorFunction.ToLocalChecked();
-  constructor.Reset(isolate, ctorFunctionChecked);
+  constructor.Set(isolate, ctorFunctionChecked);
   v8utils::defineHiddenField(isolate, exports, "RoaringBitmap32BufferedIterator", ctorFunctionChecked);
 }
 
 void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::EscapableHandleScope scope(isolate);
+  v8::HandleScope scope(isolate);
 
   if (!info.IsConstructCall()) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs to be called with new");
@@ -85,7 +93,10 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
     return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
   }
 
-  instance->Wrap(isolate, holder);
+  holder->SetAlignedPointerInInternalField(0, instance);
+  instance->persistent.Reset(isolate, holder);
+  instance->persistent.SetWeak(instance, WeakCallback, v8::WeakCallbackType::kParameter);
+
   auto context = isolate->GetCurrentContext();
 
   roaring_init_iterator(&bitmapInstance->roaring, &instance->it);
@@ -116,7 +127,7 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
     return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - instantiation failed");
   }
 
-  info.GetReturnValue().Set(scope.Escape(holder));
+  info.GetReturnValue().Set(holder);
 }
 
 void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -144,4 +155,9 @@ void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Va
   }
 
   info.GetReturnValue().Set(n);
+}
+
+void RoaringBitmap32BufferedIterator::WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info) {
+  RoaringBitmap32BufferedIterator * p = info.GetParameter();
+  delete p;
 }
