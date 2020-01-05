@@ -9,10 +9,7 @@ class RoaringBitmap32;
 
 class RoaringBitmap32 {
  public:
-  union {
-    roaring_bitmap_t roaring;
-    RoaringBitmap32 * _nextFree;
-  };
+  roaring_bitmap_t roaring;
   uint64_t version;
   v8::Persistent<v8::Object> persistent;
 
