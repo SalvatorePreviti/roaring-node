@@ -203,6 +203,20 @@ describe('RoaringBitmap32 basic', () => {
       expect(x).toHaveLength(0)
       expect(Array.from(x)).toEqual([])
     })
+
+    it('returns a paginated array with limit out of scope', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100])
+      const x = bitmap.rangeUint32Array(0, 100)
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x).toHaveLength(7)
+    })
+
+    it('returns a paginated array with limit and offset out of scope', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100])
+      const x = bitmap.rangeUint32Array(5, 100)
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x).toHaveLength(2)
+    })
   })
 
   describe('toArray', () => {

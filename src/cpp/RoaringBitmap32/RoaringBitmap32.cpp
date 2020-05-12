@@ -336,6 +336,10 @@ void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value>
     size = 0;
   }
 
+  if (limit > cardinality - offset) {
+    limit = cardinality - offset;
+  }
+
   v8::Local<v8::Value> argv[1] = {v8::Uint32::NewFromUnsigned(isolate, (uint32_t)size)};
   auto typedArrayMaybe = JSTypes::Uint32Array_ctor.Get(isolate)->NewInstance(isolate->GetCurrentContext(), 1, argv);
   if (typedArrayMaybe.IsEmpty())
