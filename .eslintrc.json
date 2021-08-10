@@ -1,5 +1,5 @@
 {
-  "extends": ["eslint-config-quick", "@acuris"],
+  "extends": ["@balsamic"],
   "plugins": ["jest", "node", "import"],
   "parserOptions": {
     "ecmaVersion": 8,

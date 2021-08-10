@@ -1,4 +1,19 @@
-# <@acuris/eslint-config>
+src/cpp/**/*
+
+# dotfiles
+
+!.*.js
+!.*._js
+!.*.jsx
+!.*.mjs
+!.*.cjs
+!.*.es
+!.*.es6
+!.*.assetgen
+!.*.ts
+!.*.tsx
+!.*.json
+!.eslintrc.js
 
 # Dependencies and vendor
 vendor
@@ -7,6 +22,11 @@ node_modules
 bower_components
 jspm_packages
 package-lock.json
+/.pnp
+.pnp.js
+.serverless
+.webpack
+.next/
 
 # Build outputs
 bundle.js
@@ -17,9 +37,12 @@ build/Release
 *-min.*
 
 # Cache
+.git
+.eslintcache
+.tmp
+.temp
 .cache
 .fuse_hidden*
-.temp
 .fusebox
 .dynamodb
 
@@ -28,9 +51,3 @@ lib-cov
 coverage
 .nyc_output
 __snapshots__
-
-# </@acuris/eslint-config>
-
-**/node_modules
-temp
-src/cpp/**/*

@@ -290,12 +290,7 @@ namespace v8utils {
   /////////////// ParallelAsyncWorker ///////////////
 
   ParallelAsyncWorker::ParallelAsyncWorker(v8::Isolate * isolate) :
-      AsyncWorker(isolate),
-      loopCount(0),
-      concurrency(0),
-      _tasks(nullptr),
-      _pendingTasks(0),
-      _currentIndex(0) {
+      AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {
   }
 
   ParallelAsyncWorker::~ParallelAsyncWorker() {

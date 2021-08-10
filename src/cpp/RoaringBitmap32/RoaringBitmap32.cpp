@@ -368,7 +368,8 @@ void RoaringBitmap32::contentToString(const v8::FunctionCallbackInfo<v8::Value> 
   }
 
   if (self && !roaring_bitmap_is_empty(&self->roaring)) {
-    roaring_iterate(&self->roaring,
+    roaring_iterate(
+        &self->roaring,
         [](uint32_t value, void * p) -> bool {
           if (((iter_data *)p)->str.length() >= ((iter_data *)p)->maxLen) {
             ((iter_data *)p)->str.append("...");

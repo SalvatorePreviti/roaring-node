@@ -1,3 +1,4 @@
+DisableFormat: false
 BasedOnStyle: Chromium
 IndentWidth: 2
 UseTab: Never
@@ -6,21 +7,20 @@ NamespaceIndentation: All
 AlignAfterOpenBracket: DontAlign
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
-AlignTrailingComments: false
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AlignOperands: false
 AlignTrailingComments: false
-Standard: Cpp11
 PointerAlignment: Middle
 BinPackArguments: true
 MaxEmptyLinesToKeep: 1
 BreakConstructorInitializers: AfterColon
-DisableFormat: false
 IndentPPDirectives: AfterHash
 
 ---
 Language: JavaScript
 DisableFormat: true
+ColumnLimit: 120
+JavaScriptQuotes: Single

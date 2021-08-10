@@ -1,24 +1,32 @@
-# <@acuris/eslint-config>
+src/cpp/**/*
 
 # Dependencies and vendor
 vendor
 typings
+node_modules
 bower_components
 jspm_packages
 package-lock.json
+/.pnp
+.pnp.js
+.serverless
+.webpack
+.next/
 
 # Build outputs
 bundle.js
 *.bundle.js
 .serverless
+build/Debug
 build/Release
 *.min.*
 *-min.*
 
 # Cache
+.tmp
+.temp
 .cache
 .fuse_hidden*
-.temp
 .fusebox
 .dynamodb
 
@@ -28,6 +36,4 @@ coverage
 .nyc_output
 __snapshots__
 
-# </@acuris/eslint-config>
-
-node_modules
+.vercel

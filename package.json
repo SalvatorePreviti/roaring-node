@@ -49,7 +49,9 @@
     "doc": "node ./node_modules/.bin/ts-docs-gen --config ./docs-gen.json",
     "benchmarks": "node --expose-gc ./scripts/benchmarks.js",
     "benchmarks/": "node --expose-gc ./scripts/benchmarks.js",
-    "acuris-eslint": "acuris-eslint"
+    "acuris-eslint": "acuris-eslint",
+    "precommit": "lint-staged && pretty-quick --staged",
+    "postinstall": "husky install"
   },
   "husky": {
     "hooks": {
@@ -57,9 +59,8 @@
     }
   },
   "lint-staged": {
-    "*.{js,jsx,json,ts,tsx}": [
-      "acuris-eslint --lint-staged --fix --max-warnings=0",
-      "git add"
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix --max-warnings=0"
     ]
   },
   "dependencies": {
@@ -67,34 +68,31 @@
   },
   "devDependencies": {
     "@acuris/eslint-config": "^0.0.51",
-    "@babel/core": "^7.7.7",
-    "@babel/runtime": "^7.7.7",
+    "@balsamic/eslint-config": "^0.0.30",
     "@types/jest": "^24.0.25",
-    "@types/node": "^13.1.4",
-    "@typescript-eslint/eslint-plugin": "^2.14.0",
-    "@typescript-eslint/parser": "^2.14.0",
-    "babel-eslint": "^10.0.3",
+    "@types/node": "^16.4.13",
+    "@typescript-eslint/eslint-plugin": "^4.29.0",
+    "@typescript-eslint/parser": "^4.29.0",
     "benchmark": "^2.1.4",
     "chalk": "^3.0.0",
-    "eslint": "^6.8.0",
-    "eslint-config-quick": "^0.1.23",
-    "eslint-plugin-import": "^2.19.1",
+    "eslint": "^7.32.0",
+    "eslint-plugin-import": "^2.24.0",
     "eslint-plugin-jest": "^23.3.0",
     "eslint-plugin-json": "^2.0.1",
-    "eslint-plugin-node": "^11.0.0",
-    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-node": "^11.1.0",
     "eslint-scope": "^5.0.0",
     "fastbitset": "^0.2.8",
-    "husky": "^3.1.0",
+    "husky": "^7.0.1",
     "jest": "^24.9.0",
-    "lint-staged": "^9.5.0",
+    "lint-staged": "^11.1.2",
     "physical-cpu-count": "^2.0.0",
     "prebuild": "^9.1.1",
-    "prettier": "^1.19.1",
+    "prettier": "^2.3.2",
+    "pretty-quick": "^3.1.1",
     "ts-docs-gen": "^0.2.0",
     "ts-jest": "^24.2.0",
     "tslib": "^1.10.0",
-    "typescript": "^3.7.4"
+    "typescript": "^4.3.5"
   },
   "gypfile": true
 }
