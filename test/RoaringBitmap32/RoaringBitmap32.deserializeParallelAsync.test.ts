@@ -3,7 +3,7 @@ import RoaringBitmap32 from '../../RoaringBitmap32'
 describe('RoaringBitmap32 deserializeParallelAsync', () => {
   describe('async/await', () => {
     describe('one empty buffer', () => {
-      it('deserializes an empty buffer (non portable, explicit)', async () => {
+      it('deserializes an empty buffer (non portable)', async () => {
         const bitmap = await RoaringBitmap32.deserializeParallelAsync([Buffer.from([])], false)
         expect(bitmap).toHaveLength(1)
         expect(bitmap[0]).toBeInstanceOf(RoaringBitmap32)
@@ -19,7 +19,7 @@ describe('RoaringBitmap32 deserializeParallelAsync', () => {
     })
 
     describe('multiple empty buffers', () => {
-      it('deserializes an empty buffer (non portable, explicit)', async () => {
+      it('deserializes an empty buffer (non portable)', async () => {
         const bitmap = await RoaringBitmap32.deserializeParallelAsync(
           [Buffer.from([]), Buffer.from([]), Buffer.from([])],
           false

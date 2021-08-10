@@ -113,19 +113,8 @@ RoaringBitmap32::RoaringBitmap32(uint32_t capacity) : roaring(nullptr), version(
 RoaringBitmap32::~RoaringBitmap32() {
   if (this->roaring) {
     roaring_bitmap_free(this->roaring);
-    this->roaring = nullptr;
   }
   this->persistent.Reset();
-}
-
-void RoaringBitmap32::destroy() {
-  if (!persistent.IsEmpty()) {
-    persistent.ClearWeak();
-    persistent.Reset();
-  }
-  if (this->roaring) {
-    roaring_bitmap_free(this->roaring);
-  }
 }
 
 void RoaringBitmap32::WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
@@ -517,26 +506,31 @@ RoaringBitmap32FactoryAsyncWorker::~RoaringBitmap32FactoryAsyncWorker() {
   }
 }
 
+#include <iostream>
+
 v8::Local<v8::Value> RoaringBitmap32FactoryAsyncWorker::done() {
-  v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(isolate);
+  if (!this->bitmap) {
+    v8utils::throwError(isolate, "Error deserializing roaring bitmap");
+    return empty();
+  }
+
+  v8::Local<v8::Function> cons = RoaringBitmap32::constructor.Get(this->isolate);
 
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   if (resultMaybe.IsEmpty()) {
-    if (this->bitmap) {
-      roaring_bitmap_free(this->bitmap);
-      this->bitmap = nullptr;
-    }
+    v8utils::throwError(isolate, "Error instantiating roaring bitmap");
     return empty();
   }
 
   v8::Local<v8::Object> result = resultMaybe.ToLocalChecked();
 
   RoaringBitmap32 * unwrapped = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
-
-  if (this->bitmap) {
-    unwrapped->replaceBitmapInstance(this->bitmap);
-    this->bitmap = nullptr;
+  if (!unwrapped) {
+    return empty();
   }
+
+  unwrapped->replaceBitmapInstance(this->bitmap);
+  this->bitmap = nullptr;
 
   return result;
 }
@@ -726,10 +720,10 @@ class DeserializeWorker : public RoaringBitmap32FactoryAsyncWorker {
     if (buffer.IsEmpty() || (!buffer->IsUint8Array() && !buffer->IsInt8Array() && !buffer->IsUint8ClampedArray())) {
       return false;
     }
-    bufferPersistent.Reset(isolate, buffer);
     if (!this->buffer.set(buffer)) {
       return false;
     }
+    bufferPersistent.Reset(isolate, buffer);
     return true;
   }
 
@@ -749,7 +743,7 @@ void RoaringBitmap32::deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::
   v8::HandleScope scope(isolate);
 
   DeserializeWorker * worker = new DeserializeWorker(isolate);
-  if (worker == nullptr) {
+  if (!worker) {
     return v8utils::throwError(isolate, "RoaringBitmap32::deserializeAsync - Failed to allocate async worker");
   }
 

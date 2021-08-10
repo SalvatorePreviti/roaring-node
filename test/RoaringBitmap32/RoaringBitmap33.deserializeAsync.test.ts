@@ -3,7 +3,7 @@ import RoaringBitmap32 from '../../RoaringBitmap32'
 describe('RoaringBitmap32 deserializeAsync', () => {
   describe('async/await', () => {
     describe('empty buffer', () => {
-      it('deserializes an empty buffer (non portable, explicit)', async () => {
+      it('deserializes an empty buffer (non portable)', async () => {
         const bitmap = await RoaringBitmap32.deserializeAsync(Buffer.from([]), false)
         expect(bitmap).toBeInstanceOf(RoaringBitmap32)
         expect(bitmap.size).toBe(0)
@@ -17,7 +17,7 @@ describe('RoaringBitmap32 deserializeAsync', () => {
     })
 
     describe('empty bitmap', () => {
-      it('deserializes an empty bitmap (non portable, explicit)', async () => {
+      it('deserializes an empty bitmap (non portable)', async () => {
         const bitmap = await RoaringBitmap32.deserializeAsync(Buffer.from([1, 0, 0, 0, 0]), false)
         expect(bitmap).toBeInstanceOf(RoaringBitmap32)
         expect(bitmap.size).toBe(0)
@@ -37,7 +37,7 @@ describe('RoaringBitmap32 deserializeAsync', () => {
       const bufferPortable = new RoaringBitmap32(values).serialize(true)
 
       const promises: Promise<RoaringBitmap32>[] = []
-      for (let i = 0; i < 5; ++i) {
+      for (let i = 0; i < 10; ++i) {
         promises.push(RoaringBitmap32.deserializeAsync(bufferNonPortable, false))
         promises.push(RoaringBitmap32.deserializeAsync(bufferPortable, true))
       }
@@ -87,7 +87,7 @@ describe('RoaringBitmap32 deserializeAsync', () => {
 
   describe('callback', () => {
     describe('empty buffer', () => {
-      it('deserializes an empty buffer (non portable, explicit)', () => {
+      it('deserializes an empty buffer (non portable)', () => {
         return new Promise<void>((done) => {
           expect(
             RoaringBitmap32.deserializeAsync(Buffer.from([]), false, (error, bitmap) => {
@@ -115,7 +115,7 @@ describe('RoaringBitmap32 deserializeAsync', () => {
     })
 
     describe('empty bitmap', () => {
-      it('deserializes an empty bitmap (non portable, implicit)', () => {
+      it('deserializes an empty bitmap (non portable)', () => {
         return new Promise<void>((done) => {
           expect(
             RoaringBitmap32.deserializeAsync(Buffer.from([1, 0, 0, 0, 0]), false, (error, bitmap) => {

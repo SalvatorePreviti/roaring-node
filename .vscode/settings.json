@@ -143,6 +143,9 @@
     "unordered_map": "cpp",
     "utility": "cpp",
     "vector": "cpp",
-    "roaring.h": "c"
+    "roaring.h": "c",
+    "clocale": "cpp",
+    "__functional_03": "cpp",
+    "memory_resource": "cpp"
   }
 }

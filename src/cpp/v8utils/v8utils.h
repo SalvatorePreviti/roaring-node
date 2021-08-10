@@ -79,7 +79,9 @@ namespace v8utils {
     inline void reset() {
       this->length = 0;
       this->data = nullptr;
+#if NODE_MAJOR_VERSION > 13
       this->backingStore = nullptr;
+#endif
       this->arrayBuffer.Clear();
     }
 

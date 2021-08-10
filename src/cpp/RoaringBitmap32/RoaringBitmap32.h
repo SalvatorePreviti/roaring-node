@@ -119,7 +119,6 @@ class RoaringBitmap32 : NonCopyable {
   ~RoaringBitmap32();
 
  private:
-  void destroy();
   static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
   static DeserializeResult doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable);
 
@@ -129,7 +128,7 @@ class RoaringBitmap32 : NonCopyable {
 
 class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
  public:
-  roaring_bitmap_t * bitmap;
+  volatile roaring_bitmap_t_ptr bitmap;
 
   RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate);
   virtual ~RoaringBitmap32FactoryAsyncWorker();

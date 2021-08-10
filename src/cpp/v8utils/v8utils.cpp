@@ -233,14 +233,14 @@ namespace v8utils {
       }
     }
 
-    if ((isError || _error != nullptr) && result.IsEmpty()) {
+    if (_error != nullptr && result.IsEmpty()) {
       isError = true;
-      v8::MaybeLocal<v8::String> message = v8::String::NewFromUtf8(isolate, _error ? _error : "Async generated an exception", v8::NewStringType::kNormal);
+      v8::MaybeLocal<v8::String> message = v8::String::NewFromUtf8(isolate, _error, v8::NewStringType::kNormal);
       result = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
     }
 
-    if (isError) {
-      return scope.Escape(isolate->ThrowException(result));
+    if (isError && _error == nullptr) {
+      _error = "Async generated an exception";
     }
 
     return scope.Escape(result);

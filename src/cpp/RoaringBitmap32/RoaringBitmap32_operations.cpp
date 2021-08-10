@@ -416,8 +416,7 @@ void RoaringBitmap32::andStatic(const v8::FunctionCallbackInfo<v8::Value> & info
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::and failed materalization");
   }
 
-  self->roaring->high_low_container = std::move(r->high_low_container);
-  free(r);
+  self->replaceBitmapInstance(r);
 
   info.GetReturnValue().Set(result);
 }
@@ -452,8 +451,7 @@ void RoaringBitmap32::orStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
   if (r == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::or failed materalization");
 
-  self->roaring->high_low_container = std::move(r->high_low_container);
-  free(r);
+  self->replaceBitmapInstance(r);
 
   info.GetReturnValue().Set(result);
 }
@@ -488,8 +486,7 @@ void RoaringBitmap32::xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info
   if (r == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor failed materalization");
 
-  self->roaring->high_low_container = std::move(r->high_low_container);
-  free(r);
+  self->replaceBitmapInstance(r);
 
   info.GetReturnValue().Set(result);
 }
@@ -526,8 +523,7 @@ void RoaringBitmap32::andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & i
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::andnot failed materalization");
   }
 
-  self->roaring->high_low_container = std::move(r->high_low_container);
-  free(r);
+  self->replaceBitmapInstance(r);
 
   info.GetReturnValue().Set(result);
 }
@@ -558,9 +554,8 @@ void RoaringBitmap32::fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> 
   uint64_t minInteger, maxInteger;
   if (getRangeOperationParameters(info, minInteger, maxInteger)) {
     roaring_bitmap_t * r = roaring_bitmap_from_range(minInteger, maxInteger, step);
-    if (r != nullptr) {
-      self->roaring->high_low_container = std::move(r->high_low_container);
-      free(r);
+    if (r) {
+      self->replaceBitmapInstance(r);
     }
   }
 
@@ -656,8 +651,7 @@ void RoaringBitmap32_opManyStatic(const char * opName,
         return v8utils::throwTypeError(isolate, std::string(opName) + " failed roaring allocation");
       }
 
-      self->roaring->high_low_container = std::move(r->high_low_container);
-      free(r);
+      self->replaceBitmapInstance(r);
 
       info.GetReturnValue().Set(result);
 
@@ -702,8 +696,7 @@ void RoaringBitmap32_opManyStatic(const char * opName,
       return v8utils::throwTypeError(isolate, std::string(opName) + " failed roaring allocation");
     }
 
-    self->roaring->high_low_container = std::move(r->high_low_container);
-    free(r);
+    self->replaceBitmapInstance(r);
 
     info.GetReturnValue().Set(result);
   }
