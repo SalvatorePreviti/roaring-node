@@ -545,7 +545,10 @@ v8::Local<v8::Value> RoaringBitmap32FactoryAsyncWorker::done() {
 
 void RoaringBitmap32::getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-  bool portable = info.Length() > 0 && info[0]->IsTrue();
+  if (info.Length() <= 0) {
+    return v8utils::throwError(info.GetIsolate(), "portable argument must be a boolean value");
+  }
+  bool portable = info[0]->IsTrue();
 
   auto portablesize = roaring_bitmap_portable_size_in_bytes(self->roaring);
 
@@ -568,6 +571,10 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
   v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+
+  if (info.Length() <= 0) {
+    return v8utils::throwError(info.GetIsolate(), "portable argument must be a boolean value");
+  }
 
   bool portable = info.Length() > 0 && info[0]->IsTrue();
   auto portablesize = roaring_bitmap_portable_size_in_bytes(self->roaring);
@@ -668,8 +675,12 @@ void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value
 
   const v8utils::TypedArrayContent<uint8_t> typedArray(info[0]);
 
+  if (info.Length() < 2) {
+    return v8utils::throwTypeError(isolate, "RoaringBitmap32::deserialize portable argument must be specified");
+  }
+
   roaring_bitmap_t * bitmap = nullptr;
-  const char * error = doDeserialize(typedArray, info.Length() > 1 && info[1]->IsTrue(), &bitmap);
+  const char * error = doDeserialize(typedArray, info[1]->IsTrue(), &bitmap);
   if (error != nullptr) {
     return v8utils::throwError(isolate, error);
   }
@@ -707,9 +718,13 @@ void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & in
 
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(holder);
 
+  if (info.Length() < 2) {
+    return v8utils::throwTypeError(isolate, "RoaringBitmap32::deserialize portable argument must be specified");
+  }
+
   const v8utils::TypedArrayContent<uint8_t> typedArray(info[0]);
   roaring_bitmap_t * bitmap;
-  const char * error = doDeserialize(typedArray, info.Length() > 1 && info[1]->IsTrue(), &bitmap);
+  const char * error = doDeserialize(typedArray, info[1]->IsTrue(), &bitmap);
   if (error != nullptr) {
     return v8utils::throwError(isolate, error);
   }

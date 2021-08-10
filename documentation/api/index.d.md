@@ -7,9 +7,8 @@
     - [RoaringBitmap32Callback][typealiasdeclaration-0]
     - [RoaringBitmap32ArrayCallback][typealiasdeclaration-1]
   - Variables
-    - [instructionSet][variabledeclaration-0]
-    - [CRoaringVersion][variabledeclaration-3]
-    - [PackageVersion][variabledeclaration-4]
+    - [CRoaringVersion][variabledeclaration-0]
+    - [PackageVersion][variabledeclaration-1]
 
 # index.d.ts
 
@@ -101,8 +100,6 @@ The iterator may throw exception if the bitmap is changed during the iteration.
 
 ## Variables
 
----
-
 ### CRoaringVersion
 
 Property: The version of the CRoaring libary as a string.
@@ -137,8 +134,5 @@ string
 [typealiasdeclaration-1]: index.d.md#roaringbitmap32arraycallback
 [classdeclaration-0]: index.d/roaringbitmap32.md#roaringbitmap32
 [classdeclaration-1]: index.d/roaringbitmap32iterator.md#roaringbitmap32iterator
-[variabledeclaration-0]: index.d.md#instructionset
-[variabledeclaration-1]: index.d.md#sse42
-[variabledeclaration-2]: index.d.md#avx2
-[variabledeclaration-3]: index.d.md#croaringversion
-[variabledeclaration-4]: index.d.md#packageversion
+[variabledeclaration-0]: index.d.md#croaringversion
+[variabledeclaration-1]: index.d.md#packageversion

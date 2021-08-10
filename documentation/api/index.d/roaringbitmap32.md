@@ -1,79 +1,80 @@
 # Table of contents
 
-* [RoaringBitmap32][ClassDeclaration-0]
-    * Constructor
-        * [constructor(values)][Constructor-0]
-    * Methods
-        * [from(values)][MethodDeclaration-0]
-        * [fromRange(rangeStart, rangeEnd, step)][MethodDeclaration-1]
-        * [fromArrayAsync(values)][MethodDeclaration-2]
-        * [fromArrayAsync(values, callback)][MethodDeclaration-3]
-        * [deserialize(serialized, portable)][MethodDeclaration-4]
-        * [deserialize(serialized, portable)][MethodDeclaration-64]
-        * [deserializeAsync(serialized, portable)][MethodDeclaration-5]
-        * [deserializeAsync(serialized, callback)][MethodDeclaration-6]
-        * [deserializeAsync(serialized, portable, callback)][MethodDeclaration-7]
-        * [deserializeParallelAsync(serialized, portable)][MethodDeclaration-8]
-        * [deserializeParallelAsync(serialized, callback)][MethodDeclaration-9]
-        * [deserializeParallelAsync(serialized, portable, callback)][MethodDeclaration-10]
-        * [swap(a, b)][MethodDeclaration-11]
-        * [and(a, b)][MethodDeclaration-12]
-        * [or(a, b)][MethodDeclaration-13]
-        * [xor(a, b)][MethodDeclaration-14]
-        * [andNot(a, b)][MethodDeclaration-15]
-        * [orMany(values)][MethodDeclaration-16]
-        * [orMany(values)][MethodDeclaration-17]
-        * [xorMany(values)][MethodDeclaration-18]
-        * [xorMany(values)][MethodDeclaration-19]
-        * [__@iterator()][MethodDeclaration-20]
-        * [iterator()][MethodDeclaration-23]
-        * [minimum()][MethodDeclaration-24]
-        * [maximum()][MethodDeclaration-25]
-        * [has(value)][MethodDeclaration-26]
-        * [hasRange(rangeStart, rangeEnd)][MethodDeclaration-27]
-        * [rangeCardinality(rangeStart, rangeEnd)][MethodDeclaration-28]
-        * [copyFrom(values)][MethodDeclaration-29]
-        * [add(value)][MethodDeclaration-30]
-        * [tryAdd(value)][MethodDeclaration-31]
-        * [addMany(values)][MethodDeclaration-32]
-        * [delete(value)][MethodDeclaration-33]
-        * [remove(value)][MethodDeclaration-34]
-        * [removeMany(values)][MethodDeclaration-35]
-        * [flipRange(rangeStart, rangeEnd)][MethodDeclaration-36]
-        * [addRange(rangeStart, rangeEnd)][MethodDeclaration-37]
-        * [removeRange(rangeStart, rangeEnd)][MethodDeclaration-38]
-        * [clear()][MethodDeclaration-39]
-        * [orInPlace(values)][MethodDeclaration-40]
-        * [andNotInPlace(values)][MethodDeclaration-41]
-        * [andInPlace(values)][MethodDeclaration-42]
-        * [xorInPlace(values)][MethodDeclaration-43]
-        * [isSubset(other)][MethodDeclaration-44]
-        * [isStrictSubset(other)][MethodDeclaration-45]
-        * [isEqual(other)][MethodDeclaration-46]
-        * [intersects(other)][MethodDeclaration-47]
-        * [andCardinality(other)][MethodDeclaration-48]
-        * [orCardinality(other)][MethodDeclaration-49]
-        * [andNotCardinality(other)][MethodDeclaration-50]
-        * [xorCardinality(other)][MethodDeclaration-51]
-        * [jaccardIndex(other)][MethodDeclaration-52]
-        * [removeRunCompression()][MethodDeclaration-53]
-        * [runOptimize()][MethodDeclaration-54]
-        * [shrinkToFit()][MethodDeclaration-55]
-        * [rank(maxValue)][MethodDeclaration-56]
-        * [select(rank)][MethodDeclaration-57]
-        * [toUint32Array()][MethodDeclaration-58]
-        * [toArray()][MethodDeclaration-59]
-        * [toSet()][MethodDeclaration-60]
-        * [toJSON()][MethodDeclaration-61]
-        * [getSerializationSizeInBytes(portable)][MethodDeclaration-62]
-        * [serialize(portable)][MethodDeclaration-63]
-        * [clone()][MethodDeclaration-65]
-        * [toString()][MethodDeclaration-66]
-        * [contentToString(maxLength)][MethodDeclaration-67]
-        * [statistics()][MethodDeclaration-68]
-    * Properties
-        * [size][PropertyDeclaration-0]
-        * [isEmpty][PropertyDeclaration-1]
+- [RoaringBitmap32][classdeclaration-0]
+  - Constructor
+    - [constructor(values)][constructor-0]
+  - Methods
+    - [from(values)][methoddeclaration-0]
+    - [fromRange(rangeStart, rangeEnd, step)][methoddeclaration-1]
+    - [fromArrayAsync(values)][methoddeclaration-2]
+    - [fromArrayAsync(values, callback)][methoddeclaration-3]
+    - [deserialize(serialized, portable)][methoddeclaration-4]
+    - [deserialize(serialized, portable)][methoddeclaration-65]
+    - [deserializeAsync(serialized, portable)][methoddeclaration-5]
+    - [deserializeAsync(serialized, callback)][methoddeclaration-6]
+    - [deserializeAsync(serialized, portable, callback)][methoddeclaration-7]
+    - [deserializeParallelAsync(serialized, portable)][methoddeclaration-8]
+    - [deserializeParallelAsync(serialized, callback)][methoddeclaration-9]
+    - [deserializeParallelAsync(serialized, portable, callback)][methoddeclaration-10]
+    - [swap(a, b)][methoddeclaration-11]
+    - [and(a, b)][methoddeclaration-12]
+    - [or(a, b)][methoddeclaration-13]
+    - [xor(a, b)][methoddeclaration-14]
+    - [andNot(a, b)][methoddeclaration-15]
+    - [orMany(values)][methoddeclaration-16]
+    - [orMany(values)][methoddeclaration-17]
+    - [xorMany(values)][methoddeclaration-18]
+    - [xorMany(values)][methoddeclaration-19]
+    - [\_\_@iterator()][methoddeclaration-20]
+    - [iterator()][methoddeclaration-23]
+    - [minimum()][methoddeclaration-24]
+    - [maximum()][methoddeclaration-25]
+    - [has(value)][methoddeclaration-26]
+    - [hasRange(rangeStart, rangeEnd)][methoddeclaration-27]
+    - [rangeCardinality(rangeStart, rangeEnd)][methoddeclaration-28]
+    - [copyFrom(values)][methoddeclaration-29]
+    - [add(value)][methoddeclaration-30]
+    - [tryAdd(value)][methoddeclaration-31]
+    - [addMany(values)][methoddeclaration-32]
+    - [delete(value)][methoddeclaration-33]
+    - [remove(value)][methoddeclaration-34]
+    - [removeMany(values)][methoddeclaration-35]
+    - [flipRange(rangeStart, rangeEnd)][methoddeclaration-36]
+    - [addRange(rangeStart, rangeEnd)][methoddeclaration-37]
+    - [removeRange(rangeStart, rangeEnd)][methoddeclaration-38]
+    - [clear()][methoddeclaration-39]
+    - [orInPlace(values)][methoddeclaration-40]
+    - [andNotInPlace(values)][methoddeclaration-41]
+    - [andInPlace(values)][methoddeclaration-42]
+    - [xorInPlace(values)][methoddeclaration-43]
+    - [isSubset(other)][methoddeclaration-44]
+    - [isStrictSubset(other)][methoddeclaration-45]
+    - [isEqual(other)][methoddeclaration-46]
+    - [intersects(other)][methoddeclaration-47]
+    - [andCardinality(other)][methoddeclaration-48]
+    - [orCardinality(other)][methoddeclaration-49]
+    - [andNotCardinality(other)][methoddeclaration-50]
+    - [xorCardinality(other)][methoddeclaration-51]
+    - [jaccardIndex(other)][methoddeclaration-52]
+    - [removeRunCompression()][methoddeclaration-53]
+    - [runOptimize()][methoddeclaration-54]
+    - [shrinkToFit()][methoddeclaration-55]
+    - [rank(maxValue)][methoddeclaration-56]
+    - [select(rank)][methoddeclaration-57]
+    - [toUint32Array()][methoddeclaration-58]
+    - [rangeUint32Array(offset, limit)][methoddeclaration-59]
+    - [toArray()][methoddeclaration-60]
+    - [toSet()][methoddeclaration-61]
+    - [toJSON()][methoddeclaration-62]
+    - [getSerializationSizeInBytes(portable)][methoddeclaration-63]
+    - [serialize(portable)][methoddeclaration-64]
+    - [clone()][methoddeclaration-66]
+    - [toString()][methoddeclaration-67]
+    - [contentToString(maxLength)][methoddeclaration-68]
+    - [statistics()][methoddeclaration-69]
+  - Properties
+    - [size][propertydeclaration-0]
+    - [isEmpty][propertydeclaration-1]
 
 # RoaringBitmap32
 
@@ -85,6 +86,7 @@ Roaring bitmap that supports 32 bit unsigned integers.
 ```typescript
 class RoaringBitmap32 implements Iterable<number>
 ```
+
 ## Constructor
 
 ### constructor(values)
@@ -127,9 +129,9 @@ public static from(values: Iterable<number>): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### fromRange(rangeStart, rangeEnd, step)
 
@@ -150,9 +152,9 @@ public static fromRange(rangeStart: number, rangeEnd: number, step?: number | un
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### fromArrayAsync(values)
 
@@ -183,9 +185,9 @@ public static fromArrayAsync(values: Iterable<number> | null | undefined): Promi
 
 **Return type**
 
-Promise<[RoaringBitmap32][ClassDeclaration-0]>
+Promise<[RoaringBitmap32][classdeclaration-0]>
 
-----------
+---
 
 ### fromArrayAsync(values, callback)
 
@@ -213,13 +215,13 @@ public static fromArrayAsync(values: Iterable<number> | null | undefined, callba
 | Name     | Type                                              | Description                                           |
 | -------- | ------------------------------------------------- | ----------------------------------------------------- |
 | values   | Iterable<number> &#124; null &#124; undefined     | The values to set. Cannot be a RoaringBitmap32.       |
-| callback | [RoaringBitmap32Callback][TypeAliasDeclaration-0] | The callback to execute when the operation completes. |
+| callback | [RoaringBitmap32Callback][typealiasdeclaration-0] | The callback to execute when the operation completes. |
 
 **Return type**
 
 void
 
-----------
+---
 
 ### deserialize(serialized, portable)
 
@@ -236,16 +238,16 @@ public static deserialize(serialized: Uint8Array, portable?: boolean | undefined
 
 **Parameters**
 
-| Name       | Type                     | Description                                                                                        |
-| ---------- | ------------------------ | -------------------------------------------------------------------------------------------------- |
-| serialized | Uint8Array               | An Uint8Array or a node Buffer that contains the serialized data.                                  |
-| portable   | boolean &#124; undefined | If false (default), optimized C/C++ format is used.  If true, Java and Go portable format is used. |
+| Name       | Type                     | Description                                                                                       |
+| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| serialized | Uint8Array               | An Uint8Array or a node Buffer that contains the serialized data.                                 |
+| portable   | boolean &#124; undefined | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### deserialize(serialized, portable)
 
@@ -269,7 +271,7 @@ public deserialize(serialized: Uint8Array, portable?: boolean | undefined): void
 
 void
 
-----------
+---
 
 ### deserializeAsync(serialized, portable)
 
@@ -295,16 +297,16 @@ public static deserializeAsync(serialized: Uint8Array, portable?: boolean | unde
 
 **Parameters**
 
-| Name       | Type                     | Description                                                                                        |
-| ---------- | ------------------------ | -------------------------------------------------------------------------------------------------- |
-| serialized | Uint8Array               | An Uint8Array or a node Buffer that contains the serialized data.                                  |
-| portable   | boolean &#124; undefined | If false (default), optimized C/C++ format is used.  If true, Java and Go portable format is used. |
+| Name       | Type                     | Description                                                                                       |
+| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| serialized | Uint8Array               | An Uint8Array or a node Buffer that contains the serialized data.                                 |
+| portable   | boolean &#124; undefined | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
-Promise<[RoaringBitmap32][ClassDeclaration-0]>
+Promise<[RoaringBitmap32][classdeclaration-0]>
 
-----------
+---
 
 ### deserializeAsync(serialized, callback)
 
@@ -333,13 +335,13 @@ public static deserializeAsync(serialized: Uint8Array, callback: RoaringBitmap32
 | Name       | Type                                              | Description                                                                    |
 | ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
 | serialized | Uint8Array                                        | An Uint8Array or a node Buffer that contains the non portable serialized data. |
-| callback   | [RoaringBitmap32Callback][TypeAliasDeclaration-0] | The callback to execute when the operation completes.                          |
+| callback   | [RoaringBitmap32Callback][typealiasdeclaration-0] | The callback to execute when the operation completes.                          |
 
 **Return type**
 
 void
 
-----------
+---
 
 ### deserializeAsync(serialized, portable, callback)
 
@@ -365,17 +367,17 @@ public static deserializeAsync(serialized: Uint8Array, portable: boolean, callba
 
 **Parameters**
 
-| Name       | Type                                              | Description                                                                                        |
-| ---------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| serialized | Uint8Array                                        | An Uint8Array or a node Buffer that contains the.                                                  |
-| portable   | boolean                                           | If false (default), optimized C/C++ format is used.  If true, Java and Go portable format is used. |
-| callback   | [RoaringBitmap32Callback][TypeAliasDeclaration-0] | The callback to execute when the operation completes.                                              |
+| Name       | Type                                              | Description                                                                                       |
+| ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| serialized | Uint8Array                                        | An Uint8Array or a node Buffer that contains the.                                                 |
+| portable   | boolean                                           | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
+| callback   | [RoaringBitmap32Callback][typealiasdeclaration-0] | The callback to execute when the operation completes.                                             |
 
 **Return type**
 
 void
 
-----------
+---
 
 ### deserializeParallelAsync(serialized, portable)
 
@@ -403,16 +405,16 @@ public static deserializeParallelAsync(serialized: (Uint8Array | null | undefine
 
 **Parameters**
 
-| Name       | Type                                        | Description                                                                                        |
-| ---------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| serialized | (Uint8Array &#124; null &#124; undefined)[] | An Uint8Array or a node Buffer that contains the serialized data.                                  |
-| portable   | boolean &#124; undefined                    | If false (default), optimized C/C++ format is used.  If true, Java and Go portable format is used. |
+| Name       | Type                                        | Description                                                                                       |
+| ---------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| serialized | (Uint8Array &#124; null &#124; undefined)[] | An Uint8Array or a node Buffer that contains the serialized data.                                 |
+| portable   | boolean &#124; undefined                    | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
-Promise<[RoaringBitmap32][ClassDeclaration-0][]>
+Promise<[RoaringBitmap32][classdeclaration-0][]>
 
-----------
+---
 
 ### deserializeParallelAsync(serialized, callback)
 
@@ -443,13 +445,13 @@ public static deserializeParallelAsync(serialized: (Uint8Array | null | undefine
 | Name       | Type                                                   | Description                                                                            |
 | ---------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
 | serialized | (Uint8Array &#124; null &#124; undefined)[]            | An array of Uint8Array or node Buffers that contains the non portable serialized data. |
-| callback   | [RoaringBitmap32ArrayCallback][TypeAliasDeclaration-1] | The callback to execute when the operation completes.                                  |
+| callback   | [RoaringBitmap32ArrayCallback][typealiasdeclaration-1] | The callback to execute when the operation completes.                                  |
 
 **Return type**
 
 void
 
-----------
+---
 
 ### deserializeParallelAsync(serialized, portable, callback)
 
@@ -481,13 +483,13 @@ public static deserializeParallelAsync(serialized: (Uint8Array | null | undefine
 | ---------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
 | serialized | (Uint8Array &#124; null &#124; undefined)[]            | An array of Uint8Array or node Buffers that contains the non portable serialized data. |
 | portable   | boolean                                                |                                                                                        |
-| callback   | [RoaringBitmap32ArrayCallback][TypeAliasDeclaration-1] | The callback to execute when the operation completes.                                  |
+| callback   | [RoaringBitmap32ArrayCallback][typealiasdeclaration-1] | The callback to execute when the operation completes.                                  |
 
 **Return type**
 
 void
 
-----------
+---
 
 ### swap(a, b)
 
@@ -501,14 +503,14 @@ public static swap(a: RoaringBitmap32, b: RoaringBitmap32): void;
 
 | Name | Type                                  | Description                             |
 | ---- | ------------------------------------- | --------------------------------------- |
-| a    | [RoaringBitmap32][ClassDeclaration-0] | First RoaringBitmap32 instance to swap  |
-| b    | [RoaringBitmap32][ClassDeclaration-0] | Second RoaringBitmap32 instance to swap |
+| a    | [RoaringBitmap32][classdeclaration-0] | First RoaringBitmap32 instance to swap  |
+| b    | [RoaringBitmap32][classdeclaration-0] | Second RoaringBitmap32 instance to swap |
 
 **Return type**
 
 void
 
-----------
+---
 
 ### and(a, b)
 
@@ -524,14 +526,14 @@ public static and(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32;
 
 | Name | Type                                  | Description                                 |
 | ---- | ------------------------------------- | ------------------------------------------- |
-| a    | [RoaringBitmap32][ClassDeclaration-0] | The first RoaringBitmap32 instance to and.  |
-| b    | [RoaringBitmap32][ClassDeclaration-0] | The second RoaringBitmap32 instance to and. |
+| a    | [RoaringBitmap32][classdeclaration-0] | The first RoaringBitmap32 instance to and.  |
+| b    | [RoaringBitmap32][classdeclaration-0] | The second RoaringBitmap32 instance to and. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### or(a, b)
 
@@ -547,14 +549,14 @@ public static or(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32;
 
 | Name | Type                                  | Description                                |
 | ---- | ------------------------------------- | ------------------------------------------ |
-| a    | [RoaringBitmap32][ClassDeclaration-0] | The first RoaringBitmap32 instance to or.  |
-| b    | [RoaringBitmap32][ClassDeclaration-0] | The second RoaringBitmap32 instance to or. |
+| a    | [RoaringBitmap32][classdeclaration-0] | The first RoaringBitmap32 instance to or.  |
+| b    | [RoaringBitmap32][classdeclaration-0] | The second RoaringBitmap32 instance to or. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### xor(a, b)
 
@@ -570,14 +572,14 @@ public static xor(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32;
 
 | Name | Type                                  | Description                                 |
 | ---- | ------------------------------------- | ------------------------------------------- |
-| a    | [RoaringBitmap32][ClassDeclaration-0] | The first RoaringBitmap32 instance to xor.  |
-| b    | [RoaringBitmap32][ClassDeclaration-0] | The second RoaringBitmap32 instance to xor. |
+| a    | [RoaringBitmap32][classdeclaration-0] | The first RoaringBitmap32 instance to xor.  |
+| b    | [RoaringBitmap32][classdeclaration-0] | The second RoaringBitmap32 instance to xor. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### andNot(a, b)
 
@@ -593,14 +595,14 @@ public static andNot(a: RoaringBitmap32, b: RoaringBitmap32): RoaringBitmap32;
 
 | Name | Type                                  | Description                          |
 | ---- | ------------------------------------- | ------------------------------------ |
-| a    | [RoaringBitmap32][ClassDeclaration-0] | The first RoaringBitmap32 instance.  |
-| b    | [RoaringBitmap32][ClassDeclaration-0] | The second RoaringBitmap32 instance. |
+| a    | [RoaringBitmap32][classdeclaration-0] | The first RoaringBitmap32 instance.  |
+| b    | [RoaringBitmap32][classdeclaration-0] | The second RoaringBitmap32 instance. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### orMany(values)
 
@@ -619,13 +621,13 @@ public static orMany(values: RoaringBitmap32[]): RoaringBitmap32;
 
 | Name   | Type                                    | Description                                           |
 | ------ | --------------------------------------- | ----------------------------------------------------- |
-| values | [RoaringBitmap32][ClassDeclaration-0][] | An array of RoaringBitmap32 instances to or together. |
+| values | [RoaringBitmap32][classdeclaration-0][] | An array of RoaringBitmap32 instances to or together. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### orMany(values)
 
@@ -644,13 +646,13 @@ public static orMany(values: RoaringBitmap32[]): RoaringBitmap32;
 
 | Name   | Type                                    | Description                                   |
 | ------ | --------------------------------------- | --------------------------------------------- |
-| values | [RoaringBitmap32][ClassDeclaration-0][] | The RoaringBitmap32 instances to or together. |
+| values | [RoaringBitmap32][classdeclaration-0][] | The RoaringBitmap32 instances to or together. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### xorMany(values)
 
@@ -669,13 +671,13 @@ public static xorMany(values: RoaringBitmap32[]): RoaringBitmap32;
 
 | Name   | Type                                    | Description                                           |
 | ------ | --------------------------------------- | ----------------------------------------------------- |
-| values | [RoaringBitmap32][ClassDeclaration-0][] | An array of RoaringBitmap32 instances to or together. |
+| values | [RoaringBitmap32][classdeclaration-0][] | An array of RoaringBitmap32 instances to or together. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### xorMany(values)
 
@@ -694,15 +696,15 @@ public static xorMany(values: RoaringBitmap32[]): RoaringBitmap32;
 
 | Name   | Type                                    | Description                                   |
 | ------ | --------------------------------------- | --------------------------------------------- |
-| values | [RoaringBitmap32][ClassDeclaration-0][] | The RoaringBitmap32 instances to or together. |
+| values | [RoaringBitmap32][classdeclaration-0][] | The RoaringBitmap32 instances to or together. |
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
-### __@iterator()
+### \_\_@iterator()
 
 [Symbol.iterator]() Gets a new iterator able to iterate all values in the set in order.
 
@@ -715,9 +717,9 @@ public __@iterator(): RoaringBitmap32Iterator;
 
 **Return type**
 
-[RoaringBitmap32Iterator][ClassDeclaration-1]
+[RoaringBitmap32Iterator][classdeclaration-1]
 
-----------
+---
 
 ### iterator()
 
@@ -734,9 +736,9 @@ public iterator(): RoaringBitmap32Iterator;
 
 **Return type**
 
-[RoaringBitmap32Iterator][ClassDeclaration-1]
+[RoaringBitmap32Iterator][classdeclaration-1]
 
-----------
+---
 
 ### minimum()
 
@@ -750,7 +752,7 @@ public minimum(): number;
 
 number
 
-----------
+---
 
 ### maximum()
 
@@ -764,7 +766,7 @@ public maximum(): number;
 
 number
 
-----------
+---
 
 ### has(value)
 
@@ -784,7 +786,7 @@ public has(value: number): boolean;
 
 boolean
 
-----------
+---
 
 ### hasRange(rangeStart, rangeEnd)
 
@@ -805,7 +807,7 @@ public hasRange(rangeStart: number, rangeEnd: number): boolean;
 
 boolean
 
-----------
+---
 
 ### rangeCardinality(rangeStart, rangeEnd)
 
@@ -827,7 +829,7 @@ public rangeCardinality(rangeStart: number, rangeEnd: number): number;
 
 number
 
-----------
+---
 
 ### copyFrom(values)
 
@@ -851,7 +853,7 @@ public copyFrom(values: Iterable<number> | null | undefined): void;
 
 void
 
-----------
+---
 
 ### add(value)
 
@@ -869,9 +871,9 @@ public add(value: number): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### tryAdd(value)
 
@@ -893,7 +895,7 @@ public tryAdd(value: number): boolean;
 
 boolean
 
-----------
+---
 
 ### addMany(values)
 
@@ -919,9 +921,9 @@ public addMany(values: Iterable<number>): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### delete(value)
 
@@ -943,7 +945,7 @@ public delete(value: number): boolean;
 
 boolean
 
-----------
+---
 
 ### remove(value)
 
@@ -963,7 +965,7 @@ public remove(value: number): void;
 
 void
 
-----------
+---
 
 ### removeMany(values)
 
@@ -987,9 +989,9 @@ public removeMany(values: Iterable<number>): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### flipRange(rangeStart, rangeEnd)
 
@@ -1015,7 +1017,7 @@ public flipRange(rangeStart: number, rangeEnd: number): void;
 
 void
 
-----------
+---
 
 ### addRange(rangeStart, rangeEnd)
 
@@ -1041,7 +1043,7 @@ public addRange(rangeStart: number, rangeEnd: number): void;
 
 void
 
-----------
+---
 
 ### removeRange(rangeStart, rangeEnd)
 
@@ -1067,7 +1069,7 @@ public removeRange(rangeStart: number, rangeEnd: number): void;
 
 void
 
-----------
+---
 
 ### clear()
 
@@ -1083,7 +1085,7 @@ public clear(): boolean;
 
 boolean
 
-----------
+---
 
 ### orInPlace(values)
 
@@ -1105,9 +1107,9 @@ public orInPlace(values: Iterable<number>): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### andNotInPlace(values)
 
@@ -1129,9 +1131,9 @@ public andNotInPlace(values: Iterable<number>): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### andInPlace(values)
 
@@ -1156,9 +1158,9 @@ public andInPlace(values: Iterable<number>): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### xorInPlace(values)
 
@@ -1183,9 +1185,9 @@ public xorInPlace(values: Iterable<number>): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### isSubset(other)
 
@@ -1201,13 +1203,13 @@ public isSubset(other: RoaringBitmap32): boolean;
 
 | Name  | Type                                  | Description    |
 | ----- | ------------------------------------- | -------------- |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other set. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other set. |
 
 **Return type**
 
 boolean
 
-----------
+---
 
 ### isStrictSubset(other)
 
@@ -1225,13 +1227,13 @@ public isStrictSubset(other: RoaringBitmap32): boolean;
 
 | Name  | Type                                  | Description                         |
 | ----- | ------------------------------------- | ----------------------------------- |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other RoaringBitmap32 instance. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other RoaringBitmap32 instance. |
 
 **Return type**
 
 boolean
 
-----------
+---
 
 ### isEqual(other)
 
@@ -1247,13 +1249,13 @@ public isEqual(other: RoaringBitmap32): boolean;
 
 | Name  | Type                                  | Description                            |
 | ----- | ------------------------------------- | -------------------------------------- |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other set to compare for equality. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other set to compare for equality. |
 
 **Return type**
 
 boolean
 
-----------
+---
 
 ### intersects(other)
 
@@ -1271,13 +1273,13 @@ public intersects(other: RoaringBitmap32): boolean;
 
 | Name  | Type                                  | Description                                |
 | ----- | ------------------------------------- | ------------------------------------------ |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other set to compare for intersection. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other set to compare for intersection. |
 
 **Return type**
 
 boolean
 
-----------
+---
 
 ### andCardinality(other)
 
@@ -1293,13 +1295,13 @@ public andCardinality(other: RoaringBitmap32): number;
 
 | Name  | Type                                  | Description                                |
 | ----- | ------------------------------------- | ------------------------------------------ |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other set to compare for intersection. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other set to compare for intersection. |
 
 **Return type**
 
 number
 
-----------
+---
 
 ### orCardinality(other)
 
@@ -1315,13 +1317,13 @@ public orCardinality(other: RoaringBitmap32): number;
 
 | Name  | Type                                  | Description                                |
 | ----- | ------------------------------------- | ------------------------------------------ |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other set to compare for intersection. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other set to compare for intersection. |
 
 **Return type**
 
 number
 
-----------
+---
 
 ### andNotCardinality(other)
 
@@ -1337,13 +1339,13 @@ public andNotCardinality(other: RoaringBitmap32): number;
 
 | Name  | Type                                  | Description                                |
 | ----- | ------------------------------------- | ------------------------------------------ |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other set to compare for intersection. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other set to compare for intersection. |
 
 **Return type**
 
 number
 
-----------
+---
 
 ### xorCardinality(other)
 
@@ -1359,13 +1361,13 @@ public xorCardinality(other: RoaringBitmap32): number;
 
 | Name  | Type                                  | Description                                |
 | ----- | ------------------------------------- | ------------------------------------------ |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other set to compare for intersection. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other set to compare for intersection. |
 
 **Return type**
 
 number
 
-----------
+---
 
 ### jaccardIndex(other)
 
@@ -1386,13 +1388,13 @@ public jaccardIndex(other: RoaringBitmap32): number;
 
 | Name  | Type                                  | Description                           |
 | ----- | ------------------------------------- | ------------------------------------- |
-| other | [RoaringBitmap32][ClassDeclaration-0] | The other RoaringBitmap32 to compare. |
+| other | [RoaringBitmap32][classdeclaration-0] | The other RoaringBitmap32 to compare. |
 
 **Return type**
 
 number
 
-----------
+---
 
 ### removeRunCompression()
 
@@ -1408,7 +1410,7 @@ public removeRunCompression(): boolean;
 
 boolean
 
-----------
+---
 
 ### runOptimize()
 
@@ -1427,7 +1429,7 @@ public runOptimize(): boolean;
 
 boolean
 
-----------
+---
 
 ### shrinkToFit()
 
@@ -1443,7 +1445,7 @@ public shrinkToFit(): number;
 
 number
 
-----------
+---
 
 ### rank(maxValue)
 
@@ -1463,7 +1465,7 @@ public rank(maxValue: number): number;
 
 number
 
-----------
+---
 
 ### select(rank)
 
@@ -1486,7 +1488,7 @@ public select(rank: number): number | undefined;
 
 number | undefined
 
-----------
+---
 
 ### toUint32Array()
 
@@ -1506,7 +1508,28 @@ public toUint32Array(): Uint32Array;
 
 Uint32Array
 
-----------
+---
+
+### rangeUint32Array(offset, limit)
+
+to array with pagination
+
+```typescript
+public rangeUint32Array(offset: number, limit: number): Uint32Array;
+```
+
+**Parameters**
+
+| Name   | Type   |
+| ------ | ------ |
+| offset | number |
+| limit  | number |
+
+**Return type**
+
+Uint32Array
+
+---
 
 ### toArray()
 
@@ -1522,7 +1545,7 @@ public toArray(): number[];
 
 number[]
 
-----------
+---
 
 ### toSet()
 
@@ -1538,7 +1561,7 @@ public toSet(): Set<number>;
 
 Set<number>
 
-----------
+---
 
 ### toJSON()
 
@@ -1554,7 +1577,7 @@ public toJSON(): number[];
 
 number[]
 
-----------
+---
 
 ### getSerializationSizeInBytes(portable)
 
@@ -1577,7 +1600,7 @@ public getSerializationSizeInBytes(portable?: boolean | undefined): number;
 
 number
 
-----------
+---
 
 ### serialize(portable)
 
@@ -1598,9 +1621,9 @@ public serialize(portable?: boolean | undefined): Buffer;
 
 **Return type**
 
-[Buffer][InterfaceDeclaration-0]
+[Buffer][interfacedeclaration-0]
 
-----------
+---
 
 ### clone()
 
@@ -1612,9 +1635,9 @@ public clone(): RoaringBitmap32;
 
 **Return type**
 
-[RoaringBitmap32][ClassDeclaration-0]
+[RoaringBitmap32][classdeclaration-0]
 
-----------
+---
 
 ### toString()
 
@@ -1630,7 +1653,7 @@ public toString(): string;
 
 string
 
-----------
+---
 
 ### contentToString(maxLength)
 
@@ -1652,7 +1675,7 @@ public contentToString(maxLength?: number | undefined): string;
 
 string
 
-----------
+---
 
 ### statistics()
 
@@ -1664,7 +1687,7 @@ public statistics(): RoaringBitmap32Statistics;
 
 **Return type**
 
-[RoaringBitmap32Statistics][InterfaceDeclaration-1]
+[RoaringBitmap32Statistics][interfacedeclaration-1]
 
 ## Properties
 
@@ -1680,7 +1703,7 @@ public readonly size: number;
 
 number
 
-----------
+---
 
 ### isEmpty
 
@@ -1694,128 +1717,129 @@ public readonly isEmpty: boolean;
 
 boolean
 
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[Constructor-0]: roaringbitmap32.md#constructorvalues
-[MethodDeclaration-0]: roaringbitmap32.md#fromvalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-1]: roaringbitmap32.md#fromrangerangestart-rangeend-step
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-2]: roaringbitmap32.md#fromarrayasyncvalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-3]: roaringbitmap32.md#fromarrayasyncvalues-callback
-[TypeAliasDeclaration-0]: ../index.d.md#roaringbitmap32callback
-[MethodDeclaration-4]: roaringbitmap32.md#deserializeserialized-portable
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-64]: roaringbitmap32.md#deserializeserialized-portable
-[MethodDeclaration-5]: roaringbitmap32.md#deserializeasyncserialized-portable
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-6]: roaringbitmap32.md#deserializeasyncserialized-callback
-[TypeAliasDeclaration-0]: ../index.d.md#roaringbitmap32callback
-[MethodDeclaration-7]: roaringbitmap32.md#deserializeasyncserialized-portable-callback
-[TypeAliasDeclaration-0]: ../index.d.md#roaringbitmap32callback
-[MethodDeclaration-8]: roaringbitmap32.md#deserializeparallelasyncserialized-portable
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-9]: roaringbitmap32.md#deserializeparallelasyncserialized-callback
-[TypeAliasDeclaration-1]: ../index.d.md#roaringbitmap32arraycallback
-[MethodDeclaration-10]: roaringbitmap32.md#deserializeparallelasyncserialized-portable-callback
-[TypeAliasDeclaration-1]: ../index.d.md#roaringbitmap32arraycallback
-[MethodDeclaration-11]: roaringbitmap32.md#swapa-b
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-12]: roaringbitmap32.md#anda-b
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-13]: roaringbitmap32.md#ora-b
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-14]: roaringbitmap32.md#xora-b
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-15]: roaringbitmap32.md#andnota-b
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-16]: roaringbitmap32.md#ormanyvalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-17]: roaringbitmap32.md#ormanyvalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-18]: roaringbitmap32.md#xormanyvalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-19]: roaringbitmap32.md#xormanyvalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-20]: roaringbitmap32.md#__iterator
-[ClassDeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
-[MethodDeclaration-23]: roaringbitmap32.md#iterator
-[ClassDeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
-[MethodDeclaration-24]: roaringbitmap32.md#minimum
-[MethodDeclaration-25]: roaringbitmap32.md#maximum
-[MethodDeclaration-26]: roaringbitmap32.md#hasvalue
-[MethodDeclaration-27]: roaringbitmap32.md#hasrangerangestart-rangeend
-[MethodDeclaration-28]: roaringbitmap32.md#rangecardinalityrangestart-rangeend
-[MethodDeclaration-29]: roaringbitmap32.md#copyfromvalues
-[MethodDeclaration-30]: roaringbitmap32.md#addvalue
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-31]: roaringbitmap32.md#tryaddvalue
-[MethodDeclaration-32]: roaringbitmap32.md#addmanyvalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-33]: roaringbitmap32.md#deletevalue
-[MethodDeclaration-34]: roaringbitmap32.md#removevalue
-[MethodDeclaration-35]: roaringbitmap32.md#removemanyvalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-36]: roaringbitmap32.md#fliprangerangestart-rangeend
-[MethodDeclaration-37]: roaringbitmap32.md#addrangerangestart-rangeend
-[MethodDeclaration-38]: roaringbitmap32.md#removerangerangestart-rangeend
-[MethodDeclaration-39]: roaringbitmap32.md#clear
-[MethodDeclaration-40]: roaringbitmap32.md#orinplacevalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-41]: roaringbitmap32.md#andnotinplacevalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-42]: roaringbitmap32.md#andinplacevalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-43]: roaringbitmap32.md#xorinplacevalues
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-44]: roaringbitmap32.md#issubsetother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-45]: roaringbitmap32.md#isstrictsubsetother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-46]: roaringbitmap32.md#isequalother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-47]: roaringbitmap32.md#intersectsother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-48]: roaringbitmap32.md#andcardinalityother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-49]: roaringbitmap32.md#orcardinalityother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-50]: roaringbitmap32.md#andnotcardinalityother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-51]: roaringbitmap32.md#xorcardinalityother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-52]: roaringbitmap32.md#jaccardindexother
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-53]: roaringbitmap32.md#removeruncompression
-[MethodDeclaration-54]: roaringbitmap32.md#runoptimize
-[MethodDeclaration-55]: roaringbitmap32.md#shrinktofit
-[MethodDeclaration-56]: roaringbitmap32.md#rankmaxvalue
-[MethodDeclaration-57]: roaringbitmap32.md#selectrank
-[MethodDeclaration-58]: roaringbitmap32.md#touint32array
-[MethodDeclaration-59]: roaringbitmap32.md#toarray
-[MethodDeclaration-60]: roaringbitmap32.md#toset
-[MethodDeclaration-61]: roaringbitmap32.md#tojson
-[MethodDeclaration-62]: roaringbitmap32.md#getserializationsizeinbytesportable
-[MethodDeclaration-63]: roaringbitmap32.md#serializeportable
-[InterfaceDeclaration-0]: ../index.d.md#indexdts
-[MethodDeclaration-65]: roaringbitmap32.md#clone
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-66]: roaringbitmap32.md#tostring
-[MethodDeclaration-67]: roaringbitmap32.md#contenttostringmaxlength
-[MethodDeclaration-68]: roaringbitmap32.md#statistics
-[InterfaceDeclaration-1]: ../index.d.md#roaringbitmap32statistics
-[PropertyDeclaration-0]: roaringbitmap32.md#size
-[PropertyDeclaration-1]: roaringbitmap32.md#isempty
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[constructor-0]: roaringbitmap32.md#constructorvalues
+[methoddeclaration-0]: roaringbitmap32.md#fromvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-1]: roaringbitmap32.md#fromrangerangestart-rangeend-step
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-2]: roaringbitmap32.md#fromarrayasyncvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-3]: roaringbitmap32.md#fromarrayasyncvalues-callback
+[typealiasdeclaration-0]: ../index.d.md#roaringbitmap32callback
+[methoddeclaration-4]: roaringbitmap32.md#deserializeserialized-portable
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-65]: roaringbitmap32.md#deserializeserialized-portable
+[methoddeclaration-5]: roaringbitmap32.md#deserializeasyncserialized-portable
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-6]: roaringbitmap32.md#deserializeasyncserialized-callback
+[typealiasdeclaration-0]: ../index.d.md#roaringbitmap32callback
+[methoddeclaration-7]: roaringbitmap32.md#deserializeasyncserialized-portable-callback
+[typealiasdeclaration-0]: ../index.d.md#roaringbitmap32callback
+[methoddeclaration-8]: roaringbitmap32.md#deserializeparallelasyncserialized-portable
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-9]: roaringbitmap32.md#deserializeparallelasyncserialized-callback
+[typealiasdeclaration-1]: ../index.d.md#roaringbitmap32arraycallback
+[methoddeclaration-10]: roaringbitmap32.md#deserializeparallelasyncserialized-portable-callback
+[typealiasdeclaration-1]: ../index.d.md#roaringbitmap32arraycallback
+[methoddeclaration-11]: roaringbitmap32.md#swapa-b
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-12]: roaringbitmap32.md#anda-b
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-13]: roaringbitmap32.md#ora-b
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-14]: roaringbitmap32.md#xora-b
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-15]: roaringbitmap32.md#andnota-b
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-16]: roaringbitmap32.md#ormanyvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-17]: roaringbitmap32.md#ormanyvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-18]: roaringbitmap32.md#xormanyvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-19]: roaringbitmap32.md#xormanyvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-20]: roaringbitmap32.md#__iterator
+[classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
+[methoddeclaration-23]: roaringbitmap32.md#iterator
+[classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
+[methoddeclaration-24]: roaringbitmap32.md#minimum
+[methoddeclaration-25]: roaringbitmap32.md#maximum
+[methoddeclaration-26]: roaringbitmap32.md#hasvalue
+[methoddeclaration-27]: roaringbitmap32.md#hasrangerangestart-rangeend
+[methoddeclaration-28]: roaringbitmap32.md#rangecardinalityrangestart-rangeend
+[methoddeclaration-29]: roaringbitmap32.md#copyfromvalues
+[methoddeclaration-30]: roaringbitmap32.md#addvalue
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-31]: roaringbitmap32.md#tryaddvalue
+[methoddeclaration-32]: roaringbitmap32.md#addmanyvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-33]: roaringbitmap32.md#deletevalue
+[methoddeclaration-34]: roaringbitmap32.md#removevalue
+[methoddeclaration-35]: roaringbitmap32.md#removemanyvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-36]: roaringbitmap32.md#fliprangerangestart-rangeend
+[methoddeclaration-37]: roaringbitmap32.md#addrangerangestart-rangeend
+[methoddeclaration-38]: roaringbitmap32.md#removerangerangestart-rangeend
+[methoddeclaration-39]: roaringbitmap32.md#clear
+[methoddeclaration-40]: roaringbitmap32.md#orinplacevalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-41]: roaringbitmap32.md#andnotinplacevalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-42]: roaringbitmap32.md#andinplacevalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-43]: roaringbitmap32.md#xorinplacevalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-44]: roaringbitmap32.md#issubsetother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-45]: roaringbitmap32.md#isstrictsubsetother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-46]: roaringbitmap32.md#isequalother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-47]: roaringbitmap32.md#intersectsother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-48]: roaringbitmap32.md#andcardinalityother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-49]: roaringbitmap32.md#orcardinalityother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-50]: roaringbitmap32.md#andnotcardinalityother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-51]: roaringbitmap32.md#xorcardinalityother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-52]: roaringbitmap32.md#jaccardindexother
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-53]: roaringbitmap32.md#removeruncompression
+[methoddeclaration-54]: roaringbitmap32.md#runoptimize
+[methoddeclaration-55]: roaringbitmap32.md#shrinktofit
+[methoddeclaration-56]: roaringbitmap32.md#rankmaxvalue
+[methoddeclaration-57]: roaringbitmap32.md#selectrank
+[methoddeclaration-58]: roaringbitmap32.md#touint32array
+[methoddeclaration-59]: roaringbitmap32.md#rangeuint32arrayoffset-limit
+[methoddeclaration-60]: roaringbitmap32.md#toarray
+[methoddeclaration-61]: roaringbitmap32.md#toset
+[methoddeclaration-62]: roaringbitmap32.md#tojson
+[methoddeclaration-63]: roaringbitmap32.md#getserializationsizeinbytesportable
+[methoddeclaration-64]: roaringbitmap32.md#serializeportable
+[interfacedeclaration-0]: ../index.d.md#indexdts
+[methoddeclaration-66]: roaringbitmap32.md#clone
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-67]: roaringbitmap32.md#tostring
+[methoddeclaration-68]: roaringbitmap32.md#contenttostringmaxlength
+[methoddeclaration-69]: roaringbitmap32.md#statistics
+[interfacedeclaration-1]: ../index.d.md#roaringbitmap32statistics
+[propertydeclaration-0]: roaringbitmap32.md#size
+[propertydeclaration-1]: roaringbitmap32.md#isempty

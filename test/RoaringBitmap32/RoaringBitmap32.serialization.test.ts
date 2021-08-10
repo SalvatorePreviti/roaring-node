@@ -4,7 +4,6 @@ describe('RoaringBitmap32 serialization', () => {
   describe('getSerializationSizeInBytes', () => {
     it('returns standard value for empty bitmap (non portable)', () => {
       const bitmap = new RoaringBitmap32()
-      expect(bitmap.getSerializationSizeInBytes()).toBe(5)
       expect(bitmap.getSerializationSizeInBytes(false)).toBe(5)
     })
 
@@ -32,12 +31,11 @@ describe('RoaringBitmap32 serialization', () => {
 
   describe('serialize', () => {
     it('returns a Buffer', () => {
-      expect(new RoaringBitmap32().serialize()).toBeInstanceOf(Buffer)
+      expect(new RoaringBitmap32().serialize(false)).toBeInstanceOf(Buffer)
     })
 
     it('returns standard value for empty bitmap (non portable)', () => {
       const bitmap = new RoaringBitmap32()
-      expect(Array.from(bitmap.serialize())).toEqual([1, 0, 0, 0, 0])
       expect(Array.from(bitmap.serialize(false))).toEqual([1, 0, 0, 0, 0])
     })
 
@@ -49,14 +47,14 @@ describe('RoaringBitmap32 serialization', () => {
   describe('deserialize', () => {
     it('deserializes zero length buffer (non portable)', () => {
       const bitmap = new RoaringBitmap32([1, 2, 3])
-      bitmap.deserialize(Buffer.from([]))
+      bitmap.deserialize(Buffer.from([]), false)
       expect(bitmap.size).toBe(0)
       expect(bitmap.isEmpty).toBe(true)
     })
 
     it('deserializes empty bitmap (non portable)', () => {
       const bitmap = new RoaringBitmap32([1, 2, 3])
-      bitmap.deserialize(Buffer.from([1, 0, 0, 0, 0]))
+      bitmap.deserialize(Buffer.from([1, 0, 0, 0, 0]), false)
       expect(bitmap.size).toBe(0)
       expect(bitmap.isEmpty).toBe(true)
     })
@@ -87,7 +85,7 @@ describe('RoaringBitmap32 serialization', () => {
 
       let total = 0
       for (const s of testDataSerialized) {
-        const bitmap = RoaringBitmap32.deserialize(Buffer.from(s, 'base64'))
+        const bitmap = RoaringBitmap32.deserialize(Buffer.from(s, 'base64'), false)
         const size = bitmap.size
         if (size !== 0) {
           expect(bitmap.has(bitmap.minimum())).toBe(true)
@@ -101,7 +99,7 @@ describe('RoaringBitmap32 serialization', () => {
 
   describe('deserialize static', () => {
     it('deserializes zero length buffer (non portable)', () => {
-      const bitmap = RoaringBitmap32.deserialize(Buffer.from([]))
+      const bitmap = RoaringBitmap32.deserialize(Buffer.from([]), false)
       expect(bitmap.size).toBe(0)
       expect(bitmap.isEmpty).toBe(true)
     })
@@ -113,13 +111,13 @@ describe('RoaringBitmap32 serialization', () => {
     })
 
     it('deserializes empty bitmap (non portable)', () => {
-      const bitmap = RoaringBitmap32.deserialize(Buffer.from([1, 0, 0, 0, 0]))
+      const bitmap = RoaringBitmap32.deserialize(Buffer.from([1, 0, 0, 0, 0]), false)
       expect(bitmap.size).toBe(0)
       expect(bitmap.isEmpty).toBe(true)
     })
 
     it('deserializes empty bitmap (non portable)', () => {
-      const bitmap = RoaringBitmap32.deserialize(Buffer.from([1, 0, 0, 0, 0]))
+      const bitmap = RoaringBitmap32.deserialize(Buffer.from([1, 0, 0, 0, 0]), false)
       expect(bitmap.size).toBe(0)
       expect(bitmap.isEmpty).toBe(true)
     })

@@ -427,8 +427,8 @@ describe('RoaringBitmap32 basic', () => {
       const rb4 = RoaringBitmap32.orMany(rb1, rb2, rb3)
       expect(rb4.toArray()).toEqual([3, 4, 5, 1000])
 
-      const serialized = rb1.serialize()
-      const rb5 = RoaringBitmap32.deserialize(serialized)
+      const serialized = rb1.serialize(false)
+      const rb5 = RoaringBitmap32.deserialize(serialized, false)
       expect(rb5.isEqual(rb1)).toBe(true)
       expect(rb1.isEqual(rb5)).toBe(true)
       expect(rb5.toArray()).toEqual(rb1.toArray())

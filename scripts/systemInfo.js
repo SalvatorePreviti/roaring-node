@@ -2,7 +2,6 @@
 
 const chalk = require('chalk')
 const os = require('os')
-const instructionSet = require('../lib/instructionSet')
 
 function getSystemInfo() {
   const cpus = os.cpus()
@@ -18,8 +17,7 @@ function getSystemInfo() {
   }
 
   const systemInfo = {
-    physicalCpuCount,
-    instructionSet
+    physicalCpuCount
   }
 
   systemInfo.print = function print() {
@@ -31,12 +29,7 @@ function getSystemInfo() {
       chalk.greenBright(os.release()),
       chalk.yellowBright(process.arch)
     )
-    console.log(
-      chalk.whiteBright('CPU     '),
-      ':',
-      chalk.cyanBright(cpus[0].model),
-      instructionSet !== 'PLAIN' ? chalk.greenBright(instructionSet) : ''
-    )
+    console.log(chalk.whiteBright('CPU     '), ':', chalk.cyanBright(cpus[0].model))
     console.log(
       chalk.whiteBright('Cores   '),
       ':',
@@ -46,7 +39,12 @@ function getSystemInfo() {
       chalk.greenBright(cpus.length),
       chalk.green('logical')
     )
-    console.log(chalk.whiteBright('Memory  '), ':', chalk.cyanBright((os.totalmem() / 1073741824).toFixed(2)), chalk.cyan('GB'))
+    console.log(
+      chalk.whiteBright('Memory  '),
+      ':',
+      chalk.cyanBright((os.totalmem() / 1073741824).toFixed(2)),
+      chalk.cyan('GB')
+    )
     console.log(
       chalk.whiteBright('NodeJS  '),
       ':',
