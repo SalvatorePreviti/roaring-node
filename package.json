@@ -48,7 +48,6 @@
     "doc": "node ./node_modules/.bin/ts-docs-gen --config ./docs-gen.json",
     "benchmarks": "node --expose-gc ./scripts/benchmarks.js",
     "benchmarks/": "node --expose-gc ./scripts/benchmarks.js",
-    "acuris-eslint": "acuris-eslint",
     "precommit": "lint-staged && pretty-quick --staged",
     "postinstall": "husky install"
   },
