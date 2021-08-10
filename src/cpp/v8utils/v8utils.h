@@ -61,6 +61,7 @@ namespace v8utils {
   struct TypedArrayContent {
     size_t length;
     T * data;
+    v8::Local<v8::ArrayBuffer> arrayBuffer;
 #if NODE_MAJOR_VERSION > 13
     std::shared_ptr<v8::BackingStore> backingStore;
 #endif
@@ -78,17 +79,20 @@ namespace v8utils {
     inline void reset() {
       this->length = 0;
       this->data = nullptr;
+      this->backingStore = nullptr;
+      this->arrayBuffer.Clear();
     }
 
     inline bool set(v8::Local<v8::Value> from) {
       if (!from.IsEmpty() && from->IsArrayBufferView()) {
-        v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
+        auto array = v8::Local<v8::ArrayBufferView>::Cast(from);
         this->length = array->ByteLength() / sizeof(T);
+        this->arrayBuffer = array->Buffer();
 #if NODE_MAJOR_VERSION > 13
-        this->backingStore = array->Buffer()->GetBackingStore();
-        this->data = (T *)((char *)(this->backingStore->Data()) + array->ByteOffset());
+        this->backingStore = this->arrayBuffer->GetBackingStore();
+        this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
 #else
-        this->data = (T *)((char *)(array->Buffer()->GetContents().Data()) + array->ByteOffset());
+        this->data = (T *)((uint8_t *)(this->arrayBuffer->GetContents().Data()) + array->ByteOffset());
 #endif
         return true;
       }

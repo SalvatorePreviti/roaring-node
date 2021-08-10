@@ -30,7 +30,7 @@ describe('RoaringBitmap32 deserializeAsync', () => {
       })
     })
 
-    it.only('deserializes simple bitmap', async () => {
+    it('deserializes simple bitmap', async () => {
       const values = [1, 2, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff]
 
       const bufferNonPortable = new RoaringBitmap32(values).serialize(false)

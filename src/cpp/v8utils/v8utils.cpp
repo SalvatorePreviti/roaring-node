@@ -93,13 +93,13 @@ namespace v8utils {
 
   void throwError(v8::Isolate * isolate, const char * message) {
     v8::HandleScope scope(isolate);
-    auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kNormal);
+    auto msg = v8::String::NewFromUtf8(isolate, message ? message : "Operation failed", v8::NewStringType::kNormal);
     isolate->ThrowException(v8::Exception::Error(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
   void throwTypeError(v8::Isolate * isolate, const char * message) {
     v8::HandleScope scope(isolate);
-    auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kNormal);
+    auto msg = v8::String::NewFromUtf8(isolate, message ? message : "Operation failed", v8::NewStringType::kNormal);
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 

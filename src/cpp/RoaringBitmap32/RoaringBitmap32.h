@@ -7,6 +7,17 @@
 
 class RoaringBitmap32;
 
+typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
+
+struct DeserializeResult {
+  roaring_bitmap_t_ptr bitmap;
+  const char * error;
+
+  inline explicit DeserializeResult(roaring_bitmap_t_ptr bitmap, const char * error = nullptr) :
+      bitmap(bitmap), error(bitmap ? nullptr : (error ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {
+  }
+};
+
 class RoaringBitmap32 : NonCopyable {
  public:
   roaring_bitmap_t * roaring;
@@ -110,7 +121,7 @@ class RoaringBitmap32 : NonCopyable {
  private:
   void destroy();
   static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
-  static const char * doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t ** newRoaring);
+  static DeserializeResult doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable);
 
   friend class DeserializeWorker;
   friend class DeserializeParallelWorker;

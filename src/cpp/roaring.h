@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define printf(...) ((void)0)
-#define fprintf(...) ((void)0)
+//#define printf(...) ((void)0)
+//#define fprintf(...) ((void)0)
 
 #include "CRoaringUnityBuild/roaring.h"
 

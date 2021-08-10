@@ -614,26 +614,16 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
   }
 }
 
-const char * RoaringBitmap32::doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t ** bitmap) {
-  bitmap = nullptr;
-
+DeserializeResult RoaringBitmap32::doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable) {
   auto bufLen = typedArray.length;
   const char * bufaschar = (const char *)typedArray.data;
 
   if (bufLen == 0 || !bufaschar) {
-    *bitmap = roaring_bitmap_create();
-    if (!*bitmap) {
-      return "RoaringBitmap32::deserialize - failed to create an empty bitmap";
-    }
-    return nullptr;
+    return DeserializeResult(roaring_bitmap_create(), "RoaringBitmap32::deserialize - failed to create an empty bitmap");
   }
 
   if (portable) {
-    *bitmap = roaring_bitmap_portable_deserialize_safe(bufaschar, bufLen);
-    if (!*bitmap) {
-      return "RoaringBitmap32::deserialize - portable deserialization failed";
-    }
-    return nullptr;
+    return DeserializeResult(roaring_bitmap_portable_deserialize_safe(bufaschar, bufLen), "RoaringBitmap32::deserialize - portable deserialization failed");
   }
 
   switch ((unsigned char)bufaschar[0]) {
@@ -642,27 +632,20 @@ const char * RoaringBitmap32::doDeserialize(const v8utils::TypedArrayContent<uin
       memcpy(&card, bufaschar + 1, sizeof(uint32_t));
 
       if (card * sizeof(uint32_t) + sizeof(uint32_t) + 1 != bufLen) {
-        return "RoaringBitmap32::deserialize - corrupted data, wrong cardinality header";
+        return DeserializeResult(nullptr, "RoaringBitmap32::deserialize - corrupted data, wrong cardinality header");
       }
 
       const uint32_t * elems = (const uint32_t *)(bufaschar + 1 + sizeof(uint32_t));
-      *bitmap = roaring_bitmap_of_ptr(card, elems);
-      if (!*bitmap) {
-        return "RoaringBitmap32::deserialize - deserialization failed";
-      }
-      return nullptr;
+      return DeserializeResult(roaring_bitmap_of_ptr(card, elems), "RoaringBitmap32::deserialize - uint32 array deserialization failed");
     }
 
     case SERIALIZATION_CONTAINER: {
-      *bitmap = roaring_bitmap_portable_deserialize_safe(bufaschar + 1, bufLen - 1);
-      if (!*bitmap) {
-        return "RoaringBitmap32::deserialize - portable deserialization failed";
-      }
-      return nullptr;
+      return DeserializeResult(
+          roaring_bitmap_portable_deserialize_safe(bufaschar + 1, bufLen - 1), "RoaringBitmap32::deserialize - container deserialization failed");
     }
   }
 
-  return "RoaringBitmap32::deserialize - invalid portable header byte";
+  return DeserializeResult(nullptr, "RoaringBitmap32::deserialize - invalid portable header byte");
 }
 
 void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -673,36 +656,29 @@ void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value
   if (info.Length() == 0 || (!info[0]->IsUint8Array() && !info[0]->IsInt8Array() && !info[0]->IsUint8ClampedArray()))
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::deserialize requires an argument of type Uint8Array or Buffer");
 
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
+
+  v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+  if (resultMaybe.IsEmpty()) {
+    return;
+  }
+
+  v8::Local<v8::Object> result = resultMaybe.ToLocalChecked();
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
+  self->replaceBitmapInstance(nullptr);
+
   const v8utils::TypedArrayContent<uint8_t> typedArray(info[0]);
 
   if (info.Length() < 2) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::deserialize portable argument must be specified");
   }
 
-  roaring_bitmap_t * bitmap = nullptr;
-  const char * error = doDeserialize(typedArray, info[1]->IsTrue(), &bitmap);
-  if (error != nullptr) {
-    return v8utils::throwError(isolate, error);
-  }
-  if (!bitmap) {
-    return v8utils::throwError(isolate, "Could not deserialize a new roaring bitmap");
+  auto deserialization = doDeserialize(typedArray, info[1]->IsTrue());
+  if (deserialization.error) {
+    return v8utils::throwError(isolate, deserialization.error);
   }
 
-  v8::Local<v8::Function> cons = constructor.Get(isolate);
-
-  v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
-  if (resultMaybe.IsEmpty()) {
-    if (bitmap) {
-      roaring_bitmap_free(bitmap);
-    }
-    return;
-  }
-
-  v8::Local<v8::Object> result = resultMaybe.ToLocalChecked();
-
-  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(result);
-
-  self->replaceBitmapInstance(bitmap);
+  self->replaceBitmapInstance(deserialization.bitmap);
 
   info.GetReturnValue().Set(result);
 }
@@ -723,15 +699,12 @@ void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & in
   }
 
   const v8utils::TypedArrayContent<uint8_t> typedArray(info[0]);
-  roaring_bitmap_t * bitmap;
-  const char * error = doDeserialize(typedArray, info[1]->IsTrue(), &bitmap);
-  if (error != nullptr) {
-    return v8utils::throwError(isolate, error);
+  auto deserialized = doDeserialize(typedArray, info[1]->IsTrue());
+  if (deserialized.error) {
+    return v8utils::throwError(isolate, deserialized.error);
   }
-  if (!bitmap) {
-    return v8utils::throwError(isolate, "Could not deserialize a new roaring bitmap");
-  }
-  self->replaceBitmapInstance(bitmap);
+
+  self->replaceBitmapInstance(deserialized.bitmap);
 
   info.GetReturnValue().Set(holder);
 }
@@ -762,11 +735,11 @@ class DeserializeWorker : public RoaringBitmap32FactoryAsyncWorker {
 
  protected:
   virtual void work() {
-    auto error = RoaringBitmap32::doDeserialize(buffer, portable, &this->bitmap);
-    if (error) {
-      this->setError(error);
-    } else if (!this->bitmap) {
-      this->setError("RoaringBitmap32::deserializeAsync - failed to deserialize new bitmap");
+    auto deserialized = RoaringBitmap32::doDeserialize(buffer, portable);
+    if (deserialized.error) {
+      this->setError(deserialized.error);
+    } else {
+      this->bitmap = deserialized.bitmap;
     }
   }
 };
@@ -807,7 +780,7 @@ void RoaringBitmap32::deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::
 
 class DeserializeParallelWorkerItem {
  public:
-  roaring_bitmap_t * bitmap;
+  volatile roaring_bitmap_t_ptr bitmap;
   v8::Persistent<v8::Value> bufferPersistent;
   v8utils::TypedArrayContent<uint8_t> buffer;
 
@@ -852,11 +825,11 @@ class DeserializeParallelWorker : public v8utils::ParallelAsyncWorker {
  protected:
   virtual void parallelWork(uint32_t index) {
     DeserializeParallelWorkerItem & item = items[index];
-    const char * error = RoaringBitmap32::doDeserialize(item.buffer, portable, &item.bitmap);
-    if (error != nullptr) {
-      this->setError(error);
-    } else if (!item.bitmap) {
-      this->setError("Error deserailizing a new bitmap");
+    auto deserialized = RoaringBitmap32::doDeserialize(item.buffer, portable);
+    if (deserialized.error) {
+      this->setError(deserialized.error);
+    } else {
+      item.bitmap = deserialized.bitmap;
     }
   }
 
