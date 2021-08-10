@@ -165,6 +165,60 @@ describe('RoaringBitmap32 basic', () => {
     })
   })
 
+  describe('rangeUint32Array', () => {
+    it('returns an empty Uint32Array for an empty bitmap', () => {
+      const a = new RoaringBitmap32().rangeUint32Array(0, 10)
+      expect(a).toBeInstanceOf(Uint32Array)
+      expect(a).toHaveLength(0)
+    })
+
+    it('returns a paginated array with multiple elements', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100])
+      const x = bitmap.rangeUint32Array(0, 3)
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x).toHaveLength(3)
+      expect(Array.from(x)).toEqual([1, 2, 10])
+    })
+
+    it('returns a paginated array with offset', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100])
+      const x = bitmap.rangeUint32Array(2, 3)
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x).toHaveLength(3)
+      expect(Array.from(x)).toEqual([10, 30, 50])
+    })
+
+    it('returns a paginated array with offset almost out of scope', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100])
+      const x = bitmap.rangeUint32Array(6, 3)
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x).toHaveLength(1)
+      expect(Array.from(x)).toEqual([100])
+    })
+
+    it('returns a paginated array with offset out of scope', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100])
+      const x = bitmap.rangeUint32Array(10, 3)
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x).toHaveLength(0)
+      expect(Array.from(x)).toEqual([])
+    })
+
+    it('returns a paginated array with limit out of scope', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100])
+      const x = bitmap.rangeUint32Array(0, 100)
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x).toHaveLength(7)
+    })
+
+    it('returns a paginated array with limit and offset out of scope', () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100])
+      const x = bitmap.rangeUint32Array(5, 100)
+      expect(x).toBeInstanceOf(Uint32Array)
+      expect(x).toHaveLength(2)
+    })
+  })
+
   describe('toArray', () => {
     it('returns an empty array for an empty bitmap', () => {
       expect(new RoaringBitmap32().toArray()).toEqual([])

@@ -60,6 +60,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(ctor, "rank", rank);
   NODE_SET_PROTOTYPE_METHOD(ctor, "select", select);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32Array", toUint32Array);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "rangeUint32Array", rangeUint32Array);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toArray", toArray);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toSet", toSet);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toJSON", toArray);
@@ -307,6 +308,51 @@ void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & 
       return v8utils::throwError(isolate, "RoaringBitmap32::toUint32Array - failed to allocate memory");
 
     roaring_bitmap_to_uint32_array(&self->roaring, typedArrayContent.data);
+  }
+
+  info.GetReturnValue().Set(typedArray);
+}
+
+void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
+
+  uint32_t offset;
+  uint32_t limit;
+  if (info.Length() < 2 || !info[0]->IsUint32() || !info[0]->Uint32Value(info.GetIsolate()->GetCurrentContext()).To(&offset)) {
+    return info.GetReturnValue().Set(false);
+  }
+
+  if (info.Length() < 2 || !info[1]->IsUint32() || !info[1]->Uint32Value(info.GetIsolate()->GetCurrentContext()).To(&limit)) {
+    return info.GetReturnValue().Set(false);
+  }
+
+  auto cardinality = roaring_bitmap_get_cardinality(&self->roaring);
+  auto size = limit < cardinality - offset ? limit : cardinality - offset;
+
+  if (offset > cardinality) {
+    size = 0;
+  }
+
+  if (limit > cardinality - offset) {
+    limit = cardinality - offset;
+  }
+
+  v8::Local<v8::Value> argv[1] = {v8::Uint32::NewFromUnsigned(isolate, (uint32_t)size)};
+  auto typedArrayMaybe = JSTypes::Uint32Array_ctor.Get(isolate)->NewInstance(isolate->GetCurrentContext(), 1, argv);
+  if (typedArrayMaybe.IsEmpty())
+    return;
+
+  auto typedArray = typedArrayMaybe.ToLocalChecked();
+
+  if (size != 0) {
+    const v8utils::TypedArrayContent<uint32_t> typedArrayContent(typedArray);
+    if (!typedArrayContent.length || !typedArrayContent.data)
+      return v8utils::throwError(isolate, "RoaringBitmap32::toUint32Array - failed to allocate memory");
+
+    roaring_bitmap_range_uint32_array(&self->roaring, offset, limit, typedArrayContent.data);
   }
 
   info.GetReturnValue().Set(typedArray);
