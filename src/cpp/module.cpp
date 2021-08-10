@@ -18,24 +18,6 @@ void InitModule(v8::Local<v8::Object> exports) {
   v8utils::defineHiddenFunction(isolate, exports, "_initTypes", initTypes);
   v8utils::defineHiddenField(isolate, exports, "default", exports);
 
-#ifdef USESSE4
-#  ifdef USEAVX
-  v8utils::defineReadonlyField(isolate, exports, "SSE42", v8::Boolean::New(isolate, true));
-  v8utils::defineReadonlyField(isolate, exports, "AVX2", v8::Boolean::New(isolate, true));
-  v8utils::defineReadonlyField(isolate, exports, "instructionSet", v8::String::NewFromUtf8(isolate, "AVX2", v8::NewStringType::kInternalized).ToLocalChecked());
-#  else
-  v8utils::defineReadonlyField(isolate, exports, "SSE42", v8::Boolean::New(isolate, true));
-  v8utils::defineReadonlyField(isolate, exports, "AVX2", v8::Boolean::New(isolate, false));
-  v8utils::defineReadonlyField(
-      isolate, exports, "instructionSet", v8::String::NewFromUtf8(isolate, "SSE42", v8::NewStringType::kInternalized).ToLocalChecked());
-#  endif
-#else
-  v8utils::defineReadonlyField(isolate, exports, "SSE42", v8::Boolean::New(isolate, false));
-  v8utils::defineReadonlyField(isolate, exports, "AVX2", v8::Boolean::New(isolate, false));
-  v8utils::defineReadonlyField(
-      isolate, exports, "instructionSet", v8::String::NewFromUtf8(isolate, "PLAIN", v8::NewStringType::kInternalized).ToLocalChecked());
-#endif
-
   v8utils::defineReadonlyField(
       isolate, exports, "CRoaringVersion", v8::String::NewFromUtf8(isolate, ROARING_VERSION_STRING, v8::NewStringType::kInternalized).ToLocalChecked());
 

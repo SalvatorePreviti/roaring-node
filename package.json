@@ -25,8 +25,7 @@
   "types": "index.d.ts",
   "typings": "index.d.ts",
   "files": [
-    "src/cpp/**/*.*",
-    "src/cpuinfo/**/*.*",
+    "src/**/*.*",
     "lib/*.js",
     "LICENSE.md",
     "README.md",

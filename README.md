@@ -34,9 +34,6 @@ See the [API documentation](https://github.com/SalvatorePreviti/roaring-node/blo
 
 See the [RoaringBitmap32 class documentation](https://github.com/SalvatorePreviti/roaring-node/blob/master/documentation/api/index.d/roaringbitmap32.md#roaringbitmap32)
 
-- To disable AVX2 instruction set, set the environment variable ROARING_DISABLE_AVX2 to 'true' before requiring this package.
-- To disable SSE42 instruction set, set the environment variable ROARING_DISABLE_SSE42 to 'true' before requiring this package.
-
 # Code sample:
 
 ```javascript

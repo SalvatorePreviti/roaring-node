@@ -1054,40 +1054,6 @@ export interface RoaringBitmap32Statistics {
 }
 
 /**
- * Property: The instruction set supported and currently used by the underlying CRoraring library.
- * Possible values are:
- *  - 'AVX2' - Advanced Vector Extensions 2
- *  - 'SSE42' - Streaming SIMD Extensions 4.2
- *  - 'PLAIN' - no special instruction set
- *
- * @export
- * @constant
- * @type {('AVX2' | 'SSE42' | 'PLAIN')}
- * @memberof RoaringModule
- */
-export const instructionSet: 'AVX2' | 'SSE42' | 'PLAIN'
-
-/**
- * Property: Indicates wether Streaming SIMD Extensions 4.2 instruction set is supported and currently used by the underlying CRoaring library.
- *
- * @export
- * @constant
- * @type {boolean} True if SSE4.2 is supported, false if not.
- * @memberof RoaringModule
- */
-export const SSE42: boolean
-
-/**
- * Property: Indicates wether Advanced Vector Extensions 2 instruction set is supported and currently used by the underlying CRoaring library.
- *
- * @export
- * @constant
- * @type {boolean} True if AVX2 is supported, false if not.
- * @memberof RoaringModule
- */
-export const AVX2: boolean
-
-/**
  * Property: The version of the CRoaring libary as a string.
  * Example: "0.2.42"
  *
