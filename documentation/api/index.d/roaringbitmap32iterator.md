@@ -1,13 +1,13 @@
 # Table of contents
 
-* [RoaringBitmap32Iterator][ClassDeclaration-1]
-    * Constructor
-        * [constructor(roaringBitmap32)][Constructor-1]
-        * [constructor(roaringBitmap32, bufferSize)][Constructor-2]
-        * [constructor(roaringBitmap32, buffer)][Constructor-3]
-    * Methods
-        * [__@iterator()][MethodDeclaration-21]
-        * [next()][MethodDeclaration-22]
+- [RoaringBitmap32Iterator][classdeclaration-1]
+  - Constructor
+    - [constructor(roaringBitmap32)][constructor-1]
+    - [constructor(roaringBitmap32, bufferSize)][constructor-2]
+    - [constructor(roaringBitmap32, buffer)][constructor-3]
+  - Methods
+    - [\_\_@iterator()][methoddeclaration-19]
+    - [next()][methoddeclaration-20]
 
 # RoaringBitmap32Iterator
 
@@ -19,6 +19,7 @@ The iterator may throw exception if the bitmap is changed during the iteration.
 ```typescript
 class RoaringBitmap32Iterator implements IterableIterator<number>
 ```
+
 ## Constructor
 
 ### constructor(roaringBitmap32)
@@ -39,7 +40,7 @@ public constructor(roaringBitmap32?: RoaringBitmap32 | undefined);
 | --------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
 | roaringBitmap32 | RoaringBitmap32 &#124; undefined | The roaring bitmap to iterate. If null or undefined, an empty iterator is created. |
 
-----------
+---
 
 ### constructor(roaringBitmap32, bufferSize)
 
@@ -57,10 +58,10 @@ public constructor(roaringBitmap32: RoaringBitmap32, bufferSize: number);
 
 | Name            | Type                                  | Description                                                |
 | --------------- | ------------------------------------- | ---------------------------------------------------------- |
-| roaringBitmap32 | [RoaringBitmap32][ClassDeclaration-0] | The roaring bitmap to iterate                              |
+| roaringBitmap32 | [RoaringBitmap32][classdeclaration-0] | The roaring bitmap to iterate                              |
 | bufferSize      | number                                | Buffer size to allocate, must be an integer greater than 0 |
 
-----------
+---
 
 ### constructor(roaringBitmap32, buffer)
 
@@ -78,12 +79,12 @@ public constructor(roaringBitmap32: RoaringBitmap32, buffer: Uint32Array);
 
 | Name            | Type                                  | Description                   |
 | --------------- | ------------------------------------- | ----------------------------- |
-| roaringBitmap32 | [RoaringBitmap32][ClassDeclaration-0] |                               |
+| roaringBitmap32 | [RoaringBitmap32][classdeclaration-0] |                               |
 | buffer          | Uint32Array                           | The roaring bitmap to iterate |
 
 ## Methods
 
-### __@iterator()
+### \_\_@iterator()
 
 Returns this.
 
@@ -93,9 +94,9 @@ public __@iterator(): RoaringBitmap32Iterator;
 
 **Return type**
 
-[RoaringBitmap32Iterator][ClassDeclaration-1]
+[RoaringBitmap32Iterator][classdeclaration-1]
 
-----------
+---
 
 ### next()
 
@@ -111,12 +112,12 @@ public next(): IteratorResult<number>;
 
 IteratorResult<number>
 
-[ClassDeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
-[Constructor-1]: roaringbitmap32iterator.md#constructorroaringbitmap32
-[Constructor-2]: roaringbitmap32iterator.md#constructorroaringbitmap32-buffersize
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[Constructor-3]: roaringbitmap32iterator.md#constructorroaringbitmap32-buffer
-[ClassDeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[MethodDeclaration-21]: roaringbitmap32iterator.md#__iterator
-[ClassDeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
-[MethodDeclaration-22]: roaringbitmap32iterator.md#next
+[classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
+[constructor-1]: roaringbitmap32iterator.md#constructorroaringbitmap32
+[constructor-2]: roaringbitmap32iterator.md#constructorroaringbitmap32-buffersize
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[constructor-3]: roaringbitmap32iterator.md#constructorroaringbitmap32-buffer
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-19]: roaringbitmap32iterator.md#__iterator
+[classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
+[methoddeclaration-20]: roaringbitmap32iterator.md#next

@@ -9,69 +9,67 @@
     - [fromArrayAsync(values)][methoddeclaration-2]
     - [fromArrayAsync(values, callback)][methoddeclaration-3]
     - [deserialize(serialized, portable)][methoddeclaration-4]
-    - [deserialize(serialized, portable)][methoddeclaration-65]
+    - [deserialize(serialized, portable)][methoddeclaration-63]
     - [deserializeAsync(serialized, portable)][methoddeclaration-5]
-    - [deserializeAsync(serialized, callback)][methoddeclaration-6]
-    - [deserializeAsync(serialized, portable, callback)][methoddeclaration-7]
-    - [deserializeParallelAsync(serialized, portable)][methoddeclaration-8]
-    - [deserializeParallelAsync(serialized, callback)][methoddeclaration-9]
-    - [deserializeParallelAsync(serialized, portable, callback)][methoddeclaration-10]
-    - [swap(a, b)][methoddeclaration-11]
-    - [and(a, b)][methoddeclaration-12]
-    - [or(a, b)][methoddeclaration-13]
-    - [xor(a, b)][methoddeclaration-14]
-    - [andNot(a, b)][methoddeclaration-15]
-    - [orMany(values)][methoddeclaration-16]
-    - [orMany(values)][methoddeclaration-17]
-    - [xorMany(values)][methoddeclaration-18]
-    - [xorMany(values)][methoddeclaration-19]
-    - [\_\_@iterator()][methoddeclaration-20]
-    - [iterator()][methoddeclaration-23]
-    - [minimum()][methoddeclaration-24]
-    - [maximum()][methoddeclaration-25]
-    - [has(value)][methoddeclaration-26]
-    - [hasRange(rangeStart, rangeEnd)][methoddeclaration-27]
-    - [rangeCardinality(rangeStart, rangeEnd)][methoddeclaration-28]
-    - [copyFrom(values)][methoddeclaration-29]
-    - [add(value)][methoddeclaration-30]
-    - [tryAdd(value)][methoddeclaration-31]
-    - [addMany(values)][methoddeclaration-32]
-    - [delete(value)][methoddeclaration-33]
-    - [remove(value)][methoddeclaration-34]
-    - [removeMany(values)][methoddeclaration-35]
-    - [flipRange(rangeStart, rangeEnd)][methoddeclaration-36]
-    - [addRange(rangeStart, rangeEnd)][methoddeclaration-37]
-    - [removeRange(rangeStart, rangeEnd)][methoddeclaration-38]
-    - [clear()][methoddeclaration-39]
-    - [orInPlace(values)][methoddeclaration-40]
-    - [andNotInPlace(values)][methoddeclaration-41]
-    - [andInPlace(values)][methoddeclaration-42]
-    - [xorInPlace(values)][methoddeclaration-43]
-    - [isSubset(other)][methoddeclaration-44]
-    - [isStrictSubset(other)][methoddeclaration-45]
-    - [isEqual(other)][methoddeclaration-46]
-    - [intersects(other)][methoddeclaration-47]
-    - [andCardinality(other)][methoddeclaration-48]
-    - [orCardinality(other)][methoddeclaration-49]
-    - [andNotCardinality(other)][methoddeclaration-50]
-    - [xorCardinality(other)][methoddeclaration-51]
-    - [jaccardIndex(other)][methoddeclaration-52]
-    - [removeRunCompression()][methoddeclaration-53]
-    - [runOptimize()][methoddeclaration-54]
-    - [shrinkToFit()][methoddeclaration-55]
-    - [rank(maxValue)][methoddeclaration-56]
-    - [select(rank)][methoddeclaration-57]
-    - [toUint32Array()][methoddeclaration-58]
-    - [rangeUint32Array(offset, limit)][methoddeclaration-59]
-    - [toArray()][methoddeclaration-60]
-    - [toSet()][methoddeclaration-61]
-    - [toJSON()][methoddeclaration-62]
-    - [getSerializationSizeInBytes(portable)][methoddeclaration-63]
-    - [serialize(portable)][methoddeclaration-64]
-    - [clone()][methoddeclaration-66]
-    - [toString()][methoddeclaration-67]
-    - [contentToString(maxLength)][methoddeclaration-68]
-    - [statistics()][methoddeclaration-69]
+    - [deserializeAsync(serialized, portable, callback)][methoddeclaration-6]
+    - [deserializeParallelAsync(serialized, portable)][methoddeclaration-7]
+    - [deserializeParallelAsync(serialized, portable, callback)][methoddeclaration-8]
+    - [swap(a, b)][methoddeclaration-9]
+    - [and(a, b)][methoddeclaration-10]
+    - [or(a, b)][methoddeclaration-11]
+    - [xor(a, b)][methoddeclaration-12]
+    - [andNot(a, b)][methoddeclaration-13]
+    - [orMany(values)][methoddeclaration-14]
+    - [orMany(values)][methoddeclaration-15]
+    - [xorMany(values)][methoddeclaration-16]
+    - [xorMany(values)][methoddeclaration-17]
+    - [\_\_@iterator()][methoddeclaration-18]
+    - [iterator()][methoddeclaration-21]
+    - [minimum()][methoddeclaration-22]
+    - [maximum()][methoddeclaration-23]
+    - [has(value)][methoddeclaration-24]
+    - [hasRange(rangeStart, rangeEnd)][methoddeclaration-25]
+    - [rangeCardinality(rangeStart, rangeEnd)][methoddeclaration-26]
+    - [copyFrom(values)][methoddeclaration-27]
+    - [add(value)][methoddeclaration-28]
+    - [tryAdd(value)][methoddeclaration-29]
+    - [addMany(values)][methoddeclaration-30]
+    - [delete(value)][methoddeclaration-31]
+    - [remove(value)][methoddeclaration-32]
+    - [removeMany(values)][methoddeclaration-33]
+    - [flipRange(rangeStart, rangeEnd)][methoddeclaration-34]
+    - [addRange(rangeStart, rangeEnd)][methoddeclaration-35]
+    - [removeRange(rangeStart, rangeEnd)][methoddeclaration-36]
+    - [clear()][methoddeclaration-37]
+    - [orInPlace(values)][methoddeclaration-38]
+    - [andNotInPlace(values)][methoddeclaration-39]
+    - [andInPlace(values)][methoddeclaration-40]
+    - [xorInPlace(values)][methoddeclaration-41]
+    - [isSubset(other)][methoddeclaration-42]
+    - [isStrictSubset(other)][methoddeclaration-43]
+    - [isEqual(other)][methoddeclaration-44]
+    - [intersects(other)][methoddeclaration-45]
+    - [andCardinality(other)][methoddeclaration-46]
+    - [orCardinality(other)][methoddeclaration-47]
+    - [andNotCardinality(other)][methoddeclaration-48]
+    - [xorCardinality(other)][methoddeclaration-49]
+    - [jaccardIndex(other)][methoddeclaration-50]
+    - [removeRunCompression()][methoddeclaration-51]
+    - [runOptimize()][methoddeclaration-52]
+    - [shrinkToFit()][methoddeclaration-53]
+    - [rank(maxValue)][methoddeclaration-54]
+    - [select(rank)][methoddeclaration-55]
+    - [toUint32Array()][methoddeclaration-56]
+    - [rangeUint32Array(offset, limit)][methoddeclaration-57]
+    - [toArray()][methoddeclaration-58]
+    - [toSet()][methoddeclaration-59]
+    - [toJSON()][methoddeclaration-60]
+    - [getSerializationSizeInBytes(portable)][methoddeclaration-61]
+    - [serialize(portable)][methoddeclaration-62]
+    - [clone()][methoddeclaration-64]
+    - [toString()][methoddeclaration-65]
+    - [contentToString(maxLength)][methoddeclaration-66]
+    - [statistics()][methoddeclaration-67]
   - Properties
     - [size][propertydeclaration-0]
     - [isEmpty][propertydeclaration-1]
@@ -232,16 +230,18 @@ Returns a new RoaringBitmap32 instance.
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 
+NOTE: this field was optional before, now is required and an Error is thrown if the portable flag is not passed.
+
 ```typescript
-public static deserialize(serialized: Uint8Array, portable?: boolean | undefined): RoaringBitmap32;
+public static deserialize(serialized: Uint8Array, portable: boolean): RoaringBitmap32;
 ```
 
 **Parameters**
 
-| Name       | Type                     | Description                                                                                       |
-| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
-| serialized | Uint8Array               | An Uint8Array or a node Buffer that contains the serialized data.                                 |
-| portable   | boolean &#124; undefined | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
+| Name       | Type       | Description                                                                             |
+| ---------- | ---------- | --------------------------------------------------------------------------------------- |
+| serialized | Uint8Array | An Uint8Array or a node Buffer that contains the serialized data.                       |
+| portable   | boolean    | If false, optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
@@ -257,15 +257,15 @@ Setting the portable flag to false enable a custom format that can save space co
 The portable version is meant to be compatible with Java and Go versions.
 
 ```typescript
-public deserialize(serialized: Uint8Array, portable?: boolean | undefined): void;
+public deserialize(serialized: Uint8Array, portable: boolean): void;
 ```
 
 **Parameters**
 
-| Name       | Type                     | Description                                                                                       |
-| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
-| serialized | Uint8Array               | An Uint8Array or a node Buffer that contains the serialized data.                                 |
-| portable   | boolean &#124; undefined | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
+| Name       | Type       | Description                                                                             |
+| ---------- | ---------- | --------------------------------------------------------------------------------------- |
+| serialized | Uint8Array | An Uint8Array or a node Buffer that contains the serialized data.                       |
+| portable   | boolean    | If false, optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
@@ -281,9 +281,8 @@ Returns a Promise that resolves to a new RoaringBitmap32 instance.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
-Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
 
-When deserialization is completed or failed, the given callback will be executed.
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
 
 When deserialization is completed or failed, the given callback will be executed.
@@ -291,55 +290,22 @@ When deserialization is completed or failed, the given callback will be executed
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
+
 ```typescript
-public static deserializeAsync(serialized: Uint8Array, portable?: boolean | undefined): Promise<RoaringBitmap32>;
+public static deserializeAsync(serialized: Uint8Array, portable: boolean): Promise<RoaringBitmap32>;
 ```
 
 **Parameters**
 
-| Name       | Type                     | Description                                                                                       |
-| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
-| serialized | Uint8Array               | An Uint8Array or a node Buffer that contains the serialized data.                                 |
-| portable   | boolean &#124; undefined | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
+| Name       | Type       | Description                                                                             |
+| ---------- | ---------- | --------------------------------------------------------------------------------------- |
+| serialized | Uint8Array | An Uint8Array or a node Buffer that contains the serialized data.                       |
+| portable   | boolean    | If false, optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
 Promise<[RoaringBitmap32][classdeclaration-0]>
-
----
-
-### deserializeAsync(serialized, callback)
-
-Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
-
-Returns a Promise that resolves to a new RoaringBitmap32 instance.
-
-Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
-The portable version is meant to be compatible with Java and Go versions.
-Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
-
-When deserialization is completed or failed, the given callback will be executed.
-Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
-
-When deserialization is completed or failed, the given callback will be executed.
-
-Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
-The portable version is meant to be compatible with Java and Go versions.
-
-```typescript
-public static deserializeAsync(serialized: Uint8Array, callback: RoaringBitmap32Callback): void;
-```
-
-**Parameters**
-
-| Name       | Type                                              | Description                                                                    |
-| ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
-| serialized | Uint8Array                                        | An Uint8Array or a node Buffer that contains the non portable serialized data. |
-| callback   | [RoaringBitmap32Callback][typealiasdeclaration-0] | The callback to execute when the operation completes.                          |
-
-**Return type**
-
-void
 
 ---
 
@@ -351,9 +317,8 @@ Returns a Promise that resolves to a new RoaringBitmap32 instance.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
-Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
 
-When deserialization is completed or failed, the given callback will be executed.
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
 Deserializes the bitmap from an Uint8Array or a Buffer asynchrnously in a parallel thread.
 
 When deserialization is completed or failed, the given callback will be executed.
@@ -361,17 +326,19 @@ When deserialization is completed or failed, the given callback will be executed
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
+
 ```typescript
 public static deserializeAsync(serialized: Uint8Array, portable: boolean, callback: RoaringBitmap32Callback): void;
 ```
 
 **Parameters**
 
-| Name       | Type                                              | Description                                                                                       |
-| ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| serialized | Uint8Array                                        | An Uint8Array or a node Buffer that contains the.                                                 |
-| portable   | boolean                                           | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
-| callback   | [RoaringBitmap32Callback][typealiasdeclaration-0] | The callback to execute when the operation completes.                                             |
+| Name       | Type                                              | Description                                                                             |
+| ---------- | ------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| serialized | Uint8Array                                        | An Uint8Array or a node Buffer that contains the.                                       |
+| portable   | boolean                                           | If false, optimized C/C++ format is used. If true, Java and Go portable format is used. |
+| callback   | [RoaringBitmap32Callback][typealiasdeclaration-0] | The callback to execute when the operation completes.                                   |
 
 **Return type**
 
@@ -387,9 +354,8 @@ Returns a Promise that resolves to an array of new RoaringBitmap32 instance.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
-Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in multiple parallel threads.
 
-When deserialization is completed or failed, the given callback will be executed.
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
 Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in a parallel thread.
 
 Deserialization in the parallel thread will be executed in sequence, if one fails, all fails.
@@ -397,59 +363,24 @@ Deserialization in the parallel thread will be executed in sequence, if one fail
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
+
 When deserialization is completed or failed, the given callback will be executed.
 
 ```typescript
-public static deserializeParallelAsync(serialized: (Uint8Array | null | undefined)[], portable?: boolean | undefined): Promise<RoaringBitmap32[]>;
+public static deserializeParallelAsync(serialized: (Uint8Array | null | undefined)[], portable: boolean): Promise<RoaringBitmap32[]>;
 ```
 
 **Parameters**
 
-| Name       | Type                                        | Description                                                                                       |
-| ---------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| serialized | (Uint8Array &#124; null &#124; undefined)[] | An Uint8Array or a node Buffer that contains the serialized data.                                 |
-| portable   | boolean &#124; undefined                    | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
+| Name       | Type                                        | Description                                                                             |
+| ---------- | ------------------------------------------- | --------------------------------------------------------------------------------------- |
+| serialized | (Uint8Array &#124; null &#124; undefined)[] | An Uint8Array or a node Buffer that contains the serialized data.                       |
+| portable   | boolean                                     | If false, optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
 Promise<[RoaringBitmap32][classdeclaration-0][]>
-
----
-
-### deserializeParallelAsync(serialized, callback)
-
-Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in multiple parallel threads.
-
-Returns a Promise that resolves to an array of new RoaringBitmap32 instance.
-
-Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
-The portable version is meant to be compatible with Java and Go versions.
-Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in multiple parallel threads.
-
-When deserialization is completed or failed, the given callback will be executed.
-Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in a parallel thread.
-
-Deserialization in the parallel thread will be executed in sequence, if one fails, all fails.
-
-Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
-The portable version is meant to be compatible with Java and Go versions.
-
-When deserialization is completed or failed, the given callback will be executed.
-
-```typescript
-public static deserializeParallelAsync(serialized: (Uint8Array | null | undefined)[], callback: RoaringBitmap32ArrayCallback): void;
-```
-
-**Parameters**
-
-| Name       | Type                                                   | Description                                                                            |
-| ---------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| serialized | (Uint8Array &#124; null &#124; undefined)[]            | An array of Uint8Array or node Buffers that contains the non portable serialized data. |
-| callback   | [RoaringBitmap32ArrayCallback][typealiasdeclaration-1] | The callback to execute when the operation completes.                                  |
-
-**Return type**
-
-void
 
 ---
 
@@ -461,15 +392,16 @@ Returns a Promise that resolves to an array of new RoaringBitmap32 instance.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
-Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in multiple parallel threads.
 
-When deserialization is completed or failed, the given callback will be executed.
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
 Deserializes many bitmaps from an array of Uint8Array or an array of Buffer asynchronously in a parallel thread.
 
 Deserialization in the parallel thread will be executed in sequence, if one fails, all fails.
 
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
+
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
 
 When deserialization is completed or failed, the given callback will be executed.
 
@@ -1586,15 +1518,17 @@ How many bytes are required to serialize this bitmap.
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
+
 ```typescript
-public getSerializationSizeInBytes(portable?: boolean | undefined): number;
+public getSerializationSizeInBytes(portable: boolean): number;
 ```
 
 **Parameters**
 
-| Name     | Type                     | Description                                                                                       |
-| -------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
-| portable | boolean &#124; undefined | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
+| Name     | Type    | Description                                                                             |
+| -------- | ------- | --------------------------------------------------------------------------------------- |
+| portable | boolean | If false, optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
@@ -1609,15 +1543,17 @@ Serializes the bitmap into a new Buffer.
 Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
 The portable version is meant to be compatible with Java and Go versions.
 
+NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
+
 ```typescript
-public serialize(portable?: boolean | undefined): Buffer;
+public serialize(portable: boolean): Buffer;
 ```
 
 **Parameters**
 
-| Name     | Type                     | Description                                                                                       |
-| -------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
-| portable | boolean &#124; undefined | If false (default), optimized C/C++ format is used. If true, Java and Go portable format is used. |
+| Name     | Type    | Description                                                                             |
+| -------- | ------- | --------------------------------------------------------------------------------------- |
+| portable | boolean | If false, optimized C/C++ format is used. If true, Java and Go portable format is used. |
 
 **Return type**
 
@@ -1729,117 +1665,113 @@ boolean
 [typealiasdeclaration-0]: ../index.d.md#roaringbitmap32callback
 [methoddeclaration-4]: roaringbitmap32.md#deserializeserialized-portable
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-65]: roaringbitmap32.md#deserializeserialized-portable
+[methoddeclaration-63]: roaringbitmap32.md#deserializeserialized-portable
 [methoddeclaration-5]: roaringbitmap32.md#deserializeasyncserialized-portable
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-6]: roaringbitmap32.md#deserializeasyncserialized-callback
+[methoddeclaration-6]: roaringbitmap32.md#deserializeasyncserialized-portable-callback
 [typealiasdeclaration-0]: ../index.d.md#roaringbitmap32callback
-[methoddeclaration-7]: roaringbitmap32.md#deserializeasyncserialized-portable-callback
-[typealiasdeclaration-0]: ../index.d.md#roaringbitmap32callback
-[methoddeclaration-8]: roaringbitmap32.md#deserializeparallelasyncserialized-portable
+[methoddeclaration-7]: roaringbitmap32.md#deserializeparallelasyncserialized-portable
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-9]: roaringbitmap32.md#deserializeparallelasyncserialized-callback
+[methoddeclaration-8]: roaringbitmap32.md#deserializeparallelasyncserialized-portable-callback
 [typealiasdeclaration-1]: ../index.d.md#roaringbitmap32arraycallback
-[methoddeclaration-10]: roaringbitmap32.md#deserializeparallelasyncserialized-portable-callback
-[typealiasdeclaration-1]: ../index.d.md#roaringbitmap32arraycallback
-[methoddeclaration-11]: roaringbitmap32.md#swapa-b
+[methoddeclaration-9]: roaringbitmap32.md#swapa-b
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-12]: roaringbitmap32.md#anda-b
-[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-13]: roaringbitmap32.md#ora-b
+[methoddeclaration-10]: roaringbitmap32.md#anda-b
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-14]: roaringbitmap32.md#xora-b
+[methoddeclaration-11]: roaringbitmap32.md#ora-b
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-15]: roaringbitmap32.md#andnota-b
+[methoddeclaration-12]: roaringbitmap32.md#xora-b
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-16]: roaringbitmap32.md#ormanyvalues
+[methoddeclaration-13]: roaringbitmap32.md#andnota-b
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-17]: roaringbitmap32.md#ormanyvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-14]: roaringbitmap32.md#ormanyvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-18]: roaringbitmap32.md#xormanyvalues
+[methoddeclaration-15]: roaringbitmap32.md#ormanyvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-19]: roaringbitmap32.md#xormanyvalues
+[methoddeclaration-16]: roaringbitmap32.md#xormanyvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-20]: roaringbitmap32.md#__iterator
+[methoddeclaration-17]: roaringbitmap32.md#xormanyvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
+[methoddeclaration-18]: roaringbitmap32.md#__iterator
 [classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
-[methoddeclaration-23]: roaringbitmap32.md#iterator
+[methoddeclaration-21]: roaringbitmap32.md#iterator
 [classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
-[methoddeclaration-24]: roaringbitmap32.md#minimum
-[methoddeclaration-25]: roaringbitmap32.md#maximum
-[methoddeclaration-26]: roaringbitmap32.md#hasvalue
-[methoddeclaration-27]: roaringbitmap32.md#hasrangerangestart-rangeend
-[methoddeclaration-28]: roaringbitmap32.md#rangecardinalityrangestart-rangeend
-[methoddeclaration-29]: roaringbitmap32.md#copyfromvalues
-[methoddeclaration-30]: roaringbitmap32.md#addvalue
+[methoddeclaration-22]: roaringbitmap32.md#minimum
+[methoddeclaration-23]: roaringbitmap32.md#maximum
+[methoddeclaration-24]: roaringbitmap32.md#hasvalue
+[methoddeclaration-25]: roaringbitmap32.md#hasrangerangestart-rangeend
+[methoddeclaration-26]: roaringbitmap32.md#rangecardinalityrangestart-rangeend
+[methoddeclaration-27]: roaringbitmap32.md#copyfromvalues
+[methoddeclaration-28]: roaringbitmap32.md#addvalue
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-31]: roaringbitmap32.md#tryaddvalue
-[methoddeclaration-32]: roaringbitmap32.md#addmanyvalues
+[methoddeclaration-29]: roaringbitmap32.md#tryaddvalue
+[methoddeclaration-30]: roaringbitmap32.md#addmanyvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-33]: roaringbitmap32.md#deletevalue
-[methoddeclaration-34]: roaringbitmap32.md#removevalue
-[methoddeclaration-35]: roaringbitmap32.md#removemanyvalues
+[methoddeclaration-31]: roaringbitmap32.md#deletevalue
+[methoddeclaration-32]: roaringbitmap32.md#removevalue
+[methoddeclaration-33]: roaringbitmap32.md#removemanyvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-36]: roaringbitmap32.md#fliprangerangestart-rangeend
-[methoddeclaration-37]: roaringbitmap32.md#addrangerangestart-rangeend
-[methoddeclaration-38]: roaringbitmap32.md#removerangerangestart-rangeend
-[methoddeclaration-39]: roaringbitmap32.md#clear
-[methoddeclaration-40]: roaringbitmap32.md#orinplacevalues
+[methoddeclaration-34]: roaringbitmap32.md#fliprangerangestart-rangeend
+[methoddeclaration-35]: roaringbitmap32.md#addrangerangestart-rangeend
+[methoddeclaration-36]: roaringbitmap32.md#removerangerangestart-rangeend
+[methoddeclaration-37]: roaringbitmap32.md#clear
+[methoddeclaration-38]: roaringbitmap32.md#orinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-41]: roaringbitmap32.md#andnotinplacevalues
+[methoddeclaration-39]: roaringbitmap32.md#andnotinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-42]: roaringbitmap32.md#andinplacevalues
+[methoddeclaration-40]: roaringbitmap32.md#andinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-43]: roaringbitmap32.md#xorinplacevalues
+[methoddeclaration-41]: roaringbitmap32.md#xorinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-44]: roaringbitmap32.md#issubsetother
+[methoddeclaration-42]: roaringbitmap32.md#issubsetother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-45]: roaringbitmap32.md#isstrictsubsetother
+[methoddeclaration-43]: roaringbitmap32.md#isstrictsubsetother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-46]: roaringbitmap32.md#isequalother
+[methoddeclaration-44]: roaringbitmap32.md#isequalother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-47]: roaringbitmap32.md#intersectsother
+[methoddeclaration-45]: roaringbitmap32.md#intersectsother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-48]: roaringbitmap32.md#andcardinalityother
+[methoddeclaration-46]: roaringbitmap32.md#andcardinalityother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-49]: roaringbitmap32.md#orcardinalityother
+[methoddeclaration-47]: roaringbitmap32.md#orcardinalityother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-50]: roaringbitmap32.md#andnotcardinalityother
+[methoddeclaration-48]: roaringbitmap32.md#andnotcardinalityother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-51]: roaringbitmap32.md#xorcardinalityother
+[methoddeclaration-49]: roaringbitmap32.md#xorcardinalityother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-52]: roaringbitmap32.md#jaccardindexother
+[methoddeclaration-50]: roaringbitmap32.md#jaccardindexother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-53]: roaringbitmap32.md#removeruncompression
-[methoddeclaration-54]: roaringbitmap32.md#runoptimize
-[methoddeclaration-55]: roaringbitmap32.md#shrinktofit
-[methoddeclaration-56]: roaringbitmap32.md#rankmaxvalue
-[methoddeclaration-57]: roaringbitmap32.md#selectrank
-[methoddeclaration-58]: roaringbitmap32.md#touint32array
-[methoddeclaration-59]: roaringbitmap32.md#rangeuint32arrayoffset-limit
-[methoddeclaration-60]: roaringbitmap32.md#toarray
-[methoddeclaration-61]: roaringbitmap32.md#toset
-[methoddeclaration-62]: roaringbitmap32.md#tojson
-[methoddeclaration-63]: roaringbitmap32.md#getserializationsizeinbytesportable
-[methoddeclaration-64]: roaringbitmap32.md#serializeportable
+[methoddeclaration-51]: roaringbitmap32.md#removeruncompression
+[methoddeclaration-52]: roaringbitmap32.md#runoptimize
+[methoddeclaration-53]: roaringbitmap32.md#shrinktofit
+[methoddeclaration-54]: roaringbitmap32.md#rankmaxvalue
+[methoddeclaration-55]: roaringbitmap32.md#selectrank
+[methoddeclaration-56]: roaringbitmap32.md#touint32array
+[methoddeclaration-57]: roaringbitmap32.md#rangeuint32arrayoffset-limit
+[methoddeclaration-58]: roaringbitmap32.md#toarray
+[methoddeclaration-59]: roaringbitmap32.md#toset
+[methoddeclaration-60]: roaringbitmap32.md#tojson
+[methoddeclaration-61]: roaringbitmap32.md#getserializationsizeinbytesportable
+[methoddeclaration-62]: roaringbitmap32.md#serializeportable
 [interfacedeclaration-0]: ../index.d.md#indexdts
-[methoddeclaration-66]: roaringbitmap32.md#clone
+[methoddeclaration-64]: roaringbitmap32.md#clone
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-67]: roaringbitmap32.md#tostring
-[methoddeclaration-68]: roaringbitmap32.md#contenttostringmaxlength
-[methoddeclaration-69]: roaringbitmap32.md#statistics
+[methoddeclaration-65]: roaringbitmap32.md#tostring
+[methoddeclaration-66]: roaringbitmap32.md#contenttostringmaxlength
+[methoddeclaration-67]: roaringbitmap32.md#statistics
 [interfacedeclaration-1]: ../index.d.md#roaringbitmap32statistics
 [propertydeclaration-0]: roaringbitmap32.md#size
 [propertydeclaration-1]: roaringbitmap32.md#isempty
