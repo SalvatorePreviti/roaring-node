@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include "RoaringBitmap32/RoaringBitmap32.h"
-#include "RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.h"
 
 void initTypes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
