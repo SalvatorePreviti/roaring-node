@@ -7,14 +7,27 @@
 
 class RoaringBitmap32;
 
-class RoaringBitmap32 {
+class RoaringBitmap32 : NonCopyable {
  public:
-  roaring_bitmap_t roaring;
+  roaring_bitmap_t * roaring;
   uint64_t version;
   v8::Persistent<v8::Object> persistent;
 
   inline void invalidate() {
     ++version;
+  }
+
+  inline bool replaceBitmapInstance(roaring_bitmap_t * newInstance) {
+    if (this->roaring != newInstance) {
+      if (this->roaring) {
+        roaring_bitmap_free(this->roaring);
+        this->roaring = nullptr;
+      }
+      this->roaring = newInstance;
+      this->invalidate();
+      return true;
+    }
+    return false;
   }
 
   static v8::Eternal<v8::FunctionTemplate> constructorTemplate;
@@ -61,6 +74,7 @@ class RoaringBitmap32 {
   static void shrinkToFit(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void toArray(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void toSet(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info);
@@ -90,13 +104,13 @@ class RoaringBitmap32 {
   static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
   static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
 
-  RoaringBitmap32();
+  RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();
 
  private:
   void destroy();
   static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
-  static const char * doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t & newRoaring);
+  static const char * doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable, roaring_bitmap_t ** newRoaring);
 
   friend class DeserializeWorker;
   friend class DeserializeParallelWorker;
@@ -104,8 +118,7 @@ class RoaringBitmap32 {
 
 class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
  public:
-  roaring_bitmap_t bitmap;
-  volatile bool bitmapMoved;
+  roaring_bitmap_t * bitmap;
 
   RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate);
   virtual ~RoaringBitmap32FactoryAsyncWorker();

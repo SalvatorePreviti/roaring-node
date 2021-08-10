@@ -99,7 +99,7 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
 
   auto context = isolate->GetCurrentContext();
 
-  roaring_init_iterator(&bitmapInstance->roaring, &instance->it);
+  roaring_init_iterator(bitmapInstance->roaring, &instance->it);
 
   uint32_t n = roaring_read_uint32_iterator(&instance->it, bufferContent.data, bufferContent.length);
   if (n != 0) {

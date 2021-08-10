@@ -1,4 +1,4 @@
-import RoaringBitmap32 = require('../../RoaringBitmap32')
+import RoaringBitmap32 from '../../RoaringBitmap32'
 
 describe('RoaringBitmap32 fromAsync', () => {
   it('Throws when called with a RoaringBitmap32', async () => {

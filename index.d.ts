@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import roaring = require('./')
+
 /**
  * Roaring bitmap that supports 32 bit unsigned integers.
  *
@@ -199,7 +201,10 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @returns {Promise<RoaringBitmap32[]>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserializeParallelAsync(serialized: (Uint8Array | null | undefined)[], portable?: boolean): Promise<RoaringBitmap32[]>
+  public static deserializeParallelAsync(
+    serialized: (Uint8Array | null | undefined)[],
+    portable?: boolean
+  ): Promise<RoaringBitmap32[]>
 
   /**
    *
@@ -213,7 +218,10 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @returns {void}
    * @memberof RoaringBitmap32
    */
-  public static deserializeParallelAsync(serialized: (Uint8Array | null | undefined)[], callback: RoaringBitmap32ArrayCallback): void
+  public static deserializeParallelAsync(
+    serialized: (Uint8Array | null | undefined)[],
+    callback: RoaringBitmap32ArrayCallback
+  ): void
 
   /**
    *
@@ -782,6 +790,13 @@ export class RoaringBitmap32 implements Iterable<number> {
   public toUint32Array(): Uint32Array
 
   /**
+   * to array with pagination
+   * @returns A new Uint32Array instance containing paginated items in the set in order.
+   * @memberof RoaringBitmap32
+   */
+  public rangeUint32Array(offset: number, limit: number): Uint32Array
+
+  /**
    * Creates a new plain JS array and fills it with all the values in the bitmap.
    *
    * The returned array may be very big, use this function only when you know what you are doing.
@@ -1093,8 +1108,6 @@ export const CRoaringVersion: string
  * @memberof RoaringModule
  */
 export const PackageVersion: string
-
-import roaring = require('./')
 
 export default roaring
 

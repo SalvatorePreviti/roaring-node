@@ -1,7 +1,7 @@
 import roaring from '..'
 
-import RoaringBitmap32 = require('../RoaringBitmap32')
-import RoaringBitmap32Iterator = require('../RoaringBitmap32Iterator')
+import RoaringBitmap32 from '../RoaringBitmap32'
+import RoaringBitmap32Iterator from '../RoaringBitmap32Iterator'
 
 describe('roaring', () => {
   it('is an object', () => {

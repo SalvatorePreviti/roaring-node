@@ -7,7 +7,7 @@
       "cflags_cc": ["-O3", "-std=c++11"],
       "defines": ["DISABLEAVX"],
       "sources": [
-        "src/cpp/roaring.c",
+        "src/cpp/roaring.cpp",
         "src/cpp/module.cpp",
         "src/cpp/v8utils/v8utils.cpp",
         "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
@@ -39,7 +39,7 @@
               "OTHER_CFLAGS": ["-msse4.2"]
             },
             "sources": [
-              "src/cpp/roaring.c",
+              "src/cpp/roaring.cpp",
               "src/cpp/module.cpp",
               "src/cpp/v8utils/v8utils.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",
@@ -64,7 +64,7 @@
               }
             },
             "sources": [
-              "src/cpp/roaring.c",
+              "src/cpp/roaring.cpp",
               "src/cpp/module.cpp",
               "src/cpp/v8utils/v8utils.cpp",
               "src/cpp/RoaringBitmap32/RoaringBitmap32.cpp",

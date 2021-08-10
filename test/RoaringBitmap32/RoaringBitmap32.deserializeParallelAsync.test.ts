@@ -1,4 +1,4 @@
-import RoaringBitmap32 = require('../../RoaringBitmap32')
+import RoaringBitmap32 from '../../RoaringBitmap32'
 
 describe('RoaringBitmap32 deserializeParallelAsync', () => {
   describe('async/await', () => {
@@ -27,7 +27,11 @@ describe('RoaringBitmap32 deserializeParallelAsync', () => {
 
     describe('multiple empty buffers', () => {
       it('deserializes an empty buffer (non portable, implicit)', async () => {
-        const bitmap = await RoaringBitmap32.deserializeParallelAsync([Buffer.from([]), Buffer.from([]), Buffer.from([])])
+        const bitmap = await RoaringBitmap32.deserializeParallelAsync([
+          Buffer.from([]),
+          Buffer.from([]),
+          Buffer.from([])
+        ])
         expect(bitmap).toHaveLength(3)
         for (let i = 0; i < 3; ++i) {
           expect(bitmap[i]).toBeInstanceOf(RoaringBitmap32)
@@ -36,7 +40,10 @@ describe('RoaringBitmap32 deserializeParallelAsync', () => {
       })
 
       it('deserializes an empty buffer (non portable, explicit)', async () => {
-        const bitmap = await RoaringBitmap32.deserializeParallelAsync([Buffer.from([]), Buffer.from([]), Buffer.from([])], false)
+        const bitmap = await RoaringBitmap32.deserializeParallelAsync(
+          [Buffer.from([]), Buffer.from([]), Buffer.from([])],
+          false
+        )
         expect(bitmap).toHaveLength(3)
         for (let i = 0; i < 3; ++i) {
           expect(bitmap[i]).toBeInstanceOf(RoaringBitmap32)
@@ -45,7 +52,10 @@ describe('RoaringBitmap32 deserializeParallelAsync', () => {
       })
 
       it('deserializes an empty buffer (portable)', async () => {
-        const bitmap = await RoaringBitmap32.deserializeParallelAsync([Buffer.from([]), Buffer.from([]), Buffer.from([])], true)
+        const bitmap = await RoaringBitmap32.deserializeParallelAsync(
+          [Buffer.from([]), Buffer.from([]), Buffer.from([])],
+          true
+        )
         expect(bitmap).toHaveLength(3)
         for (let i = 0; i < 3; ++i) {
           expect(bitmap[i]).toBeInstanceOf(RoaringBitmap32)
@@ -64,7 +74,7 @@ describe('RoaringBitmap32 deserializeParallelAsync', () => {
         sources.push(new RoaringBitmap32(array))
       }
 
-      const result = await RoaringBitmap32.deserializeParallelAsync(sources.map(x => x.serialize()))
+      const result = await RoaringBitmap32.deserializeParallelAsync(sources.map((x) => x.serialize()))
       expect(result).toHaveLength(sources.length)
       for (let i = 0; i < sources.length; ++i) {
         expect(result[i].toArray()).toEqual(sources[i].toArray())
@@ -82,7 +92,7 @@ describe('RoaringBitmap32 deserializeParallelAsync', () => {
       }
 
       const result = await RoaringBitmap32.deserializeParallelAsync(
-        sources.map(x => x.serialize(true)),
+        sources.map((x) => x.serialize(true)),
         true
       )
       expect(result).toHaveLength(sources.length)

@@ -2,7 +2,7 @@
 
 /* eslint-disable node/no-unsupported-features/node-builtins */
 /* eslint-disable no-console */
-/*global gc*/
+/* global gc */
 
 gc()
 gc()

@@ -2,6 +2,7 @@
 #define __ROARING__H__
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,9 @@
 #define fprintf(...) ((void)0)
 
 #include "CRoaringUnityBuild/roaring.h"
+
+using namespace roaring;
+using namespace roaring::api;
 
 #define ROARING_VERSION_STRING_TOK(x, y) #x
 #define ROARING_VERSION_STRING_BUILD(x) ROARING_VERSION_STRING_TOK(x)

@@ -233,14 +233,14 @@ namespace v8utils {
       }
     }
 
-    if (_error != nullptr && result.IsEmpty()) {
+    if ((isError || _error != nullptr) && result.IsEmpty()) {
       isError = true;
-      v8::MaybeLocal<v8::String> message = v8::String::NewFromUtf8(isolate, _error, v8::NewStringType::kNormal);
+      v8::MaybeLocal<v8::String> message = v8::String::NewFromUtf8(isolate, _error ? _error : "Async generated an exception", v8::NewStringType::kNormal);
       result = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
     }
 
-    if (isError && _error == nullptr) {
-      _error = "Async generated an exception";
+    if (isError) {
+      return scope.Escape(isolate->ThrowException(result));
     }
 
     return scope.Escape(result);
@@ -284,7 +284,11 @@ namespace v8utils {
   void AsyncWorker::_complete(AsyncWorker * worker) {
     v8::Isolate * isolate = worker->isolate;
     _resolveOrReject(worker);
+#if NODE_MAJOR_VERSION > 13
+    isolate->PerformMicrotaskCheckpoint();
+#else
     isolate->RunMicrotasks();
+#endif
   }
 
   /////////////// ParallelAsyncWorker ///////////////
@@ -359,7 +363,11 @@ namespace v8utils {
     ParallelAsyncWorker * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker->_completed) {
+#if NODE_MAJOR_VERSION > 13
+      worker->isolate->PerformMicrotaskCheckpoint();
+#else
       worker->isolate->RunMicrotasks();
+#endif
       return;
     }
 
@@ -368,7 +376,11 @@ namespace v8utils {
       return;
     }
 
+#if NODE_MAJOR_VERSION > 13
+    worker->isolate->PerformMicrotaskCheckpoint();
+#else
     worker->isolate->RunMicrotasks();
+#endif
   }
 
 }  // namespace v8utils

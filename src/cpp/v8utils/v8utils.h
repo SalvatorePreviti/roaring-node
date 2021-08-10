@@ -7,6 +7,16 @@
 #include <cmath>
 #include <string>
 
+class NonCopyable {
+ protected:
+  constexpr NonCopyable() throw() = default;
+  ~NonCopyable() throw() = default;
+
+ private:
+  NonCopyable(const NonCopyable &) throw() = delete;
+  void operator=(const NonCopyable &) throw() = delete;
+};
+
 class JSTypes {
  public:
   static v8::Eternal<v8::Object> Array;
@@ -51,6 +61,9 @@ namespace v8utils {
   struct TypedArrayContent {
     size_t length;
     T * data;
+#if NODE_MAJOR_VERSION > 13
+    std::shared_ptr<v8::BackingStore> backingStore;
+#endif
 
     inline TypedArrayContent() : length(0), data(nullptr) {
     }
@@ -71,7 +84,12 @@ namespace v8utils {
       if (!from.IsEmpty() && from->IsArrayBufferView()) {
         v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
         this->length = array->ByteLength() / sizeof(T);
+#if NODE_MAJOR_VERSION > 13
+        this->backingStore = array->Buffer()->GetBackingStore();
+        this->data = (T *)((char *)(this->backingStore->Data()) + array->ByteOffset());
+#else
         this->data = (T *)((char *)(array->Buffer()->GetContents().Data()) + array->ByteOffset());
+#endif
         return true;
       }
 
