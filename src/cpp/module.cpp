@@ -1,5 +1,6 @@
 #include "roaring.h"
 
+#include <stdio.h>
 #include "RoaringBitmap32/RoaringBitmap32.h"
 #include "RoaringBitmap32BufferedIterator/RoaringBitmap32BufferedIterator.h"
 
@@ -18,8 +19,11 @@ void InitModule(v8::Local<v8::Object> exports) {
   v8utils::defineHiddenFunction(isolate, exports, "_initTypes", initTypes);
   v8utils::defineHiddenField(isolate, exports, "default", exports);
 
+  char version[32];
+  snprintf(version, 32, "%d.%d.%d", ROARING_VERSION_MAJOR, ROARING_VERSION_MINOR, ROARING_VERSION_REVISION);
+
   v8utils::defineReadonlyField(
-      isolate, exports, "CRoaringVersion", v8::String::NewFromUtf8(isolate, ROARING_VERSION_STRING, v8::NewStringType::kInternalized).ToLocalChecked());
+      isolate, exports, "CRoaringVersion", v8::String::NewFromUtf8(isolate, version, v8::NewStringType::kInternalized).ToLocalChecked());
 
   RoaringBitmap32::Init(exports);
   RoaringBitmap32BufferedIterator::Init(exports);

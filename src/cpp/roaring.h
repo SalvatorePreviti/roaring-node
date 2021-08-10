@@ -15,9 +15,6 @@
 using namespace roaring;
 using namespace roaring::api;
 
-#define ROARING_VERSION_STRING_TOK(x) #x
-#define ROARING_VERSION_STRING ROARING_VERSION_STRING_TOK(ROARING_VERSION)
-
 #undef printf
 #undef fprintf
 
