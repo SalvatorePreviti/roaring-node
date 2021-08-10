@@ -73,9 +73,9 @@ for (const value of bitmap3) {
 }
 console.log('iterated:', iterated)
 
-const serialized = bitmap3.serialize()
+const serialized = bitmap3.serialize(false)
 console.log('serialized:', serialized.toString('base64'))
-console.log('deserialized:', RoaringBitmap32.deserialize(serialized).toArray())
+console.log('deserialized:', RoaringBitmap32.deserialize(serialized, false).toArray())
 ```
 
 # Development, local building
