@@ -4,7 +4,7 @@
             "target_name": "roaring",
             "default_configuration": "Release",
             "cflags": ["-O3", "-std=c11", "-fPIC"],
-            "cflags_cc": ["-O3", "-std=c++11", "-fPIC"],
+            "cflags_cc": ["-O3", "-std=c++latest", "-fPIC"],
             "sources": [
                 "src/cpp/roaring.cpp",
                 "src/cpp/module.cpp",

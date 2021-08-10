@@ -23,4 +23,4 @@ matrix:
     - os: linux
 
 node_js:
-  - '14'
+  - '16'
