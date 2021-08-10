@@ -1,5 +1,4 @@
 #include "v8utils.h"
-#include <iostream>
 #include "atomic.h"
 
 /////////////// JSTypes ///////////////

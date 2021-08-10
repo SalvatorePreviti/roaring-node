@@ -2,8 +2,8 @@
 #define __ROARINGBITMAP32__H__
 
 #include <cmath>
-#include "../roaring.h"
-#include "../v8utils/v8utils.h"
+#include "roaring.h"
+#include "v8utils/v8utils.h"
 
 class RoaringBitmap32;
 
