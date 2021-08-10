@@ -8,6 +8,9 @@ args.push('-t', '10.0.0')
 args.push('-t', '11.0.0')
 args.push('-t', '12.0.0')
 args.push('-t', '13.0.0')
+args.push('-t', '14.0.0')
+args.push('-t', '15.0.0')
+args.push('-t', '16.0.0')
 
 if (process.env.PREBUILD_GITHUB_TOKEN) {
   args.push('-u', process.env.PREBUILD_GITHUB_TOKEN)
