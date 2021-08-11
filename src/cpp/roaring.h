@@ -7,15 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#define printf(...) ((void)0)
-//#define fprintf(...) ((void)0)
+#ifndef __cplusplus
+# define __cplusplus 1
+#endif
 
 #include "CRoaringUnityBuild/roaring.h"
 
 using namespace roaring;
 using namespace roaring::api;
-
-#undef printf
-#undef fprintf
 
 #endif

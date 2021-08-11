@@ -21,6 +21,7 @@ matrix:
       osx_image: xcode12.5
 
     - os: linux
+      compiler: clang
 
 node_js:
   - '16'

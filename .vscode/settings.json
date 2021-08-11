@@ -146,6 +146,7 @@
     "roaring.h": "c",
     "clocale": "cpp",
     "__functional_03": "cpp",
-    "memory_resource": "cpp"
+    "memory_resource": "cpp",
+    "roaring.c": "cpp"
   }
 }
