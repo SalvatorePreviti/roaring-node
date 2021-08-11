@@ -1,5 +1,3 @@
-sudo: false
-
 branches:
   only: deploy
 
@@ -14,15 +12,18 @@ script:
   - npm test
   - node ./scripts/prebuild
 
-matrix:
+jobs:
   include:
-    #- os: osx
-    #  osx_image: xcode12.5
-    #
-    #- os: linux
-    #  dist: bionic
-
     - os: windows
+      language: cpp
+      install:
+        - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+      env:
+        - MSBUILD_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
+    - os: osx
+      osx_image: xcode12.5
+    - os: linux
+      dist: bionic
 
 node_js:
   - '16'
