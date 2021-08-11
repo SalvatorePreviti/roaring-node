@@ -5,6 +5,9 @@
 #include "roaring.h"
 #include "v8utils/v8utils.h"
 
+using namespace roaring;
+using namespace roaring::api;
+
 class RoaringBitmap32;
 
 typedef roaring_bitmap_t * roaring_bitmap_t_ptr;

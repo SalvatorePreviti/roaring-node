@@ -14,7 +14,4 @@
 
 #include "CRoaringUnityBuild/roaring.h"
 
-using namespace roaring;
-using namespace roaring::api;
-
 #endif

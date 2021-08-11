@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+const chalk = require('chalk')
+
 const args = []
 args.push(process.argv[0])
 args.push('-t', '8.0.0')
@@ -12,8 +14,14 @@ args.push('-t', '14.0.0')
 args.push('-t', '15.0.0')
 args.push('-t', '16.0.0')
 
-if (process.env.PREBUILD_GITHUB_TOKEN) {
-  args.push('-u', process.env.PREBUILD_GITHUB_TOKEN)
+const token = process.argv[2] || process.env.PREBUILD_GITHUB_TOKEN
+
+if (token) {
+  console.log(`${chalk.yellowBright('WARNING:')} ${chalk.redBright('\npublish binaries enabled\n')}`)
+
+  args.push('-u', token)
+} else {
+  console.log(chalk.greenBright('\nnot publishing binaries\n'))
 }
 
 for (let i = 2; i < process.argv.length; ++i) {
