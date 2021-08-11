@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include "roaring.h"
+
 #include "RoaringBitmap32.h"
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
@@ -1886,3 +1888,22 @@ void RoaringBitmap32BufferedIterator::WeakCallback(v8::WeakCallbackInfo<RoaringB
   RoaringBitmap32BufferedIterator * p = info.GetParameter();
   delete p;
 }
+
+/////////////////// ROARING LIBRARY ///////////////////
+
+#define printf(...) ((void)0)
+#define fprintf(...) ((void)0)
+
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wunused-variable"
+#endif
+
+#include "CRoaringUnityBuild/roaring.c"
+
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
+#undef printf
+#undef fprintf

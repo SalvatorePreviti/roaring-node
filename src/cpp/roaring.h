@@ -1,5 +1,5 @@
-#ifndef __ROARING__H__
-#define __ROARING__H__
+#ifndef __SP_ROARING__H__
+#define __SP_ROARING__H__
 
 #include <assert.h>
 #include <stddef.h>

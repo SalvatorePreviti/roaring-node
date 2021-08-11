@@ -6,8 +6,7 @@
             "cflags_cc": ["-O3", "-std=c++14"],
             "sources": [
                 "src/cpp/v8utils/v8utils.cpp",
-                "src/cpp/RoaringBitmap32.cpp",
-                "src/cpp/roaring.cpp",
+                "src/cpp/RoaringBitmap32.cpp"
             ],
             "conditions": [
                 [
