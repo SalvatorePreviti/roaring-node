@@ -17,10 +17,11 @@ script:
 
 matrix:
   include:
-    - os: osx
-      osx_image: xcode12.5
-
+    #  - os: osx
+    #    osx_image: xcode12.5
+    #
     - os: linux
+      dist: bionic
       compiler: clang
 
 node_js:
