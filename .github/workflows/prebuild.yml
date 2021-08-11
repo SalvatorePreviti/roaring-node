@@ -1,0 +1,50 @@
+name: Prebuild Binaries
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  prebuild-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - run: sudo apt-get install g++-multilib
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - uses: actions/checkout@v1
+      - run: git submodule -q update --init
+      - run: npm install
+      - run: npm test
+      - run: node ./scripts/prebuild ${{ secrets.GITHUB_TOKEN }}
+
+  prebuild-macos:
+    name: macOS
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - uses: actions/checkout@v1
+      - run: git submodule -q update --init
+      - run: npm install
+      - run: npm test
+      - run: node ./scripts/prebuild ${{ secrets.GITHUB_TOKEN }}
+
+  prebuild-windows:
+    name: Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - uses: actions/checkout@v1
+      - run: git submodule -q update --init
+      - run: npm install
+      - run: npm test
+      - run: node ./scripts/prebuild ${{ secrets.GITHUB_TOKEN }}
