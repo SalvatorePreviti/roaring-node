@@ -60,7 +60,11 @@ class BenchSuite {
       let b
 
       if (typeof fn === 'function') {
-        Object.defineProperty(fn, 'name', { value: `${this.name}:${fn.name || name}`, configurable: true, writable: true })
+        Object.defineProperty(fn, 'name', {
+          value: `${this.name}:${fn.name || name}`,
+          configurable: true,
+          writable: true
+        })
         b = new Benchmark({ name, fn, async: false })
       } else {
         b = new Benchmark({ name, fn: fn.fn, async: false })
@@ -145,7 +149,7 @@ module.exports = {
   },
 
   async run() {
-    for (const suite of suitesDeclarations.slice().sort(x => x.name)) {
+    for (const suite of suitesDeclarations.slice().sort((x) => x.name)) {
       await runSuite(suite)
     }
   }

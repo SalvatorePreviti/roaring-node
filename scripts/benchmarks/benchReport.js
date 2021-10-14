@@ -14,7 +14,9 @@ function printBenchError(suiteName, bench, error) {
     '\n',
     chalk.red('-'),
     chalk.yellowBright(
-      `Suite ${chalk.yellow.bold.italic(suiteName)}${bench ? `Benchmark ${chalk.yellow.bold.italic(bench.name)}` : ''} failed`
+      `Suite ${chalk.yellow.bold.italic(suiteName)}${
+        bench ? `Benchmark ${chalk.yellow.bold.italic(bench.name)}` : ''
+      } failed`
     ),
     '-',
     chalk.redBright(error)

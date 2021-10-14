@@ -18,9 +18,7 @@ function promiseMap(collection, functor, concurrency) {
         return false
       }
 
-      Promise.resolve(functor(current.value, index))
-        .then(onResolved)
-        .catch(onRejected)
+      Promise.resolve(functor(current.value, index)).then(onResolved).catch(onRejected)
       index++
       running++
       return true

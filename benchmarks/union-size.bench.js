@@ -6,7 +6,7 @@ const FastBitSet = require('fastbitset')
 
 const N = 512 * 512
 
-bench.suite('union size', suite => {
+bench.suite('union size', (suite) => {
   suite.detail(`${N} elements`)
 
   const b1 = new Uint32Array(N)
