@@ -89,17 +89,19 @@ function iterator() {
   return new RoaringBitmap32Iterator(this)
 }
 
-const roaringBitmap32Proto = RoaringBitmap32.prototype
-roaringBitmap32Proto[Symbol.iterator] = iterator
-roaringBitmap32Proto.iterator = iterator
+if (!roaring.PackageVersion) {
+  const roaringBitmap32Proto = RoaringBitmap32.prototype
+  roaringBitmap32Proto[Symbol.iterator] = iterator
+  roaringBitmap32Proto.iterator = iterator
 
-roaring.Promise = Promise
-roaring.RoaringBitmap32Iterator = RoaringBitmap32Iterator
-roaring.PackageVersion = packageVersion
+  roaring.Promise = Promise
+  roaring.RoaringBitmap32Iterator = RoaringBitmap32Iterator
+  roaring.PackageVersion = packageVersion
 
-roaring._initTypes({
-  Set,
-  Array,
-  Buffer,
-  Uint32Array: _Uint32Array
-})
+  roaring._initTypes({
+    Set,
+    Array,
+    Buffer,
+    Uint32Array: _Uint32Array
+  })
+}
