@@ -4,13 +4,8 @@ const { version: packageVersion } = require('./package.json')
 module.exports = roaring
 
 const { defineProperty } = Reflect
-const _Uint32Array = Uint32Array
 
 const { RoaringBitmap32, RoaringBitmap32BufferedIterator } = roaring
-
-const throwInvalidBitmap = () => {
-  throw new TypeError('RoaringBitmap32Iterator constructor expects a RoaringBitmap32 instance')
-}
 
 class RoaringBitmap32IteratorResult {
   constructor() {
@@ -26,15 +21,27 @@ class RoaringBitmap32Iterator {
     let i = 0
     let n = 0
 
+    if (!(bitmap instanceof RoaringBitmap32)) {
+      if (bitmap === undefined || bitmap === null) {
+        t = null
+      } else {
+        throw new TypeError('RoaringBitmap32Iterator constructor expects a RoaringBitmap32 instance')
+      }
+    }
+
+    const init = () => {
+      if (typeof buffer === 'number') {
+        buffer = new Uint32Array(buffer)
+      }
+      t = new RoaringBitmap32BufferedIterator(bitmap, buffer)
+      n = t.n
+      r.done = false
+    }
+
     const m = () => {
       if (t !== null) {
         if (t === undefined) {
-          if (typeof buffer === 'number') {
-            buffer = new _Uint32Array(buffer)
-          }
-          t = new RoaringBitmap32BufferedIterator(bitmap, buffer)
-          n = t.n
-          r.done = false
+          init()
         } else {
           n = t.fill()
         }
@@ -59,14 +66,6 @@ class RoaringBitmap32Iterator {
         m()
       }
       return r
-    }
-
-    if (!(bitmap instanceof RoaringBitmap32)) {
-      if (bitmap === undefined || bitmap === null) {
-        t = null
-      } else {
-        throwInvalidBitmap()
-      }
     }
   }
 
@@ -102,6 +101,6 @@ if (!roaring.PackageVersion) {
     Set,
     Array,
     Buffer,
-    Uint32Array: _Uint32Array
+    Uint32Array
   })
 }
