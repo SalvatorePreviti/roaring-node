@@ -85,9 +85,18 @@ Clone the repository and install all the dependencies
 ```
 git clone https://github.com/SalvatorePreviti/roaring-node.git
 
-git submodule update --init --recursive
+cd roaring-node
 
 npm install
+```
+
+# To rebuild the roaring unity build updating to the latest version
+
+```
+./scripts/update-roaring.sh
+
+npm run recompile
+
 ```
 
 ### To rebuild the C++ sources
