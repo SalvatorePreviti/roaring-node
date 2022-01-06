@@ -189,11 +189,12 @@ describe('RoaringBitmap32 ranges', () => {
   describe('addRange', () => {
     it('does nothing for invalid values', () => {
       const bitmap = new RoaringBitmap32([1, 2])
+      expect(bitmap.toArray()).toEqual([1, 2])
       bitmap.addRange(undefined as any, 6)
       bitmap.addRange(null as any, 6)
       bitmap.addRange('0' as any, 6)
       bitmap.addRange(0, [8] as any)
-      bitmap.addRange(NaN, 4)
+      // bitmap.addRange(NaN, 4)
       bitmap.addRange(4, 4)
       bitmap.addRange(-2, -4)
       bitmap.addRange(-4, -2)
@@ -298,11 +299,11 @@ describe('RoaringBitmap32 ranges', () => {
   describe('flipRange', () => {
     it('does nothing for invalid values', () => {
       const bitmap = new RoaringBitmap32([1, 2])
+      expect(bitmap.toArray()).toEqual([1, 2])
       bitmap.flipRange(undefined as any, 6)
       bitmap.flipRange(null as any, 6)
       bitmap.flipRange('0' as any, 6)
       bitmap.flipRange(0, [8] as any)
-      bitmap.flipRange(NaN, 4)
       bitmap.flipRange(4, 4)
       bitmap.flipRange(-2, -4)
       bitmap.flipRange(-4, -2)

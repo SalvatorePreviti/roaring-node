@@ -2,20 +2,8 @@
 #define __V8UTILS__H__
 
 #include <node.h>
+
 #include <uv.h>
-#include <algorithm>
-#include <cmath>
-#include <string>
-
-class NonCopyable {
- protected:
-  constexpr NonCopyable() throw() = default;
-  ~NonCopyable() throw() = default;
-
- private:
-  NonCopyable(const NonCopyable &) throw() = delete;
-  void operator=(const NonCopyable &) throw() = delete;
-};
 
 class JSTypes {
  public:
@@ -42,20 +30,19 @@ namespace v8utils {
   uint32_t getCpusCount();
 
   template <typename T>
-  inline void ignoreMaybeResult(v8::Maybe<T>) {
-  }
+  inline void ignoreMaybeResult(v8::Maybe<T>) {}
 
   void throwError(v8::Isolate * isolate, const char * message);
 
   void throwTypeError(v8::Isolate * isolate, const char * message);
 
-  inline void throwTypeError(v8::Isolate * isolate, const std::string & message) {
-    throwTypeError(isolate, message.c_str());
-  }
+  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message);
 
   void defineHiddenField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
-  void defineReadonlyField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
-  void defineHiddenFunction(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback);
+  void defineReadonlyField(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value);
+  void defineHiddenFunction(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback);
 
   template <typename T>
   struct TypedArrayContent {
@@ -66,15 +53,11 @@ namespace v8utils {
     std::shared_ptr<v8::BackingStore> backingStore;
 #endif
 
-    inline TypedArrayContent() : length(0), data(nullptr) {
-    }
+    inline TypedArrayContent() : length(0), data(nullptr) {}
 
-    inline TypedArrayContent(TypedArrayContent<T> & copy) : length(copy.length), data(copy.data) {
-    }
+    inline TypedArrayContent(TypedArrayContent<T> & copy) : length(copy.length), data(copy.data) {}
 
-    inline TypedArrayContent(v8::Local<v8::Value> from) {
-      set(from);
-    }
+    inline TypedArrayContent(v8::Local<v8::Value> from) { set(from); }
 
     inline void reset() {
       this->length = 0;
@@ -108,7 +91,7 @@ namespace v8utils {
   class ObjectWrap {
    public:
     template <class T>
-    inline static T * Unwrap(v8::Local<v8::Object> object) {
+    static T * Unwrap(v8::Local<v8::Object> object) {
       return (T *)(object->GetAlignedPointerFromInternalField(0));
     }
 
@@ -122,33 +105,49 @@ namespace v8utils {
     }
 
     template <class T>
-    static T * TryUnwrap(const v8::Local<v8::Value> & value, const v8::Local<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
-      return !ctorTemplate.IsEmpty() && ctorTemplate->HasInstance(value) ? ObjectWrap::TryUnwrap<T>(value, isolate) : nullptr;
+    static T * TryUnwrap(
+      const v8::Local<v8::Value> & value, const v8::Local<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
+      return !ctorTemplate.IsEmpty() && ctorTemplate->HasInstance(value) ? ObjectWrap::TryUnwrap<T>(value, isolate)
+                                                                         : nullptr;
     }
 
     template <class T>
-    static T * TryUnwrap(const v8::Local<v8::Value> & value, const v8::Persistent<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
+    static T * TryUnwrap(
+      const v8::Local<v8::Value> & value, const v8::Persistent<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
       return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
     }
 
     template <class T>
-    static T * TryUnwrap(const v8::Local<v8::Value> & value, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
+    static T * TryUnwrap(
+      const v8::Local<v8::Value> & value, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
       return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
     }
 
     template <class T>
-    static T * TryUnwrap(const v8::FunctionCallbackInfo<v8::Value> & info, int argumentIndex, const v8::Local<v8::FunctionTemplate> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
+    static T * TryUnwrap(
+      const v8::FunctionCallbackInfo<v8::Value> & info,
+      int argumentIndex,
+      const v8::Local<v8::FunctionTemplate> & ctorTemplate) {
+      return info.Length() <= argumentIndex ? nullptr
+                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
     }
 
     template <class T>
-    static T * TryUnwrap(const v8::FunctionCallbackInfo<v8::Value> & info, int argumentIndex, const v8::Persistent<v8::FunctionTemplate> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
+    static T * TryUnwrap(
+      const v8::FunctionCallbackInfo<v8::Value> & info,
+      int argumentIndex,
+      const v8::Persistent<v8::FunctionTemplate> & ctorTemplate) {
+      return info.Length() <= argumentIndex ? nullptr
+                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
     }
 
     template <class T>
-    static T * TryUnwrap(const v8::FunctionCallbackInfo<v8::Value> & info, int argumentIndex, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
+    static T * TryUnwrap(
+      const v8::FunctionCallbackInfo<v8::Value> & info,
+      int argumentIndex,
+      const v8::Eternal<v8::FunctionTemplate> & ctorTemplate) {
+      return info.Length() <= argumentIndex ? nullptr
+                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
     }
   };
 
@@ -164,9 +163,7 @@ namespace v8utils {
 
     bool setCallback(v8::Local<v8::Value> callback);
 
-    inline bool hasError() const {
-      return this->_error != nullptr;
-    }
+    inline bool hasError() const { return this->_error != nullptr; }
 
     inline void setError(const_char_ptr_t error) {
       if (error != nullptr && this->_error == nullptr) {
@@ -174,9 +171,7 @@ namespace v8utils {
       }
     }
 
-    inline void clearError() {
-      this->_error = nullptr;
-    }
+    inline void clearError() { this->_error = nullptr; }
 
     static v8::Local<v8::Value> run(AsyncWorker * worker);
 
@@ -187,9 +182,7 @@ namespace v8utils {
     // Called after the thread completes without errors.
     virtual v8::Local<v8::Value> done();
 
-    inline v8::Local<v8::Value> empty() const {
-      return v8::Local<v8::Value>();
-    }
+    inline v8::Local<v8::Value> empty() const { return v8::Local<v8::Value>(); }
 
    private:
     uv_work_t _task;

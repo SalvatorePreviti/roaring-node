@@ -1,8 +1,6 @@
 #ifndef __ROARINGBITMAP32__H__
 #define __ROARINGBITMAP32__H__
 
-#include <cmath>
-#include "roaring.h"
 #include "v8utils/v8utils.h"
 
 using namespace roaring;
@@ -17,19 +15,17 @@ struct DeserializeResult {
   const char * error;
 
   inline explicit DeserializeResult(roaring_bitmap_t_ptr bitmap, const char * error = nullptr) :
-      bitmap(bitmap), error(bitmap ? nullptr : (error ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {
-  }
+    bitmap(bitmap),
+    error(bitmap ? nullptr : (error ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {}
 };
 
-class RoaringBitmap32 : NonCopyable {
+class RoaringBitmap32 {
  public:
   roaring_bitmap_t * roaring;
   uint64_t version;
   v8::Persistent<v8::Object> persistent;
 
-  inline void invalidate() {
-    ++version;
-  }
+  inline void invalidate() { ++version; }
 
   inline bool replaceBitmapInstance(roaring_bitmap_t * newInstance) {
     if (this->roaring != newInstance) {
