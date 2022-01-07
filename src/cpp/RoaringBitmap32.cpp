@@ -490,8 +490,10 @@ void RoaringBitmap32::toString(const v8::FunctionCallbackInfo<v8::Value> & info)
 
   RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
 
+  double cardinality = self ? (double)roaring_bitmap_get_cardinality(self->roaring) : 0.;
+
   char buf[32];
-  snprintf(buf, sizeof(buf), "RoaringBitmap32:%llu", self ? roaring_bitmap_get_cardinality(self->roaring) : 0UL);
+  snprintf(buf, sizeof(buf), "RoaringBitmap32:%g", cardinality);
 
   auto returnValue = v8::String::NewFromUtf8(isolate, buf, v8::NewStringType::kNormal);
   if (returnValue.IsEmpty()) {
