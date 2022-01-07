@@ -200,3 +200,76 @@ NodeJS   : v10.5.0 - V8 v6.7.288.46-node.8
 
 * completed: 53610.279ms
 ```
+
+Works also on M1
+
+```
+Platform : Darwin 21.1.0 arm64
+CPU      : Apple M1 Pro
+Cores    : 10 physical - 10 logical
+Memory   : 16.00 GB
+NodeJS   : v16.13.1 - V8 v9.4.146.24-node.14
+
+* running 8 files...
+
+• suite union (in place)
+  65536 elements
+  ✔ Set                    456.60 ops/sec  ±1.88%  77 runs  -99.97%
+  ✔ FastBitSet         232,794.03 ops/sec  ±0.94%  91 runs  -86.52%
+  ✔ RoaringBitmap32  1,727,310.24 ops/sec  ±1.12%  95 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite intersection size
+  262144 elements
+  ✔ Set                   71.20 ops/sec  ±2.30%  62 runs  -99.98%
+  ✔ FastBitSet        21,525.29 ops/sec  ±0.71%  97 runs  -93.72%
+  ✔ RoaringBitmap32  342,892.37 ops/sec  ±0.93%  95 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite intersection (in place)
+  65536 elements
+  ✔ Set                    280.62 ops/sec  ±1.66%  76 runs  -99.97%
+  ✔ FastBitSet         136,148.03 ops/sec  ±0.56%  96 runs  -87.11%
+  ✔ RoaringBitmap32  1,055,978.14 ops/sec  ±1.16%  92 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite union size
+  262144 elements
+  ✔ Set                   37.95 ops/sec  ±2.33%  51 runs  -99.99%
+  ✔ FastBitSet        12,111.37 ops/sec  ±0.67%  96 runs  -96.35%
+  ✔ RoaringBitmap32  331,510.04 ops/sec  ±1.02%  95 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite intersection (new)
+  1048576 elements
+  ✔ Set                  6.54 ops/sec  ±5.41%  21 runs  -99.93%
+  ✔ FastBitSet       2,087.94 ops/sec  ±5.23%  42 runs  -78.88%
+  ✔ RoaringBitmap32  9,888.24 ops/sec  ±1.77%  51 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite union (new)
+  1048576 elements
+  ✔ Set                  3.80 ops/sec  ±7.91%  14 runs  -99.93%
+  ✔ FastBitSet       1,693.77 ops/sec  ±3.90%  64 runs  -70.63%
+  ✔ RoaringBitmap32  5,767.35 ops/sec  ±1.74%  51 runs  fastest
+  ➔ Fastest is RoaringBitmap32
+
+• suite iterator
+  65536 elements
+  ✔ Set.iterator              10,033.75 ops/sec  ±1.40%  92 runs  fastest
+  ✔ Set.forEach                1,595.08 ops/sec  ±2.02%  89 runs  -84.10%
+  ✔ RoaringBitmap32.iterator   2,879.57 ops/sec  ±1.06%  93 runs  -71.30%
+  ✔ RoaringBitmap32.forEach    1,764.98 ops/sec  ±0.68%  97 runs  -82.41%
+  ➔ Fastest is Set.iterator
+
+• suite add
+  65535 elements
+  ✔ Set.add                                508.76 ops/sec  ±1.27%   86 runs  -91.37%
+  ✔ RoaringBitmap32.tryAdd                 707.70 ops/sec  ±0.81%   96 runs  -87.99%
+  ✔ RoaringBitmap32.add                    699.27 ops/sec  ±1.08%   90 runs  -88.13%
+  ✔ RoaringBitmap32.addMany Array        4,457.70 ops/sec  ±0.54%   90 runs  -24.35%
+  ✔ RoaringBitmap32.addMany Uint32Array  5,892.57 ops/sec  ±0.07%  101 runs  fastest
+  ➔ Fastest is RoaringBitmap32.addMany Uint32Array
+
+
+* completed: 27.170s```
