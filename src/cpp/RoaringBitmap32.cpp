@@ -12,12 +12,17 @@
 #define printf(...) ((void)0)
 #define fprintf(...) ((void)0)
 
+#include "RoaringBitmap32.h"
+
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 
-#include "RoaringBitmap32.h"
+#ifdef small
+#  undef small  // on windows this seems to be defined to something...
+#endif
+
 #include "CRoaringUnityBuild/roaring.c"
 
 #if defined(__clang__)
