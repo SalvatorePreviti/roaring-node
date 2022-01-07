@@ -41,6 +41,21 @@
     "source.fixAll": true,
     "source.fixAll.eslint": true
   },
+  "[c]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "clang-tidy.blacklist": ["src/cpp/CRoaringUnityBuild", "submodules"],
+  "clang-tidy.fixOnSave": true,
+  "clang-tidy.compilerArgs": [
+    "-std=c++14",
+    "-I/usr/local/include",
+    "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
+    "-I/usr/local/include/node",
+    "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"
+  ],
   "editor.detectIndentation": false,
   "editor.formatOnSave": true,
   "editor.lineNumbers": "on",
@@ -53,28 +68,5 @@
   "javascript.format.semicolons": "remove",
   "typescript.format.enable": true,
   "typescript.format.semicolons": "remove",
-  "files.eol": "\n",
-  "files.exclude": {
-    "**/.git": true,
-    "**/.svn": true,
-    "**/.hg": true,
-    "**/CVS": true,
-    "**/.DS_Store": true,
-    "**/.eslintcache": true,
-    "**/.prettiercache": true,
-    "**/.cache": true,
-    "**/.fuse_hidden*": true
-  },
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/bower_components": true,
-    "**/package-lock.json": true,
-    "**/yarn.lock": true,
-    "**/.fusebox/**/*": true,
-    "**/.webpack": true,
-    "**/.dynamodb/**/*": true,
-    "**/*.tsbuildinfo": true,
-    "**/.yarn-integrity": true,
-    "**/.grunt": true
-  }
+  "files.eol": "\n"
 }

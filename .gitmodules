@@ -1,6 +1,3 @@
-[submodule "src/cpp/CRoaringUnityBuild"]
-	path = src/cpp/CRoaringUnityBuild
-	url = https://github.com/lemire/CRoaringUnityBuild
-[submodule "src/-f"]
-	path = src/-f
-	url = https://github.com/lemire/CRoaringUnityBuild
+[submodule "submodules/CRoaring"]
+	path = submodules/CRoaring
+	url = https://github.com/RoaringBitmap/CRoaring.git

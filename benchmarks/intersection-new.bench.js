@@ -6,7 +6,7 @@ const FastBitSet = require('fastbitset')
 
 const N = 1024 * 1024
 
-bench.suite('intersection (new)', suite => {
+bench.suite('intersection (new)', (suite) => {
   suite.detail(`${N} elements`)
 
   suite.scope(() => {

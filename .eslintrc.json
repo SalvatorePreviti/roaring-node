@@ -15,15 +15,10 @@
   },
   "overrides": [
     {
-      "files": ["*.ts"],
-      "rules": {
-        "@typescript-eslint/no-throw-literal": 0
-      }
-    },
-    {
       "files": ["index.js"],
       "rules": {
-        "node/no-unpublished-require": 0
+        "node/no-unpublished-require": 0,
+        "import/no-unresolved": 0
       }
     }
   ]

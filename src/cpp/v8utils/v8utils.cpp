@@ -1,5 +1,12 @@
 #include "v8utils.h"
-#include "atomic.h"
+
+#ifdef _MSC_VER
+#  define atomicIncrement32(ptr) InterlockedIncrement(ptr)
+#  define atomicDecrement32(ptr) InterlockedDecrement(ptr)
+#else
+#  define atomicIncrement32(ptr) __sync_add_and_fetch(ptr, 1)
+#  define atomicDecrement32(ptr) __sync_sub_and_fetch(ptr, 1)
+#endif
 
 /////////////// JSTypes ///////////////
 
@@ -20,46 +27,57 @@ void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & g
   v8::HandleScope scope(isolate);
   auto context = isolate->GetCurrentContext();
 
-  auto uint32Array = global->Get(context, v8::String::NewFromUtf8(isolate, "Uint32Array", v8::NewStringType::kInternalized).ToLocalChecked())
-                         .ToLocalChecked()
-                         ->ToObject(context)
-                         .ToLocalChecked();
+  auto uint32Array =
+    global->Get(context, v8::String::NewFromUtf8(isolate, "Uint32Array", v8::NewStringType::kInternalized).ToLocalChecked())
+      .ToLocalChecked()
+      ->ToObject(context)
+      .ToLocalChecked();
 
   JSTypes::Uint32Array.Set(isolate, uint32Array);
   JSTypes::Uint32Array_ctor.Set(isolate, v8::Local<v8::Function>::Cast(uint32Array));
-  JSTypes::Uint32Array_from.Set(isolate,
-      v8::Local<v8::Function>::Cast(
-          uint32Array->Get(context, v8::String::NewFromUtf8(isolate, "from", v8::NewStringType::kInternalized).ToLocalChecked()).ToLocalChecked()));
+  JSTypes::Uint32Array_from.Set(
+    isolate,
+    v8::Local<v8::Function>::Cast(
+      uint32Array->Get(context, v8::String::NewFromUtf8(isolate, "from", v8::NewStringType::kInternalized).ToLocalChecked())
+        .ToLocalChecked()));
 
-  auto buffer = global->Get(context, v8::String::NewFromUtf8(isolate, "Buffer", v8::NewStringType::kInternalized).ToLocalChecked())
-                    .ToLocalChecked()
-                    ->ToObject(context)
-                    .ToLocalChecked();
+  auto buffer =
+    global->Get(context, v8::String::NewFromUtf8(isolate, "Buffer", v8::NewStringType::kInternalized).ToLocalChecked())
+      .ToLocalChecked()
+      ->ToObject(context)
+      .ToLocalChecked();
   JSTypes::Buffer.Set(isolate, buffer);
-  JSTypes::Buffer_allocUnsafe.Set(isolate,
-      v8::Local<v8::Function>::Cast(
-          buffer->Get(context, v8::String::NewFromUtf8(isolate, "allocUnsafe", v8::NewStringType::kInternalized).ToLocalChecked()).ToLocalChecked()));
+  JSTypes::Buffer_allocUnsafe.Set(
+    isolate,
+    v8::Local<v8::Function>::Cast(
+      buffer
+        ->Get(context, v8::String::NewFromUtf8(isolate, "allocUnsafe", v8::NewStringType::kInternalized).ToLocalChecked())
+        .ToLocalChecked()));
 
-  auto array = global->Get(context, v8::String::NewFromUtf8(isolate, "Array", v8::NewStringType::kInternalized).ToLocalChecked())
-                   .ToLocalChecked()
-                   ->ToObject(context)
-                   .ToLocalChecked();
+  auto array =
+    global->Get(context, v8::String::NewFromUtf8(isolate, "Array", v8::NewStringType::kInternalized).ToLocalChecked())
+      .ToLocalChecked()
+      ->ToObject(context)
+      .ToLocalChecked();
   JSTypes::Array.Set(isolate, array);
-  JSTypes::Array_from.Set(isolate,
-      v8::Local<v8::Function>::Cast(
-          array->Get(context, v8::String::NewFromUtf8(isolate, "from", v8::NewStringType::kInternalized).ToLocalChecked()).ToLocalChecked()));
+  JSTypes::Array_from.Set(
+    isolate,
+    v8::Local<v8::Function>::Cast(
+      array->Get(context, v8::String::NewFromUtf8(isolate, "from", v8::NewStringType::kInternalized).ToLocalChecked())
+        .ToLocalChecked()));
 
   auto set = global->Get(context, v8::String::NewFromUtf8(isolate, "Set", v8::NewStringType::kInternalized).ToLocalChecked())
-                 .ToLocalChecked()
-                 ->ToObject(context)
-                 .ToLocalChecked();
+               .ToLocalChecked()
+               ->ToObject(context)
+               .ToLocalChecked();
   JSTypes::Set.Set(isolate, set);
   JSTypes::Set_ctor.Set(isolate, v8::Local<v8::Function>::Cast(set));
 }
 
 v8::Local<v8::Value> JSTypes::bufferAllocUnsafe(v8::Isolate * isolate, size_t size) {
   v8::Local<v8::Value> argv[] = {v8::Number::New(isolate, (double)size)};
-  auto x = JSTypes::Buffer_allocUnsafe.Get(isolate)->Call(isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 1, argv);
+  auto x =
+    JSTypes::Buffer_allocUnsafe.Get(isolate)->Call(isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 1, argv);
   if (x.IsEmpty()) {
     v8utils::throwTypeError(isolate, "Cannot allocate Buffer");
     return v8::Null(isolate);
@@ -82,7 +100,7 @@ namespace v8utils {
     uv_cpu_info_t * tmp = nullptr;
     int count = 0;
     uv_cpu_info(&tmp, &count);
-    if (tmp) {
+    if (tmp != nullptr) {
       uv_free_cpu_info(tmp, count);
     }
     result = count <= 0 ? 1 : (uint32_t)count;
@@ -92,17 +110,30 @@ namespace v8utils {
 
   void throwError(v8::Isolate * isolate, const char * message) {
     v8::HandleScope scope(isolate);
-    auto msg = v8::String::NewFromUtf8(isolate, message ? message : "Operation failed", v8::NewStringType::kNormal);
+    auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
     isolate->ThrowException(v8::Exception::Error(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  void throwTypeError(v8::Isolate * isolate, const char * message) {
+  void throwTypeError(v8::Isolate * isolate, const char * /*message*/) {
     v8::HandleScope scope(isolate);
-    auto msg = v8::String::NewFromUtf8(isolate, message ? message : "Operation failed", v8::NewStringType::kNormal);
+    auto msg = v8::String::NewFromUtf8(isolate, "Operation failed", v8::NewStringType::kInternalized);
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  void defineHiddenField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
+  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message) {
+    v8::HandleScope scope(isolate);
+    auto a = v8::String::NewFromUtf8(isolate, context, v8::NewStringType::kInternalized);
+    auto b = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+#if NODE_MAJOR_VERSION > 10
+    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(isolate, a.ToLocalChecked(), b.ToLocalChecked());
+#else
+    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(a.ToLocalChecked(), b.ToLocalChecked());
+#endif
+    isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
+  }
+
+  void defineHiddenField(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
     v8::HandleScope scope(isolate);
     v8::PropertyDescriptor propertyDescriptor(value, false);
     propertyDescriptor.set_configurable(false);
@@ -110,11 +141,13 @@ namespace v8utils {
 
     auto nameMaybe = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized);
     if (!nameMaybe.IsEmpty()) {
-      ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), nameMaybe.ToLocalChecked(), propertyDescriptor));
+      ignoreMaybeResult(
+        target->DefineProperty(isolate->GetCurrentContext(), nameMaybe.ToLocalChecked(), propertyDescriptor));
     }
   }
 
-  void defineReadonlyField(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
+  void defineReadonlyField(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
     v8::HandleScope scope(isolate);
     v8::PropertyDescriptor propertyDescriptor(value, false);
     propertyDescriptor.set_configurable(false);
@@ -122,11 +155,13 @@ namespace v8utils {
 
     auto nameMaybe = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized);
     if (!nameMaybe.IsEmpty()) {
-      ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), nameMaybe.ToLocalChecked(), propertyDescriptor));
+      ignoreMaybeResult(
+        target->DefineProperty(isolate->GetCurrentContext(), nameMaybe.ToLocalChecked(), propertyDescriptor));
     }
   }
 
-  void defineHiddenFunction(v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback) {
+  void defineHiddenFunction(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback) {
     v8::HandleScope scope(isolate);
     v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
     t->SetClassName(v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked());
@@ -187,19 +222,17 @@ namespace v8utils {
     return returnValue;
   }
 
-  v8::Local<v8::Value> AsyncWorker::done() {
-    return v8::Local<v8::Value>();
-  }
+  v8::Local<v8::Value> AsyncWorker::done() { return {}; }
 
   void AsyncWorker::_work(uv_work_t * request) {
-    AsyncWorker * worker = static_cast<AsyncWorker *>(request->data);
+    auto * worker = static_cast<AsyncWorker *>(request->data);
     if (!worker->hasError()) {
       worker->work();
     }
   }
 
   void AsyncWorker::_done(uv_work_t * request, int status) {
-    AsyncWorker * worker = static_cast<AsyncWorker *>(request->data);
+    auto * worker = static_cast<AsyncWorker *>(request->data);
     if (status != 0) {
       worker->setError("Error executing async thread");
     }
@@ -293,14 +326,9 @@ namespace v8utils {
   /////////////// ParallelAsyncWorker ///////////////
 
   ParallelAsyncWorker::ParallelAsyncWorker(v8::Isolate * isolate) :
-      AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {
-  }
+    AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {}
 
-  ParallelAsyncWorker::~ParallelAsyncWorker() {
-    if (_tasks != nullptr) {
-      delete[] _tasks;
-    }
-  }
+  ParallelAsyncWorker::~ParallelAsyncWorker() { delete[] _tasks; }
 
   void ParallelAsyncWorker::work() {
     const uint32_t c = loopCount;
@@ -314,13 +342,13 @@ namespace v8utils {
       concurrency = getCpusCount();
     }
 
-    uint32_t tasksCount = std::min(concurrency, loopCount);
+    uint32_t tasksCount = concurrency < loopCount ? concurrency : loopCount;
 
     if (tasksCount <= 1) {
       return AsyncWorker::_start();
     }
 
-    uv_work_t * tasks = new uv_work_t[tasksCount]();
+    auto * tasks = new uv_work_t[tasksCount]();
     if (tasks == nullptr) {
       this->setError("Failed to allocate memory");
       return false;
@@ -333,19 +361,21 @@ namespace v8utils {
     }
 
     for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
-      if (uv_queue_work(uv_default_loop(), &tasks[taskIndex], ParallelAsyncWorker::_parallelWork, ParallelAsyncWorker::_parallelDone) != 0) {
+      if (
+        uv_queue_work(
+          uv_default_loop(), &tasks[taskIndex], ParallelAsyncWorker::_parallelWork, ParallelAsyncWorker::_parallelDone) !=
+        0) {
         setError("Error starting async parallel task");
         break;
-      } else {
-        ++_pendingTasks;
       }
+      ++_pendingTasks;
     }
 
     return _pendingTasks > 0;
   }
 
   void ParallelAsyncWorker::_parallelWork(uv_work_t * request) {
-    ParallelAsyncWorker * worker = static_cast<ParallelAsyncWorker *>(request->data);
+    auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     uint32_t loopCount = worker->loopCount;
     while (!worker->hasError() && !worker->_completed) {
@@ -358,8 +388,8 @@ namespace v8utils {
     }
   }
 
-  void ParallelAsyncWorker::_parallelDone(uv_work_t * request, int status) {
-    ParallelAsyncWorker * worker = static_cast<ParallelAsyncWorker *>(request->data);
+  void ParallelAsyncWorker::_parallelDone(uv_work_t * request, int /*status*/) {
+    auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker->_completed) {
 #if NODE_MAJOR_VERSION > 13

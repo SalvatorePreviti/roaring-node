@@ -3,9 +3,11 @@
         {
             "target_name": "roaring",
             "default_configuration": "Release",
-            "cflags_cc": ["-O3", "-std=c++14"],
+            "cflags_cc": ["-O3", "-std=c++14", "-mcpu=native", "-fno-rtti", "-fno-exceptions", "-fvisibility=hidden", "-flto", "-Wno-unused-command-line-argument"],
+            'xcode_settings': {
+                'OTHER_CFLAGS': ["-O3", "-std=c++14", "-mcpu=native", "-fno-rtti", "-fno-exceptions", "-fvisibility=hidden", "-flto", "-Wno-unused-command-line-argument"],
+            },
             "sources": [
-                "src/cpp/v8utils/v8utils.cpp",
                 "src/cpp/RoaringBitmap32.cpp"
             ],
             "conditions": [

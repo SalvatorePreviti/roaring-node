@@ -184,7 +184,11 @@ describe('RoaringBitmap32 static', () => {
 
   describe('static orMany', () => {
     it('orManys multiple bitmaps (spread arguments)', () => {
-      const bitmap = RoaringBitmap32.orMany(new RoaringBitmap32([3, 1, 2]), new RoaringBitmap32([1, 2, 4]), new RoaringBitmap32([1, 2, 6]))
+      const bitmap = RoaringBitmap32.orMany(
+        new RoaringBitmap32([3, 1, 2]),
+        new RoaringBitmap32([1, 2, 4]),
+        new RoaringBitmap32([1, 2, 6])
+      )
       expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 6])
     })
 

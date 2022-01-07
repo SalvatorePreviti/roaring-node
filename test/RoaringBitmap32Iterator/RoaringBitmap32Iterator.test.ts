@@ -254,7 +254,7 @@ describe('RoaringBitmap32Iterator', () => {
 
       function doNothing(_v: any) {}
 
-      let error
+      let error: any
       try {
         let n = 0
         for (const v of new RoaringBitmap32Iterator(bitmap, 256)) {

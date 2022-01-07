@@ -4,7 +4,7 @@ const roaring = require('../')
 const RoaringBitmap32 = roaring.RoaringBitmap32
 const N = 65535
 
-bench.suite('add', suite => {
+bench.suite('add', (suite) => {
   suite.detail(`${N} elements`)
 
   const data = new Uint32Array(N)

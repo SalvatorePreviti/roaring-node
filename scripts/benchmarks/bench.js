@@ -1,6 +1,8 @@
 const Benchmark = require('benchmark')
 const benchReport = require('./benchReport')
 
+const { defineProperty } = Reflect
+
 const suitesDeclarations = []
 
 function errorToString(error) {
@@ -60,7 +62,11 @@ class BenchSuite {
       let b
 
       if (typeof fn === 'function') {
-        Object.defineProperty(fn, 'name', { value: `${this.name}:${fn.name || name}`, configurable: true, writable: true })
+        defineProperty(fn, 'name', {
+          value: `${this.name}:${fn.name || name}`,
+          configurable: true,
+          writable: true
+        })
         b = new Benchmark({ name, fn, async: false })
       } else {
         b = new Benchmark({ name, fn: fn.fn, async: false })
@@ -139,13 +145,13 @@ module.exports = {
    */
   suite(name, fn) {
     if (!fn.name) {
-      Object.defineProperty(fn, 'name', { value: name, configurable: true, writable: true })
+      defineProperty(fn, 'name', { value: name, configurable: true, writable: true })
     }
     suitesDeclarations.push({ name, fn })
   },
 
   async run() {
-    for (const suite of suitesDeclarations.slice().sort(x => x.name)) {
+    for (const suite of suitesDeclarations.slice().sort((x) => x.name)) {
       await runSuite(suite)
     }
   }

@@ -1,0 +1,75 @@
+---
+Checks: '
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  hicpp-multiway-paths-covered,
+  hicpp-signed-bitwise,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  cppcoreguidelines-*,
+  modernize-avoid-c-arrays,
+  google-explicit-constructor,
+  -cert-dcl37-c,
+  -cert-dcl16-c,
+  -cert-dcl51-cpp,
+  -cert-dcl58-cpp,
+  -cert-err60-cpp,
+  -bugprone-reserved-identifier,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -readability-identifier-naming,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-owning-memory,
+  -readability-magic-numbers,
+  -modernize-use-trailing-return-type,
+  -readability-named-parameter,
+  -readability-function-cognitive-complexity,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-use-nodiscard,
+  -modernize-avoid-c-arrays,
+  -misc-no-recursion,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -misc-unused-using-decls,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -readability-braces-around-statements,
+  -cppcoreguidelines-no-malloc,
+  -cppcoreguidelines-pro-type-vararg,
+  -cert-err58-cpp,
+  -cppcoreguidelines-init-variables,
+  -modernize-loop-convert,
+  -cppcoreguidelines-macro-usage,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -cert-oop54-cpp,
+  -bugprone-suspicious-include,
+  -cppcoreguidelines-avoid-c-arrays,
+  -readability-isolate-declaration,
+  -cppcoreguidelines-special-member-functions,
+  -modernize-use-default-member-init,
+  -modernize-use-equals-default,
+  -cppcoreguidelines-pro-type-member-init,
+  -bugprone-branch-clone,
+  -misc-unused-parameters,
+  -modernize-use-using'
+
+WarningsAsErrors: ''
+AnalyzeTemporaryDtors: false
+InheritParentConfig: false
+
+CheckOptions:
+  - { key: hicpp-signed-bitwise.IgnorePositiveIntegerLiterals, value: true }
+  - { key: readability-braces-around-statements.ShortStatementLines, value: 1 }
+  - { key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor, value: true }
+  - { key: cppcoreguidelines-special-member-functions.AllowMissingMoveFunctions, value: true }
+  - { key: cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted, value: true }
+  - { key: modernize-use-override.IgnoreDestructors, value: 1 }
+
+---
+

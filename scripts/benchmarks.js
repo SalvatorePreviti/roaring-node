@@ -18,9 +18,9 @@ function listBenchFiles() {
       } else {
         resolve(
           files
-            .filter(file => file.endsWith('.bench.js'))
+            .filter((file) => file.endsWith('.bench.js'))
             .sort()
-            .map(file => {
+            .map((file) => {
               return path.join(folder, file)
             })
         )
@@ -38,7 +38,7 @@ function runBenchFileAsync(benchFile) {
 
     forked.on('error', reject)
 
-    forked.on('message', message => {
+    forked.on('message', (message) => {
       if (message && message.type === 'suiteReport') {
         spinner.clear()
         if (message.hasErrors) {
@@ -49,7 +49,7 @@ function runBenchFileAsync(benchFile) {
       }
     })
 
-    forked.on('exit', code => {
+    forked.on('exit', (code) => {
       if (code !== 0) {
         const error = new Error(`"${benchFile}" failed.`)
         error.stack = `Error: ${error.message}`
@@ -67,10 +67,16 @@ async function benchmarks() {
   let hasErrors = false
   try {
     const benchFiles = await listBenchFiles()
-    console.log(chalk.green('*'), chalk.greenBright('running'), chalk.cyanBright(benchFiles.length), chalk.greenBright('files...'), '\n')
+    console.log(
+      chalk.green('*'),
+      chalk.greenBright('running'),
+      chalk.cyanBright(benchFiles.length),
+      chalk.greenBright('files...'),
+      '\n'
+    )
     await promiseMap(
       benchFiles,
-      async benchFile => {
+      async (benchFile) => {
         if (!(await runBenchFileAsync(benchFile))) {
           hasErrors = true
         }
@@ -98,7 +104,7 @@ function run() {
       console.log()
       return true
     })
-    .catch(error => {
+    .catch((error) => {
       spinner.clear()
       console.error(chalk.red('*'), chalk.redBright('FAIL'), chalk.red('-'), error, '\n')
       if (!process.exitCode) {

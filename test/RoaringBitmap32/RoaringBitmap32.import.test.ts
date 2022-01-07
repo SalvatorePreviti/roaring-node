@@ -17,7 +17,7 @@ describe('RoaringBitmap32 import', () => {
   })
 
   it('can be called as a normal function', () => {
-    const bitmap = ((RoaringBitmap32 as any) as () => any)()
+    const bitmap = (RoaringBitmap32 as any as () => any)()
     expect(bitmap).toBeInstanceOf(RoaringBitmap32)
   })
 })
