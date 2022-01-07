@@ -4,6 +4,8 @@
 #include <cmath>
 #include <string>
 
+#include "RoaringBitmap32.h"
+
 /////////////////// unity build ///////////////////
 
 #include "v8utils/v8utils.cpp"
@@ -26,8 +28,6 @@
 #undef fprintf
 
 /////////////////// RoaringBitmap32 ///////////////////
-
-#include "RoaringBitmap32.h"
 
 #define MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES 0x00FFFFFF
 
