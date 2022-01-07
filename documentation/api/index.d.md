@@ -103,7 +103,7 @@ The iterator may throw exception if the bitmap is changed during the iteration.
 ### CRoaringVersion
 
 Property: The version of the CRoaring libary as a string.
-Example: "0.2.42"
+Example: "0.4.0"
 
 ```typescript
 var CRoaringVersion: string
@@ -118,7 +118,7 @@ string
 ### PackageVersion
 
 Property: The version of the roaring npm package as a string.
-Example: "0.2.2"
+Example: "1.2.0"
 
 ```typescript
 var PackageVersion: string

@@ -27,9 +27,51 @@ import roaring = require('./')
  * @implements {Iterable<number>}
  * @author Salvatore Previti
  */
-export class RoaringBitmap32 implements Iterable<number> {
+export class RoaringBitmap32 implements Set<number> {
   // Allows: import RoaringBitmap32 from 'roaring/RoaringBitmap32'
   private static readonly default: typeof RoaringBitmap32
+
+  /**
+   * Property: The version of the CRoaring libary as a string.
+   * Example: "0.4.0"
+   *
+   * @export
+   * @constant
+   * @type {string} The version of the CRoaring libary as a string. Example: "0.2.42"
+   */
+  public static readonly CRoaringVersion: string
+
+  /**
+   * Property: The version of the roaring npm package as a string.
+   * Example: "1.2.0"
+   *
+   * @export
+   * @constant
+   * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
+   */
+  public static readonly PackageVersion: string
+
+  /**
+   * Property: The version of the CRoaring libary as a string.
+   * Example: "0.4.0"
+   *
+   * @export
+   * @constant
+   * @type {string} The version of the CRoaring libary as a string. Example: "0.2.42"
+   * @memberof RoaringBitmap32
+   */
+  public readonly CRoaringVersion: string
+
+  /**
+   * Property: The version of the roaring npm package as a string.
+   * Example: "1.2.0"
+   *
+   * @export
+   * @constant
+   * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
+   * @memberof RoaringBitmap32
+   */
+  public readonly PackageVersion: string
 
   /**
    * Property. Gets the number of items in the set (cardinality).
@@ -336,7 +378,7 @@ export class RoaringBitmap32 implements Iterable<number> {
   public static xorMany(...values: RoaringBitmap32[]): RoaringBitmap32
 
   /**
-   * [Symbol.iterator]() Gets a new iterator able to iterate all values in the set in order.
+   * [Symbol.iterator]() Gets a new iterator able to iterate all values in the set in ascending order.
    *
    * WARNING: Is not allowed to change the bitmap while iterating.
    * The iterator may throw exception if the bitmap is changed during the iteration.
@@ -347,7 +389,7 @@ export class RoaringBitmap32 implements Iterable<number> {
   public [Symbol.iterator](): RoaringBitmap32Iterator
 
   /**
-   * Gets a new iterator able to iterate all values in the set in order.
+   * Gets a new iterator able to iterate all values in the set in ascending order.
    *
    * WARNING: Is not allowed to change the bitmap while iterating.
    * The iterator may throw exception if the bitmap is changed during the iteration.
@@ -358,6 +400,56 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @memberof RoaringBitmap32
    */
   public iterator(): RoaringBitmap32Iterator
+
+  /**
+   * Gets a new iterator able to iterate all values in the set in ascending order.
+   * This is just for compatibility with the Set<number> interface.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   * The iterator may throw exception if the bitmap is changed during the iteration.
+   *
+   * Same as [Symbol.iterator]()
+   *
+   * @returns {RoaringBitmap32Iterator} A new iterator
+   * @memberof RoaringBitmap32
+   */
+  public keys(): RoaringBitmap32Iterator
+
+  /**
+   * Gets a new iterator able to iterate all values in the set in ascending order.
+   * This is just for compatibility with the Set<number> interface.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   * The iterator may throw exception if the bitmap is changed during the iteration.
+   *
+   * Same as [Symbol.iterator]()
+   *
+   * @returns {RoaringBitmap32Iterator} A new iterator
+   * @memberof RoaringBitmap32
+   */
+  public values(): RoaringBitmap32Iterator
+
+  /**
+   * Gets a new iterator able to iterate all value pairs [value, value] in the set in ascending order.
+   * This is just for compatibility with the Set<number> interface.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   * The iterator may throw exception if the bitmap is changed during the iteration.
+   *
+   * Same as [Symbol.iterator]()
+   *
+   * @returns {RoaringBitmap32Iterator} A new iterator
+   * @memberof RoaringBitmap32
+   */
+  public entries(): IterableIterator<[number, number]>
+
+  /**
+   * Executes a function for each value in the set, in ascending order.
+   * The callback has 3 arguments, the value, the value and this (this set). This is to match the Set<number> interface.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   */
+  public forEach(callbackfn: (value: number, value2: number, set: this) => void, thisArg?: any): void
 
   /**
    * Gets the minimum value in the set.
@@ -870,6 +962,16 @@ export class RoaringBitmap32 implements Iterable<number> {
    * @returns {string} "RoaringBitmap32"
    * @memberof RoaringBitmap32
    */
+  readonly [Symbol.toStringTag]: string
+
+  /**
+   * Returns always "RoaringBitmap32".
+   *
+   * To have a standard string representation of the content as a string, call contentToString() instead.
+   *
+   * @returns {string} "RoaringBitmap32"
+   * @memberof RoaringBitmap32
+   */
   public toString(): string
 
   /**
@@ -1047,7 +1149,7 @@ export interface RoaringBitmap32Statistics {
 
 /**
  * Property: The version of the CRoaring libary as a string.
- * Example: "0.2.42"
+ * Example: "0.4.0"
  *
  * @export
  * @constant
@@ -1058,7 +1160,7 @@ export const CRoaringVersion: string
 
 /**
  * Property: The version of the roaring npm package as a string.
- * Example: "0.2.2"
+ * Example: "1.2.0"
  *
  * @export
  * @constant

@@ -71,8 +71,12 @@
     - [contentToString(maxLength)][methoddeclaration-66]
     - [statistics()][methoddeclaration-67]
   - Properties
-    - [size][propertydeclaration-0]
-    - [isEmpty][propertydeclaration-1]
+    - [CRoaringVersion][propertydeclaration-0]
+    - [CRoaringVersion][propertydeclaration-2]
+    - [PackageVersion][propertydeclaration-1]
+    - [PackageVersion][propertydeclaration-3]
+    - [size][propertydeclaration-4]
+    - [isEmpty][propertydeclaration-5]
 
 # RoaringBitmap32
 
@@ -1627,6 +1631,66 @@ public statistics(): RoaringBitmap32Statistics;
 
 ## Properties
 
+### CRoaringVersion
+
+Property: The version of the CRoaring libary as a string.
+Example: "0.4.0"
+
+```typescript
+public static readonly CRoaringVersion: string;
+```
+
+**Type**
+
+string
+
+---
+
+### CRoaringVersion
+
+Property: The version of the CRoaring libary as a string.
+Example: "0.4.0"
+
+```typescript
+public readonly CRoaringVersion: string;
+```
+
+**Type**
+
+string
+
+---
+
+### PackageVersion
+
+Property: The version of the roaring npm package as a string.
+Example: "1.2.0"
+
+```typescript
+public static readonly PackageVersion: string;
+```
+
+**Type**
+
+string
+
+---
+
+### PackageVersion
+
+Property: The version of the roaring npm package as a string.
+Example: "1.2.0"
+
+```typescript
+public readonly PackageVersion: string;
+```
+
+**Type**
+
+string
+
+---
+
 ### size
 
 Property. Gets the number of items in the set (cardinality).
@@ -1778,5 +1842,9 @@ boolean
 [methoddeclaration-66]: roaringbitmap32.md#contenttostringmaxlength
 [methoddeclaration-67]: roaringbitmap32.md#statistics
 [interfacedeclaration-1]: ../index.d.md#roaringbitmap32statistics
-[propertydeclaration-0]: roaringbitmap32.md#size
-[propertydeclaration-1]: roaringbitmap32.md#isempty
+[propertydeclaration-0]: roaringbitmap32.md#croaringversion
+[propertydeclaration-2]: roaringbitmap32.md#croaringversion
+[propertydeclaration-1]: roaringbitmap32.md#packageversion
+[propertydeclaration-3]: roaringbitmap32.md#packageversion
+[propertydeclaration-4]: roaringbitmap32.md#size
+[propertydeclaration-5]: roaringbitmap32.md#isempty

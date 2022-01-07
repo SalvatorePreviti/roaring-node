@@ -2,6 +2,7 @@
 #define __ROARINGBITMAP32__H__
 
 #include "v8utils/v8utils.h"
+#include "CRoaringUnityBuild/roaring_version_string.h"
 #include "CRoaringUnityBuild/roaring.h"
 
 using namespace roaring;
@@ -135,6 +136,8 @@ class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
 
 class RoaringBitmap32BufferedIterator {
  public:
+  enum { allocatedMemoryDelta = 1024 };
+
   v8::Persistent<v8::Object> persistent;
   roaring_uint32_iterator_t it;
   uint64_t bitmapVersion;

@@ -475,4 +475,65 @@ describe('RoaringBitmap32 basic', () => {
       expect(bitmap.toArray()).deep.equal([123])
     })
   })
+
+  it('implements Set<> interface properly', () => {
+    const x: Set<number> = new RoaringBitmap32([1, 3])
+    x.add(2)
+    expect(x.has(2))
+    expect(Array.from(x.entries())).to.deep.equal([
+      [1, 1],
+      [2, 2],
+      [3, 3]
+    ])
+  })
+
+  describe('forEach', () => {
+    it('does nothing for an empty roaring bitmap', () => {
+      let invoked = false
+      const bitmap = new RoaringBitmap32()
+      bitmap.forEach(() => (invoked = true))
+      expect(invoked).to.equal(false)
+    })
+
+    it('invokes the function with a single item', () => {
+      const invoked: any[] = []
+      const bitmap = new RoaringBitmap32([1])
+      bitmap.forEach((...args) => {
+        invoked.push(args)
+      })
+      expect(invoked).to.deep.equal([[1, 1, bitmap]])
+      expect(typeof invoked[0][0]).eq('number')
+    })
+
+    it('invokes the function with multiple items', () => {
+      const invoked: any[] = []
+      const bitmap = new RoaringBitmap32([2, 5, 1, 7, 6])
+      bitmap.forEach((...args) => invoked.push(args))
+      expect(invoked).to.deep.equal([
+        [1, 1, bitmap],
+        [2, 2, bitmap],
+        [5, 5, bitmap],
+        [6, 6, bitmap],
+        [7, 7, bitmap]
+      ])
+    })
+
+    it('handles exceptions well', () => {
+      const invoked: any[] = []
+      const bitmap = new RoaringBitmap32([2, 5, 1, 7, 6])
+      expect(() =>
+        bitmap.forEach((...args) => {
+          invoked.push(args)
+          if (invoked.length === 3) {
+            throw new Error('expected')
+          }
+        })
+      ).to.throw('expected')
+      expect(invoked).to.deep.equal([
+        [1, 1, bitmap],
+        [2, 2, bitmap],
+        [5, 5, bitmap]
+      ])
+    })
+  })
 })
