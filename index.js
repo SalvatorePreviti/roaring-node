@@ -101,9 +101,6 @@ if (!roaring.PackageVersion) {
   roaring.CRoaringVersion = CRoaringVersion
 
   roaring._initTypes({
-    Set,
-    Array,
-    Buffer,
     Uint32Array
   })
 }

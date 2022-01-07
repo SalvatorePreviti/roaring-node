@@ -11,78 +11,22 @@
 /////////////// JSTypes ///////////////
 
 v8::Eternal<v8::Object> JSTypes::Uint32Array;
-v8::Eternal<v8::Function> JSTypes::Uint32Array_ctor;
 v8::Eternal<v8::Function> JSTypes::Uint32Array_from;
-
-v8::Eternal<v8::Object> JSTypes::Buffer;
-v8::Eternal<v8::Function> JSTypes::Buffer_allocUnsafe;
-
-v8::Eternal<v8::Object> JSTypes::Array;
-v8::Eternal<v8::Function> JSTypes::Array_from;
-
-v8::Eternal<v8::Object> JSTypes::Set;
-v8::Eternal<v8::Function> JSTypes::Set_ctor;
 
 void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
   v8::HandleScope scope(isolate);
   auto context = isolate->GetCurrentContext();
 
-  auto uint32Array =
-    global->Get(context, v8::String::NewFromUtf8(isolate, "Uint32Array", v8::NewStringType::kInternalized).ToLocalChecked())
-      .ToLocalChecked()
-      ->ToObject(context)
-      .ToLocalChecked();
+  auto uint32Array = global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Uint32Array", v8::NewStringType::kInternalized))
+                       .ToLocalChecked()
+                       ->ToObject(context)
+                       .ToLocalChecked();
 
   JSTypes::Uint32Array.Set(isolate, uint32Array);
-  JSTypes::Uint32Array_ctor.Set(isolate, v8::Local<v8::Function>::Cast(uint32Array));
   JSTypes::Uint32Array_from.Set(
     isolate,
     v8::Local<v8::Function>::Cast(
-      uint32Array->Get(context, v8::String::NewFromUtf8(isolate, "from", v8::NewStringType::kInternalized).ToLocalChecked())
-        .ToLocalChecked()));
-
-  auto buffer =
-    global->Get(context, v8::String::NewFromUtf8(isolate, "Buffer", v8::NewStringType::kInternalized).ToLocalChecked())
-      .ToLocalChecked()
-      ->ToObject(context)
-      .ToLocalChecked();
-  JSTypes::Buffer.Set(isolate, buffer);
-  JSTypes::Buffer_allocUnsafe.Set(
-    isolate,
-    v8::Local<v8::Function>::Cast(
-      buffer
-        ->Get(context, v8::String::NewFromUtf8(isolate, "allocUnsafe", v8::NewStringType::kInternalized).ToLocalChecked())
-        .ToLocalChecked()));
-
-  auto array =
-    global->Get(context, v8::String::NewFromUtf8(isolate, "Array", v8::NewStringType::kInternalized).ToLocalChecked())
-      .ToLocalChecked()
-      ->ToObject(context)
-      .ToLocalChecked();
-  JSTypes::Array.Set(isolate, array);
-  JSTypes::Array_from.Set(
-    isolate,
-    v8::Local<v8::Function>::Cast(
-      array->Get(context, v8::String::NewFromUtf8(isolate, "from", v8::NewStringType::kInternalized).ToLocalChecked())
-        .ToLocalChecked()));
-
-  auto set = global->Get(context, v8::String::NewFromUtf8(isolate, "Set", v8::NewStringType::kInternalized).ToLocalChecked())
-               .ToLocalChecked()
-               ->ToObject(context)
-               .ToLocalChecked();
-  JSTypes::Set.Set(isolate, set);
-  JSTypes::Set_ctor.Set(isolate, v8::Local<v8::Function>::Cast(set));
-}
-
-v8::Local<v8::Value> JSTypes::bufferAllocUnsafe(v8::Isolate * isolate, size_t size) {
-  v8::Local<v8::Value> argv[] = {v8::Number::New(isolate, (double)size)};
-  auto x =
-    JSTypes::Buffer_allocUnsafe.Get(isolate)->Call(isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 1, argv);
-  if (x.IsEmpty()) {
-    v8utils::throwTypeError(isolate, "Cannot allocate Buffer");
-    return v8::Null(isolate);
-  }
-  return x.ToLocalChecked();
+      uint32Array->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized)).ToLocalChecked()));
 }
 
 /////////////// v8utils ///////////////
@@ -110,14 +54,30 @@ namespace v8utils {
 
   void throwError(v8::Isolate * isolate, const char * message) {
     v8::HandleScope scope(isolate);
-    auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
-    isolate->ThrowException(v8::Exception::Error(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
+    if (message != nullptr && message[0] != '\0') {
+      auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+      v8::Local<v8::String> msgLocal;
+      if (msg.ToLocal(&msgLocal)) {
+        isolate->ThrowException(v8::Exception::Error(msgLocal));
+        return;
+      }
+    }
+    isolate->ThrowException(
+      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
   }
 
-  void throwTypeError(v8::Isolate * isolate, const char * /*message*/) {
+  void throwTypeError(v8::Isolate * isolate, const char * message) {
     v8::HandleScope scope(isolate);
-    auto msg = v8::String::NewFromUtf8(isolate, "Operation failed", v8::NewStringType::kInternalized);
-    isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
+    if (message != nullptr && message[0] != '\0') {
+      auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+      v8::Local<v8::String> msgLocal;
+      if (msg.ToLocal(&msgLocal)) {
+        isolate->ThrowException(v8::Exception::TypeError(msgLocal));
+        return;
+      }
+    }
+    isolate->ThrowException(
+      v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
   }
 
   void throwTypeError(v8::Isolate * isolate, const char * context, const char * message) {
@@ -132,42 +92,6 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  void defineHiddenField(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
-    v8::HandleScope scope(isolate);
-    v8::PropertyDescriptor propertyDescriptor(value, false);
-    propertyDescriptor.set_configurable(false);
-    propertyDescriptor.set_enumerable(false);
-
-    auto nameMaybe = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized);
-    if (!nameMaybe.IsEmpty()) {
-      ignoreMaybeResult(
-        target->DefineProperty(isolate->GetCurrentContext(), nameMaybe.ToLocalChecked(), propertyDescriptor));
-    }
-  }
-
-  void defineReadonlyField(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::Local<v8::Value> value) {
-    v8::HandleScope scope(isolate);
-    v8::PropertyDescriptor propertyDescriptor(value, false);
-    propertyDescriptor.set_configurable(false);
-    propertyDescriptor.set_enumerable(true);
-
-    auto nameMaybe = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized);
-    if (!nameMaybe.IsEmpty()) {
-      ignoreMaybeResult(
-        target->DefineProperty(isolate->GetCurrentContext(), nameMaybe.ToLocalChecked(), propertyDescriptor));
-    }
-  }
-
-  void defineHiddenFunction(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char * name, v8::FunctionCallback callback) {
-    v8::HandleScope scope(isolate);
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
-    t->SetClassName(v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked());
-    defineHiddenField(isolate, target, name, t->GetFunction(isolate->GetCurrentContext()).ToLocalChecked());
-  }
-
   /////////////// AsyncWorker ///////////////
 
   AsyncWorker::AsyncWorker(v8::Isolate * isolate) : isolate(isolate), _error(nullptr), _completed(false) {
@@ -180,9 +104,7 @@ namespace v8utils {
   }
 
   bool AsyncWorker::setCallback(v8::Local<v8::Value> callback) {
-    if (callback.IsEmpty() || !callback->IsFunction()) {
-      return false;
-    }
+    if (callback.IsEmpty() || !callback->IsFunction()) return false;
     _callback.Reset(isolate, v8::Local<v8::Function>::Cast(callback));
     return true;
   }
@@ -258,7 +180,7 @@ namespace v8utils {
         } else if (!result->IsObject()) {
           v8::MaybeLocal<v8::String> message = result->ToString(isolate->GetCurrentContext());
           if (message.IsEmpty()) {
-            message = v8::String::NewFromUtf8(isolate, "Operation failed", v8::NewStringType::kInternalized);
+            message = NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized);
           }
           result = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
         }
