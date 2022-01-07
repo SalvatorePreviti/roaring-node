@@ -1,10 +1,9 @@
-#include <cstdint>
-#include <cstddef>
-#include <cstring>
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+#include <math.h>
 #include <cmath>
 #include <string>
-
-#include "RoaringBitmap32.h"
 
 /////////////////// unity build ///////////////////
 
@@ -18,6 +17,7 @@
 #  pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 
+#include "RoaringBitmap32.h"
 #include "CRoaringUnityBuild/roaring.c"
 
 #if defined(__clang__)

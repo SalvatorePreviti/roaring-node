@@ -19,6 +19,7 @@ Checks: '
   -cert-dcl51-cpp,
   -cert-dcl58-cpp,
   -cert-err60-cpp,
+  -modernize-deprecated-headers,
   -bugprone-reserved-identifier,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -readability-identifier-naming,
