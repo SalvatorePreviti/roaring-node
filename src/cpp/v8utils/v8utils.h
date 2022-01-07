@@ -31,6 +31,9 @@ namespace v8utils {
   template <typename T>
   inline void ignoreMaybeResult(v8::Maybe<T>) {}
 
+  template <typename T>
+  inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
+
   void throwError(v8::Isolate * isolate, const char * message);
 
   void throwTypeError(v8::Isolate * isolate, const char * message);

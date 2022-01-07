@@ -257,7 +257,7 @@ Setting the portable flag to false enable a custom format that can save space co
 The portable version is meant to be compatible with Java and Go versions.
 
 ```typescript
-public deserialize(serialized: Uint8Array, portable: boolean): void;
+public deserialize(serialized: Uint8Array, portable: boolean): RoaringBitmap32;
 ```
 
 **Parameters**
@@ -269,7 +269,7 @@ public deserialize(serialized: Uint8Array, portable: boolean): void;
 
 **Return type**
 
-void
+[RoaringBitmap32][classdeclaration-0]
 
 ---
 
@@ -772,7 +772,7 @@ Is faster to pass a Uint32Array instance instead of an array or an iterable.
 Is even faster if a RoaringBitmap32 instance is used (it performs a simple copy).
 
 ```typescript
-public copyFrom(values: Iterable<number> | null | undefined): void;
+public copyFrom(values: Iterable<number> | null | undefined): RoaringBitmap32;
 ```
 
 **Parameters**
@@ -783,7 +783,7 @@ public copyFrom(values: Iterable<number> | null | undefined): void;
 
 **Return type**
 
-void
+[RoaringBitmap32][classdeclaration-0]
 
 ---
 
@@ -935,7 +935,7 @@ The number of negated values is rangeEnd - rangeStart.
 Areas outside the range are passed through unchanged.
 
 ```typescript
-public flipRange(rangeStart: number, rangeEnd: number): void;
+public flipRange(rangeStart: number, rangeEnd: number): RoaringBitmap32;
 ```
 
 **Parameters**
@@ -947,7 +947,7 @@ public flipRange(rangeStart: number, rangeEnd: number): void;
 
 **Return type**
 
-void
+[RoaringBitmap32][classdeclaration-0]
 
 ---
 
@@ -961,7 +961,7 @@ The number of added values is rangeEnd - rangeStart.
 Areas outside the range are passed through unchanged.
 
 ```typescript
-public addRange(rangeStart: number, rangeEnd: number): void;
+public addRange(rangeStart: number, rangeEnd: number): RoaringBitmap32;
 ```
 
 **Parameters**
@@ -973,7 +973,7 @@ public addRange(rangeStart: number, rangeEnd: number): void;
 
 **Return type**
 
-void
+[RoaringBitmap32][classdeclaration-0]
 
 ---
 
@@ -987,7 +987,7 @@ The number of renived values is rangeEnd - rangeStart.
 Areas outside the range are passed through unchanged.
 
 ```typescript
-public removeRange(rangeStart: number, rangeEnd: number): void;
+public removeRange(rangeStart: number, rangeEnd: number): RoaringBitmap32;
 ```
 
 **Parameters**
@@ -999,7 +999,7 @@ public removeRange(rangeStart: number, rangeEnd: number): void;
 
 **Return type**
 
-void
+[RoaringBitmap32][classdeclaration-0]
 
 ---
 
@@ -1577,7 +1577,7 @@ public clone(): RoaringBitmap32;
 
 ### toString()
 
-Returns "RoaringBitmap32(size)".
+Returns always "RoaringBitmap32".
 
 To have a standard string representation of the content as a string, call contentToString() instead.
 
@@ -1666,6 +1666,7 @@ boolean
 [methoddeclaration-4]: roaringbitmap32.md#deserializeserialized-portable
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-63]: roaringbitmap32.md#deserializeserialized-portable
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-5]: roaringbitmap32.md#deserializeasyncserialized-portable
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-6]: roaringbitmap32.md#deserializeasyncserialized-portable-callback
@@ -1715,6 +1716,7 @@ boolean
 [methoddeclaration-25]: roaringbitmap32.md#hasrangerangestart-rangeend
 [methoddeclaration-26]: roaringbitmap32.md#rangecardinalityrangestart-rangeend
 [methoddeclaration-27]: roaringbitmap32.md#copyfromvalues
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-28]: roaringbitmap32.md#addvalue
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-29]: roaringbitmap32.md#tryaddvalue
@@ -1725,8 +1727,11 @@ boolean
 [methoddeclaration-33]: roaringbitmap32.md#removemanyvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-34]: roaringbitmap32.md#fliprangerangestart-rangeend
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-35]: roaringbitmap32.md#addrangerangestart-rangeend
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-36]: roaringbitmap32.md#removerangerangestart-rangeend
+[classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-37]: roaringbitmap32.md#clear
 [methoddeclaration-38]: roaringbitmap32.md#orinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32

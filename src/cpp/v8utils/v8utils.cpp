@@ -297,10 +297,10 @@ namespace v8utils {
       delete worker;
       if (hasError) {
         v8::Local<v8::Value> argv[] = {result, v8::Undefined(isolate)};
-        callback->Call(context, context->Global(), 2, argv).ToLocalChecked();
+        v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
       } else {
         v8::Local<v8::Value> argv[] = {v8::Null(isolate), result};
-        callback->Call(context, context->Global(), 2, argv).ToLocalChecked();
+        v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
       }
     } else {
       v8::Local<v8::Promise::Resolver> resolver = worker->_resolver.Get(isolate);

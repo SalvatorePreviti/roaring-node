@@ -1,32 +1,33 @@
 import RoaringBitmap32 from '../../RoaringBitmap32'
+import { expect } from 'chai'
 
 describe('RoaringBitmap32 deserializeAsync', () => {
   describe('async/await', () => {
     describe('empty buffer', () => {
       it('deserializes an empty buffer (non portable)', async () => {
         const bitmap = await RoaringBitmap32.deserializeAsync(Buffer.from([]), false)
-        expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-        expect(bitmap.size).toBe(0)
+        expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+        expect(bitmap.size).eq(0)
       })
 
       it('deserializes an empty buffer (portable)', async () => {
         const bitmap = await RoaringBitmap32.deserializeAsync(Buffer.from([]), true)
-        expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-        expect(bitmap.size).toBe(0)
+        expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+        expect(bitmap.size).eq(0)
       })
     })
 
     describe('empty bitmap', () => {
       it('deserializes an empty bitmap (non portable)', async () => {
         const bitmap = await RoaringBitmap32.deserializeAsync(Buffer.from([1, 0, 0, 0, 0]), false)
-        expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-        expect(bitmap.size).toBe(0)
+        expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+        expect(bitmap.size).eq(0)
       })
 
       it('deserializes an empty bitmap (portable)', async () => {
         const bitmap = await RoaringBitmap32.deserializeAsync(Buffer.from([58, 48, 0, 0, 0, 0, 0, 0]), true)
-        expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-        expect(bitmap.size).toBe(0)
+        expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+        expect(bitmap.size).eq(0)
       })
     })
 
@@ -43,8 +44,8 @@ describe('RoaringBitmap32 deserializeAsync', () => {
       }
 
       for (const bitmap of await Promise.all(promises)) {
-        expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-        expect(bitmap.toArray()).toEqual(values)
+        expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+        expect(bitmap.toArray()).deep.equal(values)
       }
     })
 
@@ -67,8 +68,8 @@ describe('RoaringBitmap32 deserializeAsync', () => {
       const resolved = await Promise.all(promises)
 
       for (const b of resolved) {
-        expect(b).toBeInstanceOf(RoaringBitmap32)
-        expect(b.isEqual(bitmap)).toBe(true)
+        expect(b).to.be.instanceOf(RoaringBitmap32)
+        expect(b.isEqual(bitmap)).eq(true)
       }
     })
 
@@ -81,7 +82,7 @@ describe('RoaringBitmap32 deserializeAsync', () => {
       } catch (e) {
         error = e
       }
-      expect(error.message).toEqual('RoaringBitmap32::deserialize - invalid portable header byte')
+      expect(error.message).eq('RoaringBitmap32::deserialize - invalid portable header byte')
     })
   })
 
@@ -91,12 +92,12 @@ describe('RoaringBitmap32 deserializeAsync', () => {
         return new Promise<void>((done) => {
           expect(
             RoaringBitmap32.deserializeAsync(Buffer.from([]), false, (error, bitmap) => {
-              expect(error).toBeNull()
-              expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-              expect(bitmap!.size).toBe(0)
+              expect(error).to.be.null
+              expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+              expect(bitmap!.size).eq(0)
               done()
             })
-          ).toBeUndefined()
+          ).to.be.undefined
         })
       })
 
@@ -104,12 +105,12 @@ describe('RoaringBitmap32 deserializeAsync', () => {
         return new Promise<void>((done) => {
           expect(
             RoaringBitmap32.deserializeAsync(Buffer.from([]), true, (error, bitmap) => {
-              expect(error).toBeNull()
-              expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-              expect(bitmap!.size).toBe(0)
+              expect(error).to.be.null
+              expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+              expect(bitmap!.size).eq(0)
               done()
             })
-          ).toBeUndefined()
+          ).to.be.undefined
         })
       })
     })
@@ -119,12 +120,12 @@ describe('RoaringBitmap32 deserializeAsync', () => {
         return new Promise<void>((done) => {
           expect(
             RoaringBitmap32.deserializeAsync(Buffer.from([1, 0, 0, 0, 0]), false, (error, bitmap) => {
-              expect(error).toBeNull()
-              expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-              expect(bitmap!.size).toBe(0)
+              expect(error).to.be.null
+              expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+              expect(bitmap!.size).eq(0)
               done()
             })
-          ).toBeUndefined()
+          ).to.be.undefined
         })
       })
 
@@ -132,12 +133,12 @@ describe('RoaringBitmap32 deserializeAsync', () => {
         return new Promise<void>((done) => {
           expect(
             RoaringBitmap32.deserializeAsync(Buffer.from([58, 48, 0, 0, 0, 0, 0, 0]), true, (error, bitmap) => {
-              expect(error).toBeNull()
-              expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-              expect(bitmap!.size).toBe(0)
+              expect(error).to.be.null
+              expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+              expect(bitmap!.size).eq(0)
               done()
             })
-          ).toBeUndefined()
+          ).to.be.undefined
         })
       })
     })
@@ -150,12 +151,12 @@ describe('RoaringBitmap32 deserializeAsync', () => {
 
         expect(
           RoaringBitmap32.deserializeAsync(bufferNonPortable, false, (error, bitmap) => {
-            expect(error).toBeNull()
-            expect(bitmap).toBeInstanceOf(RoaringBitmap32)
-            expect(bitmap!.toArray()).toEqual(values)
+            expect(error).to.be.null
+            expect(bitmap).to.be.instanceOf(RoaringBitmap32)
+            expect(bitmap!.toArray()).deep.equal(values)
             done()
           })
-        ).toBeUndefined()
+        ).to.be.undefined
       })
     })
 
@@ -164,11 +165,11 @@ describe('RoaringBitmap32 deserializeAsync', () => {
         const wrongBuffer = Buffer.from([99, 98, 97])
         expect(
           RoaringBitmap32.deserializeAsync(wrongBuffer, false, (error, bitmap) => {
-            expect(bitmap).toBeUndefined()
-            expect(error!.message).toEqual('RoaringBitmap32::deserialize - invalid portable header byte')
+            expect(bitmap).to.be.undefined
+            expect(error!.message).eq('RoaringBitmap32::deserialize - invalid portable header byte')
             done()
           })
-        ).toBeUndefined()
+        ).to.be.undefined
       })
     })
   })

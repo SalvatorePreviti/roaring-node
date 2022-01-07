@@ -51,16 +51,6 @@ void InitModule(v8::Local<v8::Object> exports) {
   v8utils::defineHiddenFunction(isolate, exports, "_initTypes", initTypes);
   v8utils::defineHiddenField(isolate, exports, "default", exports);
 
-  char version[32];
-
-  snprintf(version, 32, "%d.%d.%d", ROARING_VERSION_MAJOR, ROARING_VERSION_MINOR, ROARING_VERSION_REVISION);
-
-  v8utils::defineReadonlyField(
-    isolate,
-    exports,
-    "CRoaringVersion",
-    v8::String::NewFromUtf8(isolate, version, v8::NewStringType::kInternalized).ToLocalChecked());
-
   RoaringBitmap32::Init(exports);
   RoaringBitmap32BufferedIterator::Init(exports);
 }
@@ -492,20 +482,7 @@ void RoaringBitmap32::toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
 void RoaringBitmap32::toString(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
-
-  RoaringBitmap32 * self = v8utils::ObjectWrap::Unwrap<RoaringBitmap32>(info.Holder());
-
-  double cardinality = self ? (double)roaring_bitmap_get_cardinality(self->roaring) : 0.;
-
-  char buf[32];
-  snprintf(buf, sizeof(buf), "RoaringBitmap32:%g", cardinality);
-
-  auto returnValue = v8::String::NewFromUtf8(isolate, buf, v8::NewStringType::kNormal);
-  if (returnValue.IsEmpty()) {
-    info.GetReturnValue().Set(v8::String::Empty(isolate));
-  } else {
-    info.GetReturnValue().Set(returnValue.ToLocalChecked());
-  }
+  info.GetReturnValue().Set(v8::String::NewFromUtf8Literal(isolate, "RoaringBitmap32"));
 }
 
 void RoaringBitmap32::contentToString(const v8::FunctionCallbackInfo<v8::Value> & info) {

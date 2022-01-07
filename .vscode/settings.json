@@ -68,5 +68,9 @@
   "javascript.format.semicolons": "remove",
   "typescript.format.enable": true,
   "typescript.format.semicolons": "remove",
-  "files.eol": "\n"
+  "files.eol": "\n",
+  "files.associations": {
+    "sstream": "cpp",
+    "algorithm": "cpp"
+  }
 }

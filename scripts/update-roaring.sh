@@ -19,3 +19,5 @@ rm amalgamation_demo.cpp
 rm roaring.hh
 
 cd ../../..
+
+node scripts/write-roaring-version.js

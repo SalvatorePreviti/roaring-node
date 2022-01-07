@@ -863,11 +863,11 @@ export class RoaringBitmap32 implements Iterable<number> {
   public clone(): RoaringBitmap32
 
   /**
-   * Returns "RoaringBitmap32(size)".
+   * Returns always "RoaringBitmap32".
    *
    * To have a standard string representation of the content as a string, call contentToString() instead.
    *
-   * @returns {string} "RoaringBitmap32(size)"
+   * @returns {string} "RoaringBitmap32"
    * @memberof RoaringBitmap32
    */
   public toString(): string

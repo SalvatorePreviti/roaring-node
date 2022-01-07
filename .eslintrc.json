@@ -1,6 +1,6 @@
 {
   "extends": ["@balsamic"],
-  "plugins": ["jest", "node", "import"],
+  "plugins": ["node", "import"],
   "parserOptions": {
     "ecmaVersion": 8,
     "ecmaFeatures": {

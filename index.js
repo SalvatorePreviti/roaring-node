@@ -1,7 +1,7 @@
 'use strict'
 
 const roaring = require('./build/Release/roaring.node')
-const { version: packageVersion } = require('./package.json')
+const { version: packageVersion, roaring_version: CRoaringVersion } = require('./package.json')
 
 module.exports = roaring
 
@@ -98,6 +98,7 @@ if (!roaring.PackageVersion) {
   roaring.Promise = Promise
   roaring.RoaringBitmap32Iterator = RoaringBitmap32Iterator
   roaring.PackageVersion = packageVersion
+  roaring.CRoaringVersion = CRoaringVersion
 
   roaring._initTypes({
     Set,
