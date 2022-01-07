@@ -959,10 +959,10 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * To have a standard string representation of the content as a string, call contentToString() instead.
    *
-   * @returns {string} "RoaringBitmap32"
+   * @returns {string} "Set"
    * @memberof RoaringBitmap32
    */
-  readonly [Symbol.toStringTag]: string
+  readonly [Symbol.toStringTag]: 'Set'
 
   /**
    * Returns always "RoaringBitmap32".

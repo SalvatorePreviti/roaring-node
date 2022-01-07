@@ -141,7 +141,8 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(ctor, "addRange", addRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "removeRange", removeRange);
 
-  ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), className);
+  ctor->PrototypeTemplate()->Set(
+    v8::Symbol::GetToStringTag(isolate), NEW_LITERAL_V8_STRING(isolate, "Set", v8::NewStringType::kInternalized));
   ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
 
   auto context = isolate->GetCurrentContext();
@@ -201,7 +202,6 @@ void RoaringBitmap32::updateAmountOfExternalAllocatedMemory(v8::Isolate * isolat
 }
 
 void RoaringBitmap32::updateAmountOfExternalAllocatedMemory(v8::Isolate * isolate, size_t newSize) {
-  auto oldSize = this->amountOfExternalAllocatedMemoryTracker;
   int64_t diff = static_cast<int64_t>(newSize + 8192) - this->amountOfExternalAllocatedMemoryTracker;
   auto absdiff = diff < 0 ? -diff : diff;
   if (absdiff > 32) {
@@ -222,7 +222,6 @@ void RoaringBitmap32::WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const &
   if (p != nullptr) {
     if (p->amountOfExternalAllocatedMemoryTracker != 0) {
       info.GetIsolate()->AdjustAmountOfExternalAllocatedMemory(-p->amountOfExternalAllocatedMemoryTracker);
-      std::cout << "RELEASED " << (-p->amountOfExternalAllocatedMemoryTracker) << std::endl;
     }
     delete p;
   }

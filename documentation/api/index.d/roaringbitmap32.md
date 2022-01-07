@@ -9,7 +9,7 @@
     - [fromArrayAsync(values)][methoddeclaration-2]
     - [fromArrayAsync(values, callback)][methoddeclaration-3]
     - [deserialize(serialized, portable)][methoddeclaration-4]
-    - [deserialize(serialized, portable)][methoddeclaration-63]
+    - [deserialize(serialized, portable)][methoddeclaration-67]
     - [deserializeAsync(serialized, portable)][methoddeclaration-5]
     - [deserializeAsync(serialized, portable, callback)][methoddeclaration-6]
     - [deserializeParallelAsync(serialized, portable)][methoddeclaration-7]
@@ -25,51 +25,55 @@
     - [xorMany(values)][methoddeclaration-17]
     - [\_\_@iterator()][methoddeclaration-18]
     - [iterator()][methoddeclaration-21]
-    - [minimum()][methoddeclaration-22]
-    - [maximum()][methoddeclaration-23]
-    - [has(value)][methoddeclaration-24]
-    - [hasRange(rangeStart, rangeEnd)][methoddeclaration-25]
-    - [rangeCardinality(rangeStart, rangeEnd)][methoddeclaration-26]
-    - [copyFrom(values)][methoddeclaration-27]
-    - [add(value)][methoddeclaration-28]
-    - [tryAdd(value)][methoddeclaration-29]
-    - [addMany(values)][methoddeclaration-30]
-    - [delete(value)][methoddeclaration-31]
-    - [remove(value)][methoddeclaration-32]
-    - [removeMany(values)][methoddeclaration-33]
-    - [flipRange(rangeStart, rangeEnd)][methoddeclaration-34]
-    - [addRange(rangeStart, rangeEnd)][methoddeclaration-35]
-    - [removeRange(rangeStart, rangeEnd)][methoddeclaration-36]
-    - [clear()][methoddeclaration-37]
-    - [orInPlace(values)][methoddeclaration-38]
-    - [andNotInPlace(values)][methoddeclaration-39]
-    - [andInPlace(values)][methoddeclaration-40]
-    - [xorInPlace(values)][methoddeclaration-41]
-    - [isSubset(other)][methoddeclaration-42]
-    - [isStrictSubset(other)][methoddeclaration-43]
-    - [isEqual(other)][methoddeclaration-44]
-    - [intersects(other)][methoddeclaration-45]
-    - [andCardinality(other)][methoddeclaration-46]
-    - [orCardinality(other)][methoddeclaration-47]
-    - [andNotCardinality(other)][methoddeclaration-48]
-    - [xorCardinality(other)][methoddeclaration-49]
-    - [jaccardIndex(other)][methoddeclaration-50]
-    - [removeRunCompression()][methoddeclaration-51]
-    - [runOptimize()][methoddeclaration-52]
-    - [shrinkToFit()][methoddeclaration-53]
-    - [rank(maxValue)][methoddeclaration-54]
-    - [select(rank)][methoddeclaration-55]
-    - [toUint32Array()][methoddeclaration-56]
-    - [rangeUint32Array(offset, limit)][methoddeclaration-57]
-    - [toArray()][methoddeclaration-58]
-    - [toSet()][methoddeclaration-59]
-    - [toJSON()][methoddeclaration-60]
-    - [getSerializationSizeInBytes(portable)][methoddeclaration-61]
-    - [serialize(portable)][methoddeclaration-62]
-    - [clone()][methoddeclaration-64]
-    - [toString()][methoddeclaration-65]
-    - [contentToString(maxLength)][methoddeclaration-66]
-    - [statistics()][methoddeclaration-67]
+    - [keys()][methoddeclaration-22]
+    - [values()][methoddeclaration-23]
+    - [entries()][methoddeclaration-24]
+    - [forEach(callbackfn, thisArg)][methoddeclaration-25]
+    - [minimum()][methoddeclaration-26]
+    - [maximum()][methoddeclaration-27]
+    - [has(value)][methoddeclaration-28]
+    - [hasRange(rangeStart, rangeEnd)][methoddeclaration-29]
+    - [rangeCardinality(rangeStart, rangeEnd)][methoddeclaration-30]
+    - [copyFrom(values)][methoddeclaration-31]
+    - [add(value)][methoddeclaration-32]
+    - [tryAdd(value)][methoddeclaration-33]
+    - [addMany(values)][methoddeclaration-34]
+    - [delete(value)][methoddeclaration-35]
+    - [remove(value)][methoddeclaration-36]
+    - [removeMany(values)][methoddeclaration-37]
+    - [flipRange(rangeStart, rangeEnd)][methoddeclaration-38]
+    - [addRange(rangeStart, rangeEnd)][methoddeclaration-39]
+    - [removeRange(rangeStart, rangeEnd)][methoddeclaration-40]
+    - [clear()][methoddeclaration-41]
+    - [orInPlace(values)][methoddeclaration-42]
+    - [andNotInPlace(values)][methoddeclaration-43]
+    - [andInPlace(values)][methoddeclaration-44]
+    - [xorInPlace(values)][methoddeclaration-45]
+    - [isSubset(other)][methoddeclaration-46]
+    - [isStrictSubset(other)][methoddeclaration-47]
+    - [isEqual(other)][methoddeclaration-48]
+    - [intersects(other)][methoddeclaration-49]
+    - [andCardinality(other)][methoddeclaration-50]
+    - [orCardinality(other)][methoddeclaration-51]
+    - [andNotCardinality(other)][methoddeclaration-52]
+    - [xorCardinality(other)][methoddeclaration-53]
+    - [jaccardIndex(other)][methoddeclaration-54]
+    - [removeRunCompression()][methoddeclaration-55]
+    - [runOptimize()][methoddeclaration-56]
+    - [shrinkToFit()][methoddeclaration-57]
+    - [rank(maxValue)][methoddeclaration-58]
+    - [select(rank)][methoddeclaration-59]
+    - [toUint32Array()][methoddeclaration-60]
+    - [rangeUint32Array(offset, limit)][methoddeclaration-61]
+    - [toArray()][methoddeclaration-62]
+    - [toSet()][methoddeclaration-63]
+    - [toJSON()][methoddeclaration-64]
+    - [getSerializationSizeInBytes(portable)][methoddeclaration-65]
+    - [serialize(portable)][methoddeclaration-66]
+    - [clone()][methoddeclaration-68]
+    - [toString()][methoddeclaration-69]
+    - [contentToString(maxLength)][methoddeclaration-70]
+    - [statistics()][methoddeclaration-71]
   - Properties
     - [CRoaringVersion][propertydeclaration-0]
     - [CRoaringVersion][propertydeclaration-2]
@@ -77,6 +81,7 @@
     - [PackageVersion][propertydeclaration-3]
     - [size][propertydeclaration-4]
     - [isEmpty][propertydeclaration-5]
+    - [\_\_@toStringTag][propertydeclaration-6]
 
 # RoaringBitmap32
 
@@ -86,7 +91,7 @@ Roaring bitmap that supports 32 bit unsigned integers.
 - See https://github.com/SalvatorePreviti/roaring-node
 
 ```typescript
-class RoaringBitmap32 implements Iterable<number>
+class RoaringBitmap32 implements Set<number>
 ```
 
 ## Constructor
@@ -642,7 +647,7 @@ public static xorMany(values: RoaringBitmap32[]): RoaringBitmap32;
 
 ### \_\_@iterator()
 
-[Symbol.iterator]() Gets a new iterator able to iterate all values in the set in order.
+[Symbol.iterator]() Gets a new iterator able to iterate all values in the set in ascending order.
 
 WARNING: Is not allowed to change the bitmap while iterating.
 The iterator may throw exception if the bitmap is changed during the iteration.
@@ -659,7 +664,7 @@ public __@iterator(): RoaringBitmap32Iterator;
 
 ### iterator()
 
-Gets a new iterator able to iterate all values in the set in order.
+Gets a new iterator able to iterate all values in the set in ascending order.
 
 WARNING: Is not allowed to change the bitmap while iterating.
 The iterator may throw exception if the bitmap is changed during the iteration.
@@ -673,6 +678,90 @@ public iterator(): RoaringBitmap32Iterator;
 **Return type**
 
 [RoaringBitmap32Iterator][classdeclaration-1]
+
+---
+
+### keys()
+
+Gets a new iterator able to iterate all values in the set in ascending order.
+This is just for compatibility with the Set<number> interface.
+
+WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+The iterator may throw exception if the bitmap is changed during the iteration.
+
+Same as [Symbol.iterator]()
+
+```typescript
+public keys(): RoaringBitmap32Iterator;
+```
+
+**Return type**
+
+[RoaringBitmap32Iterator][classdeclaration-1]
+
+---
+
+### values()
+
+Gets a new iterator able to iterate all values in the set in ascending order.
+This is just for compatibility with the Set<number> interface.
+
+WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+The iterator may throw exception if the bitmap is changed during the iteration.
+
+Same as [Symbol.iterator]()
+
+```typescript
+public values(): RoaringBitmap32Iterator;
+```
+
+**Return type**
+
+[RoaringBitmap32Iterator][classdeclaration-1]
+
+---
+
+### entries()
+
+Gets a new iterator able to iterate all value pairs [value, value] in the set in ascending order.
+This is just for compatibility with the Set<number> interface.
+
+WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+The iterator may throw exception if the bitmap is changed during the iteration.
+
+Same as [Symbol.iterator]()
+
+```typescript
+public entries(): IterableIterator<[number, number]>;
+```
+
+**Return type**
+
+IterableIterator<[number, number]>
+
+---
+
+### forEach(callbackfn, thisArg)
+
+Executes a function for each value in the set, in ascending order.
+The callback has 3 arguments, the value, the value and this (this set). This is to match the Set<number> interface.
+
+WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+
+```typescript
+public forEach(callbackfn: (value: number, value2: number, set: RoaringBitmap32) => void, thisArg?: any): void;
+```
+
+**Parameters**
+
+| Name       | Type                                                          |
+| ---------- | ------------------------------------------------------------- |
+| callbackfn | (value: number, value2: number, set: RoaringBitmap32) => void |
+| thisArg    | any                                                           |
+
+**Return type**
+
+void
 
 ---
 
@@ -1717,6 +1806,22 @@ public readonly isEmpty: boolean;
 
 boolean
 
+---
+
+### \_\_@toStringTag
+
+Returns always "RoaringBitmap32".
+
+To have a standard string representation of the content as a string, call contentToString() instead.
+
+```typescript
+public readonly __@toStringTag: "Set";
+```
+
+**Type**
+
+"Set"
+
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [constructor-0]: roaringbitmap32.md#constructorvalues
 [methoddeclaration-0]: roaringbitmap32.md#fromvalues
@@ -1729,7 +1834,7 @@ boolean
 [typealiasdeclaration-0]: ../index.d.md#roaringbitmap32callback
 [methoddeclaration-4]: roaringbitmap32.md#deserializeserialized-portable
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-63]: roaringbitmap32.md#deserializeserialized-portable
+[methoddeclaration-67]: roaringbitmap32.md#deserializeserialized-portable
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
 [methoddeclaration-5]: roaringbitmap32.md#deserializeasyncserialized-portable
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
@@ -1774,73 +1879,79 @@ boolean
 [classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
 [methoddeclaration-21]: roaringbitmap32.md#iterator
 [classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
-[methoddeclaration-22]: roaringbitmap32.md#minimum
-[methoddeclaration-23]: roaringbitmap32.md#maximum
-[methoddeclaration-24]: roaringbitmap32.md#hasvalue
-[methoddeclaration-25]: roaringbitmap32.md#hasrangerangestart-rangeend
-[methoddeclaration-26]: roaringbitmap32.md#rangecardinalityrangestart-rangeend
-[methoddeclaration-27]: roaringbitmap32.md#copyfromvalues
+[methoddeclaration-22]: roaringbitmap32.md#keys
+[classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
+[methoddeclaration-23]: roaringbitmap32.md#values
+[classdeclaration-1]: roaringbitmap32iterator.md#roaringbitmap32iterator
+[methoddeclaration-24]: roaringbitmap32.md#entries
+[methoddeclaration-25]: roaringbitmap32.md#foreachcallbackfn-thisarg
+[methoddeclaration-26]: roaringbitmap32.md#minimum
+[methoddeclaration-27]: roaringbitmap32.md#maximum
+[methoddeclaration-28]: roaringbitmap32.md#hasvalue
+[methoddeclaration-29]: roaringbitmap32.md#hasrangerangestart-rangeend
+[methoddeclaration-30]: roaringbitmap32.md#rangecardinalityrangestart-rangeend
+[methoddeclaration-31]: roaringbitmap32.md#copyfromvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-28]: roaringbitmap32.md#addvalue
+[methoddeclaration-32]: roaringbitmap32.md#addvalue
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-29]: roaringbitmap32.md#tryaddvalue
-[methoddeclaration-30]: roaringbitmap32.md#addmanyvalues
+[methoddeclaration-33]: roaringbitmap32.md#tryaddvalue
+[methoddeclaration-34]: roaringbitmap32.md#addmanyvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-31]: roaringbitmap32.md#deletevalue
-[methoddeclaration-32]: roaringbitmap32.md#removevalue
-[methoddeclaration-33]: roaringbitmap32.md#removemanyvalues
+[methoddeclaration-35]: roaringbitmap32.md#deletevalue
+[methoddeclaration-36]: roaringbitmap32.md#removevalue
+[methoddeclaration-37]: roaringbitmap32.md#removemanyvalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-34]: roaringbitmap32.md#fliprangerangestart-rangeend
+[methoddeclaration-38]: roaringbitmap32.md#fliprangerangestart-rangeend
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-35]: roaringbitmap32.md#addrangerangestart-rangeend
+[methoddeclaration-39]: roaringbitmap32.md#addrangerangestart-rangeend
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-36]: roaringbitmap32.md#removerangerangestart-rangeend
+[methoddeclaration-40]: roaringbitmap32.md#removerangerangestart-rangeend
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-37]: roaringbitmap32.md#clear
-[methoddeclaration-38]: roaringbitmap32.md#orinplacevalues
+[methoddeclaration-41]: roaringbitmap32.md#clear
+[methoddeclaration-42]: roaringbitmap32.md#orinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-39]: roaringbitmap32.md#andnotinplacevalues
+[methoddeclaration-43]: roaringbitmap32.md#andnotinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-40]: roaringbitmap32.md#andinplacevalues
+[methoddeclaration-44]: roaringbitmap32.md#andinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-41]: roaringbitmap32.md#xorinplacevalues
+[methoddeclaration-45]: roaringbitmap32.md#xorinplacevalues
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-42]: roaringbitmap32.md#issubsetother
+[methoddeclaration-46]: roaringbitmap32.md#issubsetother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-43]: roaringbitmap32.md#isstrictsubsetother
+[methoddeclaration-47]: roaringbitmap32.md#isstrictsubsetother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-44]: roaringbitmap32.md#isequalother
+[methoddeclaration-48]: roaringbitmap32.md#isequalother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-45]: roaringbitmap32.md#intersectsother
+[methoddeclaration-49]: roaringbitmap32.md#intersectsother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-46]: roaringbitmap32.md#andcardinalityother
+[methoddeclaration-50]: roaringbitmap32.md#andcardinalityother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-47]: roaringbitmap32.md#orcardinalityother
+[methoddeclaration-51]: roaringbitmap32.md#orcardinalityother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-48]: roaringbitmap32.md#andnotcardinalityother
+[methoddeclaration-52]: roaringbitmap32.md#andnotcardinalityother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-49]: roaringbitmap32.md#xorcardinalityother
+[methoddeclaration-53]: roaringbitmap32.md#xorcardinalityother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-50]: roaringbitmap32.md#jaccardindexother
+[methoddeclaration-54]: roaringbitmap32.md#jaccardindexother
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-51]: roaringbitmap32.md#removeruncompression
-[methoddeclaration-52]: roaringbitmap32.md#runoptimize
-[methoddeclaration-53]: roaringbitmap32.md#shrinktofit
-[methoddeclaration-54]: roaringbitmap32.md#rankmaxvalue
-[methoddeclaration-55]: roaringbitmap32.md#selectrank
-[methoddeclaration-56]: roaringbitmap32.md#touint32array
-[methoddeclaration-57]: roaringbitmap32.md#rangeuint32arrayoffset-limit
-[methoddeclaration-58]: roaringbitmap32.md#toarray
-[methoddeclaration-59]: roaringbitmap32.md#toset
-[methoddeclaration-60]: roaringbitmap32.md#tojson
-[methoddeclaration-61]: roaringbitmap32.md#getserializationsizeinbytesportable
-[methoddeclaration-62]: roaringbitmap32.md#serializeportable
+[methoddeclaration-55]: roaringbitmap32.md#removeruncompression
+[methoddeclaration-56]: roaringbitmap32.md#runoptimize
+[methoddeclaration-57]: roaringbitmap32.md#shrinktofit
+[methoddeclaration-58]: roaringbitmap32.md#rankmaxvalue
+[methoddeclaration-59]: roaringbitmap32.md#selectrank
+[methoddeclaration-60]: roaringbitmap32.md#touint32array
+[methoddeclaration-61]: roaringbitmap32.md#rangeuint32arrayoffset-limit
+[methoddeclaration-62]: roaringbitmap32.md#toarray
+[methoddeclaration-63]: roaringbitmap32.md#toset
+[methoddeclaration-64]: roaringbitmap32.md#tojson
+[methoddeclaration-65]: roaringbitmap32.md#getserializationsizeinbytesportable
+[methoddeclaration-66]: roaringbitmap32.md#serializeportable
 [interfacedeclaration-0]: ../index.d.md#indexdts
-[methoddeclaration-64]: roaringbitmap32.md#clone
+[methoddeclaration-68]: roaringbitmap32.md#clone
 [classdeclaration-0]: roaringbitmap32.md#roaringbitmap32
-[methoddeclaration-65]: roaringbitmap32.md#tostring
-[methoddeclaration-66]: roaringbitmap32.md#contenttostringmaxlength
-[methoddeclaration-67]: roaringbitmap32.md#statistics
+[methoddeclaration-69]: roaringbitmap32.md#tostring
+[methoddeclaration-70]: roaringbitmap32.md#contenttostringmaxlength
+[methoddeclaration-71]: roaringbitmap32.md#statistics
 [interfacedeclaration-1]: ../index.d.md#roaringbitmap32statistics
 [propertydeclaration-0]: roaringbitmap32.md#croaringversion
 [propertydeclaration-2]: roaringbitmap32.md#croaringversion
@@ -1848,3 +1959,4 @@ boolean
 [propertydeclaration-3]: roaringbitmap32.md#packageversion
 [propertydeclaration-4]: roaringbitmap32.md#size
 [propertydeclaration-5]: roaringbitmap32.md#isempty
+[propertydeclaration-6]: roaringbitmap32.md#__tostringtag
