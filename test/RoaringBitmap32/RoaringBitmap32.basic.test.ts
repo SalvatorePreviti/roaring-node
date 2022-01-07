@@ -301,8 +301,8 @@ describe('RoaringBitmap32 basic', () => {
 
     it('returns valid statistics', () => {
       const rb = new RoaringBitmap32()
-      rb.addMany([1, 2, 3, 4, 6, 7])
-      rb.addMany([999991, 999992, 999993, 999994, 999996, 999997])
+      expect(rb.addMany([1, 2, 3, 4, 6, 7])).toBe(rb)
+      expect(rb.addMany([999991, 999992, 999993, 999994, 999996, 999997])).toBe(rb)
       expect(rb.statistics()).toEqual({
         containers: 2,
         arrayContainers: 2,

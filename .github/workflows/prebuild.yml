@@ -16,7 +16,6 @@ jobs:
         with:
           node-version: 16.x
       - uses: actions/checkout@v1
-      - run: git submodule -q update --init
       - run: npm install
       - run: npm test
       - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
@@ -30,7 +29,6 @@ jobs:
         with:
           node-version: 16.x
       - uses: actions/checkout@v1
-      - run: git submodule -q update --init
       - run: npm install
       - run: npm test
       - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
@@ -44,7 +42,6 @@ jobs:
         with:
           node-version: 16.x
       - uses: actions/checkout@v1
-      - run: git submodule -q update --init
       - run: npm install
       - run: npm test
       - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}

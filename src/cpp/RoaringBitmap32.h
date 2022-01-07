@@ -2,6 +2,7 @@
 #define __ROARINGBITMAP32__H__
 
 #include "v8utils/v8utils.h"
+#include "CRoaringUnityBuild/roaring.h"
 
 using namespace roaring;
 using namespace roaring::api;
@@ -10,35 +11,31 @@ class RoaringBitmap32;
 
 typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
 
-struct DeserializeResult {
+struct DeserializeResult final {
   roaring_bitmap_t_ptr bitmap;
   const char * error;
 
   inline explicit DeserializeResult(roaring_bitmap_t_ptr bitmap, const char * error = nullptr) :
     bitmap(bitmap),
-    error(bitmap ? nullptr : (error ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {}
+    error(
+      bitmap != nullptr
+        ? nullptr
+        : (error != nullptr ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {}
 };
 
-class RoaringBitmap32 {
+class RoaringBitmap32 final {
  public:
   roaring_bitmap_t * roaring;
   uint64_t version;
+  int64_t amountOfExternalAllocatedMemoryTracker;
   v8::Persistent<v8::Object> persistent;
 
   inline void invalidate() { ++version; }
 
-  inline bool replaceBitmapInstance(roaring_bitmap_t * newInstance) {
-    if (this->roaring != newInstance) {
-      if (this->roaring) {
-        roaring_bitmap_free(this->roaring);
-        this->roaring = nullptr;
-      }
-      this->roaring = newInstance;
-      this->invalidate();
-      return true;
-    }
-    return false;
-  }
+  void updateAmountOfExternalAllocatedMemory(v8::Isolate * isolate);
+  void updateAmountOfExternalAllocatedMemory(v8::Isolate * isolate, size_t newSize);
+
+  bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance);
 
   static v8::Eternal<v8::FunctionTemplate> constructorTemplate;
   static v8::Eternal<v8::Function> constructor;
@@ -114,7 +111,7 @@ class RoaringBitmap32 {
   static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
   static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
 
-  RoaringBitmap32(uint32_t capacity);
+  explicit RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();
 
  private:
@@ -129,11 +126,11 @@ class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
  public:
   volatile roaring_bitmap_t_ptr bitmap;
 
-  RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate);
+  explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate);
   virtual ~RoaringBitmap32FactoryAsyncWorker();
 
  protected:
-  virtual v8::Local<v8::Value> done();
+  v8::Local<v8::Value> done() override;
 };
 
 class RoaringBitmap32BufferedIterator {

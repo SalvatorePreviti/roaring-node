@@ -2,7 +2,6 @@
 #define __V8UTILS__H__
 
 #include <node.h>
-
 #include <uv.h>
 
 class JSTypes {
@@ -57,7 +56,7 @@ namespace v8utils {
 
     inline TypedArrayContent(TypedArrayContent<T> & copy) : length(copy.length), data(copy.data) {}
 
-    inline TypedArrayContent(v8::Local<v8::Value> from) { set(from); }
+    inline explicit TypedArrayContent(v8::Local<v8::Value> from) { set(from); }
 
     inline void reset() {
       this->length = 0;
@@ -157,7 +156,7 @@ namespace v8utils {
    public:
     v8::Isolate * const isolate;
 
-    AsyncWorker(v8::Isolate * isolate);
+    explicit AsyncWorker(v8::Isolate * isolate);
 
     virtual ~AsyncWorker();
 
@@ -182,10 +181,8 @@ namespace v8utils {
     // Called after the thread completes without errors.
     virtual v8::Local<v8::Value> done();
 
-    inline v8::Local<v8::Value> empty() const { return v8::Local<v8::Value>(); }
-
    private:
-    uv_work_t _task;
+    uv_work_t _task{};
     volatile const_char_ptr_t _error;
     volatile bool _completed;
     v8::Persistent<v8::Function> _callback;
@@ -206,11 +203,11 @@ namespace v8utils {
     uint32_t loopCount;
     uint32_t concurrency;
 
-    ParallelAsyncWorker(v8::Isolate * isolate);
+    explicit ParallelAsyncWorker(v8::Isolate * isolate);
     virtual ~ParallelAsyncWorker();
 
    protected:
-    virtual void work();
+    void work() override;
 
     virtual void parallelWork(uint32_t index) = 0;
 
@@ -219,7 +216,7 @@ namespace v8utils {
     volatile int32_t _pendingTasks;
     volatile uint32_t _currentIndex;
 
-    virtual bool _start();
+    bool _start() override;
 
     static void _parallelWork(uv_work_t * request);
     static void _parallelDone(uv_work_t * request, int status);

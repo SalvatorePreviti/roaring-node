@@ -300,7 +300,7 @@ describe('RoaringBitmap32 ranges', () => {
     it('does nothing for invalid values', () => {
       const bitmap = new RoaringBitmap32([1, 2])
       expect(bitmap.toArray()).toEqual([1, 2])
-      bitmap.flipRange(undefined as any, 6)
+      expect(bitmap.flipRange(undefined as any, 6)).toBe(bitmap)
       bitmap.flipRange(null as any, 6)
       bitmap.flipRange('0' as any, 6)
       bitmap.flipRange(0, [8] as any)
@@ -314,7 +314,7 @@ describe('RoaringBitmap32 ranges', () => {
 
     it('flips a ranges on an empty bitmap', () => {
       const bitmap = new RoaringBitmap32()
-      bitmap.flipRange(1, 3)
+      expect(bitmap.flipRange(1, 3)).toBe(bitmap)
       bitmap.flipRange(3, 5)
       bitmap.flipRange(8, 10)
       expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 8, 9])

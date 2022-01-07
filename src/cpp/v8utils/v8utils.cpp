@@ -100,7 +100,7 @@ namespace v8utils {
     uv_cpu_info_t * tmp = nullptr;
     int count = 0;
     uv_cpu_info(&tmp, &count);
-    if (tmp) {
+    if (tmp != nullptr) {
       uv_free_cpu_info(tmp, count);
     }
     result = count <= 0 ? 1 : (uint32_t)count;
@@ -114,7 +114,7 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::Error(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  void throwTypeError(v8::Isolate * isolate, const char * message) {
+  void throwTypeError(v8::Isolate * isolate, const char * /*message*/) {
     v8::HandleScope scope(isolate);
     auto msg = v8::String::NewFromUtf8(isolate, "Operation failed", v8::NewStringType::kInternalized);
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
@@ -124,7 +124,11 @@ namespace v8utils {
     v8::HandleScope scope(isolate);
     auto a = v8::String::NewFromUtf8(isolate, context, v8::NewStringType::kInternalized);
     auto b = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+#if NODE_MAJOR_VERSION > 10
     auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(isolate, a.ToLocalChecked(), b.ToLocalChecked());
+#else
+    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(a.ToLocalChecked(), b.ToLocalChecked());
+#endif
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
@@ -218,17 +222,17 @@ namespace v8utils {
     return returnValue;
   }
 
-  v8::Local<v8::Value> AsyncWorker::done() { return v8::Local<v8::Value>(); }
+  v8::Local<v8::Value> AsyncWorker::done() { return {}; }
 
   void AsyncWorker::_work(uv_work_t * request) {
-    AsyncWorker * worker = static_cast<AsyncWorker *>(request->data);
+    auto * worker = static_cast<AsyncWorker *>(request->data);
     if (!worker->hasError()) {
       worker->work();
     }
   }
 
   void AsyncWorker::_done(uv_work_t * request, int status) {
-    AsyncWorker * worker = static_cast<AsyncWorker *>(request->data);
+    auto * worker = static_cast<AsyncWorker *>(request->data);
     if (status != 0) {
       worker->setError("Error executing async thread");
     }
@@ -324,11 +328,7 @@ namespace v8utils {
   ParallelAsyncWorker::ParallelAsyncWorker(v8::Isolate * isolate) :
     AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {}
 
-  ParallelAsyncWorker::~ParallelAsyncWorker() {
-    if (_tasks != nullptr) {
-      delete[] _tasks;
-    }
-  }
+  ParallelAsyncWorker::~ParallelAsyncWorker() { delete[] _tasks; }
 
   void ParallelAsyncWorker::work() {
     const uint32_t c = loopCount;
@@ -348,7 +348,7 @@ namespace v8utils {
       return AsyncWorker::_start();
     }
 
-    uv_work_t * tasks = new uv_work_t[tasksCount]();
+    auto * tasks = new uv_work_t[tasksCount]();
     if (tasks == nullptr) {
       this->setError("Failed to allocate memory");
       return false;
@@ -367,16 +367,15 @@ namespace v8utils {
         0) {
         setError("Error starting async parallel task");
         break;
-      } else {
-        ++_pendingTasks;
       }
+      ++_pendingTasks;
     }
 
     return _pendingTasks > 0;
   }
 
   void ParallelAsyncWorker::_parallelWork(uv_work_t * request) {
-    ParallelAsyncWorker * worker = static_cast<ParallelAsyncWorker *>(request->data);
+    auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     uint32_t loopCount = worker->loopCount;
     while (!worker->hasError() && !worker->_completed) {
@@ -389,8 +388,8 @@ namespace v8utils {
     }
   }
 
-  void ParallelAsyncWorker::_parallelDone(uv_work_t * request, int status) {
-    ParallelAsyncWorker * worker = static_cast<ParallelAsyncWorker *>(request->data);
+  void ParallelAsyncWorker::_parallelDone(uv_work_t * request, int /*status*/) {
+    auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker->_completed) {
 #if NODE_MAJOR_VERSION > 13

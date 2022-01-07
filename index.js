@@ -1,3 +1,5 @@
+'use strict'
+
 const roaring = require('./build/Release/roaring.node')
 const { version: packageVersion } = require('./package.json')
 

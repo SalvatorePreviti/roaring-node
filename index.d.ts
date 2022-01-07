@@ -412,9 +412,10 @@ export class RoaringBitmap32 implements Iterable<number> {
    * Is even faster if a RoaringBitmap32 instance is used (it performs a simple copy).
    *
    * @param {Iterable<number>} values The new values or a RoaringBitmap32 instance.
+   * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public copyFrom(values: Iterable<number> | null | undefined): void
+  public copyFrom(values: Iterable<number> | null | undefined): this
 
   /**
    * Adds a single value to the set.
@@ -460,6 +461,7 @@ export class RoaringBitmap32 implements Iterable<number> {
    *
    * @param value The unsigned 32 bit integer to remove.
    * @returns True if the value was removed during this call, false if not.
+   * @memberof RoaringBitmap32
    */
   public delete(value: number): boolean
 
@@ -467,6 +469,7 @@ export class RoaringBitmap32 implements Iterable<number> {
    * Removes a value from the set.
    *
    * @param value The unsigned 32 bit integer to remove.
+   * @memberof RoaringBitmap32
    */
   public remove(value: number): void
 
@@ -481,6 +484,7 @@ export class RoaringBitmap32 implements Iterable<number> {
    *
    * @param values An iterable of values to remove.
    * @returns This RoaringBitmap32 instance.
+   * @memberof RoaringBitmap32
    */
   public removeMany(values: Iterable<number>): this
 
@@ -494,8 +498,10 @@ export class RoaringBitmap32 implements Iterable<number> {
    *
    * @param rangeStart The start index. Trimmed to 0.
    * @param rangeEnd The end index. Trimmed to 4294967297.
+   * @returns {this} This RoaringBitmap32 instance.
+   * @memberof RoaringBitmap32
    */
-  public flipRange(rangeStart: number, rangeEnd: number): void
+  public flipRange(rangeStart: number, rangeEnd: number): this
 
   /**
    * Adds all the values in the interval: [rangeStart, rangeEnd).
@@ -507,9 +513,10 @@ export class RoaringBitmap32 implements Iterable<number> {
    *
    * @param {number} rangeStart The start index. Trimmed to 0.
    * @param {number} rangeEnd The end index. Trimmed to 4294967297.
+   * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public addRange(rangeStart: number, rangeEnd: number): void
+  public addRange(rangeStart: number, rangeEnd: number): this
 
   /**
    * Removes all the values in the interval: [rangeStart, rangeEnd).
@@ -520,9 +527,10 @@ export class RoaringBitmap32 implements Iterable<number> {
    * Areas outside the range are passed through unchanged.
    * @param {number} rangeStart The start index. Trimmed to 0.
    * @param {number} rangeEnd The end index. Trimmed to 4294967297.
+   * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public removeRange(rangeStart: number, rangeEnd: number): void
+  public removeRange(rangeStart: number, rangeEnd: number): this
 
   /**
    * Removes all values from the set.
@@ -841,9 +849,10 @@ export class RoaringBitmap32 implements Iterable<number> {
    *
    * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the serialized data.
    * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public deserialize(serialized: Uint8Array, portable: boolean): void
+  public deserialize(serialized: Uint8Array, portable: boolean): this
 
   /**
    * Returns a new RoaringBitmap32 that is a copy of this bitmap, same as new RoaringBitmap32(copy)
