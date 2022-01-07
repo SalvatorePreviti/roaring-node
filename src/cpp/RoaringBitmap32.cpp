@@ -313,7 +313,7 @@ void RoaringBitmap32::hasRange(const v8::FunctionCallbackInfo<v8::Value> & info)
     return info.GetReturnValue().Set(false);
   }
 
-  if (isnan(minimum) || isnan(maximum)) {
+  if (std::isnan(minimum) || std::isnan(maximum)) {
     return info.GetReturnValue().Set(false);
   }
 
@@ -1367,11 +1367,11 @@ inline static bool getRangeOperationParameters(
   v8::Isolate * isolate = info.GetIsolate();
   double minimum, maximum;
 
-  if (!info[0]->NumberValue(isolate->GetCurrentContext()).To(&minimum) || isnan(minimum)) {
+  if (!info[0]->NumberValue(isolate->GetCurrentContext()).To(&minimum) || std::isnan(minimum)) {
     return false;
   }
 
-  if (!info[1]->NumberValue(isolate->GetCurrentContext()).To(&maximum) || isnan(maximum)) {
+  if (!info[1]->NumberValue(isolate->GetCurrentContext()).To(&maximum) || std::isnan(maximum)) {
     return false;
   }
 
