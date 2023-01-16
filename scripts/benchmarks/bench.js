@@ -1,137 +1,137 @@
-const Benchmark = require('benchmark')
-const benchReport = require('./benchReport')
+const Benchmark = require("benchmark");
+const benchReport = require("./benchReport");
 
-const { defineProperty } = Reflect
+const { defineProperty } = Reflect;
 
-const suitesDeclarations = []
+const suitesDeclarations = [];
 
 function errorToString(error) {
-  return error.stack || String(error || 'Error')
+  return error.stack || String(error || "Error");
 }
 
 const actions =
-  process.send && process.env.NODE_BENCHMARK_FORKED === '1'
+  process.send && process.env.NODE_BENCHMARK_FORKED === "1"
     ? {
         suiteStart() {},
         suiteReport(report) {
-          process.send(report)
-        }
+          process.send(report);
+        },
       }
     : {
         suiteStart: benchReport.printSuiteName,
-        suiteReport: benchReport.printSuiteReport
-      }
+        suiteReport: benchReport.printSuiteReport,
+      };
 
 function pushBenchResult(results, b) {
-  const failed = b.error || b.aborted
+  const failed = b.error || b.aborted;
   results.push({
     name: b.name,
     aborted: b.aborted,
     error: b.error !== undefined && errorToString(b.error),
     hz: failed ? 0 : b.hz || 0,
-    ops: failed ? '' : b.hz.toFixed(2).replace(/\B(?=(\d{3})+\b)/g, ','),
-    rme: failed ? '' : b.stats.rme.toFixed(2),
-    runs: failed ? '' : `${b.stats.sample.length}`,
-    diff: '',
-    fastest: false
-  })
+    ops: failed ? "" : b.hz.toFixed(2).replace(/\B(?=(\d{3})+\b)/g, ","),
+    rme: failed ? "" : b.stats.rme.toFixed(2),
+    runs: failed ? "" : `${b.stats.sample.length}`,
+    diff: "",
+    fastest: false,
+  });
 }
 
 class BenchSuite {
   constructor(name) {
-    this.name = name
-    this.results = []
-    this.details = []
-    this.hasErrors = false
+    this.name = name;
+    this.results = [];
+    this.details = [];
+    this.hasErrors = false;
   }
 
   detail(text) {
-    this.details.push(text)
+    this.details.push(text);
   }
 
   scope(fn) {
-    return fn()
+    return fn();
   }
 
   benchmark(name, fn) {
-    if (typeof global.gc === 'function') {
-      global.gc()
+    if (typeof global.gc === "function") {
+      global.gc();
     }
 
     {
-      let b
+      let b;
 
-      if (typeof fn === 'function') {
-        defineProperty(fn, 'name', {
+      if (typeof fn === "function") {
+        defineProperty(fn, "name", {
           value: `${this.name}:${fn.name || name}`,
           configurable: true,
-          writable: true
-        })
-        b = new Benchmark({ name, fn, async: false })
+          writable: true,
+        });
+        b = new Benchmark({ name, fn, async: false });
       } else {
-        b = new Benchmark({ name, fn: fn.fn, async: false })
+        b = new Benchmark({ name, fn: fn.fn, async: false });
       }
 
-      if (typeof fn.setup === 'function') {
-        b.on('start cycle', () => {
-          fn.setup(this)
-        })
+      if (typeof fn.setup === "function") {
+        b.on("start cycle", () => {
+          fn.setup(this);
+        });
       }
 
-      b.on('complete', () => {
+      b.on("complete", () => {
         if (b.error) {
-          this.hasErrors = true
+          this.hasErrors = true;
         }
-        pushBenchResult(this.results, b)
-      })
+        pushBenchResult(this.results, b);
+      });
 
-      b.run()
+      b.run();
     }
 
-    if (typeof global.gc === 'function') {
-      global.gc()
+    if (typeof global.gc === "function") {
+      global.gc();
     }
 
-    return this
+    return this;
   }
 }
 
 async function runSuite(suiteDeclaration) {
-  const benchSuite = new BenchSuite(suiteDeclaration.name)
-  let fastest = null
-  let error = null
+  const benchSuite = new BenchSuite(suiteDeclaration.name);
+  let fastest = null;
+  let error = null;
   try {
-    actions.suiteStart(suiteDeclaration.name)
+    actions.suiteStart(suiteDeclaration.name);
 
-    await suiteDeclaration.fn(benchSuite)
+    await suiteDeclaration.fn(benchSuite);
 
-    let fastValue = 0
+    let fastValue = 0;
     for (const b of benchSuite.results) {
       if (fastValue < b.hz) {
-        fastValue = b.hz
-        fastest = b
+        fastValue = b.hz;
+        fastest = b;
       }
     }
 
     if (fastest) {
-      fastest.fastest = true
+      fastest.fastest = true;
       for (const b of benchSuite.results) {
-        b.diff = b.fastest ? '' : `-${((1.0 - b.hz / fastest.hz) * 100).toFixed(2)}%`
+        b.diff = b.fastest ? "" : `-${((1.0 - b.hz / fastest.hz) * 100).toFixed(2)}%`;
       }
     }
   } catch (e) {
-    benchSuite.hasErrors = true
-    error = errorToString(e)
+    benchSuite.hasErrors = true;
+    error = errorToString(e);
   } finally {
     actions.suiteReport({
-      type: 'suiteReport',
+      type: "suiteReport",
       name: suiteDeclaration.name,
       details: benchSuite.details,
       error,
       hasErrors: benchSuite.hasErrors,
       benchs: benchSuite.results,
-      fastest: fastest && fastest.name
-    })
+      fastest: fastest && fastest.name,
+    });
   }
 }
 
@@ -145,14 +145,14 @@ module.exports = {
    */
   suite(name, fn) {
     if (!fn.name) {
-      defineProperty(fn, 'name', { value: name, configurable: true, writable: true })
+      defineProperty(fn, "name", { value: name, configurable: true, writable: true });
     }
-    suitesDeclarations.push({ name, fn })
+    suitesDeclarations.push({ name, fn });
   },
 
   async run() {
     for (const suite of suitesDeclarations.slice().sort((x) => x.name)) {
-      await runSuite(suite)
+      await runSuite(suite);
     }
-  }
-}
+  },
+};

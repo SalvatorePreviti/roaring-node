@@ -65,9 +65,9 @@
   "eslint.lintTask.enable": true,
   "eslint.validate": [],
   "javascript.format.enable": true,
-  "javascript.format.semicolons": "remove",
+  "javascript.format.semicolons": "insert",
   "typescript.format.enable": true,
-  "typescript.format.semicolons": "remove",
+  "typescript.format.semicolons": "insert",
   "files.eol": "\n",
   "files.associations": {
     "sstream": "cpp",

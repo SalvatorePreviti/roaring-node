@@ -1,1 +1,1 @@
-module.exports = require('./index').RoaringBitmap32
+module.exports = require("./index").RoaringBitmap32;

@@ -14,6 +14,9 @@
 
 #include "RoaringBitmap32.h"
 
+#define CROARING_SERIALIZATION_ARRAY_UINT32 1
+#define CROARING_SERIALIZATION_CONTAINER 2
+
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-variable"
@@ -762,11 +765,11 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
   if (portable) {
     roaring_bitmap_portable_serialize(self->roaring, (char *)buf.data);
   } else if (serializeArray) {
-    buf.data[0] = SERIALIZATION_ARRAY_UINT32;
+    buf.data[0] = CROARING_SERIALIZATION_ARRAY_UINT32;
     memcpy(buf.data + 1, &cardinality, sizeof(uint32_t));
     roaring_bitmap_to_uint32_array(self->roaring, (uint32_t *)(buf.data + 1 + sizeof(uint32_t)));
   } else {
-    buf.data[0] = SERIALIZATION_CONTAINER;
+    buf.data[0] = CROARING_SERIALIZATION_CONTAINER;
     roaring_bitmap_portable_serialize(self->roaring, (char *)buf.data + 1);
   }
 }
@@ -786,7 +789,7 @@ DeserializeResult RoaringBitmap32::doDeserialize(const v8utils::TypedArrayConten
   }
 
   switch ((unsigned char)bufaschar[0]) {
-    case SERIALIZATION_ARRAY_UINT32: {
+    case CROARING_SERIALIZATION_ARRAY_UINT32: {
       uint32_t card;
       memcpy(&card, bufaschar + 1, sizeof(uint32_t));
 
@@ -799,7 +802,7 @@ DeserializeResult RoaringBitmap32::doDeserialize(const v8utils::TypedArrayConten
         roaring_bitmap_of_ptr(card, elems), "RoaringBitmap32::deserialize - uint32 array deserialization failed");
     }
 
-    case SERIALIZATION_CONTAINER: {
+    case CROARING_SERIALIZATION_CONTAINER: {
       return DeserializeResult(
         roaring_bitmap_portable_deserialize_safe(bufaschar + 1, bufLen - 1),
         "RoaringBitmap32::deserialize - container deserialization failed");

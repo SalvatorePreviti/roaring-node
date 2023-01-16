@@ -1,4 +1,4 @@
-import roaring from '.'
+import roaring from ".";
 
 /**
  * Roaring bitmap that supports 32 bit unsigned integers.
@@ -7,4 +7,4 @@ import roaring from '.'
  *
  * @type {roaring.RoaringBitmap32}
  */
-export = roaring.RoaringBitmap32
+export = roaring.RoaringBitmap32;

@@ -5,9 +5,9 @@
   "htmlWhitespaceSensitivity": "css",
   "jsxSingleQuote": false,
   "printWidth": 120,
-  "semi": false,
-  "singleQuote": true,
+  "semi": true,
+  "singleQuote": false,
   "tabWidth": 2,
-  "trailingComma": "none",
+  "trailingComma": "all",
   "useTabs": false
 }

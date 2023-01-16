@@ -1,1 +1,1 @@
-module.exports = require('./index').RoaringBitmap32Iterator
+module.exports = require("./index").RoaringBitmap32Iterator;

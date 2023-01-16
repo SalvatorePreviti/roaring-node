@@ -6,6 +6,9 @@ git submodule update --init --recursive
 
 cd submodules/CRoaring
 
+git checkout master
+git pull
+
 cd ../..
 
 mkdir -p src/cpp/CRoaringUnityBuild
