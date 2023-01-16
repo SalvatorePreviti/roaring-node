@@ -82,6 +82,7 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.1.0",
     "mocha": "^10.2.0",
+    "node-abi": "^3.31.0",
     "physical-cpu-count": "^2.0.0",
     "prebuild": "^11.0.4",
     "prettier": "^2.8.3",

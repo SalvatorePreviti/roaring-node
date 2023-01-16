@@ -10,7 +10,6 @@ args.push("-t", "12.0.0");
 args.push("-t", "14.0.0");
 args.push("-t", "15.0.0");
 args.push("-t", "16.0.0");
-args.push("-t", "17.0.0");
 args.push("-t", "18.0.0");
 
 const token = process.argv[2] || process.env.PREBUILD_GITHUB_TOKEN;
