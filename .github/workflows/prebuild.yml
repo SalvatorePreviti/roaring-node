@@ -19,6 +19,7 @@ jobs:
         with:
           python-version: "3.10"
       - uses: actions/checkout@v3
+      - run: npm i -g node-gyp
       - run: npm install
       - run: npm test
       - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
@@ -35,6 +36,7 @@ jobs:
         with:
           python-version: "3.10"
       - uses: actions/checkout@v3
+      - run: npm i -g node-gyp
       - run: npm install
       - run: npm test
       - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
@@ -51,6 +53,7 @@ jobs:
         with:
           python-version: "3.10"
       - uses: actions/checkout@v3
+      - run: npm i -g node-gyp
       - run: npm install
       - run: npm test
       - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
