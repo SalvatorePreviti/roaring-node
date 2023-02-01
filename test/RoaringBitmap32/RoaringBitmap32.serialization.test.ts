@@ -220,22 +220,111 @@ describe("RoaringBitmap32 serialization", () => {
     it("serializes to buffer (non portable)", () => {
       const bitmap = new RoaringBitmap32(data);
       const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(false));
-      bitmap.serialize(false, buffer);
+      expect(bitmap.serialize(false, buffer)).to.eq(buffer);
       expect(RoaringBitmap32.deserialize(buffer, false).toArray()).to.deep.eq(data);
     });
 
     it("serializes to buffer (portable)", () => {
       const bitmap = new RoaringBitmap32(data);
       const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true));
-      bitmap.serialize(true, buffer);
+      expect(bitmap.serialize(true, buffer)).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(buffer, true).toArray()).to.deep.eq(data);
+    });
+
+    it("serializes to buffer (portable), inverted arguments", () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true));
+      expect(bitmap.serialize(buffer, true)).to.eq(buffer);
       expect(RoaringBitmap32.deserialize(buffer, true).toArray()).to.deep.eq(data);
     });
 
     it("handles offset correctly and deserialize correctly", () => {
       const bitmap = new RoaringBitmap32(data);
       const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) + 10);
-      bitmap.serialize(true, buffer, 10);
-      expect(RoaringBitmap32.deserialize(Buffer.from(buffer, 10), true).toArray()).to.deep.eq(data);
+      expect(bitmap.serialize("portable", buffer, 10)).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
+    });
+
+    it("handles offset correctly and deserialize correctly, inverted arguments", () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) + 11);
+      expect(bitmap.serialize(buffer, 11, "portable")).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 11), true).toArray()).to.deep.eq(data);
+    });
+  });
+
+  describe("serializeAsync", () => {
+    it("serializes to buffer (non portable)", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(false));
+      expect(await bitmap.serializeAsync(false, buffer)).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(buffer, false).toArray()).to.deep.eq(data);
+    });
+
+    it("serializes to buffer (portable)", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true));
+      expect(await bitmap.serializeAsync(true, buffer)).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(buffer, true).toArray()).to.deep.eq(data);
+    });
+
+    it("handles offset correctly and deserialize correctly", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) + 10);
+      expect(await bitmap.serializeAsync(true, buffer, 10)).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
+    });
+
+    it("throws if buffer is not a valid buffer", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      await expect(bitmap.serializeAsync(false, {} as any)).to.be.rejected;
+      await expect(bitmap.serializeAsync(false, 1 as any)).to.be.rejected;
+      await expect(bitmap.serializeAsync(false, "test" as any)).to.be.rejected;
+      await expect(bitmap.serializeAsync(false, [1, 2, 3] as any)).to.be.rejected;
+    });
+
+    it("throws if buffer is too small", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(false) - 1);
+      await expect(bitmap.serializeAsync(false, buffer)).to.be.rejected;
+    });
+
+    it("throws if buffer is too small (portable)", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) - 1);
+      await expect(bitmap.serializeAsync(true, buffer)).to.be.rejected;
+    });
+
+    it("throws if offset is not a number, infinity, NaN or negative or too big", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true));
+      await expect(bitmap.serializeAsync(true, buffer, 10.1)).to.be.rejected;
+      await expect(bitmap.serializeAsync(true, buffer, Infinity)).to.be.rejected;
+      await expect(bitmap.serializeAsync(true, buffer, NaN)).to.be.rejected;
+      await expect(bitmap.serializeAsync(true, buffer, -1)).to.be.rejected;
+      await expect(bitmap.serializeAsync(true, buffer, Number.MAX_SAFE_INTEGER)).to.be.rejected;
+      await expect(bitmap.serializeAsync(true, buffer, buffer.length - 1)).to.be.rejected;
+    });
+
+    it("serializes to buffer (non portable)", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(false));
+      expect(await bitmap.serializeAsync(false, buffer)).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(buffer, false).toArray()).to.deep.eq(data);
+    });
+
+    it("serializes to buffer (portable)", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true));
+      expect(await bitmap.serializeAsync(true, buffer)).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(buffer, true).toArray()).to.deep.eq(data);
+    });
+
+    it("handles offset correctly and deserialize correctly", async () => {
+      const bitmap = new RoaringBitmap32(data);
+      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) + 10);
+      expect(await bitmap.serializeAsync(true, buffer, 10)).to.eq(buffer);
+      expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
     });
   });
 });

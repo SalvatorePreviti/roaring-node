@@ -91,7 +91,7 @@ namespace v8utils {
   struct TypedArrayContent final {
     size_t length;
     T * data;
-    v8::Local<v8::ArrayBuffer> arrayBuffer;
+    v8::Persistent<v8::Value> bufferPersistent;
 #if NODE_MAJOR_VERSION > 13
     std::shared_ptr<v8::BackingStore> backingStore;
 #endif
@@ -104,13 +104,13 @@ namespace v8utils {
     TypedArrayContent<T> & operator=(TypedArrayContent<T> &&) = delete;
 
     template <typename Q>
-    inline explicit TypedArrayContent(v8::Local<Q> from) {
-      set(from);
+    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::Local<Q> from) {
+      set(isolate, from);
     }
 
     template <typename Q>
-    inline explicit TypedArrayContent(v8::MaybeLocal<Q> from) {
-      set(from);
+    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::MaybeLocal<Q> from) {
+      set(isolate, from);
     }
 
     inline void reset() {
@@ -119,27 +119,28 @@ namespace v8utils {
 #if NODE_MAJOR_VERSION > 13
       this->backingStore = nullptr;
 #endif
-      this->arrayBuffer.Clear();
+      this->bufferPersistent.Reset();
     }
 
     template <typename Q>
-    inline bool set(v8::MaybeLocal<Q> from) {
+    inline bool set(v8::Isolate * isolate, v8::MaybeLocal<Q> from) {
       v8::Local<Q> local;
       if (from.ToLocal(&local)) {
-        return this->set(local);
+        return this->set(isolate, local);
       }
       this->reset();
       return false;
     }
 
     template <typename Q>
-    inline bool set(v8::Local<Q> from) {
+    inline bool set(v8::Isolate * isolate, v8::Local<Q> from) {
       if (!from.IsEmpty() && from->IsArrayBufferView()) {
+        bufferPersistent.Reset(isolate, from);
         auto array = v8::Local<v8::ArrayBufferView>::Cast(from);
         this->length = array->ByteLength() / sizeof(T);
-        this->arrayBuffer = array->Buffer();
 #if NODE_MAJOR_VERSION > 13
-        this->backingStore = this->arrayBuffer->GetBackingStore();
+        auto arrayBuffer = array->Buffer();
+        this->backingStore = arrayBuffer->GetBackingStore();
         this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
 #else
         this->data = (T *)((uint8_t *)(this->arrayBuffer->GetContents().Data()) + array->ByteOffset());
@@ -237,11 +238,17 @@ namespace v8utils {
     static v8::Local<v8::Value> run(AsyncWorker * worker);
 
    protected:
+    // Called before the thread starts, in the main thread.
+    virtual void before();
+
     // Called in a thread to execute the workload
     virtual void work() = 0;
 
-    // Called after the thread completes without errors.
+    // Called after the thread completes without errors, in the main thread.
     virtual v8::Local<v8::Value> done();
+
+    // Called after the thread completes, with or without errors, in the main thread.
+    virtual void finally();
 
    private:
     uv_work_t _task{};

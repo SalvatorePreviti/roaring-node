@@ -31,7 +31,7 @@ struct DeserializeResult final {
         : (error != nullptr ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {}
 };
 
-enum class FrozenMode { Unfrozen = 0, SoftFrozen = 1, HardFrozen = 2 };
+enum class FrozenMode { Counter = 0, SoftFrozen = 1, HardFrozen = 2 };
 
 enum class SerializationMode { croaring = 0, portable = 1, frozen = 2 };
 
@@ -47,7 +47,15 @@ class RoaringBitmap32 final {
   uint64_t version;
   int64_t amountOfExternalAllocatedMemoryTracker;
   v8::Persistent<v8::Object> persistent;
+
   FrozenMode frozenMode;
+  int64_t frozenCounter;
+
+  inline bool isFrozen() const { return this->frozenMode != FrozenMode::Counter || this->frozenCounter != 0; }
+  inline bool isFrozenHard() const { return this->frozenMode == FrozenMode::HardFrozen || this->frozenCounter != 0; }
+
+  inline void beginFreeze() { ++this->frozenCounter; }
+  inline void endFreeze() { --this->frozenCounter; }
 
   inline void invalidate() { ++version; }
 
@@ -105,6 +113,7 @@ class RoaringBitmap32 final {
   static void toSet(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void serialize(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void deserialize(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
@@ -136,15 +145,11 @@ class RoaringBitmap32 final {
   explicit RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();
 
- private:
   static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
   static DeserializeResult doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable);
   static SerializationFormat tryParseSerializationFormat(
     const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
   static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
-
-  friend class DeserializeWorker;
-  friend class DeserializeParallelWorker;
 };
 
 class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {

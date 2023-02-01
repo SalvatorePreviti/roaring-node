@@ -111,6 +111,7 @@
     "filesystem": "cpp",
     "version": "cpp",
     "complex": "cpp",
-    "*.inc": "cpp"
+    "*.inc": "cpp",
+    "__nullptr": "cpp"
   }
 }

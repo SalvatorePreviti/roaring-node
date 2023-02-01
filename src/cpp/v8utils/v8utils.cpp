@@ -1,5 +1,7 @@
 #include "v8utils.h"
 
+#include <atomic>
+
 #ifdef _MSC_VER
 #  define atomicIncrement32(ptr) InterlockedIncrement(ptr)
 #  define atomicDecrement32(ptr) InterlockedDecrement(ptr)
@@ -50,6 +52,18 @@ namespace v8utils {
     result = count <= 0 ? 1 : (uint32_t)count;
     _cpusCountCache = result;
     return result;
+  }
+
+  // Creates a new Error from string
+  v8::Local<v8::Value> createError(v8::Isolate * isolate, const char * message) {
+    v8::EscapableHandleScope scope(isolate);
+    auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+    v8::Local<v8::String> msgLocal;
+    if (msg.ToLocal(&msgLocal)) {
+      return scope.Escape(v8::Exception::Error(msgLocal));
+    }
+    return scope.Escape(
+      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
   }
 
   void throwError(v8::Isolate * isolate, const char * message) {
@@ -110,6 +124,13 @@ namespace v8utils {
   }
 
   bool AsyncWorker::_start() {
+    if (this->hasError()) {
+      return false;
+    }
+    this->before();
+    if (this->hasError()) {
+      return false;
+    }
     if (uv_queue_work(uv_default_loop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
       setError("Error starting async thread");
       return false;
@@ -144,16 +165,23 @@ namespace v8utils {
     return returnValue;
   }
 
+  void AsyncWorker::before() {}
+
   v8::Local<v8::Value> AsyncWorker::done() { return {}; }
 
+  void AsyncWorker::finally() {}
+
   void AsyncWorker::_work(uv_work_t * request) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (!worker->hasError()) {
       worker->work();
     }
+    std::atomic_thread_fence(std::memory_order_seq_cst);
   }
 
   void AsyncWorker::_done(uv_work_t * request, int status) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (status != 0) {
       worker->setError("Error executing async thread");
@@ -170,7 +198,7 @@ namespace v8utils {
     if (_error == nullptr) {
       v8::TryCatch tryCatch(isolate);
 
-      result = done();
+      result = this->done();
 
       if (tryCatch.HasCaught()) {
         isError = true;
@@ -196,6 +224,8 @@ namespace v8utils {
     if (isError && _error == nullptr) {
       _error = "Async generated an exception";
     }
+
+    this->finally();
 
     return scope.Escape(result);
   }
@@ -236,6 +266,7 @@ namespace v8utils {
   }
 
   void AsyncWorker::_complete(AsyncWorker * worker) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     v8::Isolate * isolate = worker->isolate;
     _resolveOrReject(worker);
 #if NODE_MAJOR_VERSION > 13
