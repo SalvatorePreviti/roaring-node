@@ -12,6 +12,13 @@ class RoaringBitmap32;
 
 typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
 
+enum class SerializationFormat {
+  INVALID = -1,
+  croaring = 0,
+  portable = 1,
+  frozen_croaring = 2,
+};
+
 struct DeserializeResult final {
   roaring_bitmap_t_ptr bitmap;
   const char * error;
@@ -128,6 +135,9 @@ class RoaringBitmap32 final {
  private:
   static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
   static DeserializeResult doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable);
+  static SerializationFormat tryParseSerializationFormat(
+    const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
+  static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
 
   friend class DeserializeWorker;
   friend class DeserializeParallelWorker;

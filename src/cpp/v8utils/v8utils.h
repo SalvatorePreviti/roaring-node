@@ -151,17 +151,10 @@ namespace v8utils {
 
   namespace ObjectWrap {
     template <class T>
-    static T * Unwrap(v8::Local<v8::Object> object) {
-      return (T *)(object->GetAlignedPointerFromInternalField(0));
-    }
-
-    template <class T>
     static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
       v8::Local<v8::Object> obj;
-      if (!value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
-        return nullptr;
-      }
-      return (T *)(obj->GetAlignedPointerFromInternalField(0));
+      return value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj) ? (T *)(obj->GetAlignedPointerFromInternalField(0))
+                                                                         : nullptr;
     }
 
     template <class T>

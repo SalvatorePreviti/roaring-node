@@ -16,6 +16,21 @@ limitations under the License.
 
 import roaring = require("./");
 
+export enum SerializationFormat {
+  /** Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
+  croaring = "croaring",
+
+  /** Portable Java and Go format. */
+  portable = "portable",
+
+  /** Optimized non portable C/C++ frozen format. Can be larger than the other formats. */
+  frozen_croaring = "frozen_croaring",
+}
+
+export namespace RoaringBitmap32 {
+  export type SerializationFormat = typeof SerializationFormat;
+}
+
 /**
  * Roaring bitmap that supports 32 bit unsigned integers.
  *
@@ -30,6 +45,10 @@ import roaring = require("./");
 export class RoaringBitmap32 implements Set<number> {
   // Allows: import RoaringBitmap32 from 'roaring/RoaringBitmap32'
   private static readonly default: typeof RoaringBitmap32;
+
+  public static readonly SerializationFormat: typeof SerializationFormat;
+
+  public readonly SerializationFormat: typeof SerializationFormat;
 
   /**
    * Property: The version of the CRoaring libary as a string.
@@ -924,11 +943,13 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
-   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @returns {number} How many bytes are required to serialize this bitmap.
    * @memberof RoaringBitmap32
    */
-  public getSerializationSizeInBytes(portable: boolean): number;
+  public getSerializationSizeInBytes(
+    format: SerializationFormat | "croaring" | "portable" | "frozen_croaring" | boolean,
+  ): number;
 
   /**
    * Serializes the bitmap into a new Buffer.
@@ -936,11 +957,11 @@ export class RoaringBitmap32 implements Set<number> {
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
-   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @returns {Buffer} A new node Buffer that contains the serialized bitmap.
    * @memberof RoaringBitmap32
    */
-  public serialize(portable: boolean): Buffer;
+  public serialize(format: SerializationFormat | "croaring" | "portable" | "frozen_croaring" | boolean): Buffer;
 
   /**
    * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
@@ -952,10 +973,14 @@ export class RoaringBitmap32 implements Set<number> {
    * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @param {Buffer} output The node Buffer where to write the serialized data.
    * @param {number} [outputStartIndex=0] The index where to start writing the serialized data.
-   * @returns {Buffer} A new node Buffer that contains the serialized bitmap.
+   * @returns {Buffer} The output Buffer.
    * @memberof RoaringBitmap32
    */
-  public serialize<TOutput extends Uint8Array>(portable: boolean, output: TOutput, outputStartIndex?: number): TOutput;
+  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray>(
+    format: SerializationFormat | boolean,
+    output: TOutput,
+    outputStartIndex?: number,
+  ): TOutput;
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.

@@ -1,26 +1,59 @@
 import RoaringBitmap32 from "../../RoaringBitmap32";
+import { SerializationFormat } from "../../";
 import { expect } from "chai";
 
 describe("RoaringBitmap32 serialization", () => {
   const data = [1, 2, 3, 4, 5, 6, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff];
 
+  describe("RoaringBitmap32SerializationFormat", () => {
+    it("should have the right values", () => {
+      expect(SerializationFormat.croaring).eq("croaring");
+      expect(SerializationFormat.portable).eq("portable");
+      expect(SerializationFormat.frozen_croaring).eq("frozen_croaring");
+
+      expect(Object.values(SerializationFormat)).to.deep.eq(["croaring", "portable", "frozen_croaring"]);
+
+      expect(RoaringBitmap32.SerializationFormat).to.eq(SerializationFormat);
+
+      expect(new RoaringBitmap32().SerializationFormat).to.eq(SerializationFormat);
+    });
+  });
+
   describe("getSerializationSizeInBytes", () => {
+    it("throws if the argument is not a valid format", () => {
+      const bitmap = new RoaringBitmap32(data);
+      const expectedError = "RoaringBitmap32::getSerializationSizeInBytes format argument was invalid";
+      expect(() => bitmap.getSerializationSizeInBytes(undefined as any)).to.throw(expectedError);
+      expect(() => bitmap.getSerializationSizeInBytes(null as any)).to.throw(expectedError);
+      expect(() => bitmap.getSerializationSizeInBytes("foo" as any)).to.throw(expectedError);
+      expect(() => bitmap.getSerializationSizeInBytes(0 as any)).to.throw(expectedError);
+      expect(() => bitmap.getSerializationSizeInBytes(1 as any)).to.throw(expectedError);
+    });
+
     it("returns standard value for empty bitmap (non portable)", () => {
       const bitmap = new RoaringBitmap32();
       expect(bitmap.getSerializationSizeInBytes(false)).eq(5);
+      expect(bitmap.getSerializationSizeInBytes("croaring")).eq(5);
     });
 
     it("returns standard value for empty bitmap (portable)", () => {
       const bitmap = new RoaringBitmap32();
       expect(bitmap.getSerializationSizeInBytes(true)).eq(8);
+      expect(bitmap.getSerializationSizeInBytes("portable")).eq(8);
+    });
+
+    it("returns a value for frozen croaring", () => {
+      expect(new RoaringBitmap32([1, 2, 3]).getSerializationSizeInBytes("frozen_croaring")).gt(0);
     });
 
     it("returns the correct amount of bytes (non portable)", () => {
       const bitmap = new RoaringBitmap32(data);
       expect(bitmap.getSerializationSizeInBytes(false)).eq(bitmap.serialize(false).byteLength);
+      expect(bitmap.getSerializationSizeInBytes("croaring")).eq(bitmap.serialize("croaring").byteLength);
       bitmap.runOptimize();
       bitmap.shrinkToFit();
       expect(bitmap.getSerializationSizeInBytes(false)).eq(bitmap.serialize(false).byteLength);
+      expect(bitmap.getSerializationSizeInBytes("croaring")).eq(bitmap.serialize("croaring").byteLength);
     });
 
     it("returns the correct amount of bytes (portable)", () => {

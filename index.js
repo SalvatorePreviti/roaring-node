@@ -104,17 +104,17 @@ function iterator() {
 }
 
 if (!roaring.PackageVersion) {
-  const roaringBitmap32Proto = RoaringBitmap32.prototype;
-  roaringBitmap32Proto[Symbol.iterator] = iterator;
-  roaringBitmap32Proto.iterator = iterator;
-  roaringBitmap32Proto.keys = iterator;
-  roaringBitmap32Proto.values = iterator;
-  roaringBitmap32Proto.entries = function* entries() {
+  const roaringBitmap32_proto = RoaringBitmap32.prototype;
+  roaringBitmap32_proto[Symbol.iterator] = iterator;
+  roaringBitmap32_proto.iterator = iterator;
+  roaringBitmap32_proto.keys = iterator;
+  roaringBitmap32_proto.values = iterator;
+  roaringBitmap32_proto.entries = function* entries() {
     for (const v of this) {
       yield [v, v];
     }
   };
-  roaringBitmap32Proto.forEach = function (fn, self) {
+  roaringBitmap32_proto.forEach = function (fn, self) {
     if (self !== undefined) {
       for (const v of this) {
         fn(v, v, this);
@@ -125,15 +125,30 @@ if (!roaring.PackageVersion) {
       }
     }
   };
-  roaringBitmap32Proto.PackageVersion = packageVersion;
 
-  RoaringBitmap32.PackageVersion = packageVersion;
-  RoaringBitmap32.RoaringBitmap32Iterator = RoaringBitmap32Iterator;
+  const define = (name, value, writable) => {
+    const prop = {
+      value,
+      writable: !!writable,
+      configurable: false,
+      enumerable: false,
+    };
+    defineProperty(roaring, name, prop);
+    defineProperty(RoaringBitmap32, name, prop);
+    defineProperty(roaringBitmap32_proto, name, prop);
+  };
 
-  roaring.PackageVersion = packageVersion;
-  roaring.RoaringBitmap32Iterator = RoaringBitmap32Iterator;
+  define("PackageVersion", packageVersion);
+  define("RoaringBitmap32Iterator", RoaringBitmap32Iterator, false);
+  define(
+    "SerializationFormat",
+    {
+      croaring: "croaring",
+      portable: "portable",
+      frozen_croaring: "frozen_croaring",
+    },
+    false,
+  );
 
-  roaring._initTypes({
-    Uint32Array,
-  });
+  roaring._initTypes({ Uint32Array });
 }
