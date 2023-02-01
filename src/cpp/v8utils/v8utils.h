@@ -30,12 +30,12 @@ namespace v8utils {
   inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
 
   template <int N>
-  void throwError(v8::Isolate * isolate, const char (&message)[N]) {
+  inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
   }
 
   template <int N>
-  void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
+  inline void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(
       v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
   }
@@ -88,7 +88,7 @@ namespace v8utils {
   }
 
   template <typename T>
-  struct TypedArrayContent {
+  struct TypedArrayContent final {
     size_t length;
     T * data;
     v8::Local<v8::ArrayBuffer> arrayBuffer;
@@ -98,7 +98,10 @@ namespace v8utils {
 
     inline TypedArrayContent() : length(0), data(nullptr) {}
 
-    inline TypedArrayContent(TypedArrayContent<T> & copy) : length(copy.length), data(copy.data) {}
+    TypedArrayContent(const TypedArrayContent<T> &) = delete;
+    TypedArrayContent<T> & operator=(const TypedArrayContent<T> &) = delete;
+    TypedArrayContent(TypedArrayContent<T> &&) = delete;
+    TypedArrayContent<T> & operator=(TypedArrayContent<T> &&) = delete;
 
     template <typename Q>
     inline explicit TypedArrayContent(v8::Local<Q> from) {
@@ -122,9 +125,10 @@ namespace v8utils {
     template <typename Q>
     inline bool set(v8::MaybeLocal<Q> from) {
       v8::Local<Q> local;
-      if (from.ToLocal(&local)) return this->set(local);
-      this->length = 0;
-      this->data = nullptr;
+      if (from.ToLocal(&local)) {
+        return this->set(local);
+      }
+      this->reset();
       return false;
     }
 
@@ -143,8 +147,7 @@ namespace v8utils {
         return true;
       }
 
-      this->length = 0;
-      this->data = nullptr;
+      this->reset();
       return false;
     }
   };
@@ -153,8 +156,13 @@ namespace v8utils {
     template <class T>
     static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
       v8::Local<v8::Object> obj;
-      return value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj) ? (T *)(obj->GetAlignedPointerFromInternalField(0))
-                                                                         : nullptr;
+      if (isolate && value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
+        T * result = (T *)(obj->GetAlignedPointerFromInternalField(0));
+        if (result && result->objectToken == T::OBJECT_TOKEN) {
+          return result;
+        }
+      }
+      return nullptr;
     }
 
     template <class T>

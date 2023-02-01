@@ -39,6 +39,10 @@ enum class DeserializationMode { croaring = 0, portable = 1, frozen = 2, frozen_
 
 class RoaringBitmap32 final {
  public:
+  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152333221;
+
+  static const uint64_t objectToken = OBJECT_TOKEN;
+
   roaring_bitmap_t * roaring;
   uint64_t version;
   int64_t amountOfExternalAllocatedMemoryTracker;
@@ -156,6 +160,10 @@ class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
 
 class RoaringBitmap32BufferedIterator {
  public:
+  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152495421;
+
+  static const uint64_t objectToken = OBJECT_TOKEN;
+
   enum { allocatedMemoryDelta = 1024 };
 
   v8::Persistent<v8::Object> persistent;
