@@ -936,13 +936,26 @@ export class RoaringBitmap32 implements Set<number> {
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
-   * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
-   *
    * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @returns {Buffer} A new node Buffer that contains the serialized bitmap.
    * @memberof RoaringBitmap32
    */
   public serialize(portable: boolean): Buffer;
+
+  /**
+   * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
+   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Buffer} output The node Buffer where to write the serialized data.
+   * @param {number} [outputStartIndex=0] The index where to start writing the serialized data.
+   * @returns {Buffer} A new node Buffer that contains the serialized bitmap.
+   * @memberof RoaringBitmap32
+   */
+  public serialize<TOutput extends Uint8Array>(portable: boolean, output: TOutput, outputStartIndex?: number): TOutput;
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.

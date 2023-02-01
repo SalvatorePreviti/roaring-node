@@ -790,13 +790,57 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
     }
   }
 
-  auto maybeBufferObject = node::Buffer::New(isolate, buffersize);
-  v8::Local<v8::Object> bufferObject;
-  if (!maybeBufferObject.ToLocal(&bufferObject))
-    return v8utils::throwError(isolate, "RoaringBitmap32::serialize - failed to allocate");
-  const v8utils::TypedArrayContent<uint8_t> buf(bufferObject);
-  if (!buf.length || !buf.data) return v8utils::throwError(isolate, "RoaringBitmap32::serialize - failed to allocate");
+  size_t offset = 0;
+  v8::MaybeLocal<v8::Object> maybeBufferObject;
+  v8utils::TypedArrayContent<uint8_t> buf;
 
+  if (info.Length() > 1 && !info[1]->IsNullOrUndefined()) {
+    if (!info[1]->IsUint8Array() && !info[1]->IsInt8Array() && !info[1]->IsUint8ClampedArray()) {
+      return v8utils::throwTypeError(
+        isolate, "RoaringBitmap32::deserialize requires an argument of type Uint8Array or Buffer");
+    }
+
+    // Get the buffer object
+    maybeBufferObject = info[1]->ToObject(isolate->GetCurrentContext());
+    if (!buf.set(maybeBufferObject)) {
+      return v8utils::throwError(
+        info.GetIsolate(), "RoaringBitmap32::serialize output argument must be an UInt8Array or a buffer");
+    }
+
+    // Get the offset
+    double doubleOffset = 0;
+    if (info.Length() > 2 && !info[2]->IsNullOrUndefined()) {
+      if (!info[2]->IsNumber() || !info[2]->NumberValue(isolate->GetCurrentContext()).To(&doubleOffset)) {
+        return v8utils::throwError(info.GetIsolate(), "RoaringBitmap32::serialize offset argument must be a number");
+      }
+
+      // Check is a positive and not nan or infinity and can be converted to an int 53 bits
+      if (doubleOffset < 0 || !std::isfinite(doubleOffset) || doubleOffset > 9007199254740991 - buffersize) {
+        return v8utils::throwError(
+          info.GetIsolate(), "RoaringBitmap32::serialize offset argument must be a positive safe integer");
+      }
+
+      offset = (size_t)doubleOffset;
+    }
+
+    // Check that we have enough space to write the bitmap
+    if (offset + buffersize > buf.length) {
+      return v8utils::throwError(
+        info.GetIsolate(),
+        "RoaringBitmap32::serialize offset argument plus the bitmap size is greater than the buffer size");
+    }
+  } else {
+    // Allocate the buffer
+    maybeBufferObject = node::Buffer::New(isolate, buffersize);
+  }
+
+  v8::Local<v8::Object> bufferObject;
+  if (!maybeBufferObject.ToLocal(&bufferObject)) {
+    return v8utils::throwError(isolate, "RoaringBitmap32::serialize - failed to allocate");
+  }
+  if (!buf.set(bufferObject) || !buf.length || !buf.data) {
+    return v8utils::throwError(isolate, "RoaringBitmap32::serialize - failed to allocate");
+  }
   info.GetReturnValue().Set(bufferObject);
 
   if (portable) {
