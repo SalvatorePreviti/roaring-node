@@ -90,6 +90,17 @@ export class RoaringBitmap32 implements Set<number> {
   public readonly isEmpty: boolean;
 
   /**
+   * Property. True if the bitmap is read-only.
+   * A read-only bitmap cannot be modified, every operation will throw an error.
+   * You can freeze a bitmap using the freeze() method.
+   * A bitmap cannot be unfrozen, but it can be swapped with the static method swap(a, b) with a writable bitmap.
+   *
+   * @type {boolean}
+   * @memberof RoaringBitmap32
+   */
+  public readonly isFrozen: boolean;
+
+  /**
    * Creates an instance of RoaringBitmap32.
    *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
@@ -992,6 +1003,18 @@ export class RoaringBitmap32 implements Set<number> {
    * @memberof RoaringBitmap32
    */
   public statistics(): RoaringBitmap32Statistics;
+
+  /**
+   * Makes this roaring bitmap readonly.
+   * Sets isFrozen to true.
+   * This is a no-op if isFrozen is already true.
+   * Every attempt to modify the bitmap will throw an exception.
+   * A bitmap cannot be unfrozen, but it can be swapped with the static method swap(a, b) with a writable bitmap.
+   *
+   * @returns {this} This instance.
+   * @memberof RoaringBitmap32Iterator
+   */
+  public freeze(): this;
 }
 
 /**

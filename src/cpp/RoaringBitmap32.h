@@ -24,12 +24,15 @@ struct DeserializeResult final {
         : (error != nullptr ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {}
 };
 
+enum class FrozenMode { Unfrozen = 0, SoftFrozen = 1, HardFrozen = 2 };
+
 class RoaringBitmap32 final {
  public:
   roaring_bitmap_t * roaring;
   uint64_t version;
   int64_t amountOfExternalAllocatedMemoryTracker;
   v8::Persistent<v8::Object> persistent;
+  FrozenMode frozenMode;
 
   inline void invalidate() { ++version; }
 
@@ -109,8 +112,11 @@ class RoaringBitmap32 final {
   static void contentToString(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void statistics(const v8::FunctionCallbackInfo<v8::Value> & info);
 
+  static void freeze(const v8::FunctionCallbackInfo<v8::Value> & info);
+
   static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
   static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+  static void isFrozen_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
 
   explicit RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();
