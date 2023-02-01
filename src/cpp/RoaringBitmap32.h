@@ -26,6 +26,10 @@ struct DeserializeResult final {
 
 enum class FrozenMode { Unfrozen = 0, SoftFrozen = 1, HardFrozen = 2 };
 
+enum class SerializationMode { croaring = 0, portable = 1, frozen = 2 };
+
+enum class DeserializationMode { croaring = 0, portable = 1, frozen = 2, frozen_portable = 3 };
+
 class RoaringBitmap32 final {
  public:
   roaring_bitmap_t * roaring;
