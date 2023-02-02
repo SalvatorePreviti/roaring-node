@@ -102,7 +102,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
 
   void * ptr = sp_aligned_malloc(alignment, size);
   if (!ptr) {
-    return v8utils::throwError(isolate, "Buffer allocation failed");
+    return v8utils::throwError(isolate, "Buffer memory allocation failed");
   }
 
   if (!unsafe) {
