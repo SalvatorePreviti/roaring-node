@@ -35,7 +35,34 @@
 #undef printf
 #undef fprintf
 
-void roaring_free_callback(char * data, void * hint) { roaring_aligned_free(data); }
+#include <stdlib.h>
+
+// portable version of  posix_memalign
+static void * sp_aligned_malloc(size_t alignment, size_t size) {
+  void * p;
+#ifdef _MSC_VER
+  p = _aligned_malloc(size, alignment);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  p = __mingw_aligned_malloc(size, alignment);
+#else
+  // somehow, if this is used before including "x86intrin.h", it creates an
+  // implicit defined warning.
+  if (posix_memalign(&p, alignment, size) != 0) return NULL;
+#endif
+  return p;
+}
+
+static void sp_aligned_free(void * memblock) {
+#ifdef _MSC_VER
+  _aligned_free(memblock);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  __mingw_aligned_free(memblock);
+#else
+  free(memblock);
+#endif
+}
+
+static void buffer_aligned_free_callback(char * data, void * hint) { sp_aligned_free(data); }
 
 /////////////////// RoaringBitmap32 ///////////////////
 
@@ -958,7 +985,7 @@ class RoaringBitmapSerializer final {
     uint8_t * data = this->inputBuffer.data;
 
     if (data == nullptr) {
-      data = (uint8_t *)roaring_aligned_malloc(32, buffersize);
+      data = (uint8_t *)sp_aligned_malloc(this->format == SerializationFormat::frozen_croaring ? 32 : 8, buffersize);
       if (!data) {
         return "RoaringBitmap32 serialization allocation failed";
       }
@@ -1047,8 +1074,8 @@ class SerializeWorker final : public v8utils::AsyncWorker {
 
     if (allocatedBuffer) {
       // Create a new buffer using the allocated memory
-      v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal =
-        node::Buffer::New(isolate, (char *)allocatedBuffer, serializer.serializedSize, roaring_free_callback, nullptr);
+      v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
+        isolate, (char *)allocatedBuffer, serializer.serializedSize, buffer_aligned_free_callback, nullptr);
 
       v8::Local<v8::Object> nodeBuffer;
       if (!nodeBufferMaybeLocal.ToLocal(&nodeBuffer)) {
@@ -1064,8 +1091,6 @@ class SerializeWorker final : public v8utils::AsyncWorker {
   }
 };
 
-#include <iostream>
-
 void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
@@ -1080,8 +1105,9 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
   }
   if (serializer.allocatedBuffer) {
     // Create a new buffer using the allocated memory
+
     v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-      isolate, (char *)serializer.allocatedBuffer, serializer.serializedSize, roaring_free_callback, nullptr);
+      isolate, (char *)serializer.allocatedBuffer, serializer.serializedSize, buffer_aligned_free_callback, nullptr);
 
     v8::Local<v8::Object> nodeBuffer;
     if (!nodeBufferMaybeLocal.ToLocal(&nodeBuffer)) {
@@ -2350,7 +2376,6 @@ RoaringBitmap32BufferedIterator::RoaringBitmap32BufferedIterator() {
 
 void RoaringBitmap32BufferedIterator::destroy() {
   this->bitmap.Reset();
-  this->buffer.Reset();
   if (!persistent.IsEmpty()) {
     persistent.ClearWeak();
     persistent.Reset();
@@ -2451,7 +2476,6 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
     if (!a1Maybe.ToLocal(&a1)) {
       return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
     }
-    instance->buffer.Reset(isolate, a1);
 
     instance->bufferContent.set(isolate, bufferObject);
   } else {
@@ -2463,7 +2487,6 @@ void RoaringBitmap32BufferedIterator::New(const v8::FunctionCallbackInfo<v8::Val
   }
 
   info.GetReturnValue().Set(holder);
-  isolate->AdjustAmountOfExternalAllocatedMemory(RoaringBitmap32BufferedIterator::allocatedMemoryDelta);
 }
 
 void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -2488,7 +2511,6 @@ void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Va
     instance->bitmapInstance = nullptr;
     instance->bufferContent.reset();
     instance->bitmap.Reset();
-    instance->buffer.Reset();
   }
 
   info.GetReturnValue().Set(n);
@@ -2497,7 +2519,6 @@ void RoaringBitmap32BufferedIterator::fill(const v8::FunctionCallbackInfo<v8::Va
 void RoaringBitmap32BufferedIterator::WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info) {
   RoaringBitmap32BufferedIterator * p = info.GetParameter();
   if (p != nullptr) {
-    info.GetIsolate()->AdjustAmountOfExternalAllocatedMemory(-RoaringBitmap32BufferedIterator::allocatedMemoryDelta);
     delete p;
   }
 }

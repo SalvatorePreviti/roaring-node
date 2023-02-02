@@ -145,11 +145,12 @@ class RoaringBitmap32 final {
   explicit RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();
 
-  static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
   static DeserializeResult doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable);
   static SerializationFormat tryParseSerializationFormat(
     const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
   static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
+
+  static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
 };
 
 class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
@@ -177,7 +178,6 @@ class RoaringBitmap32BufferedIterator {
   RoaringBitmap32 * bitmapInstance;
   v8utils::TypedArrayContent<uint32_t> bufferContent;
 
-  v8::Persistent<v8::Object> buffer;
   v8::Persistent<v8::Object> bitmap;
 
   static v8::Eternal<v8::FunctionTemplate> constructorTemplate;
