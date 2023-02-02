@@ -10,15 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-node@v3
         with:
           node-version: 18.x
 
-      - name: npm install
+      - name: npm ci
         run: npm ci
 
-      - name: Create documentation
+      - name: npm run doc
         run: npm run doc
 
       - name: Deploy documentation 🚀
