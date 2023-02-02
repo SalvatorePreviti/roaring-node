@@ -41,5 +41,10 @@
   "exclude": ["node_modules", "node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*"],
   "typeAcquisition": {
     "enable": true
+  },
+  "typedocOptions": {
+    "out": "docs",
+    "entryPoints": "src/index.tsx",
+    "exclude": ["test/**/*", "node_modules/**/*", "temp/**/*", "build/**/*", "docs/**/*"]
   }
 }
