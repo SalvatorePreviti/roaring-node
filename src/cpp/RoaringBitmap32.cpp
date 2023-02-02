@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <cmath>
+#include <limits>
 #include <string>
 
 /////////////////// unity build ///////////////////
