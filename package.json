@@ -44,7 +44,7 @@
     "test": "mocha -r ts-node/register test/**/*.test.ts test/*.test.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "doc": "node ./node_modules/.bin/ts-docs-gen --config ./docs-gen.json",
+    "doc": "typedoc ./index.d.ts",
     "benchmarks": "node --expose-gc ./scripts/benchmarks.js",
     "benchmarks/": "node --expose-gc ./scripts/benchmarks.js",
     "precommit": "lint-staged && pretty-quick --staged"
@@ -53,11 +53,6 @@
     "hooks": {
       "pre-commit": "lint-staged"
     }
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix --max-warnings=0"
-    ]
   },
   "dependencies": {
     "prebuild-install": "^7.1.1"
@@ -87,7 +82,7 @@
     "prebuild": "^11.0.4",
     "prettier": "^2.8.3",
     "pretty-quick": "^3.1.3",
-    "ts-docs-gen": "^0.2.0",
+    "typedoc": "^0.23.24",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
     "typescript": "^4.9.5"

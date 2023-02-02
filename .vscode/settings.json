@@ -150,6 +150,7 @@
     "stack": "cpp",
     "stdexcept": "cpp",
     "streambuf": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "roaring.c": "cpp"
   }
 }
