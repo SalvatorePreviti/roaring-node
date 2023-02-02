@@ -19,6 +19,20 @@ enum class SerializationFormat {
   frozen_croaring = 2,
 };
 
+enum class DeserializationFormat {
+  INVALID = -1,
+  croaring = 0,
+  portable = 1,
+  frozen_croaring = 2,
+  frozen_portable = 3,
+};
+
+enum class FrozenMode { Counter = 0, SoftFrozen = 1, HardFrozen = 2 };
+
+enum class SerializationMode { croaring = 0, portable = 1, frozen = 2 };
+
+enum class DeserializationMode { croaring = 0, portable = 1, frozen = 2, frozen_portable = 3 };
+
 struct DeserializeResult final {
   roaring_bitmap_t_ptr bitmap;
   const char * error;
@@ -30,12 +44,6 @@ struct DeserializeResult final {
         ? nullptr
         : (error != nullptr ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {}
 };
-
-enum class FrozenMode { Counter = 0, SoftFrozen = 1, HardFrozen = 2 };
-
-enum class SerializationMode { croaring = 0, portable = 1, frozen = 2 };
-
-enum class DeserializationMode { croaring = 0, portable = 1, frozen = 2, frozen_portable = 3 };
 
 class RoaringBitmap32 final {
  public:
@@ -50,12 +58,16 @@ class RoaringBitmap32 final {
 
   FrozenMode frozenMode;
   int64_t frozenCounter;
+  void * frozenBuffer;
+  size_t frozenBufferSize;
 
   inline bool isFrozen() const { return this->frozenMode != FrozenMode::Counter || this->frozenCounter != 0; }
   inline bool isFrozenHard() const { return this->frozenMode == FrozenMode::HardFrozen || this->frozenCounter != 0; }
 
   inline void beginFreeze() { ++this->frozenCounter; }
   inline void endFreeze() { --this->frozenCounter; }
+
+  void hardFreeze(v8::Isolate * isolate);
 
   inline void invalidate() { ++version; }
 
@@ -146,10 +158,15 @@ class RoaringBitmap32 final {
   explicit RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();
 
-  static DeserializeResult doDeserialize(const v8utils::TypedArrayContent<uint8_t> & typedArray, bool portable);
   static SerializationFormat tryParseSerializationFormat(
     const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
+
   static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
+
+  static DeserializationFormat tryParseDeserializationFormat(
+    const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
+
+  static DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
 
   static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
 };

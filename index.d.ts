@@ -80,6 +80,28 @@ export enum SerializationFormat {
 
 export type SerializationFormatType = SerializationFormat | "croaring" | "portable" | "frozen_croaring" | boolean;
 
+export enum DeserializationFormat {
+  /** Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
+  croaring = "croaring",
+
+  /** Portable Java and Go format. */
+  portable = "portable",
+
+  /** Optimized non portable C/C++ frozen format. Can be larger than the other formats. */
+  frozen_croaring = "frozen_croaring",
+
+  /** Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
+  frozen_portable = "frozen_portable",
+}
+
+export type DeserializationFormatType =
+  | SerializationFormat
+  | "croaring"
+  | "portable"
+  | "frozen_croaring"
+  | "frozen_portable"
+  | boolean;
+
 export namespace RoaringBitmap32 {
   export type SerializationFormat = typeof SerializationFormat;
 }
@@ -298,11 +320,11 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * @static
    * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {boolean} portable If false, optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserialize(serialized: Uint8Array, portable: boolean): RoaringBitmap32;
+  public static deserialize(serialized: Uint8Array, format: DeserializationFormatType): RoaringBitmap32;
 
   /**
    *
@@ -317,11 +339,11 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * @static
    * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {boolean} portable If false, optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserializeAsync(serialized: Uint8Array, portable: boolean): Promise<RoaringBitmap32>;
+  public static deserializeAsync(serialized: Uint8Array, format: DeserializationFormatType): Promise<RoaringBitmap32>;
 
   /**
    *
@@ -336,12 +358,16 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * @static
    * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the.
-   * @param {boolean} portable If false, optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @param {RoaringBitmap32Callback} callback The callback to execute when the operation completes.
    * @returns {void}
    * @memberof RoaringBitmap32
    */
-  public static deserializeAsync(serialized: Uint8Array, portable: boolean, callback: RoaringBitmap32Callback): void;
+  public static deserializeAsync(
+    serialized: Uint8Array,
+    format: DeserializationFormatType,
+    callback: RoaringBitmap32Callback,
+  ): void;
 
   /**
    *
@@ -356,13 +382,13 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * @static
    * @param {Uint8Array[]} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {boolean} portable If false, optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {Promise<RoaringBitmap32[]>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
   public static deserializeParallelAsync(
     serialized: (Uint8Array | null | undefined)[],
-    portable: boolean,
+    format: DeserializationFormatType,
   ): Promise<RoaringBitmap32[]>;
 
   /**
@@ -380,13 +406,14 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * @static
    * @param {Uint8Array[]} serialized An array of Uint8Array or node Buffers that contains the non portable serialized data.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @param {RoaringBitmap32ArrayCallback} callback The callback to execute when the operation completes.
    * @returns {void}
    * @memberof RoaringBitmap32
    */
   public static deserializeParallelAsync(
     serialized: (Uint8Array | null | undefined)[],
-    portable: boolean,
+    format: DeserializationFormatType,
     callback: RoaringBitmap32ArrayCallback,
   ): void;
 
@@ -1131,10 +1158,8 @@ export class RoaringBitmap32 implements Set<number> {
   /**
    * How many bytes are required to serialize this bitmap.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * Setting the format flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
-   *
-   * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @returns {number} How many bytes are required to serialize this bitmap.
@@ -1145,7 +1170,7 @@ export class RoaringBitmap32 implements Set<number> {
   /**
    * Serializes the bitmap into a new Buffer.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * Setting the formatg to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
    * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
@@ -1158,7 +1183,7 @@ export class RoaringBitmap32 implements Set<number> {
    * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
    * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * Setting the format to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
    * @param {boolean} format If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
@@ -1167,7 +1192,7 @@ export class RoaringBitmap32 implements Set<number> {
    * @returns {Buffer} The output Buffer.
    * @memberof RoaringBitmap32
    */
-  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray>(
+  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
     format: SerializationFormatType,
     output: TOutput,
     outputStartIndex?: number,
@@ -1185,7 +1210,7 @@ export class RoaringBitmap32 implements Set<number> {
    * @returns {Buffer} The output Buffer.
    * @memberof RoaringBitmap32
    */
-  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray>(
+  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
     output: TOutput,
     format: SerializationFormatType,
   ): TOutput;
@@ -1202,7 +1227,7 @@ export class RoaringBitmap32 implements Set<number> {
    * @returns {Buffer} The output Buffer.
    * @memberof RoaringBitmap32
    */
-  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray>(
+  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
     output: TOutput,
     outputStartIndex: number,
     format: SerializationFormatType,
@@ -1235,7 +1260,7 @@ export class RoaringBitmap32 implements Set<number> {
    * @returns {Buffer} The output Buffer.
    * @memberof RoaringBitmap32
    */
-  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray>(
+  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
     format: SerializationFormatType,
     output: TOutput,
     outputStartIndex?: number,
@@ -1254,7 +1279,7 @@ export class RoaringBitmap32 implements Set<number> {
    * @returns {Buffer} The output Buffer.
    * @memberof RoaringBitmap32
    */
-  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray>(
+  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
     output: TOutput,
     format: SerializationFormatType,
   ): Promise<TOutput>;
@@ -1272,7 +1297,7 @@ export class RoaringBitmap32 implements Set<number> {
    * @returns {Buffer} The output Buffer.
    * @memberof RoaringBitmap32
    */
-  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray>(
+  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
     output: TOutput,
     outputStartIndex: number,
     format: SerializationFormatType,
@@ -1284,12 +1309,15 @@ export class RoaringBitmap32 implements Set<number> {
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
-   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public deserialize(serialized: Uint8Array, portable: boolean): this;
+  public deserialize(
+    serialized: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
+    format: DeserializationFormatType,
+  ): this;
 
   /**
    * Returns a new RoaringBitmap32 that is a copy of this bitmap, same as new RoaringBitmap32(copy)
