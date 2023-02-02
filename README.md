@@ -78,6 +78,10 @@ console.log("serialized:", serialized.toString("base64"));
 console.log("deserialized:", RoaringBitmap32.deserialize(serialized, false).toArray());
 ```
 
+# Other
+
+Wanna play an open source game made by the author of this library? Try [Dante](https://github.com/SalvatorePreviti/js13k-2022)
+
 # Development, local building
 
 Clone the repository and install all the dependencies

@@ -3,7 +3,7 @@ name: Generate documentation from master
 on:
   push:
     branches:
-      - frozen
+      - master
 
 jobs:
   docs:
