@@ -91,6 +91,14 @@ describe("RoaringBitmap32 frozen", () => {
       expect(view.isFrozen).to.be.true;
       expect(view.toArray()).to.deep.equal(values);
       expect(() => view.add(4)).to.throw(ERROR_FROZEN);
+      expect(() => view.runOptimize()).to.throw(ERROR_FROZEN);
+      expect(() => view.shrinkToFit()).to.throw(ERROR_FROZEN);
+      expect(() => view.removeRunCompression()).to.throw(ERROR_FROZEN);
+
+      const copy = view.clone();
+      expect(copy.isFrozen).to.be.false;
+      expect(copy.toArray()).to.deep.equal(values);
+      expect(copy.tryAdd(4)).to.be.true;
     });
   });
 });
