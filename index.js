@@ -150,5 +150,9 @@ if (!roaring.PackageVersion) {
     false,
   );
 
+  define("bufferAlignedAlloc", roaring.bufferAlignedAlloc);
+  define("bufferAlignedAllocUnsafe", roaring.bufferAlignedAllocUnsafe);
+  define("bufferIsAligned", roaring.bufferIsAligned);
+
   roaring._initTypes({ Uint32Array });
 }

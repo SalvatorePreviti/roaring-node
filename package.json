@@ -41,7 +41,7 @@
     "install": "prebuild-install || node-gyp rebuild",
     "compile": "node-gyp build",
     "recompile": "node-gyp rebuild",
-    "test": "mocha -r ts-node/register test/**/*.test.ts",
+    "test": "mocha -r ts-node/register test/**/*.test.ts test/*.test.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "doc": "node ./node_modules/.bin/ts-docs-gen --config ./docs-gen.json",

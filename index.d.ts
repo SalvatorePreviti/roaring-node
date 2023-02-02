@@ -16,6 +16,57 @@ limitations under the License.
 
 import roaring = require("./");
 
+/**
+ * Creates a new buffer with the given size and alignment.
+ * If alignment is not specified, the default alignment of 32 is used.
+ * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+ *
+ * Is the same as Buffer.alloc but is aligned.
+ * We need an aligned buffer to create a roaring bitmap frozen view.
+ *
+ * @param {number} size The size of the buffer to allocate.
+ * @param {number} [alignment=32] The alignment of the buffer to allocate.
+ */
+export function bufferAlignedAlloc(size: number, alignment?: number): Buffer;
+
+/**
+ * Creates a new buffer not initialized with the given size and alignment.
+ * If alignment is not specified, the default alignment of 32 is used.
+ * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+ *
+ * Is the same as Buffer.allocUnsafe but is aligned.
+ * We need an aligned buffer to create a roaring bitmap frozen view.
+ *
+ * WARNING: this function is unsafe because the returned buffer may contain previously unallocated memory that may contain sensitive data.
+ *
+ * @param {number} size The size of the buffer to allocate.
+ * @param {number} [alignment=32] The alignment of the buffer to allocate.
+ */
+export function bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
+
+export type TypedArray =
+  | Uint8Array
+  | Uint16Array
+  | Uint32Array
+  | Uint8ClampedArray
+  | Int8Array
+  | Int16Array
+  | Int32Array
+  | Float32Array
+  | Float64Array;
+
+/**
+ * Checks if the given buffer is memory aligned.
+ * If alignment is not specified, the default alignment of 32 is used.
+ *
+ * @param {TypedArray | Buffer | ArrayBuffer | null | undefined} buffer The buffer to check.
+ * @param {number} [alignment=32] The alignment to check.
+ */
+export function bufferIsAligned(
+  buffer: TypedArray | Buffer | ArrayBuffer | null | undefined,
+  alignment?: number,
+): boolean;
+
 export enum SerializationFormat {
   /** Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
   croaring = "croaring",
@@ -51,6 +102,46 @@ export class RoaringBitmap32 implements Set<number> {
   public static readonly SerializationFormat: typeof SerializationFormat;
 
   public readonly SerializationFormat: typeof SerializationFormat;
+
+  /**
+   * Creates a new buffer with the given size and alignment.
+   * If alignment is not specified, the default alignment of 32 is used.
+   * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+   *
+   * Is the same as Buffer.alloc but is aligned.
+   * We need an aligned buffer to create a roaring bitmap frozen view.
+   *
+   * @param {number} size The size of the buffer to allocate.
+   * @param {number} [alignment=32] The alignment of the buffer to allocate.
+   */
+  public static bufferAlignedAlloc(size: number, alignment?: number): Buffer;
+
+  /**
+   * Creates a new buffer not initialized with the given size and alignment.
+   * If alignment is not specified, the default alignment of 32 is used.
+   * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+   *
+   * Is the same as Buffer.allocUnsafe but is aligned.
+   * We need an aligned buffer to create a roaring bitmap frozen view.
+   *
+   * WARNING: this function is unsafe because the returned buffer may contain previously unallocated memory that may contain sensitive data.
+   *
+   * @param {number} size The size of the buffer to allocate.
+   * @param {number} [alignment=32] The alignment of the buffer to allocate.
+   */
+  public static bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
+
+  /**
+   * Checks if the given buffer is memory aligned.
+   * If alignment is not specified, the default alignment of 32 is used.
+   *
+   * @param {TypedArray | Buffer | ArrayBuffer | null | undefined} buffer The buffer to check.
+   * @param {number} [alignment=32] The alignment to check.
+   */
+  public static bufferIsAligned(
+    buffer: TypedArray | Buffer | ArrayBuffer | null | undefined,
+    alignment?: number,
+  ): boolean;
 
   /**
    * Property: The version of the CRoaring libary as a string.

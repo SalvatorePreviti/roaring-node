@@ -123,7 +123,7 @@ namespace v8utils {
     }
 
     template <typename Q>
-    inline bool set(v8::Isolate * isolate, v8::MaybeLocal<Q> from) {
+    bool set(v8::Isolate * isolate, v8::MaybeLocal<Q> from) {
       v8::Local<Q> local;
       if (from.ToLocal(&local)) {
         return this->set(isolate, local);
@@ -133,19 +133,34 @@ namespace v8utils {
     }
 
     template <typename Q>
-    inline bool set(v8::Isolate * isolate, v8::Local<Q> from) {
-      if (!from.IsEmpty() && from->IsArrayBufferView()) {
-        bufferPersistent.Reset(isolate, from);
-        auto array = v8::Local<v8::ArrayBufferView>::Cast(from);
-        this->length = array->ByteLength() / sizeof(T);
+    bool set(v8::Isolate * isolate, v8::Local<Q> from) {
+      if (!from.IsEmpty()) {
+        if (from->IsArrayBufferView()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
+          this->length = array->ByteLength() / sizeof(T);
 #if NODE_MAJOR_VERSION > 13
-        auto arrayBuffer = array->Buffer();
-        this->backingStore = arrayBuffer->GetBackingStore();
-        this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
+          auto arrayBuffer = array->Buffer();
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
 #else
-        this->data = (T *)((uint8_t *)(this->arrayBuffer->GetContents().Data()) + array->ByteOffset());
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()) + array->ByteOffset());
 #endif
-        return true;
+          return true;
+        }
+
+        if (from->IsArrayBuffer()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
+          this->length = arrayBuffer->ByteLength() / sizeof(T);
+#if NODE_MAJOR_VERSION > 13
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+#else
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
+#endif
+          return true;
+        }
       }
 
       this->reset();
