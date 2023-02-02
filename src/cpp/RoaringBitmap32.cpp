@@ -130,7 +130,7 @@ inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexc
   return !(iptr % alignment);
 }
 
-void bufferIsAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -165,7 +165,7 @@ void InitModule(v8::Local<v8::Object> exports) {
 
   NODE_SET_METHOD(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
   NODE_SET_METHOD(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
-  NODE_SET_METHOD(exports, "bufferIsAligned", bufferIsAligned);
+  NODE_SET_METHOD(exports, "isBufferAligned", isBufferAligned);
 
   RoaringBitmap32::Init(exports);
   RoaringBitmap32BufferedIterator::Init(exports);
@@ -283,6 +283,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_METHOD(ctorObject, "deserialize", deserializeStatic);
   NODE_SET_METHOD(ctorObject, "deserializeAsync", deserializeStaticAsync);
   NODE_SET_METHOD(ctorObject, "deserializeParallelAsync", deserializeParallelStaticAsync);
+  NODE_SET_METHOD(ctorObject, "unsafeFrozenView", unsafeFrozenViewStatic);
   NODE_SET_METHOD(ctorObject, "and", andStatic);
   NODE_SET_METHOD(ctorObject, "or", orStatic);
   NODE_SET_METHOD(ctorObject, "xor", xorStatic);
@@ -312,7 +313,21 @@ RoaringBitmap32::RoaringBitmap32(uint32_t capacity) :
   frozenMode(FrozenMode::Counter),
   frozenCounter(0),
   frozenBuffer(nullptr),
-  frozenBufferSize(0) {}
+  frozenBufferSize(0),
+  frozenStorage(nullptr) {}
+
+RoaringBitmap32::~RoaringBitmap32() {
+  if (this->roaring != nullptr) {
+    roaring_bitmap_free(this->roaring);
+  }
+  if (this->frozenBuffer != nullptr) {
+    sp_aligned_free(this->frozenBuffer);
+  }
+  if (this->frozenStorage != nullptr) {
+    delete this->frozenStorage;
+  }
+  this->persistent.Reset();
+}
 
 bool RoaringBitmap32::replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance) {
   if (this->roaring != newInstance) {
@@ -340,16 +355,6 @@ void RoaringBitmap32::updateAmountOfExternalAllocatedMemory(v8::Isolate * isolat
     this->amountOfExternalAllocatedMemoryTracker = static_cast<int64_t>(newSize);
     isolate->AdjustAmountOfExternalAllocatedMemory(diff);
   }
-}
-
-RoaringBitmap32::~RoaringBitmap32() {
-  if (this->roaring != nullptr) {
-    roaring_bitmap_free(this->roaring);
-  }
-  if (this->frozenBuffer != nullptr) {
-    sp_aligned_free(this->frozenBuffer);
-  }
-  this->persistent.Reset();
 }
 
 void RoaringBitmap32::WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
@@ -1210,6 +1215,28 @@ DeserializationFormat RoaringBitmap32::tryParseDeserializationFormat(
                                     : DeserializationFormat::INVALID;
 }
 
+FrozenViewFormat RoaringBitmap32::tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+  if (!isolate || value.IsEmpty()) {
+    return FrozenViewFormat::INVALID;
+  }
+  if (value->IsString()) {
+    v8::String::Utf8Value formatString(isolate, value);
+    if (strcmp(*formatString, "frozen_croaring") == 0) {
+      return FrozenViewFormat::frozen_croaring;
+    }
+    if (strcmp(*formatString, "frozen_portable") == 0) {
+      return FrozenViewFormat::frozen_portable;
+    }
+  }
+  return FrozenViewFormat::INVALID;
+}
+
+FrozenViewFormat RoaringBitmap32::tryParseFrozenViewFormat(
+  const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate) {
+  v8::Local<v8::Value> value;
+  return maybeValue.ToLocal(&value) ? RoaringBitmap32::tryParseFrozenViewFormat(value, isolate) : FrozenViewFormat::INVALID;
+}
+
 void RoaringBitmap32::getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
@@ -1673,6 +1700,88 @@ void RoaringBitmap32::serializeAsync(const v8::FunctionCallbackInfo<v8::Value> &
   }
   worker->parseArguments(info);
   info.GetReturnValue().Set(v8utils::AsyncWorker::run(worker));
+}
+
+void RoaringBitmap32::unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
+
+  v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+  v8::Local<v8::Object> result;
+  if (!resultMaybe.ToLocal(&result)) {
+    return;
+  }
+
+  RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+  if (self == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+  self->replaceBitmapInstance(isolate, nullptr);
+
+  if (info.Length() < 2) {
+    return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView expects a format and a buffer arguments");
+  }
+
+  int bufferArgIndex = 1;
+  FrozenViewFormat format = RoaringBitmap32::tryParseFrozenViewFormat(info[0], isolate);
+  if (format == FrozenViewFormat::INVALID) {
+    bufferArgIndex = 0;
+    format = RoaringBitmap32::tryParseFrozenViewFormat(info[1], isolate);
+  }
+  if (format == FrozenViewFormat::INVALID) {
+    return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView format argument is invalid");
+  }
+
+  v8utils::TypedArrayContent<uint8_t> * storage = new v8utils::TypedArrayContent<uint8_t>();
+
+  if (storage == nullptr) {
+    return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView allocation failed");
+  }
+
+  if (
+    !info[bufferArgIndex]->IsNullOrUndefined() &&
+    !storage->set(isolate, info[bufferArgIndex]->ToObject(isolate->GetCurrentContext()))) {
+    delete storage;
+    return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView buffer argument was invalid");
+  }
+
+  roaring_bitmap_t * bitmap = nullptr;
+
+  switch (format) {
+    case FrozenViewFormat::frozen_croaring: {
+      if (!is_pointer_aligned(storage->data, 32)) {
+        delete storage;
+        return v8utils::throwError(
+          isolate,
+          "RoaringBitmap32::unsafeFrozenView with format frozen_croaring requires the buffer to be 32 bytes aligned. "
+          "You can use bufferAlignedAlloc, bufferAlignedAllocUnsafe or ensureBufferAligned exposed by the roaring library.");
+      }
+
+      bitmap = const_cast<roaring_bitmap_t *>(roaring_bitmap_frozen_view((const char *)storage->data, storage->length));
+      break;
+    }
+    case FrozenViewFormat::frozen_portable: {
+      bitmap = roaring_bitmap_portable_deserialize_frozen((const char *)storage->data);
+      break;
+    }
+    default: {
+      delete storage;
+      return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView format argument is invalid");
+    }
+  }
+
+  if (!bitmap) {
+    delete storage;
+    return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView failed to deserialize the input");
+  }
+
+  self->frozenStorage = storage;
+  self->replaceBitmapInstance(isolate, bitmap);
+  self->hardFreeze(isolate);
+
+  info.GetReturnValue().Set(result);
 }
 
 void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {

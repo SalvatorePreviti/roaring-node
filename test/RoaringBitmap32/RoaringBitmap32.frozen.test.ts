@@ -43,24 +43,54 @@ describe("RoaringBitmap32 frozen", () => {
     });
   });
 
-  it("Is temporarily frozen while using serializeAsync", async () => {
-    const bitmap = new RoaringBitmap32([1, 2, 3]);
-    expect(bitmap.isFrozen).to.be.false;
-    const promise = bitmap.serializeAsync("croaring");
-    expect(bitmap.isFrozen).to.be.true;
-    await promise;
-    expect(bitmap.isFrozen).to.be.false;
-    bitmap.add(4);
+  describe("serializeAsync", () => {
+    it("Is temporarily frozen while using serializeAsync", async () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      expect(bitmap.isFrozen).to.be.false;
+      const promise = bitmap.serializeAsync("croaring");
+      expect(bitmap.isFrozen).to.be.true;
+      await promise;
+      expect(bitmap.isFrozen).to.be.false;
+      bitmap.add(4);
+    });
+
+    it('keep it frozen after calling "serializeAsync"', async () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      bitmap.freeze();
+      expect(bitmap.isFrozen).to.be.true;
+      const promise = bitmap.serializeAsync("croaring");
+      expect(bitmap.isFrozen).to.be.true;
+      await promise;
+      expect(bitmap.isFrozen).to.be.true;
+      expect(() => bitmap.add(4)).to.throw(ERROR_FROZEN);
+    });
   });
 
-  it('keep it frozen after calling "serializeAsync"', async () => {
-    const bitmap = new RoaringBitmap32([1, 2, 3]);
-    bitmap.freeze();
-    expect(bitmap.isFrozen).to.be.true;
-    const promise = bitmap.serializeAsync("croaring");
-    expect(bitmap.isFrozen).to.be.true;
-    await promise;
-    expect(bitmap.isFrozen).to.be.true;
-    expect(() => bitmap.add(4)).to.throw(ERROR_FROZEN);
+  describe("unsafeFrozenView", () => {
+    it("throws if the buffer is an invalid type", () => {
+      expect(() => RoaringBitmap32.unsafeFrozenView({} as any, "frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView([] as any, "frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(null as any, "frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(undefined as any, "frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(new Uint32Array(1), "frozen_croaring")).to.throw();
+    });
+
+    it("throws if format is invalid", () => {
+      expect(() => RoaringBitmap32.unsafeFrozenView(new Uint8Array(10), "a" as any)).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(new Uint8Array(10), "" as any)).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(new Uint8Array(10), undefined as any)).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(new Uint8Array(10), null as any)).to.throw();
+    });
+
+    it("can create a view from a serialized bitmap, and the view is frozen", () => {
+      const values = [1, 2, 3, 100, 8772837, 0x7ffffff1, 0x7fffffff];
+      const bitmap = new RoaringBitmap32(values);
+      const serialized = bitmap.serialize("frozen_croaring");
+      expect(RoaringBitmap32.isBufferAligned(serialized)).to.be.true;
+      const view = RoaringBitmap32.unsafeFrozenView(serialized, "frozen_croaring");
+      expect(view.isFrozen).to.be.true;
+      expect(view.toArray()).to.deep.equal(values);
+      expect(() => view.add(4)).to.throw(ERROR_FROZEN);
+    });
   });
 });

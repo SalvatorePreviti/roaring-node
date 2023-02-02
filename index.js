@@ -1,5 +1,6 @@
 "use strict";
 
+const { isUint8Array, isInt8Array, isArrayBuffer } = require("util/types");
 const roaring = require("./build/Release/roaring.node");
 const { version: packageVersion } = require("./package.json");
 
@@ -160,6 +161,7 @@ if (!roaring.PackageVersion) {
 
   define("PackageVersion", packageVersion);
   define("RoaringBitmap32Iterator", RoaringBitmap32Iterator, false);
+
   define(
     "SerializationFormat",
     {
@@ -170,9 +172,50 @@ if (!roaring.PackageVersion) {
     false,
   );
 
+  define(
+    "DeserializationFormat",
+    {
+      croaring: "croaring",
+      portable: "portable",
+      frozen_croaring: "frozen_croaring",
+      frozen_portable: "frozen_portable",
+    },
+    false,
+  );
+
+  define(
+    "FrozenViewFormat",
+    {
+      frozen_croaring: "frozen_croaring",
+      frozen_portable: "frozen_portable",
+    },
+    false,
+  );
+
   define("bufferAlignedAlloc", roaring.bufferAlignedAlloc);
   define("bufferAlignedAllocUnsafe", roaring.bufferAlignedAllocUnsafe);
-  define("bufferIsAligned", roaring.bufferIsAligned);
+  define("isBufferAligned", roaring.isBufferAligned);
+
+  define("ensureBufferAligned", function ensureBufferAligned(buffer, alignment = 32) {
+    if (typeof alignment !== "number" || alignment < 0 || alignment > 1024 || !Number.isInteger(alignment)) {
+      throw new TypeError("ensureBufferAligned alignment must be an integer number between 0 and 1024");
+    }
+    if (!Buffer.isBuffer(buffer)) {
+      if (buffer instanceof ArrayBuffer) {
+        buffer = Buffer.from(buffer);
+      } else if (isUint8Array(buffer) || isInt8Array(buffer) || isInt8Array(buffer) || isArrayBuffer(buffer)) {
+        buffer = Buffer.from(buffer.buffer);
+      } else {
+        throw new TypeError("ensureBufferAligned expects a Buffer instance");
+      }
+    }
+    if (!roaring.isBufferAligned(buffer, alignment)) {
+      const aligned = roaring.bufferAlignedAlloc(buffer.length, alignment);
+      aligned.set(buffer);
+      return aligned;
+    }
+    return buffer;
+  });
 
   roaring._initTypes({ Uint32Array });
 }

@@ -1,23 +1,8 @@
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { SerializationFormat } from "../../";
 import { expect } from "chai";
 
 describe("RoaringBitmap32 serialization", () => {
   const data = [1, 2, 3, 4, 5, 6, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff];
-
-  describe("RoaringBitmap32SerializationFormat", () => {
-    it("should have the right values", () => {
-      expect(SerializationFormat.croaring).eq("croaring");
-      expect(SerializationFormat.portable).eq("portable");
-      expect(SerializationFormat.frozen_croaring).eq("frozen_croaring");
-
-      expect(Object.values(SerializationFormat)).to.deep.eq(["croaring", "portable", "frozen_croaring"]);
-
-      expect(RoaringBitmap32.SerializationFormat).to.eq(SerializationFormat);
-
-      expect(new RoaringBitmap32().SerializationFormat).to.eq(SerializationFormat);
-    });
-  });
 
   describe("getSerializationSizeInBytes", () => {
     it("throws if the argument is not a valid format", () => {

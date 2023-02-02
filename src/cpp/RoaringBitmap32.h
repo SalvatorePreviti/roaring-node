@@ -27,11 +27,13 @@ enum class DeserializationFormat {
   frozen_portable = 3,
 };
 
+enum class FrozenViewFormat {
+  INVALID = -1,
+  frozen_croaring = 2,
+  frozen_portable = 3,
+};
+
 enum class FrozenMode { Counter = 0, SoftFrozen = 1, HardFrozen = 2 };
-
-enum class SerializationMode { croaring = 0, portable = 1, frozen = 2 };
-
-enum class DeserializationMode { croaring = 0, portable = 1, frozen = 2, frozen_portable = 3 };
 
 struct DeserializeResult final {
   roaring_bitmap_t_ptr bitmap;
@@ -60,6 +62,7 @@ class RoaringBitmap32 final {
   int64_t frozenCounter;
   void * frozenBuffer;
   size_t frozenBufferSize;
+  v8utils::TypedArrayContent<uint8_t> * frozenStorage;
 
   inline bool isFrozen() const { return this->frozenMode != FrozenMode::Counter || this->frozenCounter != 0; }
   inline bool isFrozenHard() const { return this->frozenMode == FrozenMode::HardFrozen || this->frozenCounter != 0; }
@@ -133,6 +136,8 @@ class RoaringBitmap32 final {
   static void deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
 
+  static void unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+
   static void fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void andStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
@@ -167,6 +172,10 @@ class RoaringBitmap32 final {
     const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
 
   static DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
+
+  static FrozenViewFormat tryParseFrozenViewFormat(const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
+
+  static FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
 
   static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
 };
