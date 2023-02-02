@@ -15,7 +15,7 @@ jobs:
           node-version: 18.x
 
       - name: npm ci
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: npm run doc
         run: npm run doc
