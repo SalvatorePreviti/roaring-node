@@ -1,0 +1,25 @@
+name: Generate documentation from master
+
+on:
+  push:
+    branches:
+      - frozen
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+
+      - name: Create documentation
+        run: npx typedoc index.d.ts
+
+      - name: Deploy documentation 🚀
+        uses: JamesIves/github-pages-deploy-action@4
+        with:
+          branch: gh-pages
+          folder: docs
