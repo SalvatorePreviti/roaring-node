@@ -108,6 +108,7 @@ class RoaringBitmap32 final {
   static void shrinkToFit(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void toArray(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void toSet(const v8::FunctionCallbackInfo<v8::Value> & info);

@@ -123,7 +123,7 @@ namespace v8utils {
     }
 
     template <typename Q>
-    bool set(v8::Isolate * isolate, v8::MaybeLocal<Q> from) {
+    bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
       v8::Local<Q> local;
       if (from.ToLocal(&local)) {
         return this->set(isolate, local);
@@ -133,7 +133,7 @@ namespace v8utils {
     }
 
     template <typename Q>
-    bool set(v8::Isolate * isolate, v8::Local<Q> from) {
+    bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
       if (!from.IsEmpty()) {
         if (from->IsArrayBufferView()) {
           bufferPersistent.Reset(isolate, from);

@@ -114,8 +114,9 @@ if (!roaring.PackageVersion) {
       yield [v, v];
     }
   };
+
   roaringBitmap32_proto.forEach = function (fn, self) {
-    if (self !== undefined) {
+    if (self === undefined) {
       for (const v of this) {
         fn(v, v, this);
       }
@@ -124,6 +125,25 @@ if (!roaring.PackageVersion) {
         fn.call(self, v, v, this);
       }
     }
+    return this;
+  };
+
+  roaringBitmap32_proto.map = function (fn, self, output = []) {
+    let index = 0;
+    if (self === undefined) {
+      for (const v of this) {
+        output.push(fn(v, index++, this));
+      }
+    } else {
+      for (const v of this) {
+        output.push(fn.call(self, v, index++, this));
+      }
+    }
+    return output;
+  };
+
+  roaringBitmap32_proto.toJSON = function () {
+    return this.toArray();
   };
 
   const define = (name, value, writable) => {

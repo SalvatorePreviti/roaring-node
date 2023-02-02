@@ -151,10 +151,90 @@ describe("RoaringBitmap32 basic", () => {
 
     it("returns an array with multiple elements", () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
-      const x = bitmap.toUint32Array();
+      const x = bitmap.toUint32Array(undefined as any);
       expect(x).to.be.instanceOf(Uint32Array);
       expect(x).to.have.lengthOf(6);
       expect(Array.from(x)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+    });
+
+    it("throws if the output argument is invalid", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      expect(() => bitmap.toUint32Array(null as any)).to.throw();
+      expect(() => bitmap.toUint32Array(123 as any)).to.throw();
+      expect(() => bitmap.toUint32Array({} as any)).to.throw();
+      expect(() => bitmap.toUint32Array([] as any)).to.throw();
+      expect(() => bitmap.toUint32Array(new Int8Array(1) as any)).to.throw();
+    });
+
+    it("writes the bitmap to the output array", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      const output = new Uint32Array(6);
+      expect(bitmap.toUint32Array(output)).to.eq(output);
+      expect(Array.from(output)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+    });
+
+    it("throws if the output array is too small", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      expect(() => bitmap.toUint32Array(new Uint32Array(0))).to.throw();
+      expect(() => bitmap.toUint32Array(new Uint32Array(1))).to.throw();
+      expect(() => bitmap.toUint32Array(new Uint32Array(2))).to.throw();
+      expect(() => bitmap.toUint32Array(new Int32Array(5))).to.throw();
+    });
+  });
+
+  describe("toUint32ArrayAsync", () => {
+    it("returns an empty Uint32Array for an empty bitmap", async () => {
+      const a = await new RoaringBitmap32().toUint32ArrayAsync();
+      expect(a).to.be.instanceOf(Uint32Array);
+      expect(a).to.have.lengthOf(0);
+    });
+
+    it("returns an array with 1 element for 1 element", async () => {
+      const bitmap = new RoaringBitmap32([1]);
+      const x = await bitmap.toUint32ArrayAsync();
+      expect(x).to.be.instanceOf(Uint32Array);
+      expect(x).to.have.lengthOf(1);
+      expect(Array.from(x)).deep.equal([1]);
+    });
+
+    it("returns an array with multiple elements", async () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      const x = await bitmap.toUint32ArrayAsync(undefined as any);
+      expect(x).to.be.instanceOf(Uint32Array);
+      expect(x).to.have.lengthOf(6);
+      expect(Array.from(x)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+    });
+
+    it("throws if the output argument is invalid", async () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      await expect(bitmap.toUint32ArrayAsync(null as any)).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync(123 as any)).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync({} as any)).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync([] as any)).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync(new Int8Array(1) as any)).to.be.rejectedWith(Error);
+    });
+
+    it("writes the bitmap to the output array", async () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      const output = new Uint32Array(6);
+      expect(await bitmap.toUint32ArrayAsync(output)).to.eq(output);
+      expect(Array.from(output)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+    });
+
+    it("throws if the output array is too small", async () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      await expect(bitmap.toUint32ArrayAsync(new Uint32Array(0))).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync(new Uint32Array(1))).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync(new Uint32Array(2))).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync(new Int32Array(5))).to.be.rejectedWith(Error);
+    });
+
+    it("freezes the bitmap while in progress", async () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      const p = bitmap.toUint32ArrayAsync();
+      expect(bitmap.isFrozen).to.be.true;
+      await p;
+      expect(bitmap.isFrozen).to.be.false;
     });
   });
 
@@ -210,6 +290,30 @@ describe("RoaringBitmap32 basic", () => {
       expect(x).to.be.instanceOf(Uint32Array);
       expect(x).to.have.lengthOf(2);
     });
+
+    it("throws if the output argument is invalid", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
+      expect(() => bitmap.rangeUint32Array(5, 7, null as any)).to.throw();
+      expect(() => bitmap.rangeUint32Array(5, 7, 123 as any)).to.throw();
+      expect(() => bitmap.rangeUint32Array(5, 7, {} as any)).to.throw();
+      expect(() => bitmap.rangeUint32Array(5, 7, [] as any)).to.throw();
+      expect(() => bitmap.rangeUint32Array(5, 7, new Int8Array(1) as any)).to.throw();
+    });
+
+    it("throws if the output array is too small", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
+      expect(() => bitmap.rangeUint32Array(0, 7, new Uint32Array(0))).to.throw();
+      expect(() => bitmap.rangeUint32Array(0, 7, new Uint32Array(1))).to.throw();
+      expect(() => bitmap.rangeUint32Array(0, 7, new Uint32Array(2))).to.throw();
+      expect(() => bitmap.rangeUint32Array(0, 7, new Int32Array(5))).to.throw();
+    });
+
+    it("writes the bitmap to the output array", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
+      const output = new Uint32Array(3);
+      expect(bitmap.rangeUint32Array(0, 3, output)).to.eq(output);
+      expect(Array.from(output)).deep.equal([1, 2, 10]);
+    });
   });
 
   describe("toArray", () => {
@@ -225,6 +329,39 @@ describe("RoaringBitmap32 basic", () => {
     it("returns an array with multiple elements", () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
       expect(bitmap.toArray()).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+    });
+
+    it("limits using maxLength argument", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      expect(bitmap.toArray(3)).deep.equal([1, 2, 10]);
+    });
+
+    it("throws if the argument is not a valid array", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      expect(() => bitmap.toArray(null as any)).to.throw();
+      expect(() => bitmap.toArray({} as any)).to.throw();
+      expect(() => bitmap.toArray(new Int8Array(1) as any)).to.throw();
+    });
+
+    it("appends to an empty output array", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      const output: number[] = [];
+      expect(bitmap.toArray(output)).to.eq(output);
+      expect(Array.from(output)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+    });
+
+    it("appends to a non empty output array", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30]);
+      const output = [100];
+      expect(bitmap.toArray(output)).to.eq(output);
+      expect(Array.from(output)).deep.equal([100, 1, 2, 10, 30]);
+    });
+
+    it("overwrite values in a non empty output array, with an offset and maximum length", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30]);
+      const output = [100, 200, 300, 400, 500, 600];
+      expect(bitmap.toArray(output, 2, 2)).to.eq(output);
+      expect(Array.from(output)).deep.equal([100, 200, 1, 2, 500, 600]);
     });
   });
 
@@ -246,6 +383,36 @@ describe("RoaringBitmap32 basic", () => {
       const set = new RoaringBitmap32(values).toSet();
       expect(set).to.be.instanceOf(Set);
       expect(Array.from(set)).deep.equal(values);
+    });
+
+    it("limits with maxLength", () => {
+      const values = [1, 2, 10, 30, 0x7fffffff, 0xffffffff];
+      const set = new RoaringBitmap32(values).toSet(3);
+      expect(set).to.be.instanceOf(Set);
+      expect(Array.from(set)).deep.equal([1, 2, 10]);
+    });
+
+    it("throws if the given set is invalid", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      expect(() => bitmap.toSet(null as any)).to.throw();
+      expect(() => bitmap.toSet({} as any)).to.throw();
+      expect(() => bitmap.toSet([] as any)).to.throw();
+    });
+
+    it("fills the given set", () => {
+      const values = [1, 2, 10, 30, 0x7fffffff, 0xffffffff];
+      const set = new Set([77, 1]);
+      const bitmap = new RoaringBitmap32(values);
+      expect(bitmap.toSet(set)).to.eq(set);
+      expect(Array.from(set)).deep.equal([77, ...values]);
+    });
+
+    it("fills the given set, limiting to maxLength", () => {
+      const values = [1, 2, 10, 30, 0x7fffffff, 0xffffffff];
+      const set = new Set([77, 1]);
+      const bitmap = new RoaringBitmap32(values);
+      expect(bitmap.toSet(set, 3)).to.eq(set);
+      expect(Array.from(set)).deep.equal([77, 1, 2, 10]);
     });
   });
 
@@ -508,6 +675,7 @@ describe("RoaringBitmap32 basic", () => {
     it("invokes the function with multiple items", () => {
       const invoked: any[] = [];
       const bitmap = new RoaringBitmap32([2, 5, 1, 7, 6]);
+
       bitmap.forEach((...args) => invoked.push(args));
       expect(invoked).to.deep.equal([
         [1, 1, bitmap],
@@ -534,6 +702,27 @@ describe("RoaringBitmap32 basic", () => {
         [2, 2, bitmap],
         [5, 5, bitmap],
       ]);
+    });
+  });
+
+  describe("map", () => {
+    it("maps a bitmap", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      let counter = 0;
+      const mapped = bitmap.map((x, index, set) => {
+        expect(index).eq(counter++);
+        expect(set).eq(bitmap);
+        return x + 1;
+      });
+      expect(mapped).deep.equal([2, 3, 4]);
+    });
+
+    it("maps a bitmap with a context", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      const mapped = bitmap.map(function (this: number, x) {
+        return x + this;
+      }, 10);
+      expect(mapped).deep.equal([11, 12, 13]);
     });
   });
 });

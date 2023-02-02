@@ -571,8 +571,23 @@ export class RoaringBitmap32 implements Set<number> {
    * The callback has 3 arguments, the value, the value and this (this set). This is to match the Set<number> interface.
    *
    * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * WARNING: the second parameter of the callback is not the index, but the value itself, the same as the first argument.
+   * This is required to match the Set<number> interface.
    */
-  public forEach(callbackfn: (value: number, value2: number, set: this) => void, thisArg?: any): void;
+  public forEach(callbackfn: (value: number, value2: number, set: this) => void, thisArg?: unknown): this;
+
+  /**
+   * It behaves like array.map.
+   *
+   * WARNING: The returned array may be very big, up to 4 trillion elements.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * WARNING: The second parameter is the index in the resulting array.
+   *
+   */
+  public map<U>(callbackfn: (value: number, index: number, set: this) => U, thisArg?: unknown, output?: U[]): U[];
 
   /**
    * Gets the minimum value in the set.
@@ -980,7 +995,7 @@ export class RoaringBitmap32 implements Set<number> {
   /**
    * Creates a new Uint32Array and fills it with all the values in the bitmap.
    *
-   * The returned array may be very big, up to 4 gigabytes.
+   * The returned array may be very big, up to 4 trillion elements.
    *
    * Use this function only when you know what you are doing.
    *
@@ -992,31 +1007,116 @@ export class RoaringBitmap32 implements Set<number> {
   public toUint32Array(): Uint32Array;
 
   /**
-   * to array with pagination
+   * Copies all the values in the roaring bitmap to an Uint32Array.
+   *
+   * This function is faster than calling new Uint32Array(bitmap);
+   * Throws if the given array is not a valid Uint32Array or Int32Array or is not big enough.
+   *
+   * @template TOutput The type of the output array.
+   * @param {TOutput} output The output array.
+   * @returns {TOutput} The output array.
+   * @memberof RoaringBitmap32
+   */
+  public toUint32Array<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(output: TOutput): TOutput;
+
+  /**
+   * Creates a new Uint32Array and fills it with all the values in the bitmap, asynchronously.
+   * The bitmap will be temporarily frozen until the operation completes.
+   *
+   * The returned array may be very big, up to 4 trillion elements.
+   *
+   * Use this function only when you know what you are doing.
+   *
+   * This function is faster than calling new Uint32Array(bitmap);
+   *
+   * @returns A new Uint32Array instance containing all the items in the set in order.
+   * @memberof RoaringBitmap32
+   */
+  public toUint32ArrayAsync(): Promise<Uint32Array>;
+
+  /**
+   * Copies all the values in the roaring bitmap to an Uint32Array, asynchronously.
+   * The bitmap will be temporarily frozen until the operation completes.
+   *
+   * This function is faster than calling new Uint32Array(bitmap);
+   * Throws if the given array is not a valid Uint32Array or Int32Array or is not big enough.
+   *
+   * @template TOutput The type of the output array.
+   * @param {TOutput} output The output array.
+   * @returns {TOutput} The output array.
+   * @memberof RoaringBitmap32
+   */
+  public toUint32ArrayAsync<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(
+    output: TOutput,
+  ): Promise<TOutput>;
+
+  /**
+   * toUint32Array array with pagination
    * @returns A new Uint32Array instance containing paginated items in the set in order.
    * @memberof RoaringBitmap32
    */
   public rangeUint32Array(offset: number, limit: number): Uint32Array;
 
   /**
+   * toUint32Array array with pagination
+   * @template TOutput The type of the output array.
+   * @param {TOutput} output The output array.
+   * @returns {TOutput} The output array.
+   * @memberof RoaringBitmap32
+   */
+  public rangeUint32Array<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(
+    offset: number,
+    limit: number,
+    output: TOutput,
+  ): TOutput;
+
+  /**
    * Creates a new plain JS array and fills it with all the values in the bitmap.
    *
    * The returned array may be very big, use this function only when you know what you are doing.
    *
+   * @param {number} [maxLength] The maximum number of elements to return.
    * @returns {number[]}  A new plain JS array that contains all the items in the set in order.
    * @memberof RoaringBitmap32
    */
-  public toArray(): number[];
+  public toArray(maxLength?: number | undefined): number[];
+
+  /**
+   * Append all the values in this bitmap to the given plain JS array.
+   *
+   * The resulting array may be very big, use this function only when you know what you are doing.
+   *
+   * @template TOutput The type of the output array.
+   * @param {TOutput} output The output array.
+   * @param {number} [maxLength] The maximum number of elements to return.
+   * @param {number} [offset] The offset in the output array to start writing.
+   * @returns {TOutput} The output array.
+   * @memberof RoaringBitmap32
+   */
+  public toArray<TOutput extends number[]>(output: TOutput, maxLength?: number, offset?: number): TOutput;
 
   /**
    * Creates a new plain JS Set<number> and fills it with all the values in the bitmap.
    *
    * The returned set may be very big, use this function only when you know what you are doing.
    *
+   * @param {number} [maxLength] The maximum number of elements to return.
    * @returns {Set<number>} A new plain JS array that contains all the items in the set in order.
    * @memberof RoaringBitmap32
    */
-  public toSet(): Set<number>;
+  public toSet(maxLength?: number | undefined): Set<number>;
+
+  /**
+   * Adds all the values in this bitmap to the given plain JS Set<number>.
+   *
+   * The resulting set may be very big, use this function only when you know what you are doing.
+   *
+   * @param {Set<number>} output The output set.
+   * @param {number} [maxLength] The maximum number of elements to return.
+   * @returns {Set<number>} The output set.
+   * @memberof RoaringBitmap32
+   */
+  public toSet(output: Set<number>, maxLength?: number | undefined): Set<number>;
 
   /**
    * Returns a plain JS array with all the values in the bitmap.
