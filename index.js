@@ -31,7 +31,7 @@ module.exports = roaring;
 
 const { defineProperty } = Reflect;
 
-defineProperty(roaring, "__esModule", { value: true });
+defineProperty(roaring, "__esModule", { value: true, configurable: true });
 
 const { RoaringBitmap32, RoaringBitmap32BufferedIterator } = roaring;
 

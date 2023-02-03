@@ -1162,6 +1162,16 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * @memberof RoaringBitmap32
    */
   freeze(): this;
+
+  /**
+   * A readonly view on this bitmap.
+   * It returns always the same instance.
+   * Can return this if this bitmap is fully hard frozen.
+   * The bitmap will contain the same data, and if the first bitmap is modified
+   * the readonlyView bitmap one will be modified too.
+   * The readonlyView bitmap is readonly, so it is not possible to modify it.
+   */
+  asReadonlyView(): ReadonlyRoaringBitmap32;
 }
 
 /**
@@ -1279,7 +1289,7 @@ export class RoaringBitmap32 {
   public static get PackageVersion(): string;
 
   /**
-   * Creates an instance of RoaringBitmap32.
+   * Creates an instance of RoaringBitmap32, or copies the given bitmap.
    *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
    *
@@ -1289,6 +1299,18 @@ export class RoaringBitmap32 {
    * @memberof RoaringBitmap32
    */
   public constructor(values?: Iterable<number>);
+
+  /**
+   * Creates a new frozen readonly view of the given bitmap.
+   * The bitmap will contain the same data, and if the first bitmap is modified
+   * the second one will be modified too.
+   * The created bitmap is frozen, so it is not possible to modify it.
+   *
+   * @param {RoaringBitmap32} roaringBitmap32 The source RoaringBitmap32.
+   * @param {"frozen"} frozen Must be "frozen"
+   * @memberof RoaringBitmap32Iterator
+   */
+  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, frozen: "frozen");
 
   /**
    * Creates an instance of RoaringBitmap32 from the given Iterable.
