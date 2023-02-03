@@ -40,7 +40,7 @@
 #undef printf
 #undef fprintf
 
-static void buffer_aligned_free_callback(char * data, void * hint) { gcaware_aligned_free(data); }
+static void buffer_bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
 
 /////////////////// RoaringBitmap32 ///////////////////
 
@@ -100,7 +100,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
   }
 
   v8::MaybeLocal<v8::Object> bufferMaybe =
-    node::Buffer::New(isolate, (char *)ptr, size, buffer_aligned_free_callback, nullptr);
+    node::Buffer::New(isolate, (char *)ptr, size, buffer_bare_aligned_free_callback, nullptr);
 
   v8::Local<v8::Object> bufferObj;
   if (!bufferMaybe.ToLocal(&bufferObj)) {
@@ -381,8 +381,8 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 
 RoaringBitmap32::RoaringBitmap32(uint32_t capacity) :
   roaring(roaring_bitmap_create_with_capacity(capacity)), version(0), frozenCounter(0) {
-  gcaware_adjustAllocatedMemory(sizeof(RoaringBitmap32));
   ++RoaringBitmap32InstancesCounter;
+  gcaware_adjustAllocatedMemory(sizeof(RoaringBitmap32));
 }
 
 RoaringBitmap32::~RoaringBitmap32() {
@@ -756,7 +756,7 @@ class ToUint32ArrayAsyncWorker final : public v8utils::AsyncWorker {
     if (allocatedBuffer && this->outputSize != 0) {
       // Create a new buffer using the allocated memory
       v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate, (char *)allocatedBuffer, this->outputSize * sizeof(uint32_t), buffer_aligned_free_callback, nullptr);
+        isolate, (char *)allocatedBuffer, this->outputSize * sizeof(uint32_t), buffer_bare_aligned_free_callback, nullptr);
       if (!nodeBufferMaybeLocal.IsEmpty()) {
         this->allocatedBuffer = nullptr;
       }
@@ -1554,7 +1554,7 @@ class SerializeWorker final : public v8utils::AsyncWorker {
     gcaware_adjustAllocatedMemory(sizeof(SerializeWorker));
   }
 
-  ~SerializeWorker() { gcaware_adjustAllocatedMemory(-sizeof(SerializeWorker)); }
+  virtual ~SerializeWorker() { gcaware_adjustAllocatedMemory(-sizeof(SerializeWorker)); }
 
   void parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
     const char * error = this->serializer.parseArguments(info);
@@ -1592,7 +1592,7 @@ class SerializeWorker final : public v8utils::AsyncWorker {
     if (allocatedBuffer) {
       // Create a new buffer using the allocated memory
       v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate, (char *)allocatedBuffer, serializer.serializedSize, buffer_aligned_free_callback, nullptr);
+        isolate, (char *)allocatedBuffer, serializer.serializedSize, buffer_bare_aligned_free_callback, nullptr);
 
       v8::Local<v8::Object> nodeBuffer;
       if (!nodeBufferMaybeLocal.ToLocal(&nodeBuffer)) {
@@ -1624,7 +1624,7 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
     // Create a new buffer using the allocated memory
 
     v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-      isolate, (char *)serializer.allocatedBuffer, serializer.serializedSize, buffer_aligned_free_callback, nullptr);
+      isolate, (char *)serializer.allocatedBuffer, serializer.serializedSize, buffer_bare_aligned_free_callback, nullptr);
 
     v8::Local<v8::Object> nodeBuffer;
     if (!nodeBufferMaybeLocal.ToLocal(&nodeBuffer)) {
@@ -2952,10 +2952,12 @@ void RoaringBitmap32BufferedIterator::destroy() {
     persistent.ClearWeak();
     persistent.Reset();
   }
-  gcaware_adjustAllocatedMemory(-sizeof(RoaringBitmap32BufferedIterator));
 }
 
-RoaringBitmap32BufferedIterator::~RoaringBitmap32BufferedIterator() { this->destroy(); }
+RoaringBitmap32BufferedIterator::~RoaringBitmap32BufferedIterator() {
+  this->destroy();
+  gcaware_adjustAllocatedMemory(-sizeof(RoaringBitmap32BufferedIterator));
+}
 
 void RoaringBitmap32BufferedIterator::Init(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();

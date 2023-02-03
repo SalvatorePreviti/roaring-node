@@ -33,17 +33,19 @@ void * bare_aligned_malloc(size_t alignment, size_t size) {
 
 /** portable version of free fo aligned allocs */
 void bare_aligned_free(void * memblock) {
+  if (memblock != nullptr) {
 #ifdef _MSC_VER
-  _aligned_free(memblock);
+    _aligned_free(memblock);
 #elif defined(__MINGW32__) || defined(__MINGW64__)
-  __mingw_aligned_free(memblock);
+    __mingw_aligned_free(memblock);
 #else
-  free(memblock);
+    free(memblock);
 #endif
+  }
 }
 
 /** portable version of malloc_size */
-size_t bare_malloc_size(void * ptr) {
+inline static size_t bare_malloc_size(void * ptr) {
 #if defined(__APPLE__)
   return malloc_size(ptr);
 #elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
@@ -54,10 +56,7 @@ size_t bare_malloc_size(void * ptr) {
 }
 
 /** portable version of malloc_size for memory allocated with bare_aligned_malloc */
-size_t bare_aligned_malloc_size(void * ptr) {
-  if (ptr == nullptr) {
-    return 0;
-  }
+inline static size_t bare_aligned_malloc_size(void * ptr) {
 #if defined(__APPLE__)
   return malloc_size(ptr);
 #elif defined(_WIN32)
@@ -67,28 +66,51 @@ size_t bare_aligned_malloc_size(void * ptr) {
 #endif
 }
 
-std::atomic<uint64_t> gcaware_totalMemCounter{0};
+std::atomic<int64_t> gcaware_totalMemCounter{0};
 
-uint64_t gcaware_totalMem() { return gcaware_totalMemCounter.load(std::memory_order_relaxed); }
+int64_t gcaware_totalMem() { return gcaware_totalMemCounter.load(std::memory_order_relaxed); }
+
+#include <execinfo.h>
+#include <iostream>
+
+static thread_local v8::Isolate * thread_local_isolate = nullptr;
 
 void gcaware_adjustAllocatedMemory(int64_t size) {
   if (size != 0) {
     v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    if (isolate == nullptr) {
+      isolate = thread_local_isolate;
+    }
     if (isolate != nullptr) {
       isolate->AdjustAmountOfExternalAllocatedMemory(size);
     }
+    int64_t old = gcaware_totalMemCounter;
     gcaware_totalMemCounter += size;
+
+    if (old >= 0 && gcaware_totalMemCounter < 0) {
+      std::cout << std::endl;
+      void * callstack[128];
+      int i, frames = backtrace(callstack, 128);
+      char ** strs = backtrace_symbols(callstack, frames);
+      for (i = 0; i < frames; ++i) {
+        printf("%s\n", strs[i]);
+      }
+      free(strs);
+      std::cout << "old: " << old << " gcaware_totalMemCounter: " << gcaware_totalMemCounter << std::endl << std::endl;
+    }
   }
 }
 
 void * gcaware_malloc(size_t size) {
   void * memory = malloc(size);
-  gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  }
   return memory;
 }
 
 void * gcaware_realloc(void * memory, size_t size) {
-  size_t oldSize = bare_malloc_size(memory);
+  size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
   memory = realloc(memory, size);
   if (memory != nullptr) {
     gcaware_adjustAllocatedMemory(-oldSize);
@@ -99,23 +121,31 @@ void * gcaware_realloc(void * memory, size_t size) {
 
 void * gcaware_calloc(size_t count, size_t size) {
   void * memory = calloc(count, size);
-  gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  }
   return memory;
 }
 
 void gcaware_free(void * memory) {
-  gcaware_adjustAllocatedMemory(-bare_malloc_size(memory));
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(-bare_malloc_size(memory));
+  }
   free(memory);
 }
 
 void * gcaware_aligned_malloc(size_t alignment, size_t size) {
   void * memory = bare_aligned_malloc(alignment, size);
-  gcaware_adjustAllocatedMemory(bare_aligned_malloc_size(memory));
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(bare_aligned_malloc_size(memory));
+  }
   return memory;
 }
 
 void gcaware_aligned_free(void * memory) {
-  gcaware_adjustAllocatedMemory(-bare_aligned_malloc_size(memory));
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(-bare_aligned_malloc_size(memory));
+  }
   bare_aligned_free(memory);
 }
 
@@ -280,10 +310,13 @@ namespace v8utils {
   void AsyncWorker::_work(uv_work_t * request) {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
-    if (!worker->hasError()) {
+    if (worker && !worker->hasError()) {
+      auto oldIsolate = thread_local_isolate;
+      thread_local_isolate = worker->isolate;
       worker->work();
+      thread_local_isolate = oldIsolate;
+      std::atomic_thread_fence(std::memory_order_seq_cst);
     }
-    std::atomic_thread_fence(std::memory_order_seq_cst);
   }
 
   void AsyncWorker::_done(uv_work_t * request, int status) {
@@ -439,14 +472,19 @@ namespace v8utils {
   void ParallelAsyncWorker::_parallelWork(uv_work_t * request) {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
-    uint32_t loopCount = worker->loopCount;
-    while (!worker->hasError() && !worker->_completed) {
-      const uint32_t prevIndex = worker->_currentIndex;
-      const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
-      if (index >= loopCount || index < prevIndex) {
-        break;
+    if (worker) {
+      auto oldIsolate = thread_local_isolate;
+      thread_local_isolate = worker->isolate;
+      uint32_t loopCount = worker->loopCount;
+      while (!worker->hasError() && !worker->_completed) {
+        const uint32_t prevIndex = worker->_currentIndex;
+        const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
+        if (index >= loopCount || index < prevIndex) {
+          break;
+        }
+        worker->parallelWork(index);
       }
-      worker->parallelWork(index);
+      thread_local_isolate = oldIsolate;
     }
   }
 

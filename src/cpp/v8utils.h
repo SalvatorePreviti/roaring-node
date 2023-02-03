@@ -14,13 +14,7 @@ void * bare_aligned_malloc(size_t alignment, size_t size);
 /** portable version of free fo aligned allocs */
 void bare_aligned_free(void * memblock);
 
-/** portable version of malloc_size */
-size_t bare_malloc_size(void * ptr);
-
-/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
-size_t bare_aligned_malloc_size(void * ptr);
-
-uint64_t gcaware_totalMem();
+int64_t gcaware_totalMem();
 
 /** Updates amount of used memory */
 void gcaware_adjustAllocatedMemory(int64_t size);
