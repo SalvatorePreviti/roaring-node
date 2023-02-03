@@ -19,7 +19,7 @@ Source code at: https://github.com/SalvatorePreviti/roaring-node
 
 Documentation at: https://salvatorepreviti.github.io/roaring-node/modules.html
 
-Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32-1.html
+Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32.html
 
 */
 

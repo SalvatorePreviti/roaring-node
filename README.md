@@ -32,7 +32,7 @@ npm install --save roaring
 
 See the [roaring module documentation](https://salvatorepreviti.github.io/roaring-node/modules.html)
 
-See the [RoaringBitmap32 class documentation](https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32-1.html)
+See the [RoaringBitmap32 class documentation](https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32.html)
 
 # Code sample:
 

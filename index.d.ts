@@ -17,7 +17,7 @@ Source code at: https://github.com/SalvatorePreviti/roaring-node
 
 Documentation at: https://salvatorepreviti.github.io/roaring-node/modules.html
 
-Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32-1.html
+Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32.html
 
 */
 
@@ -94,13 +94,27 @@ export function ensureBufferAligned(
 ): Buffer;
 
 export enum SerializationFormat {
-  /** Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
+  /**
+   * Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format.
+   */
   croaring = "croaring",
 
-  /** Portable Java and Go format. */
+  /**
+   * Stable Portable Java and Go format.
+   */
   portable = "unsafe_portable",
 
-  /** Non portable C/C++ frozen format. Can be larger than the other formats. */
+  /**
+   * Non portable C/C++ frozen format.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when deserialized or when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   *
+   * When this option is used in the serialize function, the new returned buffer (if no buffer was provided) will be aligned to a 32 bytes boundary.
+   * This is required to create a frozen view with the method unsafeFrozenView.
+   *
+   */
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
 }
 
@@ -112,16 +126,28 @@ export type SerializationFormatType =
   | boolean;
 
 export enum DeserializationFormat {
-  /** Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
+  /** Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
   croaring = "croaring",
 
-  /** Portable Java and Go format. */
+  /** Stable Portable Java and Go format. */
   portable = "portable",
 
-  /** Non portable C/C++ frozen format. Can be larger than the other formats. */
+  /**
+   * Non portable C/C++ frozen format. Can be larger than the other formats.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
 
-  /** Portable version of the frozen view, compatible with Go and Java. Can be larger than the other formats. */
+  /**
+   * Portable version of the frozen view, compatible with Go and Java. Can be larger than the other formats.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
   unsafe_frozen_portable = "unsafe_frozen_portable",
 }
 
@@ -134,10 +160,22 @@ export type DeserializationFormatType =
   | boolean;
 
 export enum FrozenViewFormat {
-  /** Non portable C/C++ frozen format. Can be larger than the other formats. */
+  /**
+   * Non portable C/C++ frozen format.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
 
-  /** Portable version of the frozen view, compatible with Go and Java. */
+  /**
+   * Portable version of the frozen view, compatible with Go and Java.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
   unsafe_frozen_portable = "unsafe_frozen_portable",
 }
 
@@ -391,6 +429,7 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: this field was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
@@ -413,6 +452,7 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
@@ -435,6 +475,7 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
@@ -459,6 +500,7 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
@@ -481,6 +523,7 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
@@ -508,9 +551,16 @@ export class RoaringBitmap32 implements Set<number> {
    * This function is considered unsafe because if the buffer gets modified, the bitmap will be corrupted and the application can crash.
    * There is a risk for buffer overrun or arbitrary code execution here. Be careful and do not allow the buffer to be modified while or after the bitmap is in use.
    *
+   * The content of buffer should not be modified until the bitmap is destroyed! Is responsibility of the caller to ensure that the buffer is not modified while the bitmap is in use.
+   *
    * Using "unsafe_frozen_croaring" the buffer data must be aligned to 32 bytes.
    * The roaring library provides the functions bufferAlignedAlloc, bufferAlignedAllocUnsafe, isBufferAligned, ensureBufferAligned that helps allocating and managing aligned buffers.
    * If you read a file, or read from database, be careful to use an aligned buffer or copy to an aligned buffer before calling this function with "unsafe_frozen_croaring" format.
+   *
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
    *
    * @static
    * @param {Buffer} storage A Buffer that contains the serialized data.

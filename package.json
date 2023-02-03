@@ -16,7 +16,7 @@
   },
   "documentation": [
     "https://salvatorepreviti.github.io/roaring-node/modules.html",
-    "https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32-1.html"
+    "https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32.html"
   ],
   "repository": {
     "type": "git",
