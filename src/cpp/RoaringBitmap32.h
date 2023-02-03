@@ -127,6 +127,7 @@ class RoaringBitmap32 final {
 
   static void fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
 
+  static void addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void andStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void orStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info);

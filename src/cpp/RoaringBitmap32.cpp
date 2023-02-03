@@ -287,56 +287,56 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
     (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING),
     (v8::PropertyAttribute)(v8::ReadOnly));
 
-  NODE_SET_PROTOTYPE_METHOD(ctor, "minimum", minimum);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "maximum", maximum);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "contains", has);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "has", has);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "copyFrom", copyFrom);
   NODE_SET_PROTOTYPE_METHOD(ctor, "add", add);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "tryAdd", tryAdd);
   NODE_SET_PROTOTYPE_METHOD(ctor, "addMany", addMany);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "addRange", addRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "andCardinality", andCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "andInPlace", andInPlace);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "andNotCardinality", andNotCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "andNotInPlace", removeMany);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "clear", clear);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "clone", clone);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "contains", has);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "containsRange", hasRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "contentToString", contentToString);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "copyFrom", copyFrom);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "delete", removeChecked);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "deserialize", deserialize);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "flipRange", flipRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "freeze", freeze);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "has", has);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "hasRange", hasRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "intersects", intersects);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isEqual", isEqual);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSubset", isStrictSubset);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isSubset", isSubset);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "jaccardIndex", jaccardIndex);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "maximum", maximum);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "minimum", minimum);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "orCardinality", orCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "orInPlace", addMany);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "rangeCardinality", rangeCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "rangeUint32Array", rangeUint32Array);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "rank", rank);
   NODE_SET_PROTOTYPE_METHOD(ctor, "remove", remove);
   NODE_SET_PROTOTYPE_METHOD(ctor, "removeMany", removeMany);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "delete", removeChecked);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "clear", clear);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "orInPlace", addMany);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "andNotInPlace", removeMany);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "andInPlace", andInPlace);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "xorInPlace", xorInPlace);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "isSubset", isSubset);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSubset", isStrictSubset);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "isEqual", isEqual);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "intersects", intersects);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "andCardinality", andCardinality);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "orCardinality", orCardinality);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "andNotCardinality", andNotCardinality);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "xorCardinality", xorCardinality);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "jaccardIndex", jaccardIndex);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "removeRange", removeRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "removeRunCompression", removeRunCompression);
   NODE_SET_PROTOTYPE_METHOD(ctor, "runOptimize", runOptimize);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "shrinkToFit", shrinkToFit);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "rank", rank);
   NODE_SET_PROTOTYPE_METHOD(ctor, "select", select);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32Array", toUint32Array);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32ArrayAsync", toUint32ArrayAsync);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "rangeUint32Array", rangeUint32Array);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "toArray", toArray);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "toSet", toSet);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "getSerializationSizeInBytes", getSerializationSizeInBytes);
   NODE_SET_PROTOTYPE_METHOD(ctor, "serialize", serialize);
   NODE_SET_PROTOTYPE_METHOD(ctor, "serializeAsync", serializeAsync);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "deserialize", deserialize);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "clone", clone);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "toString", toString);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "contentToString", contentToString);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "shrinkToFit", shrinkToFit);
   NODE_SET_PROTOTYPE_METHOD(ctor, "statistics", statistics);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "containsRange", hasRange);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "hasRange", hasRange);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "rangeCardinality", rangeCardinality);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "flipRange", flipRange);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "addRange", addRange);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "removeRange", removeRange);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "freeze", freeze);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toArray", toArray);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toSet", toSet);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toString", toString);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32Array", toUint32Array);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32ArrayAsync", toUint32ArrayAsync);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "tryAdd", tryAdd);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "xorCardinality", xorCardinality);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "xorInPlace", xorInPlace);
 
   auto context = isolate->GetCurrentContext();
   auto ctorFunction = ctor->GetFunction(context).ToLocalChecked();
@@ -345,31 +345,35 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), versionString);
   ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
 
-  NODE_SET_METHOD(ctorObject, "fromRange", fromRangeStatic);
-  NODE_SET_METHOD(ctorObject, "fromArrayAsync", fromArrayStaticAsync);
+  NODE_SET_METHOD(ctorObject, "addOffset", addOffsetStatic);
+  NODE_SET_METHOD(ctorObject, "and", andStatic);
+  NODE_SET_METHOD(ctorObject, "andNot", andNotStatic);
+
+  v8utils::defineHiddenField(isolate, ctorObject, "default", ctorFunction);
+
   NODE_SET_METHOD(ctorObject, "deserialize", deserializeStatic);
   NODE_SET_METHOD(ctorObject, "deserializeAsync", deserializeStaticAsync);
   NODE_SET_METHOD(ctorObject, "deserializeParallelAsync", deserializeParallelStaticAsync);
-  NODE_SET_METHOD(ctorObject, "unsafeFrozenView", unsafeFrozenViewStatic);
-  NODE_SET_METHOD(ctorObject, "and", andStatic);
-  NODE_SET_METHOD(ctorObject, "or", orStatic);
-  NODE_SET_METHOD(ctorObject, "xor", xorStatic);
-  NODE_SET_METHOD(ctorObject, "andNot", andNotStatic);
-  NODE_SET_METHOD(ctorObject, "orMany", orManyStatic);
-  NODE_SET_METHOD(ctorObject, "xorMany", xorManyStatic);
-  NODE_SET_METHOD(ctorObject, "swap", swapStatic);
-  NODE_SET_METHOD(ctorObject, "getInstancesCount", getInstanceCountStatic);
 
   v8utils::ignoreMaybeResult(
     ctorObject->Set(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized), ctorFunction));
 
-  v8utils::defineHiddenField(isolate, ctorObject, "default", ctorFunction);
-  v8utils::defineHiddenField(isolate, ctorObject, "RoaringBitmap32", ctorFunction);
-
-  v8utils::ignoreMaybeResult(exports->Set(context, className, ctorFunction));
+  NODE_SET_METHOD(ctorObject, "fromArrayAsync", fromArrayStaticAsync);
+  NODE_SET_METHOD(ctorObject, "fromRange", fromRangeStatic);
+  NODE_SET_METHOD(ctorObject, "getInstancesCount", getInstanceCountStatic);
+  NODE_SET_METHOD(ctorObject, "or", orStatic);
+  NODE_SET_METHOD(ctorObject, "orMany", orManyStatic);
+  NODE_SET_METHOD(ctorObject, "swap", swapStatic);
+  NODE_SET_METHOD(ctorObject, "unsafeFrozenView", unsafeFrozenViewStatic);
+  NODE_SET_METHOD(ctorObject, "xor", xorStatic);
+  NODE_SET_METHOD(ctorObject, "xorMany", xorManyStatic);
 
   v8utils::defineReadonlyField(isolate, ctorObject, "CRoaringVersion", versionString);
   v8utils::defineReadonlyField(isolate, exports, "CRoaringVersion", versionString);
+
+  v8utils::defineHiddenField(isolate, ctorObject, "RoaringBitmap32", ctorFunction);
+
+  v8utils::ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
   constructor.Set(isolate, ctorFunction);
 }
@@ -2462,6 +2466,50 @@ void RoaringBitmap32::swapStatic(const v8::FunctionCallbackInfo<v8::Value> & inf
     a->invalidate();
     b->invalidate();
   }
+}
+
+void RoaringBitmap32::addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  auto constructorTemplate = RoaringBitmap32::constructorTemplate.Get(isolate);
+
+  if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset expects 2 arguments");
+
+  RoaringBitmap32 * a = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], constructorTemplate, isolate);
+  if (a == nullptr)
+    return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset first argument must be a RoaringBitmap32");
+
+  v8::Local<v8::Function> cons = constructor.Get(isolate);
+
+  auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+  v8::Local<v8::Object> result;
+  if (!resultMaybe.ToLocal(&result)) {
+    return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset failed to create new instance");
+  }
+
+  auto self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+  if (!self) {
+    return v8utils::throwError(info.GetIsolate(), ERROR_INVALID_OBJECT);
+  }
+
+  // Second argument is the offset, read as double
+  double offset = info[1]->NumberValue(isolate->GetCurrentContext()).FromMaybe(NAN);
+  if (std::isnan(offset)) {
+    offset = 0;
+  } else if (offset < -4294967296) {
+    offset = -4294967296;
+  } else if (offset > 4294967296) {
+    offset = 4294967296;
+  }
+
+  roaring_bitmap_t * r = roaring_bitmap_add_offset(a->roaring, (int64_t)offset);
+  if (r == nullptr) {
+    return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset failed materalization");
+  }
+  self->replaceBitmapInstance(isolate, r);
+
+  info.GetReturnValue().Set(result);
 }
 
 void RoaringBitmap32::andStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {

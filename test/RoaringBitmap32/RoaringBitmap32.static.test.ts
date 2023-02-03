@@ -376,4 +376,40 @@ describe("RoaringBitmap32 static", () => {
       expect(b.isFrozen).eq(false);
     });
   });
+
+  describe("addOffset", () => {
+    it("returns an empty bitmap if the input bitmap is empty", () => {
+      const input = new RoaringBitmap32();
+      const offsetted = RoaringBitmap32.addOffset(input, 10);
+      expect(offsetted).to.not.eq(input);
+      expect(offsetted.toArray()).deep.equal([]);
+      expect(offsetted.isEmpty).to.be.true;
+    });
+
+    it("increment values", () => {
+      const input = new RoaringBitmap32([1, 2, 3, 100]);
+      const offsetted = RoaringBitmap32.addOffset(input, 10);
+      expect(offsetted.toArray()).deep.equal([11, 12, 13, 110]);
+      expect(offsetted).to.not.eq(input);
+    });
+
+    it("decrement values", () => {
+      const input = new RoaringBitmap32([11, 12, 13, 1100]);
+      const offsetted = RoaringBitmap32.addOffset(input, -10);
+      expect(offsetted.toArray()).deep.equal([1, 2, 3, 1090]);
+      expect(offsetted).to.not.eq(input);
+    });
+
+    it("accepts out of range values and NaN", () => {
+      const input = new RoaringBitmap32([1, 2, 30, 40, 0xffffffff]);
+      expect(RoaringBitmap32.addOffset(input, -Infinity).toArray()).deep.equal([]);
+      expect(RoaringBitmap32.addOffset(input, Infinity).toArray()).deep.equal([]);
+      expect(RoaringBitmap32.addOffset(input, -0xffffffff - 1).toArray()).deep.equal([]);
+      expect(RoaringBitmap32.addOffset(input, 0xffffffff).toArray()).deep.equal([]);
+      expect(RoaringBitmap32.addOffset(input, -0xffffffff).toArray()).deep.equal([0]);
+      expect(RoaringBitmap32.addOffset(input, 0xfffffffe).toArray()).deep.equal([4294967295]);
+      expect(RoaringBitmap32.addOffset(input, -35).toArray()).deep.equal([5, 4294967260]);
+      expect(RoaringBitmap32.addOffset(input, 35).toArray()).deep.equal([36, 37, 65, 75]);
+    });
+  });
 });

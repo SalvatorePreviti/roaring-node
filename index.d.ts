@@ -523,6 +523,16 @@ export class RoaringBitmap32 implements Set<number> {
   public static swap(a: RoaringBitmap32, b: RoaringBitmap32): void;
 
   /**
+   * addOffset adds the value 'offset' to each and every value in a bitmap, generating a new bitmap in the process.
+   * If offset + element is outside of the range [0,2^32), that the element will be dropped.
+   *
+   * @param {RoaringBitmap32} input The input bitmap.
+   * @param {number} offset The offset to add to each element. Can be positive or negative.
+   * @returns {RoaringBitmap32} A new bitmap with the offset added to each element.
+   */
+  public static addOffset(input: RoaringBitmap32, offset: number): RoaringBitmap32;
+
+  /**
    * Returns a new RoaringBitmap32 with the intersection (and) between the given two bitmaps.
    *
    * The provided bitmaps are not modified.
