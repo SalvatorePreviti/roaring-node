@@ -31,6 +31,9 @@
 #  pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #  pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
 #  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#elif defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4244)  // possible loss of data
 #endif
 
 #ifdef small
@@ -43,6 +46,8 @@
 #  pragma clang diagnostic pop
 #elif defined(__GNUC__)
 #  pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#  pragma warning(pop)
 #endif
 
 #undef printf
@@ -190,7 +195,7 @@ static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value
       return SerializationFormat::croaring;
     }
   } else if (value->IsString()) {
-#if NODE_MAJOR_VERSION >= 10
+#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
 #else
     v8::String::Utf8Value formatString(value);
@@ -220,7 +225,7 @@ static DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::V
       return DeserializationFormat::croaring;
     }
   } else if (value->IsString()) {
-#if NODE_MAJOR_VERSION >= 10
+#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
 #else
     v8::String::Utf8Value formatString(value);
@@ -246,7 +251,7 @@ static FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & va
     return FrozenViewFormat::INVALID;
   }
   if (value->IsString()) {
-#if NODE_MAJOR_VERSION >= 11
+#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
 #else
     v8::String::Utf8Value formatString(value);
@@ -402,7 +407,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 RoaringBitmap32::RoaringBitmap32(uint32_t capacity) :
   roaring(roaring_bitmap_create_with_capacity(capacity)), version(0), frozenCounter(0) {
   ++RoaringBitmap32InstancesCounter;
-  gcaware_adjustAllocatedMemory(sizeof(RoaringBitmap32));
+  gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
 }
 
 RoaringBitmap32::~RoaringBitmap32() {
@@ -414,7 +419,7 @@ RoaringBitmap32::~RoaringBitmap32() {
     gcaware_aligned_free(this->frozenStorage.data);
   }
   this->persistent.Reset();
-  gcaware_adjustAllocatedMemory(-sizeof(RoaringBitmap32));
+  gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32));
 }
 
 void RoaringBitmap32::getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -695,14 +700,14 @@ class ToUint32ArrayAsyncWorker final : public v8utils::AsyncWorker {
   bool hasInput = false;
 
   explicit ToUint32ArrayAsyncWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {
-    gcaware_adjustAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
+    gcaware_addAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
   }
 
   ~ToUint32ArrayAsyncWorker() {
     if (this->allocatedBuffer) {
       bare_aligned_free(this->allocatedBuffer);
     }
-    gcaware_adjustAllocatedMemory(-sizeof(ToUint32ArrayAsyncWorker));
+    gcaware_removeAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
   }
 
   void parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -832,7 +837,7 @@ void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value>
   }
 
   if (limit > cardinality - offset) {
-    limit = cardinality - offset;
+    limit = (uint32_t)(cardinality - offset);
   }
 
   v8utils::TypedArrayContent<uint32_t> typedArrayContent;
@@ -890,7 +895,7 @@ void RoaringBitmap32::toArray(const v8::FunctionCallbackInfo<v8::Value> & info) 
   iterData.isolate = isolate;
   iterData.context = isolate->GetCurrentContext();
 
-  double maxLength = cardinality;
+  double maxLength = (double)cardinality;
 
   // Check if the first argument is an array
   if (info.Length() >= 1 && !info[0]->IsUndefined()) {
@@ -899,7 +904,7 @@ void RoaringBitmap32::toArray(const v8::FunctionCallbackInfo<v8::Value> & info) 
         return v8utils::throwTypeError(isolate, "RoaringBitmap32::toArray - maxLength argument must be a valid number");
       }
       if (maxLength > cardinality) {
-        maxLength = cardinality;
+        maxLength = (double)cardinality;
       }
       iterData.jsArray = v8::Array::New(isolate, (uint32_t)maxLength);
     } else {
@@ -917,7 +922,7 @@ void RoaringBitmap32::toArray(const v8::FunctionCallbackInfo<v8::Value> & info) 
             isolate, "RoaringBitmap32::toArray - maxLength must be zero or a valid uint32 value");
         }
         if (maxLength > cardinality) {
-          maxLength = cardinality;
+          maxLength = (double)cardinality;
         }
       }
 
@@ -1571,10 +1576,10 @@ class SerializeWorker final : public v8utils::AsyncWorker {
   RoaringBitmapSerializer serializer;
 
   explicit SerializeWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {
-    gcaware_adjustAllocatedMemory(sizeof(SerializeWorker));
+    gcaware_addAllocatedMemory(sizeof(SerializeWorker));
   }
 
-  virtual ~SerializeWorker() { gcaware_adjustAllocatedMemory(-sizeof(SerializeWorker)); }
+  virtual ~SerializeWorker() { gcaware_removeAllocatedMemory(sizeof(SerializeWorker)); }
 
   void parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
     const char * error = this->serializer.parseArguments(info);
@@ -1804,10 +1809,10 @@ class DeserializeWorker final : public v8utils::AsyncWorker {
   RoaringBitmapDeserializer deserializer;
 
   explicit DeserializeWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {
-    gcaware_adjustAllocatedMemory(sizeof(DeserializeWorker));
+    gcaware_addAllocatedMemory(sizeof(DeserializeWorker));
   }
 
-  virtual ~DeserializeWorker() { gcaware_adjustAllocatedMemory(-sizeof(DeserializeWorker)); }
+  virtual ~DeserializeWorker() { gcaware_removeAllocatedMemory(sizeof(DeserializeWorker)); }
 
   void parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
     const char * error = this->deserializer.parseArguments(info, false);
@@ -2890,10 +2895,10 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
   v8utils::TypedArrayContent<uint32_t> buffer;
 
   explicit FromArrayAsyncWorker(v8::Isolate * isolate) : RoaringBitmap32FactoryAsyncWorker(isolate) {
-    gcaware_adjustAllocatedMemory(sizeof(FromArrayAsyncWorker));
+    gcaware_addAllocatedMemory(sizeof(FromArrayAsyncWorker));
   }
 
-  virtual ~FromArrayAsyncWorker() { gcaware_adjustAllocatedMemory(-sizeof(FromArrayAsyncWorker)); }
+  virtual ~FromArrayAsyncWorker() { gcaware_removeAllocatedMemory(sizeof(FromArrayAsyncWorker)); }
 
  protected:
   void work() final {
@@ -2963,7 +2968,7 @@ v8::Eternal<v8::String> RoaringBitmap32BufferedIterator::nPropertyName;
 RoaringBitmap32BufferedIterator::RoaringBitmap32BufferedIterator() {
   this->it.parent = nullptr;
   this->it.has_value = false;
-  gcaware_adjustAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
+  gcaware_addAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
 }
 
 void RoaringBitmap32BufferedIterator::destroy() {
@@ -2976,7 +2981,7 @@ void RoaringBitmap32BufferedIterator::destroy() {
 
 RoaringBitmap32BufferedIterator::~RoaringBitmap32BufferedIterator() {
   this->destroy();
-  gcaware_adjustAllocatedMemory(-sizeof(RoaringBitmap32BufferedIterator));
+  gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
 }
 
 void RoaringBitmap32BufferedIterator::Init(v8::Local<v8::Object> exports) {

@@ -17,7 +17,10 @@ void bare_aligned_free(void * memblock);
 int64_t gcaware_totalMem();
 
 /** Updates amount of used memory */
-void gcaware_adjustAllocatedMemory(int64_t size);
+void gcaware_addAllocatedMemory(size_t size);
+
+/** Updates amount of used memory */
+void gcaware_removeAllocatedMemory(size_t size);
 
 void * gcaware_malloc(size_t size);
 

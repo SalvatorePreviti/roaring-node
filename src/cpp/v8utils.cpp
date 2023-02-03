@@ -72,7 +72,7 @@ int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
 
 static thread_local v8::Isolate * thread_local_isolate = nullptr;
 
-void gcaware_adjustAllocatedMemory(int64_t size) {
+inline static void _gcaware_adjustAllocatedMemory(int64_t size) {
   if (size != 0) {
     v8::Isolate * isolate = v8::Isolate::GetCurrent();
     if (isolate == nullptr) {
@@ -85,10 +85,14 @@ void gcaware_adjustAllocatedMemory(int64_t size) {
   }
 }
 
+void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
+
+void gcaware_removeAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory(-(int64_t)size); }
+
 void * gcaware_malloc(size_t size) {
   void * memory = malloc(size);
   if (memory != nullptr) {
-    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
   }
   return memory;
 }
@@ -97,8 +101,8 @@ void * gcaware_realloc(void * memory, size_t size) {
   size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
   memory = realloc(memory, size);
   if (memory != nullptr) {
-    gcaware_adjustAllocatedMemory(-oldSize);
-    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+    gcaware_removeAllocatedMemory(oldSize);
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
   }
   return memory;
 }
@@ -106,14 +110,14 @@ void * gcaware_realloc(void * memory, size_t size) {
 void * gcaware_calloc(size_t count, size_t size) {
   void * memory = calloc(count, size);
   if (memory != nullptr) {
-    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
   }
   return memory;
 }
 
 void gcaware_free(void * memory) {
   if (memory != nullptr) {
-    gcaware_adjustAllocatedMemory(-bare_malloc_size(memory));
+    gcaware_removeAllocatedMemory(bare_malloc_size(memory));
   }
   free(memory);
 }
@@ -121,14 +125,14 @@ void gcaware_free(void * memory) {
 void * gcaware_aligned_malloc(size_t alignment, size_t size) {
   void * memory = bare_aligned_malloc(alignment, size);
   if (memory != nullptr) {
-    gcaware_adjustAllocatedMemory(bare_aligned_malloc_size(memory));
+    gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));
   }
   return memory;
 }
 
 void gcaware_aligned_free(void * memory) {
   if (memory != nullptr) {
-    gcaware_adjustAllocatedMemory(-bare_aligned_malloc_size(memory));
+    gcaware_removeAllocatedMemory(bare_aligned_malloc_size(memory));
   }
   bare_aligned_free(memory);
 }
