@@ -179,7 +179,7 @@ export enum FrozenViewFormat {
   unsafe_frozen_portable = "unsafe_frozen_portable",
 }
 
-export type FrozenViewFormatType = SerializationFormat | "unsafe_frozen_croaring" | "unsafe_frozen_portable" | boolean;
+export type FrozenViewFormatType = FrozenViewFormat | "unsafe_frozen_croaring" | "unsafe_frozen_portable" | boolean;
 
 /**
  * Roaring bitmap that supports 32 bit unsigned integers.
