@@ -161,8 +161,8 @@ namespace v8utils {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
           this->length = array->ByteLength() / sizeof(T);
-#if NODE_MAJOR_VERSION > 13
           auto arrayBuffer = array->Buffer();
+#if NODE_MAJOR_VERSION > 13
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
 #else
