@@ -2,7 +2,7 @@
 
 const { isUint8Array, isInt8Array, isArrayBuffer } = require("util/types");
 const roaring = require("./build/Release/roaring.node");
-const { version: packageVersion } = require("./package.json");
+// const { version: packageVersion } = require("./package.json");
 
 module.exports = roaring;
 
@@ -147,22 +147,26 @@ if (!roaring.PackageVersion) {
     return this.toArray();
   };
 
-  const define = (name, value, writable) => {
-    const prop = {
-      value,
-      writable: !!writable,
-      configurable: false,
-      enumerable: false,
-    };
+  const defineProp = (name, prop) => {
     defineProperty(roaring, name, prop);
     defineProperty(RoaringBitmap32, name, prop);
     defineProperty(roaringBitmap32_proto, name, prop);
   };
 
-  define("PackageVersion", packageVersion);
-  define("RoaringBitmap32Iterator", RoaringBitmap32Iterator, false);
+  const defineValue = (name, value, writable) =>
+    defineProp(name, { value, writable: !!writable, configurable: false, enumerable: false });
 
-  define(
+  let packageVersion = null;
+
+  defineProp("PackageVersion", {
+    get: () => (packageVersion !== null ? packageVersion : (packageVersion = require("./package.json").version)),
+    configurable: false,
+    enumerable: true,
+  });
+
+  defineValue("RoaringBitmap32Iterator", RoaringBitmap32Iterator, false);
+
+  defineValue(
     "SerializationFormat",
     {
       croaring: "croaring",
@@ -172,7 +176,7 @@ if (!roaring.PackageVersion) {
     false,
   );
 
-  define(
+  defineValue(
     "DeserializationFormat",
     {
       croaring: "croaring",
@@ -183,7 +187,7 @@ if (!roaring.PackageVersion) {
     false,
   );
 
-  define(
+  defineValue(
     "FrozenViewFormat",
     {
       unsafe_frozen_croaring: "unsafe_frozen_croaring",
@@ -192,11 +196,11 @@ if (!roaring.PackageVersion) {
     false,
   );
 
-  define("bufferAlignedAlloc", roaring.bufferAlignedAlloc);
-  define("bufferAlignedAllocUnsafe", roaring.bufferAlignedAllocUnsafe);
-  define("isBufferAligned", roaring.isBufferAligned);
+  defineValue("bufferAlignedAlloc", roaring.bufferAlignedAlloc);
+  defineValue("bufferAlignedAllocUnsafe", roaring.bufferAlignedAllocUnsafe);
+  defineValue("isBufferAligned", roaring.isBufferAligned);
 
-  define("ensureBufferAligned", function ensureBufferAligned(buffer, alignment = 32) {
+  defineValue("ensureBufferAligned", function ensureBufferAligned(buffer, alignment = 32) {
     if (typeof alignment !== "number" || alignment < 0 || alignment > 1024 || !Number.isInteger(alignment)) {
       throw new TypeError("ensureBufferAligned alignment must be an integer number between 0 and 1024");
     }

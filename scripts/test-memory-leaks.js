@@ -12,7 +12,9 @@ const { RoaringBitmap32, getRoaringUsedMemory } = require("../");
 gc();
 gc();
 
+console.log();
 console.log("RoaringUsedMemory", getRoaringUsedMemory());
+console.log("RoaringBitmap32.getInstancesCount", RoaringBitmap32.getInstancesCount());
 
 gc();
 gc();
@@ -24,7 +26,10 @@ for (let i = 0; i < 10000; i++) {
   RoaringBitmap32.andNot(a, b);
 }
 
+console.log();
 console.log("RoaringUsedMemory", getRoaringUsedMemory());
+console.log("RoaringBitmap32.getInstancesCount", RoaringBitmap32.getInstancesCount());
+console.log();
 
 gc();
 gc();
@@ -43,7 +48,10 @@ for (let i = 0; i < 10000000; i++) {
 process.stdout.write("\n");
 console.timeEnd("allocation");
 
+console.log();
 console.log("RoaringUsedMemory", getRoaringUsedMemory());
+console.log("RoaringBitmap32.getInstancesCount", RoaringBitmap32.getInstancesCount());
+console.log();
 
 for (let i = 0; i < 10; ++i) {
   gc();
@@ -57,6 +65,9 @@ setTimeout(() => {
       gc();
     }
     console.table(process.memoryUsage());
+    console.log();
     console.log("RoaringUsedMemory", getRoaringUsedMemory());
+    console.log("RoaringBitmap32.getInstancesCount", RoaringBitmap32.getInstancesCount());
+    console.log();
   }, 150);
 }, 150);

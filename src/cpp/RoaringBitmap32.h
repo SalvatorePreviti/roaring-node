@@ -2,7 +2,6 @@
 #define __ROARINGBITMAP32__H__
 
 #include "v8utils.h"
-#include "CRoaringUnityBuild/roaring_version_string.h"
 #include "CRoaringUnityBuild/roaring.h"
 
 using namespace roaring;
@@ -147,6 +146,8 @@ class RoaringBitmap32 final {
   static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
   static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
   static void isFrozen_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+
+  static void getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   explicit RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();

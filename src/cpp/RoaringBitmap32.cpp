@@ -22,6 +22,9 @@
 #if defined(__clang__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-variable"
+#  pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#  pragma clang diagnostic ignored "-Wunused-but-set-parameter"
+#  pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #endif
 
 #ifdef small
@@ -42,6 +45,8 @@ static void buffer_aligned_free_callback(char * data, void * hint) { gcaware_ali
 /////////////////// RoaringBitmap32 ///////////////////
 
 const uint32_t MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES = 0x00FFFFFF;
+
+std::atomic<uint64_t> RoaringBitmap32InstancesCounter{0};
 
 void initTypes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
@@ -249,7 +254,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   v8::HandleScope scope(isolate);
 
   auto className = NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32", v8::NewStringType::kInternalized);
-  auto versionString = NEW_LITERAL_V8_STRING(isolate, ROARING_VERSION_STRING, v8::NewStringType::kInternalized);
+  auto versionString = NEW_LITERAL_V8_STRING(isolate, ROARING_VERSION, v8::NewStringType::kInternalized);
 
   v8::Local<v8::FunctionTemplate> ctor = v8::FunctionTemplate::New(isolate, RoaringBitmap32::New);
   RoaringBitmap32::constructorTemplate.Set(isolate, ctor);
@@ -333,13 +338,12 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(ctor, "removeRange", removeRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "freeze", freeze);
 
-  ctor->PrototypeTemplate()->Set(
-    v8::Symbol::GetToStringTag(isolate), NEW_LITERAL_V8_STRING(isolate, "Set", v8::NewStringType::kInternalized));
-  ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
-
   auto context = isolate->GetCurrentContext();
   auto ctorFunction = ctor->GetFunction(context).ToLocalChecked();
   auto ctorObject = ctorFunction->ToObject(context).ToLocalChecked();
+
+  ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), versionString);
+  ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
 
   NODE_SET_METHOD(ctorObject, "fromRange", fromRangeStatic);
   NODE_SET_METHOD(ctorObject, "fromArrayAsync", fromArrayStaticAsync);
@@ -354,16 +358,17 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_METHOD(ctorObject, "orMany", orManyStatic);
   NODE_SET_METHOD(ctorObject, "xorMany", xorManyStatic);
   NODE_SET_METHOD(ctorObject, "swap", swapStatic);
+  NODE_SET_METHOD(ctorObject, "getInstancesCount", getInstanceCountStatic);
 
   v8utils::ignoreMaybeResult(
     ctorObject->Set(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized), ctorFunction));
 
   v8utils::defineHiddenField(isolate, ctorObject, "default", ctorFunction);
   v8utils::defineHiddenField(isolate, ctorObject, "RoaringBitmap32", ctorFunction);
-  v8utils::defineReadonlyField(isolate, ctorObject, "CRoaringVersion", versionString);
 
   v8utils::ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
+  v8utils::defineReadonlyField(isolate, ctorObject, "CRoaringVersion", versionString);
   v8utils::defineReadonlyField(isolate, exports, "CRoaringVersion", versionString);
 
   constructor.Set(isolate, ctorFunction);
@@ -372,9 +377,11 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 RoaringBitmap32::RoaringBitmap32(uint32_t capacity) :
   roaring(roaring_bitmap_create_with_capacity(capacity)), version(0), frozenCounter(0) {
   gcaware_adjustAllocatedMemory(sizeof(RoaringBitmap32));
+  ++RoaringBitmap32InstancesCounter;
 }
 
 RoaringBitmap32::~RoaringBitmap32() {
+  --RoaringBitmap32InstancesCounter;
   if (this->roaring != nullptr) {
     roaring_bitmap_free(this->roaring);
   }
@@ -383,6 +390,10 @@ RoaringBitmap32::~RoaringBitmap32() {
   }
   this->persistent.Reset();
   gcaware_adjustAllocatedMemory(-sizeof(RoaringBitmap32));
+}
+
+void RoaringBitmap32::getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetReturnValue().Set((double)RoaringBitmap32InstancesCounter);
 }
 
 bool RoaringBitmap32::replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance) {
@@ -658,7 +669,16 @@ class ToUint32ArrayAsyncWorker final : public v8utils::AsyncWorker {
   size_t volatile outputSize = 0;
   bool hasInput = false;
 
-  explicit ToUint32ArrayAsyncWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {}
+  explicit ToUint32ArrayAsyncWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {
+    gcaware_adjustAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
+  }
+
+  ~ToUint32ArrayAsyncWorker() {
+    if (this->allocatedBuffer) {
+      bare_aligned_free(this->allocatedBuffer);
+    }
+    gcaware_adjustAllocatedMemory(-sizeof(ToUint32ArrayAsyncWorker));
+  }
 
   void parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Isolate * isolate = info.GetIsolate();
@@ -679,12 +699,6 @@ class ToUint32ArrayAsyncWorker final : public v8utils::AsyncWorker {
           "RoaringBitmap32::toUint32ArrayAsync - argument must be a UInt32Array, Int32Array or ArrayBuffer");
       }
       this->hasInput = true;
-    }
-  }
-
-  ~ToUint32ArrayAsyncWorker() {
-    if (this->allocatedBuffer) {
-      bare_aligned_free(this->allocatedBuffer);
     }
   }
 
@@ -1531,7 +1545,11 @@ class SerializeWorker final : public v8utils::AsyncWorker {
   v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bitmapPersistent;
   RoaringBitmapSerializer serializer;
 
-  explicit SerializeWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {}
+  explicit SerializeWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {
+    gcaware_adjustAllocatedMemory(sizeof(SerializeWorker));
+  }
+
+  ~SerializeWorker() { gcaware_adjustAllocatedMemory(-sizeof(SerializeWorker)); }
 
   void parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
     const char * error = this->serializer.parseArguments(info);
@@ -1760,7 +1778,11 @@ class DeserializeWorker final : public v8utils::AsyncWorker {
  public:
   RoaringBitmapDeserializer deserializer;
 
-  explicit DeserializeWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {}
+  explicit DeserializeWorker(v8::Isolate * isolate) : v8utils::AsyncWorker(isolate) {
+    gcaware_adjustAllocatedMemory(sizeof(DeserializeWorker));
+  }
+
+  virtual ~DeserializeWorker() { gcaware_adjustAllocatedMemory(-sizeof(DeserializeWorker)); }
 
   void parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
     const char * error = this->deserializer.parseArguments(info, false);
@@ -2775,14 +2797,16 @@ void RoaringBitmap32::xorManyStatic(const v8::FunctionCallbackInfo<v8::Value> & 
   RoaringBitmap32_opManyStatic("RoaringBitmap32::xorMany", roaring_bitmap_xor_many, info);
 }
 
-struct FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
+class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
  public:
   v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> argPersistent;
   v8utils::TypedArrayContent<uint32_t> buffer;
 
-  explicit FromArrayAsyncWorker(v8::Isolate * isolate) : RoaringBitmap32FactoryAsyncWorker(isolate) {}
+  explicit FromArrayAsyncWorker(v8::Isolate * isolate) : RoaringBitmap32FactoryAsyncWorker(isolate) {
+    gcaware_adjustAllocatedMemory(sizeof(FromArrayAsyncWorker));
+  }
 
-  virtual ~FromArrayAsyncWorker() { argPersistent.Reset(); }
+  virtual ~FromArrayAsyncWorker() { gcaware_adjustAllocatedMemory(-sizeof(FromArrayAsyncWorker)); }
 
  protected:
   void work() final {
@@ -2852,6 +2876,7 @@ v8::Eternal<v8::String> RoaringBitmap32BufferedIterator::nPropertyName;
 RoaringBitmap32BufferedIterator::RoaringBitmap32BufferedIterator() {
   this->it.parent = nullptr;
   this->it.has_value = false;
+  gcaware_adjustAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
 }
 
 void RoaringBitmap32BufferedIterator::destroy() {
@@ -2860,6 +2885,7 @@ void RoaringBitmap32BufferedIterator::destroy() {
     persistent.ClearWeak();
     persistent.Reset();
   }
+  gcaware_adjustAllocatedMemory(-sizeof(RoaringBitmap32BufferedIterator));
 }
 
 RoaringBitmap32BufferedIterator::~RoaringBitmap32BufferedIterator() { this->destroy(); }

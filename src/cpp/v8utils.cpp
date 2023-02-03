@@ -352,6 +352,7 @@ namespace v8utils {
     auto context = isolate->GetCurrentContext();
     if (worker->_resolver.IsEmpty()) {
       v8::Local<v8::Function> callback = worker->_callback.Get(isolate);
+      std::atomic_thread_fence(std::memory_order_seq_cst);
       delete worker;
       if (hasError) {
         v8::Local<v8::Value> argv[] = {result, v8::Undefined(isolate)};
@@ -362,6 +363,7 @@ namespace v8utils {
       }
     } else {
       v8::Local<v8::Promise::Resolver> resolver = worker->_resolver.Get(isolate);
+      std::atomic_thread_fence(std::memory_order_seq_cst);
       delete worker;
       if (hasError) {
         v8utils::ignoreMaybeResult(resolver->Reject(context, result));
