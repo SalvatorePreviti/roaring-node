@@ -1,4 +1,4 @@
-import roaring from "..";
+import roaring, { DeserializationFormat, FrozenViewFormat, SerializationFormat } from "..";
 import { expect } from "chai";
 
 import RoaringBitmap32 from "../RoaringBitmap32";
@@ -42,5 +42,52 @@ describe("roaring", () => {
     for (let i = 0; i < 3; ++i) {
       expect(Number.isInteger(Number.parseInt(values[i], 10))).eq(true);
     }
+  });
+
+  describe("SerializationFormat", () => {
+    it("should have the right values", () => {
+      expect(SerializationFormat.croaring).eq("croaring");
+      expect(SerializationFormat.portable).eq("portable");
+      expect(SerializationFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
+
+      expect(Object.values(SerializationFormat)).to.deep.eq(["croaring", "portable", "unsafe_frozen_croaring"]);
+
+      expect(RoaringBitmap32.SerializationFormat).to.eq(SerializationFormat);
+
+      expect(new RoaringBitmap32().SerializationFormat).to.eq(SerializationFormat);
+    });
+  });
+
+  describe("DeserializationFormat", () => {
+    it("should have the right values", () => {
+      expect(DeserializationFormat.croaring).eq("croaring");
+      expect(DeserializationFormat.portable).eq("portable");
+      expect(DeserializationFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
+      expect(DeserializationFormat.unsafe_frozen_portable).eq("unsafe_frozen_portable");
+
+      expect(Object.values(DeserializationFormat)).to.deep.eq([
+        "croaring",
+        "portable",
+        "unsafe_frozen_croaring",
+        "unsafe_frozen_portable",
+      ]);
+
+      expect(RoaringBitmap32.DeserializationFormat).to.eq(DeserializationFormat);
+
+      expect(new RoaringBitmap32().DeserializationFormat).to.eq(DeserializationFormat);
+    });
+  });
+
+  describe("FrozenViewFormat", () => {
+    it("should have the right values", () => {
+      expect(FrozenViewFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
+      expect(FrozenViewFormat.unsafe_frozen_portable).eq("unsafe_frozen_portable");
+
+      expect(Object.values(FrozenViewFormat)).to.deep.eq(["unsafe_frozen_croaring", "unsafe_frozen_portable"]);
+
+      expect(RoaringBitmap32.FrozenViewFormat).to.eq(FrozenViewFormat);
+
+      expect(new RoaringBitmap32().FrozenViewFormat).to.eq(FrozenViewFormat);
+    });
   });
 });

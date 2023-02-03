@@ -1,7 +1,31 @@
 "use strict";
 
+/*
+Copyright 2018 Salvatore Previti
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Source code at: https://github.com/SalvatorePreviti/roaring-node 
+
+Documentation at: https://salvatorepreviti.github.io/roaring-node/modules.html
+
+Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32.html
+
+*/
+
+const { isUint8Array, isInt8Array, isArrayBuffer } = require("util/types");
 const roaring = require("./build/Release/roaring.node");
-const { version: packageVersion } = require("./package.json");
+// const { version: packageVersion } = require("./package.json");
 
 module.exports = roaring;
 
@@ -104,18 +128,19 @@ function iterator() {
 }
 
 if (!roaring.PackageVersion) {
-  const roaringBitmap32Proto = RoaringBitmap32.prototype;
-  roaringBitmap32Proto[Symbol.iterator] = iterator;
-  roaringBitmap32Proto.iterator = iterator;
-  roaringBitmap32Proto.keys = iterator;
-  roaringBitmap32Proto.values = iterator;
-  roaringBitmap32Proto.entries = function* entries() {
+  const roaringBitmap32_proto = RoaringBitmap32.prototype;
+  roaringBitmap32_proto[Symbol.iterator] = iterator;
+  roaringBitmap32_proto.iterator = iterator;
+  roaringBitmap32_proto.keys = iterator;
+  roaringBitmap32_proto.values = iterator;
+  roaringBitmap32_proto.entries = function* entries() {
     for (const v of this) {
       yield [v, v];
     }
   };
-  roaringBitmap32Proto.forEach = function (fn, self) {
-    if (self !== undefined) {
+
+  roaringBitmap32_proto.forEach = function (fn, self) {
+    if (self === undefined) {
       for (const v of this) {
         fn(v, v, this);
       }
@@ -124,16 +149,102 @@ if (!roaring.PackageVersion) {
         fn.call(self, v, v, this);
       }
     }
+    return this;
   };
-  roaringBitmap32Proto.PackageVersion = packageVersion;
 
-  RoaringBitmap32.PackageVersion = packageVersion;
-  RoaringBitmap32.RoaringBitmap32Iterator = RoaringBitmap32Iterator;
+  roaringBitmap32_proto.map = function (fn, self, output = []) {
+    let index = 0;
+    if (self === undefined) {
+      for (const v of this) {
+        output.push(fn(v, index++, this));
+      }
+    } else {
+      for (const v of this) {
+        output.push(fn.call(self, v, index++, this));
+      }
+    }
+    return output;
+  };
 
-  roaring.PackageVersion = packageVersion;
-  roaring.RoaringBitmap32Iterator = RoaringBitmap32Iterator;
+  roaringBitmap32_proto.toJSON = function () {
+    return this.toArray();
+  };
 
-  roaring._initTypes({
-    Uint32Array,
+  const defineProp = (name, prop) => {
+    defineProperty(roaring, name, prop);
+    defineProperty(RoaringBitmap32, name, prop);
+    defineProperty(roaringBitmap32_proto, name, prop);
+  };
+
+  const defineValue = (name, value, writable) =>
+    defineProp(name, { value, writable: !!writable, configurable: false, enumerable: false });
+
+  let packageVersion = null;
+
+  defineProp("PackageVersion", {
+    get: () => (packageVersion !== null ? packageVersion : (packageVersion = require("./package.json").version)),
+    configurable: false,
+    enumerable: true,
   });
+
+  defineValue("RoaringBitmap32Iterator", RoaringBitmap32Iterator, false);
+
+  defineValue(
+    "SerializationFormat",
+    {
+      croaring: "croaring",
+      portable: "portable",
+      unsafe_frozen_croaring: "unsafe_frozen_croaring",
+    },
+    false,
+  );
+
+  defineValue(
+    "DeserializationFormat",
+    {
+      croaring: "croaring",
+      portable: "portable",
+      unsafe_frozen_croaring: "unsafe_frozen_croaring",
+      unsafe_frozen_portable: "unsafe_frozen_portable",
+    },
+    false,
+  );
+
+  defineValue(
+    "FrozenViewFormat",
+    {
+      unsafe_frozen_croaring: "unsafe_frozen_croaring",
+      unsafe_frozen_portable: "unsafe_frozen_portable",
+    },
+    false,
+  );
+
+  defineValue("bufferAlignedAlloc", roaring.bufferAlignedAlloc);
+  defineValue("bufferAlignedAllocUnsafe", roaring.bufferAlignedAllocUnsafe);
+  defineValue("isBufferAligned", roaring.isBufferAligned);
+
+  defineValue("ensureBufferAligned", function ensureBufferAligned(buffer, alignment = 32) {
+    if (typeof alignment !== "number" || alignment < 0 || alignment > 1024 || !Number.isInteger(alignment)) {
+      throw new TypeError("ensureBufferAligned alignment must be an integer number between 0 and 1024");
+    }
+    if (!Buffer.isBuffer(buffer)) {
+      if (buffer instanceof ArrayBuffer) {
+        buffer = Buffer.from(buffer);
+      } else if (isUint8Array(buffer) || isInt8Array(buffer) || isInt8Array(buffer) || isArrayBuffer(buffer)) {
+        buffer = Buffer.from(buffer.buffer);
+      } else {
+        throw new TypeError("ensureBufferAligned expects a Buffer instance");
+      }
+    }
+    if (!roaring.isBufferAligned(buffer, alignment)) {
+      const aligned = roaring.bufferAlignedAlloc(buffer.length, alignment);
+      aligned.set(buffer);
+      return aligned;
+    }
+    return buffer;
+  });
+
+  RoaringBitmap32.getRoaringUsedMemory = roaring.getRoaringUsedMemory;
+
+  roaring._initTypes({ Uint32Array });
 }

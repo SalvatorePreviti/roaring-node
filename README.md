@@ -30,9 +30,9 @@ npm install --save roaring
 
 # API
 
-See the [API documentation](https://github.com/SalvatorePreviti/roaring-node/blob/master/documentation/api/index.d.md)
+See the [roaring module documentation](https://salvatorepreviti.github.io/roaring-node/modules.html)
 
-See the [RoaringBitmap32 class documentation](https://github.com/SalvatorePreviti/roaring-node/blob/master/documentation/api/index.d/roaringbitmap32.md#roaringbitmap32)
+See the [RoaringBitmap32 class documentation](https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32.html)
 
 # Code sample:
 
@@ -41,42 +41,46 @@ See the [RoaringBitmap32 class documentation](https://github.com/SalvatorePrevit
 // create this file as demo.js
 // type node demo.js
 
-const RoaringBitmap32 = require('roaring/RoaringBitmap32')
+const RoaringBitmap32 = require("roaring/RoaringBitmap32");
 
-const bitmap1 = new RoaringBitmap32([1, 2, 3, 4, 5])
-bitmap1.addMany([100, 1000])
-console.log('bitmap1.toArray():', bitmap1.toArray())
+const bitmap1 = new RoaringBitmap32([1, 2, 3, 4, 5]);
+bitmap1.addMany([100, 1000]);
+console.log("bitmap1.toArray():", bitmap1.toArray());
 
-const bitmap2 = new RoaringBitmap32([3, 4, 1000])
-console.log('bitmap2.toArray():', bitmap2.toArray())
+const bitmap2 = new RoaringBitmap32([3, 4, 1000]);
+console.log("bitmap2.toArray():", bitmap2.toArray());
 
-const bitmap3 = new RoaringBitmap32()
-console.log('bitmap1.size:', bitmap1.size)
-console.log('bitmap3.has(3):', bitmap3.has(3))
-bitmap3.add(3)
-console.log('bitmap3.has(3):', bitmap3.has(3))
+const bitmap3 = new RoaringBitmap32();
+console.log("bitmap1.size:", bitmap1.size);
+console.log("bitmap3.has(3):", bitmap3.has(3));
+bitmap3.add(3);
+console.log("bitmap3.has(3):", bitmap3.has(3));
 
-bitmap3.add(111)
-bitmap3.add(544)
-bitmap3.orInPlace(bitmap1)
-bitmap1.runOptimize()
-bitmap1.shrinkToFit()
-console.log('contentToString:', bitmap3.contentToString())
+bitmap3.add(111);
+bitmap3.add(544);
+bitmap3.orInPlace(bitmap1);
+bitmap1.runOptimize();
+bitmap1.shrinkToFit();
+console.log("contentToString:", bitmap3.contentToString());
 
-console.log('bitmap3.toArray():', bitmap3.toArray())
-console.log('bitmap3.maximum():', bitmap3.maximum())
-console.log('bitmap3.rank(100):', bitmap3.rank(100))
+console.log("bitmap3.toArray():", bitmap3.toArray());
+console.log("bitmap3.maximum():", bitmap3.maximum());
+console.log("bitmap3.rank(100):", bitmap3.rank(100));
 
-const iterated = []
+const iterated = [];
 for (const value of bitmap3) {
-  iterated.push(value)
+  iterated.push(value);
 }
-console.log('iterated:', iterated)
+console.log("iterated:", iterated);
 
-const serialized = bitmap3.serialize(false)
-console.log('serialized:', serialized.toString('base64'))
-console.log('deserialized:', RoaringBitmap32.deserialize(serialized, false).toArray())
+const serialized = bitmap3.serialize(false);
+console.log("serialized:", serialized.toString("base64"));
+console.log("deserialized:", RoaringBitmap32.deserialize(serialized, false).toArray());
 ```
+
+# Other
+
+Wanna play an open source game made by the author of this library? Try [Dante](https://github.com/SalvatorePreviti/js13k-2022)
 
 # Development, local building
 
@@ -203,7 +207,7 @@ NodeJS   : v10.5.0 - V8 v6.7.288.46-node.8
 
 Works also on M1
 
-```
+````
 Platform : Darwin 21.1.0 arm64
 CPU      : Apple M1 Pro
 Cores    : 10 physical - 10 logical
@@ -273,3 +277,5 @@ NodeJS   : v16.13.1 - V8 v9.4.146.24-node.14
 
 
 * completed: 27.170s```
+
+````

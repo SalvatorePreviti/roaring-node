@@ -82,7 +82,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
       } catch (e) {
         error = e;
       }
-      expect(error.message).eq("RoaringBitmap32::deserialize - invalid portable header byte");
+      expect(error.message).eq("RoaringBitmap32 deserialization - invalid portable header byte");
     });
   });
 
@@ -166,7 +166,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
         expect(
           RoaringBitmap32.deserializeAsync(wrongBuffer, false, (error, bitmap) => {
             expect(bitmap).to.be.undefined;
-            expect(error!.message).eq("RoaringBitmap32::deserialize - invalid portable header byte");
+            expect(error!.message).eq("RoaringBitmap32 deserialization - invalid portable header byte");
             done();
           }),
         ).to.be.undefined;

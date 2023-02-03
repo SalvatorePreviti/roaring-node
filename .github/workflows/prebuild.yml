@@ -9,7 +9,7 @@ jobs:
   prebuild-linux:
     name: Linux
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - run: sudo apt-get install g++-multilib
       - uses: actions/setup-node@v3
@@ -22,12 +22,15 @@ jobs:
       - run: npm i -g node-gyp@latest
       - run: npm install
       - run: npm test
-      - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+      - name: Prebuild
+        env:
+          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+        run: node ./scripts/prebuild
 
   prebuild-macos:
     name: macOS
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/setup-node@v3
         with:
@@ -39,12 +42,15 @@ jobs:
       - run: npm i -g node-gyp@latest
       - run: npm install
       - run: npm test
-      - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+      - name: Prebuild
+        env:
+          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+        run: node ./scripts/prebuild
 
   prebuild-windows:
     name: Windows
     runs-on: windows-2019
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/setup-node@v3
         with:
@@ -57,4 +63,7 @@ jobs:
       - run: npm install
       - run: npm i node-gyp@latest
       - run: npm test
-      - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+      - name: Prebuild
+        env:
+          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+        run: node ./scripts/prebuild
