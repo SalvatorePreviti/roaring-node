@@ -133,7 +133,7 @@ export enum DeserializationFormat {
   portable = "portable",
 
   /**
-   * Non portable C/C++ frozen format. Can be larger than the other formats.
+   * Non portable C/C++ frozen format.
    * Is considered unsafe and unstable because the format might change at any new version.
    * Can be useful for temporary storage or for sending data over the network between similar machines.
    * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
@@ -142,7 +142,7 @@ export enum DeserializationFormat {
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
 
   /**
-   * Portable version of the frozen view, compatible with Go and Java. Can be larger than the other formats.
+   * Portable version of the frozen view, compatible with Go and Java.
    * Is considered unsafe and unstable because the format might change at any new version.
    * Can be useful for temporary storage or for sending data over the network between similar machines.
    * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!

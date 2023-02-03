@@ -507,7 +507,7 @@ static void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info
 #if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value arg1String(isolate, info[1]);
 #else
-    v8::String::Utf8Value arg1String(value);
+    v8::String::Utf8Value arg1String(info[1]);
 #endif
     if (strcmp(*arg1String, "readonly") == 0) {
       readonlyViewOf = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
