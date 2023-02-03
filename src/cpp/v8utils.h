@@ -1,9 +1,35 @@
 #ifndef __V8UTILS__H__
 #define __V8UTILS__H__
 
+#include <stdint.h>
+#include <stddef.h>
 #include <node.h>
 #include <node_buffer.h>
 #include <uv.h>
+#include <atomic>
+
+/** portable version of posix_memalign */
+void * bare_aligned_malloc(size_t alignment, size_t size);
+
+/** portable version of free fo aligned allocs */
+void bare_aligned_free(void * memblock);
+
+int64_t gcaware_totalMem();
+
+/** Updates amount of used memory */
+void gcaware_adjustAllocatedMemory(int64_t size);
+
+void * gcaware_malloc(size_t size);
+
+void * gcaware_realloc(void * memory, size_t size);
+
+void * gcaware_calloc(size_t count, size_t size);
+
+void gcaware_free(void * memory);
+
+void * gcaware_aligned_malloc(size_t alignment, size_t size);
+
+void gcaware_aligned_free(void * memory);
 
 #if NODE_MAJOR_VERSION > 14
 #  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8Literal(isolate, str, type)
@@ -30,12 +56,12 @@ namespace v8utils {
   inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
 
   template <int N>
-  void throwError(v8::Isolate * isolate, const char (&message)[N]) {
+  inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
   }
 
   template <int N>
-  void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
+  inline void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(
       v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
   }
@@ -88,26 +114,25 @@ namespace v8utils {
   }
 
   template <typename T>
-  struct TypedArrayContent {
+  class TypedArrayContent final {
+   public:
     size_t length;
     T * data;
-    v8::Local<v8::ArrayBuffer> arrayBuffer;
+    v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
 #if NODE_MAJOR_VERSION > 13
     std::shared_ptr<v8::BackingStore> backingStore;
 #endif
 
     inline TypedArrayContent() : length(0), data(nullptr) {}
 
-    inline TypedArrayContent(TypedArrayContent<T> & copy) : length(copy.length), data(copy.data) {}
-
     template <typename Q>
-    inline explicit TypedArrayContent(v8::Local<Q> from) {
-      set(from);
+    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::Local<Q> from) {
+      set(isolate, from);
     }
 
     template <typename Q>
-    inline explicit TypedArrayContent(v8::MaybeLocal<Q> from) {
-      set(from);
+    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::MaybeLocal<Q> from) {
+      set(isolate, from);
     }
 
     inline void reset() {
@@ -116,52 +141,66 @@ namespace v8utils {
 #if NODE_MAJOR_VERSION > 13
       this->backingStore = nullptr;
 #endif
-      this->arrayBuffer.Clear();
+      this->bufferPersistent.Reset();
     }
 
     template <typename Q>
-    inline bool set(v8::MaybeLocal<Q> from) {
+    bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
       v8::Local<Q> local;
-      if (from.ToLocal(&local)) return this->set(local);
-      this->length = 0;
-      this->data = nullptr;
+      if (from.ToLocal(&local)) {
+        return this->set(isolate, local);
+      }
+      this->reset();
       return false;
     }
 
     template <typename Q>
-    inline bool set(v8::Local<Q> from) {
-      if (!from.IsEmpty() && from->IsArrayBufferView()) {
-        auto array = v8::Local<v8::ArrayBufferView>::Cast(from);
-        this->length = array->ByteLength() / sizeof(T);
-        this->arrayBuffer = array->Buffer();
+    bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
+      if (!from.IsEmpty()) {
+        if (from->IsArrayBufferView()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
+          this->length = array->ByteLength() / sizeof(T);
 #if NODE_MAJOR_VERSION > 13
-        this->backingStore = this->arrayBuffer->GetBackingStore();
-        this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
+          auto arrayBuffer = array->Buffer();
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
 #else
-        this->data = (T *)((uint8_t *)(this->arrayBuffer->GetContents().Data()) + array->ByteOffset());
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()) + array->ByteOffset());
 #endif
-        return true;
+          return true;
+        }
+
+        if (from->IsArrayBuffer()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
+          this->length = arrayBuffer->ByteLength() / sizeof(T);
+#if NODE_MAJOR_VERSION > 13
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+#else
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
+#endif
+          return true;
+        }
       }
 
-      this->length = 0;
-      this->data = nullptr;
+      this->reset();
       return false;
     }
   };
 
   namespace ObjectWrap {
     template <class T>
-    static T * Unwrap(v8::Local<v8::Object> object) {
-      return (T *)(object->GetAlignedPointerFromInternalField(0));
-    }
-
-    template <class T>
     static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
       v8::Local<v8::Object> obj;
-      if (!value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
-        return nullptr;
+      if (isolate && value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
+        T * result = (T *)(obj->GetAlignedPointerFromInternalField(0));
+        if (result && result->objectToken == T::OBJECT_TOKEN) {
+          return result;
+        }
       }
-      return (T *)(obj->GetAlignedPointerFromInternalField(0));
+      return nullptr;
     }
 
     template <class T>
@@ -173,7 +212,9 @@ namespace v8utils {
 
     template <class T>
     static T * TryUnwrap(
-      const v8::Local<v8::Value> & value, const v8::Persistent<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
+      const v8::Local<v8::Value> & value,
+      const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate,
+      v8::Isolate * isolate) {
       return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
     }
 
@@ -196,7 +237,7 @@ namespace v8utils {
     static T * TryUnwrap(
       const v8::FunctionCallbackInfo<v8::Value> & info,
       int argumentIndex,
-      const v8::Persistent<v8::FunctionTemplate> & ctorTemplate) {
+      const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate) {
       return info.Length() <= argumentIndex ? nullptr
                                             : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
     }
@@ -236,18 +277,24 @@ namespace v8utils {
     static v8::Local<v8::Value> run(AsyncWorker * worker);
 
    protected:
+    // Called before the thread starts, in the main thread.
+    virtual void before();
+
     // Called in a thread to execute the workload
     virtual void work() = 0;
 
-    // Called after the thread completes without errors.
+    // Called after the thread completes without errors, in the main thread.
     virtual v8::Local<v8::Value> done();
+
+    // Called after the thread completes, with or without errors, in the main thread.
+    virtual void finally();
 
    private:
     uv_work_t _task{};
     volatile const_char_ptr_t _error;
     volatile bool _completed;
-    v8::Persistent<v8::Function> _callback;
-    v8::Persistent<v8::Promise::Resolver> _resolver;
+    v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> _callback;
+    v8::Persistent<v8::Promise::Resolver, v8::CopyablePersistentTraits<v8::Promise::Resolver>> _resolver;
 
     v8::Local<v8::Value> _invokeDone();
     virtual bool _start();

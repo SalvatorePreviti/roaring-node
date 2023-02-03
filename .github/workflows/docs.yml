@@ -1,0 +1,27 @@
+name: Generate documentation from master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+
+      - name: npm ci
+        run: npm ci --ignore-scripts
+
+      - name: npm run doc
+        run: npm run doc
+
+      - name: Deploy documentation 🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.4
+        with:
+          branch: gh-pages
+          folder: docs

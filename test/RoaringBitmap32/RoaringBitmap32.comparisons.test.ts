@@ -208,6 +208,54 @@ describe("RoaringBitmap32 comparisons", () => {
     });
   });
 
+  describe("intersectsWithRange", () => {
+    // intersectsWithRange has two parameters: rangeStart and rangeEnd, both numbers
+
+    it("returns false for invalid values", () => {
+      const bitmap = new RoaringBitmap32();
+      expect(bitmap.intersectsWithRange(null as any, 10)).eq(false);
+      expect(bitmap.intersectsWithRange(undefined as any, 10)).eq(false);
+      expect(bitmap.intersectsWithRange(123 as any, 10)).eq(false);
+      expect(bitmap.intersectsWithRange([123] as any, 10)).eq(false);
+      expect(bitmap.intersectsWithRange(10, null as any)).eq(false);
+      expect(bitmap.intersectsWithRange(10, undefined as any)).eq(false);
+      expect(bitmap.intersectsWithRange(10, 123 as any)).eq(false);
+      expect(bitmap.intersectsWithRange(10, [123] as any)).eq(false);
+    });
+
+    it("returns false with an empty bitmap", () => {
+      const bitmap = new RoaringBitmap32();
+      expect(bitmap.intersectsWithRange(10, 20)).eq(false);
+    });
+
+    it("returns false if bitmap is before range", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      expect(bitmap.intersectsWithRange(10, 20)).eq(false);
+    });
+
+    it("returns false if bitmap is after range", () => {
+      const bitmap = new RoaringBitmap32([100, 200, 300]);
+      expect(bitmap.intersectsWithRange(10, 20)).eq(false);
+    });
+
+    it("returns true if bitmap is inside range", () => {
+      const bitmap = new RoaringBitmap32([10, 11, 12]);
+      expect(bitmap.intersectsWithRange(10, 20)).eq(true);
+    });
+
+    it("works with undefineds", () => {
+      const bitmap = new RoaringBitmap32([5, 6, 7, 10]);
+
+      expect(bitmap.intersectsWithRange(undefined, 3)).eq(false);
+      expect(bitmap.intersectsWithRange(17, undefined)).eq(false);
+      expect(bitmap.intersectsWithRange(17)).eq(false);
+
+      expect(bitmap.intersectsWithRange(undefined, 20)).eq(true);
+      expect(bitmap.intersectsWithRange(7, undefined)).eq(true);
+      expect(bitmap.intersectsWithRange(7)).eq(true);
+    });
+  });
+
   describe("andCardinality", () => {
     it("returns -1 for invalid values", () => {
       const bitmap = new RoaringBitmap32();

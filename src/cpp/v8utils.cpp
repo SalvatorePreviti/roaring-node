@@ -1,5 +1,7 @@
 #include "v8utils.h"
 
+#include <stdlib.h>
+
 #ifdef _MSC_VER
 #  define atomicIncrement32(ptr) InterlockedIncrement(ptr)
 #  define atomicDecrement32(ptr) InterlockedDecrement(ptr)
@@ -7,6 +9,129 @@
 #  define atomicIncrement32(ptr) __sync_add_and_fetch(ptr, 1)
 #  define atomicDecrement32(ptr) __sync_sub_and_fetch(ptr, 1)
 #endif
+
+#if defined(__APPLE__)
+#  include <malloc/malloc.h>
+#else
+#  include <malloc.h>
+#endif
+
+/** portable version of posix_memalign */
+void * bare_aligned_malloc(size_t alignment, size_t size) {
+  void * p;
+#ifdef _MSC_VER
+  p = _aligned_malloc(size, alignment);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  p = __mingw_aligned_malloc(size, alignment);
+#else
+  // somehow, if this is used before including "x86intrin.h", it creates an
+  // implicit defined warning.
+  if (posix_memalign(&p, alignment, size) != 0) return NULL;
+#endif
+  return p;
+}
+
+/** portable version of free fo aligned allocs */
+void bare_aligned_free(void * memblock) {
+  if (memblock != nullptr) {
+#ifdef _MSC_VER
+    _aligned_free(memblock);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+    __mingw_aligned_free(memblock);
+#else
+    free(memblock);
+#endif
+  }
+}
+
+/** portable version of malloc_size */
+inline static size_t bare_malloc_size(void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size(ptr);
+#elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
+  return _msize(ptr);
+#else
+  return malloc_usable_size(ptr);
+#endif
+}
+
+/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
+inline static size_t bare_aligned_malloc_size(void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size(ptr);
+#elif defined(_WIN32)
+  return _aligned_msize(ptr, 32, 0);
+#else
+  return malloc_usable_size(ptr);
+#endif
+}
+
+std::atomic<int64_t> gcaware_totalMemCounter{0};
+
+int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
+
+static thread_local v8::Isolate * thread_local_isolate = nullptr;
+
+void gcaware_adjustAllocatedMemory(int64_t size) {
+  if (size != 0) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    if (isolate == nullptr) {
+      isolate = thread_local_isolate;
+    }
+    if (isolate != nullptr) {
+      isolate->AdjustAmountOfExternalAllocatedMemory(size);
+    }
+    gcaware_totalMemCounter += size;
+  }
+}
+
+void * gcaware_malloc(size_t size) {
+  void * memory = malloc(size);
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+void * gcaware_realloc(void * memory, size_t size) {
+  size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
+  memory = realloc(memory, size);
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(-oldSize);
+    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+void * gcaware_calloc(size_t count, size_t size) {
+  void * memory = calloc(count, size);
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+void gcaware_free(void * memory) {
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(-bare_malloc_size(memory));
+  }
+  free(memory);
+}
+
+void * gcaware_aligned_malloc(size_t alignment, size_t size) {
+  void * memory = bare_aligned_malloc(alignment, size);
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(bare_aligned_malloc_size(memory));
+  }
+  return memory;
+}
+
+void gcaware_aligned_free(void * memory) {
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(-bare_aligned_malloc_size(memory));
+  }
+  bare_aligned_free(memory);
+}
 
 /////////////// JSTypes ///////////////
 
@@ -50,6 +175,18 @@ namespace v8utils {
     result = count <= 0 ? 1 : (uint32_t)count;
     _cpusCountCache = result;
     return result;
+  }
+
+  // Creates a new Error from string
+  v8::Local<v8::Value> createError(v8::Isolate * isolate, const char * message) {
+    v8::EscapableHandleScope scope(isolate);
+    auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+    v8::Local<v8::String> msgLocal;
+    if (msg.ToLocal(&msgLocal)) {
+      return scope.Escape(v8::Exception::Error(msgLocal));
+    }
+    return scope.Escape(
+      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
   }
 
   void throwError(v8::Isolate * isolate, const char * message) {
@@ -98,10 +235,7 @@ namespace v8utils {
     _task.data = this;
   }
 
-  AsyncWorker::~AsyncWorker() {
-    _callback.Reset();
-    _resolver.Reset();
-  }
+  AsyncWorker::~AsyncWorker() {}
 
   bool AsyncWorker::setCallback(v8::Local<v8::Value> callback) {
     if (callback.IsEmpty() || !callback->IsFunction()) return false;
@@ -110,6 +244,13 @@ namespace v8utils {
   }
 
   bool AsyncWorker::_start() {
+    if (this->hasError()) {
+      return false;
+    }
+    this->before();
+    if (this->hasError()) {
+      return false;
+    }
     if (uv_queue_work(uv_default_loop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
       setError("Error starting async thread");
       return false;
@@ -144,16 +285,26 @@ namespace v8utils {
     return returnValue;
   }
 
+  void AsyncWorker::before() {}
+
   v8::Local<v8::Value> AsyncWorker::done() { return {}; }
 
+  void AsyncWorker::finally() {}
+
   void AsyncWorker::_work(uv_work_t * request) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
-    if (!worker->hasError()) {
+    if (worker && !worker->hasError()) {
+      auto oldIsolate = thread_local_isolate;
+      thread_local_isolate = worker->isolate;
       worker->work();
+      thread_local_isolate = oldIsolate;
+      std::atomic_thread_fence(std::memory_order_seq_cst);
     }
   }
 
   void AsyncWorker::_done(uv_work_t * request, int status) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (status != 0) {
       worker->setError("Error executing async thread");
@@ -170,7 +321,7 @@ namespace v8utils {
     if (_error == nullptr) {
       v8::TryCatch tryCatch(isolate);
 
-      result = done();
+      result = this->done();
 
       if (tryCatch.HasCaught()) {
         isError = true;
@@ -197,6 +348,8 @@ namespace v8utils {
       _error = "Async generated an exception";
     }
 
+    this->finally();
+
     return scope.Escape(result);
   }
 
@@ -216,6 +369,7 @@ namespace v8utils {
     auto context = isolate->GetCurrentContext();
     if (worker->_resolver.IsEmpty()) {
       v8::Local<v8::Function> callback = worker->_callback.Get(isolate);
+      std::atomic_thread_fence(std::memory_order_seq_cst);
       delete worker;
       if (hasError) {
         v8::Local<v8::Value> argv[] = {result, v8::Undefined(isolate)};
@@ -226,6 +380,7 @@ namespace v8utils {
       }
     } else {
       v8::Local<v8::Promise::Resolver> resolver = worker->_resolver.Get(isolate);
+      std::atomic_thread_fence(std::memory_order_seq_cst);
       delete worker;
       if (hasError) {
         v8utils::ignoreMaybeResult(resolver->Reject(context, result));
@@ -236,6 +391,7 @@ namespace v8utils {
   }
 
   void AsyncWorker::_complete(AsyncWorker * worker) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     v8::Isolate * isolate = worker->isolate;
     _resolveOrReject(worker);
 #if NODE_MAJOR_VERSION > 13
@@ -250,7 +406,7 @@ namespace v8utils {
   ParallelAsyncWorker::ParallelAsyncWorker(v8::Isolate * isolate) :
     AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {}
 
-  ParallelAsyncWorker::~ParallelAsyncWorker() { delete[] _tasks; }
+  ParallelAsyncWorker::~ParallelAsyncWorker() { gcaware_free(_tasks); }
 
   void ParallelAsyncWorker::work() {
     const uint32_t c = loopCount;
@@ -270,11 +426,12 @@ namespace v8utils {
       return AsyncWorker::_start();
     }
 
-    auto * tasks = new uv_work_t[tasksCount]();
+    uv_work_t * tasks = (uv_work_t *)gcaware_malloc(tasksCount * sizeof(uv_work_t));
     if (tasks == nullptr) {
       this->setError("Failed to allocate memory");
       return false;
     }
+    memset(tasks, 0, tasksCount * sizeof(uv_work_t));
 
     _tasks = tasks;
 
@@ -299,14 +456,19 @@ namespace v8utils {
   void ParallelAsyncWorker::_parallelWork(uv_work_t * request) {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
-    uint32_t loopCount = worker->loopCount;
-    while (!worker->hasError() && !worker->_completed) {
-      const uint32_t prevIndex = worker->_currentIndex;
-      const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
-      if (index >= loopCount || index < prevIndex) {
-        break;
+    if (worker) {
+      auto oldIsolate = thread_local_isolate;
+      thread_local_isolate = worker->isolate;
+      uint32_t loopCount = worker->loopCount;
+      while (!worker->hasError() && !worker->_completed) {
+        const uint32_t prevIndex = worker->_currentIndex;
+        const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
+        if (index >= loopCount || index < prevIndex) {
+          break;
+        }
+        worker->parallelWork(index);
       }
-      worker->parallelWork(index);
+      thread_local_isolate = oldIsolate;
     }
   }
 

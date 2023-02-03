@@ -1,4 +1,5 @@
 src/cpp/**/*
+docs/**/*
 
 # Dependencies and vendor
 vendor

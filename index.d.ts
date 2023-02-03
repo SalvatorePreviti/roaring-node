@@ -12,9 +12,174 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+Source code at: https://github.com/SalvatorePreviti/roaring-node 
+
+Documentation at: https://salvatorepreviti.github.io/roaring-node/modules.html
+
+Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32.html
+
 */
 
 import roaring = require("./");
+
+/** Gets the approximate memory allocated by the roaring bitmap library. */
+export function getRoaringUsedMemory(): number;
+
+/**
+ * Creates a new buffer with the given size and alignment.
+ * If alignment is not specified, the default alignment of 32 is used.
+ * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+ *
+ * Is the same as Buffer.alloc but is aligned.
+ * We need an aligned buffer to create a roaring bitmap frozen view.
+ *
+ * @param {number} size The size of the buffer to allocate.
+ * @param {number} [alignment=32] The alignment of the buffer to allocate.
+ */
+export function bufferAlignedAlloc(size: number, alignment?: number): Buffer;
+
+/**
+ * Creates a new buffer not initialized with the given size and alignment.
+ * If alignment is not specified, the default alignment of 32 is used.
+ * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+ *
+ * Is the same as Buffer.allocUnsafe but is aligned.
+ * We need an aligned buffer to create a roaring bitmap frozen view.
+ *
+ * WARNING: this function is unsafe because the returned buffer may contain previously unallocated memory that may contain sensitive data.
+ *
+ * @param {number} size The size of the buffer to allocate.
+ * @param {number} [alignment=32] The alignment of the buffer to allocate.
+ */
+export function bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
+
+export type TypedArray =
+  | Uint8Array
+  | Uint16Array
+  | Uint32Array
+  | Uint8ClampedArray
+  | Int8Array
+  | Int16Array
+  | Int32Array
+  | Float32Array
+  | Float64Array;
+
+/**
+ * Checks if the given buffer is memory aligned.
+ * If alignment is not specified, the default alignment of 32 is used.
+ *
+ * @param {TypedArray | Buffer | ArrayBuffer | null | undefined} buffer The buffer to check.
+ * @param {number} [alignment=32] The alignment to check.
+ */
+export function isBufferAligned(
+  buffer: TypedArray | Buffer | ArrayBuffer | null | undefined,
+  alignment?: number,
+): boolean;
+
+/**
+ * Ensures that the given buffer is aligned to the given alignment.
+ * If alignment is not specified, the default alignment of 32 is used.
+ * If the buffer is already aligned, it is returned.
+ * If the buffer is not aligned, a new aligned buffer is created with bufferAlignedAllocUnsafe and the data is copied.
+ *
+ * @param {Buffer} buffer The buffer to align.
+ * @param {number} [alignment=32] The alignment to align to.
+ * @returns {Buffer} The aligned buffer. Can be the same as the input buffer if it was already aligned. Can be a new buffer if the input buffer was not aligned.
+ * @memberof RoaringBitmap32
+ */
+export function ensureBufferAligned(
+  buffer: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer,
+  alignment?: number,
+): Buffer;
+
+export enum SerializationFormat {
+  /**
+   * Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format.
+   */
+  croaring = "croaring",
+
+  /**
+   * Stable Portable Java and Go format.
+   */
+  portable = "unsafe_portable",
+
+  /**
+   * Non portable C/C++ frozen format.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when deserialized or when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   *
+   * When this option is used in the serialize function, the new returned buffer (if no buffer was provided) will be aligned to a 32 bytes boundary.
+   * This is required to create a frozen view with the method unsafeFrozenView.
+   *
+   */
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
+}
+
+export type SerializationFormatType =
+  | SerializationFormat
+  | "croaring"
+  | "portable"
+  | "unsafe_frozen_croaring"
+  | boolean;
+
+export enum DeserializationFormat {
+  /** Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
+  croaring = "croaring",
+
+  /** Stable Portable Java and Go format. */
+  portable = "portable",
+
+  /**
+   * Non portable C/C++ frozen format. Can be larger than the other formats.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
+
+  /**
+   * Portable version of the frozen view, compatible with Go and Java. Can be larger than the other formats.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
+  unsafe_frozen_portable = "unsafe_frozen_portable",
+}
+
+export type DeserializationFormatType =
+  | SerializationFormat
+  | "croaring"
+  | "portable"
+  | "unsafe_frozen_croaring"
+  | "unsafe_frozen_portable"
+  | boolean;
+
+export enum FrozenViewFormat {
+  /**
+   * Non portable C/C++ frozen format.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
+
+  /**
+   * Portable version of the frozen view, compatible with Go and Java.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
+  unsafe_frozen_portable = "unsafe_frozen_portable",
+}
+
+export type FrozenViewFormatType = SerializationFormat | "unsafe_frozen_croaring" | "unsafe_frozen_portable" | boolean;
 
 /**
  * Roaring bitmap that supports 32 bit unsigned integers.
@@ -30,6 +195,85 @@ import roaring = require("./");
 export class RoaringBitmap32 implements Set<number> {
   // Allows: import RoaringBitmap32 from 'roaring/RoaringBitmap32'
   private static readonly default: typeof RoaringBitmap32;
+
+  public static readonly SerializationFormat: typeof SerializationFormat;
+
+  public readonly SerializationFormat: typeof SerializationFormat;
+
+  public static readonly DeserializationFormat: typeof SerializationFormat;
+
+  public readonly DeserializationFormat: typeof SerializationFormat;
+
+  public static readonly FrozenViewFormat: typeof FrozenViewFormat;
+
+  public readonly FrozenViewFormat: typeof FrozenViewFormat;
+
+  /** Gets the approximate memory allocated by the roaring bitmap library. Useful for debugging memory issues and GC. */
+  public static getRoaringUsedMemory(): number;
+
+  /** Gets the total number of allocated RoaringBitmap32 globally. Useful for debugging memory issues and GC. */
+  public static getInstancesCount(): number;
+
+  /**
+   * Creates a new buffer with the given size and alignment.
+   * If alignment is not specified, the default alignment of 32 is used.
+   * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+   *
+   * Is the same as Buffer.alloc but is aligned.
+   * We need an aligned buffer to create a roaring bitmap frozen view.
+   *
+   * @static
+   * @param {number} size The size of the buffer to allocate.
+   * @param {number} [alignment=32] The alignment of the buffer to allocate.
+   * @memberof RoaringBitmap32
+   */
+  public static bufferAlignedAlloc(size: number, alignment?: number): Buffer;
+
+  /**
+   * Creates a new buffer not initialized with the given size and alignment.
+   * If alignment is not specified, the default alignment of 32 is used.
+   * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+   *
+   * Is the same as Buffer.allocUnsafe but is aligned.
+   * We need an aligned buffer to create a roaring bitmap frozen view.
+   *
+   * WARNING: this function is unsafe because the returned buffer may contain previously unallocated memory that may contain sensitive data.
+   *
+   * @static
+   * @param {number} size The size of the buffer to allocate.
+   * @param {number} [alignment=32] The alignment of the buffer to allocate.
+   * @memberof RoaringBitmap32
+   */
+  public static bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
+
+  /**
+   * Ensures that the given buffer is aligned to the given alignment.
+   * If alignment is not specified, the default alignment of 32 is used.
+   * If the buffer is already aligned, it is returned.
+   * If the buffer is not aligned, a new aligned buffer is created with bufferAlignedAllocUnsafe and the data is copied.
+   *
+   * @static
+   * @param {Buffer} buffer The buffer to align.
+   * @param {number} [alignment=32] The alignment to align to.
+   * @returns {Buffer} The aligned buffer. Can be the same as the input buffer if it was already aligned. Can be a new buffer if the input buffer was not aligned.
+   * @memberof RoaringBitmap32
+   */
+  public static ensureBufferAligned(
+    buffer: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer,
+    alignment?: number,
+  ): Buffer;
+
+  /**
+   * Checks if the given buffer is memory aligned.
+   * If alignment is not specified, the default alignment of 32 is used.
+   *
+   * @param {TypedArray | Buffer | ArrayBuffer | null | undefined} buffer The buffer to check.
+   * @param {number} [alignment=32] The alignment to check.
+   */
+  public static isBufferAligned(
+    buffer: TypedArray | Buffer | ArrayBuffer | null | undefined,
+    alignment?: number,
+  ): boolean;
 
   /**
    * Property: The version of the CRoaring libary as a string.
@@ -90,6 +334,17 @@ export class RoaringBitmap32 implements Set<number> {
   public readonly isEmpty: boolean;
 
   /**
+   * Property. True if the bitmap is read-only.
+   * A read-only bitmap cannot be modified, every operation will throw an error.
+   * You can freeze a bitmap using the freeze() method.
+   * A bitmap cannot be unfrozen.
+   *
+   * @type {boolean}
+   * @memberof RoaringBitmap32
+   */
+  public readonly isFrozen: boolean;
+
+  /**
    * Creates an instance of RoaringBitmap32.
    *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
@@ -120,13 +375,17 @@ export class RoaringBitmap32 implements Set<number> {
    * Is possible to specify the step parameter to have a non contiguous range.
    *
    * @static
-   * @param {number} rangeStart The start index. Trimmed to 0.
-   * @param {number} rangeEnd The end index. Trimmed to 4294967297.
-   * @param {number} [step=1] The increment step, defaults to 1.
+   * @param {number|undefined} rangeStart The start index. Trimmed to 0.
+   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967297.
+   * @param {number|undefined} [step=1] The increment step, defaults to 1.
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static fromRange(rangeStart: number, rangeEnd: number, step?: number): RoaringBitmap32;
+  public static fromRange(
+    rangeStart: number | undefined,
+    rangeEnd?: number | undefined,
+    step?: number | undefined,
+  ): RoaringBitmap32;
 
   /**
    *
@@ -170,16 +429,20 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: this field was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
-   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {boolean} portable If false, optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserialize(serialized: Uint8Array, portable: boolean): RoaringBitmap32;
+  public static deserialize(
+    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined,
+    format: DeserializationFormatType,
+  ): RoaringBitmap32;
 
   /**
    *
@@ -189,16 +452,20 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
-   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {boolean} portable If false, optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserializeAsync(serialized: Uint8Array, portable: boolean): Promise<RoaringBitmap32>;
+  public static deserializeAsync(
+    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined,
+    format: DeserializationFormatType,
+  ): Promise<RoaringBitmap32>;
 
   /**
    *
@@ -208,17 +475,22 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
-   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the.
-   * @param {boolean} portable If false, optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @param {RoaringBitmap32Callback} callback The callback to execute when the operation completes.
    * @returns {void}
    * @memberof RoaringBitmap32
    */
-  public static deserializeAsync(serialized: Uint8Array, portable: boolean, callback: RoaringBitmap32Callback): void;
+  public static deserializeAsync(
+    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined,
+    format: DeserializationFormatType,
+    callback: RoaringBitmap32Callback,
+  ): void;
 
   /**
    *
@@ -228,18 +500,19 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
-   * @param {Uint8Array[]} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {boolean} portable If false, optimized C/C++ format is used.  If true, Java and Go portable format is used.
+   * @param {(Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined)[]} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {Promise<RoaringBitmap32[]>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
   public static deserializeParallelAsync(
-    serialized: (Uint8Array | null | undefined)[],
-    portable: boolean,
+    serialized: (Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined)[],
+    format: DeserializationFormatType,
   ): Promise<RoaringBitmap32[]>;
 
   /**
@@ -250,6 +523,7 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
    *
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
@@ -257,15 +531,47 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * @static
    * @param {Uint8Array[]} serialized An array of Uint8Array or node Buffers that contains the non portable serialized data.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @param {RoaringBitmap32ArrayCallback} callback The callback to execute when the operation completes.
    * @returns {void}
    * @memberof RoaringBitmap32
    */
   public static deserializeParallelAsync(
-    serialized: (Uint8Array | null | undefined)[],
-    portable: boolean,
+    serialized: readonly (Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer)[],
+    format: DeserializationFormatType,
     callback: RoaringBitmap32ArrayCallback,
   ): void;
+
+  /**
+   * This is an unsafe method that builds a frozen roaring bitmap over a buffer.
+   * This removes the overhead of a deserialization of a large bitmap.
+   * The buffer will be kept alive by the bitmap.
+   * This function is endian sensitive, it supports only little endian and cannot load frozen bitmaps saved on big endian machines.
+   *
+   * This function is considered unsafe because if the buffer gets modified, the bitmap will be corrupted and the application can crash.
+   * There is a risk for buffer overrun or arbitrary code execution here. Be careful and do not allow the buffer to be modified while or after the bitmap is in use.
+   *
+   * The content of buffer should not be modified until the bitmap is destroyed! Is responsibility of the caller to ensure that the buffer is not modified while the bitmap is in use.
+   *
+   * Using "unsafe_frozen_croaring" the buffer data must be aligned to 32 bytes.
+   * The roaring library provides the functions bufferAlignedAlloc, bufferAlignedAllocUnsafe, isBufferAligned, ensureBufferAligned that helps allocating and managing aligned buffers.
+   * If you read a file, or read from database, be careful to use an aligned buffer or copy to an aligned buffer before calling this function with "unsafe_frozen_croaring" format.
+   *
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   *
+   * @static
+   * @param {Buffer} storage A Buffer that contains the serialized data.
+   * @param {FrozenViewFormatType} format The format of the serialized data. true means "portable". false means "croaring".
+   * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
+   * @memberof RoaringBitmap32
+   */
+  public static unsafeFrozenView(
+    storage: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer,
+    format: FrozenViewFormatType,
+  ): RoaringBitmap32;
 
   /**
    * Swaps the content of two RoaringBitmap32 instances.
@@ -276,6 +582,16 @@ export class RoaringBitmap32 implements Set<number> {
    * @memberof RoaringBitmap32
    */
   public static swap(a: RoaringBitmap32, b: RoaringBitmap32): void;
+
+  /**
+   * addOffset adds the value 'offset' to each and every value in a bitmap, generating a new bitmap in the process.
+   * If offset + element is outside of the range [0,2^32), that the element will be dropped.
+   *
+   * @param {RoaringBitmap32} input The input bitmap.
+   * @param {number} offset The offset to add to each element. Can be positive or negative.
+   * @returns {RoaringBitmap32} A new bitmap with the offset added to each element.
+   */
+  public static addOffset(input: RoaringBitmap32, offset: number): RoaringBitmap32;
 
   /**
    * Returns a new RoaringBitmap32 with the intersection (and) between the given two bitmaps.
@@ -448,8 +764,23 @@ export class RoaringBitmap32 implements Set<number> {
    * The callback has 3 arguments, the value, the value and this (this set). This is to match the Set<number> interface.
    *
    * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * WARNING: the second parameter of the callback is not the index, but the value itself, the same as the first argument.
+   * This is required to match the Set<number> interface.
    */
-  public forEach(callbackfn: (value: number, value2: number, set: this) => void, thisArg?: any): void;
+  public forEach(callbackfn: (value: number, value2: number, set: this) => void, thisArg?: unknown): this;
+
+  /**
+   * It behaves like array.map.
+   *
+   * WARNING: The returned array may be very big, up to 4 trillion elements.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * WARNING: The second parameter is the index in the resulting array.
+   *
+   */
+  public map<U>(callbackfn: (value: number, index: number, set: this) => U, thisArg?: unknown, output?: U[]): U[];
 
   /**
    * Gets the minimum value in the set.
@@ -479,22 +810,22 @@ export class RoaringBitmap32 implements Set<number> {
   /**
    * Check whether a range of values from rangeStart (included) to rangeEnd (excluded) is present
    *
-   * @param {number} rangeStart The start index (inclusive).
-   * @param {number} rangeEnd The end index (exclusive).
+   * @param {number|undefined} rangeStart The start index (inclusive).
+   * @param {number|undefined} [rangeEnd] The end index (exclusive).
    * @returns {boolean} True if the bitmap contains the whole range of values from rangeStart (included) to rangeEnd (excluded), false if not.
    * @memberof RoaringBitmap32
    */
-  public hasRange(rangeStart: number, rangeEnd: number): boolean;
+  public hasRange(rangeStart: number | undefined, rangeEnd?: number | undefined): boolean;
 
   /**
    * Gets the cardinality (number of elements) between rangeStart (included) to rangeEnd (excluded) of the bitmap.
    * Returns 0 if range is invalid or if no element was found in the given range.
    *
-   * @param {number} rangeStart The start index (inclusive).
-   * @param {number} rangeEnd The end index (exclusive).
+   * @param {number|undefined} rangeStart The start index (inclusive).
+   * @param {number|undefined} [rangeEnd] The end index (exclusive).
    * @returns {number} The number of elements between rangeStart (included) to rangeEnd (excluded).
    */
-  public rangeCardinality(rangeStart: number, rangeEnd: number): number;
+  public rangeCardinality(rangeStart: number | undefined, rangeEnd?: number | undefined): number;
 
   /**
    * Overwrite the content of this bitmap copying it from an Iterable or another RoaringBitmap32.
@@ -588,12 +919,12 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Areas outside the range are passed through unchanged.
    *
-   * @param rangeStart The start index. Trimmed to 0.
-   * @param rangeEnd The end index. Trimmed to 4294967297.
+   * @param {number|undefined} rangeStart The start index. Trimmed to 0.
+   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967297.
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public flipRange(rangeStart: number, rangeEnd: number): this;
+  public flipRange(rangeStart: number | undefined, rangeEnd?: number | undefined): this;
 
   /**
    * Adds all the values in the interval: [rangeStart, rangeEnd).
@@ -603,12 +934,12 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Areas outside the range are passed through unchanged.
    *
-   * @param {number} rangeStart The start index. Trimmed to 0.
-   * @param {number} rangeEnd The end index. Trimmed to 4294967297.
+   * @param {number|undefined} rangeStart The start index. Trimmed to 0.
+   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967297.
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public addRange(rangeStart: number, rangeEnd: number): this;
+  public addRange(rangeStart: number | undefined, rangeEnd?: number | undefined): this;
 
   /**
    * Removes all the values in the interval: [rangeStart, rangeEnd).
@@ -622,7 +953,7 @@ export class RoaringBitmap32 implements Set<number> {
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public removeRange(rangeStart: number, rangeEnd: number): this;
+  public removeRange(rangeStart: number | undefined, rangeEnd?: number | undefined): this;
 
   /**
    * Removes all values from the set.
@@ -741,6 +1072,15 @@ export class RoaringBitmap32 implements Set<number> {
   public intersects(other: RoaringBitmap32): boolean;
 
   /**
+   * Check whether a bitmap and a closed range intersect.
+   *
+   * @param {number|undefined} rangeStart The start of the range.
+   * @param {number|undefined} [rangeEnd] The end of the range.
+   * @returns {boolean} True if the bitmap and the range intersects, false if not.
+   */
+  public intersectsWithRange(rangeStart: number | undefined, rangeEnd?: number | undefined): boolean;
+
+  /**
    * Computes the size of the intersection between two bitmaps (the number of values in common).
    *
    * Returns -1 if the given argument is not a RoaringBitmap32 instance.
@@ -857,7 +1197,7 @@ export class RoaringBitmap32 implements Set<number> {
   /**
    * Creates a new Uint32Array and fills it with all the values in the bitmap.
    *
-   * The returned array may be very big, up to 4 gigabytes.
+   * The returned array may be very big, up to 4 trillion elements.
    *
    * Use this function only when you know what you are doing.
    *
@@ -869,31 +1209,116 @@ export class RoaringBitmap32 implements Set<number> {
   public toUint32Array(): Uint32Array;
 
   /**
-   * to array with pagination
+   * Copies all the values in the roaring bitmap to an Uint32Array.
+   *
+   * This function is faster than calling new Uint32Array(bitmap);
+   * Throws if the given array is not a valid Uint32Array or Int32Array or is not big enough.
+   *
+   * @template TOutput The type of the output array.
+   * @param {TOutput} output The output array.
+   * @returns {TOutput} The output array.
+   * @memberof RoaringBitmap32
+   */
+  public toUint32Array<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(output: TOutput): TOutput;
+
+  /**
+   * Creates a new Uint32Array and fills it with all the values in the bitmap, asynchronously.
+   * The bitmap will be temporarily frozen until the operation completes.
+   *
+   * The returned array may be very big, up to 4 trillion elements.
+   *
+   * Use this function only when you know what you are doing.
+   *
+   * This function is faster than calling new Uint32Array(bitmap);
+   *
+   * @returns A new Uint32Array instance containing all the items in the set in order.
+   * @memberof RoaringBitmap32
+   */
+  public toUint32ArrayAsync(): Promise<Uint32Array>;
+
+  /**
+   * Copies all the values in the roaring bitmap to an Uint32Array, asynchronously.
+   * The bitmap will be temporarily frozen until the operation completes.
+   *
+   * This function is faster than calling new Uint32Array(bitmap);
+   * Throws if the given array is not a valid Uint32Array or Int32Array or is not big enough.
+   *
+   * @template TOutput The type of the output array.
+   * @param {TOutput} output The output array.
+   * @returns {TOutput} The output array.
+   * @memberof RoaringBitmap32
+   */
+  public toUint32ArrayAsync<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(
+    output: TOutput,
+  ): Promise<TOutput>;
+
+  /**
+   * toUint32Array array with pagination
    * @returns A new Uint32Array instance containing paginated items in the set in order.
    * @memberof RoaringBitmap32
    */
   public rangeUint32Array(offset: number, limit: number): Uint32Array;
 
   /**
+   * toUint32Array array with pagination
+   * @template TOutput The type of the output array.
+   * @param {TOutput} output The output array.
+   * @returns {TOutput} The output array.
+   * @memberof RoaringBitmap32
+   */
+  public rangeUint32Array<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(
+    offset: number,
+    limit: number,
+    output: TOutput,
+  ): TOutput;
+
+  /**
    * Creates a new plain JS array and fills it with all the values in the bitmap.
    *
    * The returned array may be very big, use this function only when you know what you are doing.
    *
+   * @param {number} [maxLength] The maximum number of elements to return.
    * @returns {number[]}  A new plain JS array that contains all the items in the set in order.
    * @memberof RoaringBitmap32
    */
-  public toArray(): number[];
+  public toArray(maxLength?: number | undefined): number[];
+
+  /**
+   * Append all the values in this bitmap to the given plain JS array.
+   *
+   * The resulting array may be very big, use this function only when you know what you are doing.
+   *
+   * @template TOutput The type of the output array.
+   * @param {TOutput} output The output array.
+   * @param {number} [maxLength] The maximum number of elements to return.
+   * @param {number} [offset] The offset in the output array to start writing.
+   * @returns {TOutput} The output array.
+   * @memberof RoaringBitmap32
+   */
+  public toArray<TOutput extends number[]>(output: TOutput, maxLength?: number, offset?: number): TOutput;
 
   /**
    * Creates a new plain JS Set<number> and fills it with all the values in the bitmap.
    *
    * The returned set may be very big, use this function only when you know what you are doing.
    *
+   * @param {number} [maxLength] The maximum number of elements to return.
    * @returns {Set<number>} A new plain JS array that contains all the items in the set in order.
    * @memberof RoaringBitmap32
    */
-  public toSet(): Set<number>;
+  public toSet(maxLength?: number | undefined): Set<number>;
+
+  /**
+   * Adds all the values in this bitmap to the given plain JS Set<number>.
+   *
+   * The resulting set may be very big, use this function only when you know what you are doing.
+   *
+   * @param {Set<number>} output The output set.
+   * @param {number} [maxLength] The maximum number of elements to return.
+   * @returns {Set<number>} The output set.
+   * @memberof RoaringBitmap32
+   */
+  public toSet(output: Set<number>, maxLength?: number | undefined): Set<number>;
 
   /**
    * Returns a plain JS array with all the values in the bitmap.
@@ -908,30 +1333,150 @@ export class RoaringBitmap32 implements Set<number> {
   /**
    * How many bytes are required to serialize this bitmap.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * Setting the format flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
-   * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
-   *
-   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @returns {number} How many bytes are required to serialize this bitmap.
    * @memberof RoaringBitmap32
    */
-  public getSerializationSizeInBytes(portable: boolean): number;
+  public getSerializationSizeInBytes(format: SerializationFormatType): number;
 
   /**
    * Serializes the bitmap into a new Buffer.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * Setting the formatg to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
-   * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
-   *
-   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @returns {Buffer} A new node Buffer that contains the serialized bitmap.
    * @memberof RoaringBitmap32
    */
-  public serialize(portable: boolean): Buffer;
+  public serialize(format: SerializationFormatType): Buffer;
+
+  /**
+   * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
+   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
+   *
+   * Setting the format to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {boolean} format If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Buffer} output The node Buffer where to write the serialized data.
+   * @param {number} [outputStartIndex=0] The index where to start writing the serialized data.
+   * @returns {Buffer} The output Buffer.
+   * @memberof RoaringBitmap32
+   */
+  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
+    format: SerializationFormatType,
+    output: TOutput,
+    outputStartIndex?: number,
+  ): TOutput;
+
+  /**
+   * Serializes the bitmap into the given Buffer, starting to write at position 0.
+   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Buffer} output The node Buffer where to write the serialized data.
+   * @returns {Buffer} The output Buffer.
+   * @memberof RoaringBitmap32
+   */
+  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
+    output: TOutput,
+    format: SerializationFormatType,
+  ): TOutput;
+
+  /**
+   * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
+   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Buffer} output The node Buffer where to write the serialized data.
+   * @returns {Buffer} The output Buffer.
+   * @memberof RoaringBitmap32
+   */
+  public serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
+    output: TOutput,
+    outputStartIndex: number,
+    format: SerializationFormatType,
+  ): TOutput;
+
+  /**
+   * Serializes the bitmap into a new Buffer.
+   * The bitmap will be temporarily frozen until the operation completes.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @returns {Buffer} A new node Buffer that contains the serialized bitmap.
+   * @memberof RoaringBitmap32
+   */
+  public serializeAsync(format: SerializationFormatType): Promise<Buffer>;
+
+  /**
+   * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
+   * The bitmap will be temporarily frozen until the operation completes.
+   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {boolean} format If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Buffer} output The node Buffer where to write the serialized data.
+   * @param {number} [outputStartIndex=0] The index where to start writing the serialized data.
+   * @returns {Buffer} The output Buffer.
+   * @memberof RoaringBitmap32
+   */
+  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
+    format: SerializationFormatType,
+    output: TOutput,
+    outputStartIndex?: number,
+  ): Promise<TOutput>;
+
+  /**
+   * Serializes the bitmap into the given Buffer, starting to write at position 0.
+   * The bitmap will be temporarily frozen until the operation completes.
+   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Buffer} output The node Buffer where to write the serialized data.
+   * @returns {Buffer} The output Buffer.
+   * @memberof RoaringBitmap32
+   */
+  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
+    output: TOutput,
+    format: SerializationFormatType,
+  ): Promise<TOutput>;
+
+  /**
+   * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
+   * The bitmap will be temporarily frozen until the operation completes.
+   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Buffer} output The node Buffer where to write the serialized data.
+   * @returns {Buffer} The output Buffer.
+   * @memberof RoaringBitmap32
+   */
+  public serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
+    output: TOutput,
+    outputStartIndex: number,
+    format: SerializationFormatType,
+  ): Promise<TOutput>;
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.
@@ -939,12 +1484,15 @@ export class RoaringBitmap32 implements Set<number> {
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
-   * @param {Uint8Array} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public deserialize(serialized: Uint8Array, portable: boolean): this;
+  public deserialize(
+    serialized: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
+    format: DeserializationFormatType,
+  ): this;
 
   /**
    * Returns a new RoaringBitmap32 that is a copy of this bitmap, same as new RoaringBitmap32(copy)
@@ -992,6 +1540,18 @@ export class RoaringBitmap32 implements Set<number> {
    * @memberof RoaringBitmap32
    */
   public statistics(): RoaringBitmap32Statistics;
+
+  /**
+   * Makes this roaring bitmap readonly.
+   * Sets isFrozen to true.
+   * This is a no-op if isFrozen is already true.
+   * Every attempt to modify the bitmap will throw an exception.
+   * A bitmap cannot be unfrozen.
+   *
+   * @returns {this} This instance.
+   * @memberof RoaringBitmap32Iterator
+   */
+  public freeze(): this;
 }
 
 /**
@@ -1145,6 +1705,12 @@ export interface RoaringBitmap32Statistics {
    * @type {number}
    */
   size: number;
+
+  /**
+   * True if this bitmap is frozen and cannot be modified
+   * @type {boolean}
+   */
+  isFrozen: boolean;
 }
 
 /**
