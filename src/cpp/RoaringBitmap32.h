@@ -95,6 +95,7 @@ class RoaringBitmap32 final {
   static void isSubset(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void isStrictSubset(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void intersects(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void intersectsWithRange(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void isEqual(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void andCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void orCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);

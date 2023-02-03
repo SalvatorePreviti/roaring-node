@@ -10,7 +10,6 @@ describe("RoaringBitmap32 ranges", () => {
       expect(RoaringBitmap32.fromRange(0, 0).isEmpty).eq(true);
       expect(RoaringBitmap32.fromRange(20, 20).isEmpty).eq(true);
       expect(RoaringBitmap32.fromRange(null as any, 20).isEmpty).eq(true);
-      expect(RoaringBitmap32.fromRange(undefined as any, 20).isEmpty).eq(true);
     });
 
     it("works with range 0, 6", () => {
@@ -44,7 +43,6 @@ describe("RoaringBitmap32 ranges", () => {
   describe("hasRange", () => {
     it("returns false for invalid values", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5]);
-      expect(bitmap.hasRange(undefined as any, 6)).eq(false);
       expect(bitmap.hasRange(null as any, 6)).eq(false);
       expect(bitmap.hasRange("0" as any, 6)).eq(false);
       expect(bitmap.hasRange(0, [8] as any)).eq(false);
@@ -191,7 +189,6 @@ describe("RoaringBitmap32 ranges", () => {
     it("does nothing for invalid values", () => {
       const bitmap = new RoaringBitmap32([1, 2]);
       expect(bitmap.toArray()).deep.equal([1, 2]);
-      bitmap.addRange(undefined as any, 6);
       bitmap.addRange(null as any, 6);
       bitmap.addRange("0" as any, 6);
       bitmap.addRange(0, [8] as any);
@@ -279,13 +276,11 @@ describe("RoaringBitmap32 ranges", () => {
       const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
       const bitmap = new RoaringBitmap32(values);
       bitmap.removeRange(null as any, 10);
-      bitmap.removeRange(undefined as any, 10);
       bitmap.removeRange(-19, -10);
       bitmap.removeRange(-10, -19);
       bitmap.removeRange(10, 3);
       bitmap.removeRange(0, 0);
       bitmap.removeRange(5, 5);
-      bitmap.removeRange(5, undefined as any);
       bitmap.removeRange(5, "xxx" as any);
       expect(bitmap.toArray()).deep.equal(values);
     });
@@ -301,7 +296,6 @@ describe("RoaringBitmap32 ranges", () => {
     it("does nothing for invalid values", () => {
       const bitmap = new RoaringBitmap32([1, 2]);
       expect(bitmap.toArray()).deep.equal([1, 2]);
-      expect(bitmap.flipRange(undefined as any, 6)).eq(bitmap);
       bitmap.flipRange(null as any, 6);
       bitmap.flipRange("0" as any, 6);
       bitmap.flipRange(0, [8] as any);

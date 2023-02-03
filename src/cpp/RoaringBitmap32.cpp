@@ -308,6 +308,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(ctor, "has", has);
   NODE_SET_PROTOTYPE_METHOD(ctor, "hasRange", hasRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "intersects", intersects);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "intersectsWithRange", intersectsWithRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isEqual", isEqual);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSubset", isStrictSubset);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isSubset", isSubset);
@@ -2341,18 +2342,28 @@ void RoaringBitmap32::clear(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 inline static bool getRangeOperationParameters(
   const v8::FunctionCallbackInfo<v8::Value> & info, uint64_t & minInteger, uint64_t & maxInteger) {
-  if (info.Length() < 2 || !info[0]->IsNumber() || !info[1]->IsNumber()) {
-    return false;
-  }
-
   v8::Isolate * isolate = info.GetIsolate();
-  double minimum, maximum;
+  double minimum = 0, maximum = 4294967296;
 
-  if (!info[0]->NumberValue(isolate->GetCurrentContext()).To(&minimum) || std::isnan(minimum)) {
-    return false;
+  if (info.Length() > 0 && !info[0]->IsUndefined()) {
+    if (!info[0]->IsNumber()) {
+      return false;
+    }
+    if (!info[0]->NumberValue(isolate->GetCurrentContext()).To(&minimum)) {
+      minimum = 0;
+    }
   }
 
-  if (!info[1]->NumberValue(isolate->GetCurrentContext()).To(&maximum) || std::isnan(maximum)) {
+  if (info.Length() > 1 && !info[1]->IsUndefined()) {
+    if (!info[1]->IsNumber()) {
+      return false;
+    }
+    if (!info[1]->NumberValue(isolate->GetCurrentContext()).To(&maximum)) {
+      maximum = 4294967296;
+    }
+  }
+
+  if (std::isnan(minimum) || std::isnan(maximum)) {
     return false;
   }
 
@@ -2369,7 +2380,7 @@ inline static bool getRangeOperationParameters(
   minInteger = (uint64_t)minimum;
   maxInteger = (uint64_t)maximum;
 
-  return minInteger < maxInteger;
+  return minimum < 4294967296 && minInteger < maxInteger;
 }
 
 void RoaringBitmap32::rangeCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -2466,6 +2477,14 @@ void RoaringBitmap32::swapStatic(const v8::FunctionCallbackInfo<v8::Value> & inf
     a->invalidate();
     b->invalidate();
   }
+}
+
+void RoaringBitmap32::intersectsWithRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  uint64_t minInteger, maxInteger;
+  info.GetReturnValue().Set(
+    self != nullptr && getRangeOperationParameters(info, minInteger, maxInteger) &&
+    roaring_bitmap_intersect_with_range(self->roaring, (uint64_t)minInteger, (uint64_t)(maxInteger - 1)));
 }
 
 void RoaringBitmap32::addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -2666,7 +2685,7 @@ void RoaringBitmap32::fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> 
 
   uint32_t v;
   uint32_t step = 1;
-  if (info.Length() >= 3 && info[2]->IsUint32() && info[2]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
+  if (info.Length() >= 3 && info[2]->IsNumber() && info[2]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
     step = v;
     if (step == 0) {
       step = 1;

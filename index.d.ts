@@ -330,13 +330,17 @@ export class RoaringBitmap32 implements Set<number> {
    * Is possible to specify the step parameter to have a non contiguous range.
    *
    * @static
-   * @param {number} rangeStart The start index. Trimmed to 0.
-   * @param {number} rangeEnd The end index. Trimmed to 4294967297.
-   * @param {number} [step=1] The increment step, defaults to 1.
+   * @param {number|undefined} rangeStart The start index. Trimmed to 0.
+   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967297.
+   * @param {number|undefined} [step=1] The increment step, defaults to 1.
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static fromRange(rangeStart: number, rangeEnd: number, step?: number): RoaringBitmap32;
+  public static fromRange(
+    rangeStart: number | undefined,
+    rangeEnd?: number | undefined,
+    step?: number | undefined,
+  ): RoaringBitmap32;
 
   /**
    *
@@ -749,22 +753,22 @@ export class RoaringBitmap32 implements Set<number> {
   /**
    * Check whether a range of values from rangeStart (included) to rangeEnd (excluded) is present
    *
-   * @param {number} rangeStart The start index (inclusive).
-   * @param {number} rangeEnd The end index (exclusive).
+   * @param {number|undefined} rangeStart The start index (inclusive).
+   * @param {number|undefined} [rangeEnd] The end index (exclusive).
    * @returns {boolean} True if the bitmap contains the whole range of values from rangeStart (included) to rangeEnd (excluded), false if not.
    * @memberof RoaringBitmap32
    */
-  public hasRange(rangeStart: number, rangeEnd: number): boolean;
+  public hasRange(rangeStart: number | undefined, rangeEnd?: number | undefined): boolean;
 
   /**
    * Gets the cardinality (number of elements) between rangeStart (included) to rangeEnd (excluded) of the bitmap.
    * Returns 0 if range is invalid or if no element was found in the given range.
    *
-   * @param {number} rangeStart The start index (inclusive).
-   * @param {number} rangeEnd The end index (exclusive).
+   * @param {number|undefined} rangeStart The start index (inclusive).
+   * @param {number|undefined} [rangeEnd] The end index (exclusive).
    * @returns {number} The number of elements between rangeStart (included) to rangeEnd (excluded).
    */
-  public rangeCardinality(rangeStart: number, rangeEnd: number): number;
+  public rangeCardinality(rangeStart: number | undefined, rangeEnd?: number | undefined): number;
 
   /**
    * Overwrite the content of this bitmap copying it from an Iterable or another RoaringBitmap32.
@@ -858,12 +862,12 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Areas outside the range are passed through unchanged.
    *
-   * @param rangeStart The start index. Trimmed to 0.
-   * @param rangeEnd The end index. Trimmed to 4294967297.
+   * @param {number|undefined} rangeStart The start index. Trimmed to 0.
+   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967297.
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public flipRange(rangeStart: number, rangeEnd: number): this;
+  public flipRange(rangeStart: number | undefined, rangeEnd?: number | undefined): this;
 
   /**
    * Adds all the values in the interval: [rangeStart, rangeEnd).
@@ -873,12 +877,12 @@ export class RoaringBitmap32 implements Set<number> {
    *
    * Areas outside the range are passed through unchanged.
    *
-   * @param {number} rangeStart The start index. Trimmed to 0.
-   * @param {number} rangeEnd The end index. Trimmed to 4294967297.
+   * @param {number|undefined} rangeStart The start index. Trimmed to 0.
+   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967297.
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public addRange(rangeStart: number, rangeEnd: number): this;
+  public addRange(rangeStart: number | undefined, rangeEnd?: number | undefined): this;
 
   /**
    * Removes all the values in the interval: [rangeStart, rangeEnd).
@@ -892,7 +896,7 @@ export class RoaringBitmap32 implements Set<number> {
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public removeRange(rangeStart: number, rangeEnd: number): this;
+  public removeRange(rangeStart: number | undefined, rangeEnd?: number | undefined): this;
 
   /**
    * Removes all values from the set.
@@ -1009,6 +1013,15 @@ export class RoaringBitmap32 implements Set<number> {
    * @memberof RoaringBitmap32
    */
   public intersects(other: RoaringBitmap32): boolean;
+
+  /**
+   * Check whether a bitmap and a closed range intersect.
+   *
+   * @param {number|undefined} rangeStart The start of the range.
+   * @param {number|undefined} [rangeEnd] The end of the range.
+   * @returns {boolean} True if the bitmap and the range intersects, false if not.
+   */
+  public intersectsWithRange(rangeStart: number | undefined, rangeEnd?: number | undefined): boolean;
 
   /**
    * Computes the size of the intersection between two bitmaps (the number of values in common).
