@@ -456,6 +456,7 @@ describe("RoaringBitmap32 basic", () => {
         minValue: 4294967295,
         sumOfAllValues: 0,
         size: 0,
+        isFrozen: false,
       });
     });
 
@@ -478,10 +479,11 @@ describe("RoaringBitmap32 basic", () => {
         minValue: 1,
         sumOfAllValues: 5999986,
         size: 12,
+        isFrozen: false,
       });
       rb.runOptimize();
       rb.shrinkToFit();
-      expect(rb.statistics()).deep.equal({
+      const expected = {
         containers: 2,
         arrayContainers: 0,
         runContainers: 2,
@@ -496,7 +498,11 @@ describe("RoaringBitmap32 basic", () => {
         minValue: 1,
         sumOfAllValues: 5999986,
         size: 12,
-      });
+        isFrozen: false,
+      };
+      expect(rb.statistics()).deep.equal(expected);
+      rb.freeze();
+      expect(rb.statistics()).deep.equal({ ...expected, isFrozen: true });
     });
   });
 

@@ -16,6 +16,9 @@ limitations under the License.
 
 import roaring = require("./");
 
+/** Gets the approximate memory allocated by the roaring bitmap library. */
+export function getRoaringUsedMemory(): number;
+
 /**
  * Creates a new buffer with the given size and alignment.
  * If alignment is not specified, the default alignment of 32 is used.
@@ -88,13 +91,18 @@ export enum SerializationFormat {
   croaring = "croaring",
 
   /** Portable Java and Go format. */
-  portable = "portable",
+  portable = "unsafe_portable",
 
   /** Non portable C/C++ frozen format. Can be larger than the other formats. */
-  frozen_croaring = "frozen_croaring",
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
 }
 
-export type SerializationFormatType = SerializationFormat | "croaring" | "portable" | "frozen_croaring" | boolean;
+export type SerializationFormatType =
+  | SerializationFormat
+  | "croaring"
+  | "portable"
+  | "unsafe_frozen_croaring"
+  | boolean;
 
 export enum DeserializationFormat {
   /** Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
@@ -104,29 +112,29 @@ export enum DeserializationFormat {
   portable = "portable",
 
   /** Non portable C/C++ frozen format. Can be larger than the other formats. */
-  frozen_croaring = "frozen_croaring",
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
 
   /** Portable version of the frozen view, compatible with Go and Java. Can be larger than the other formats. */
-  frozen_portable = "frozen_portable",
+  unsafe_frozen_portable = "unsafe_frozen_portable",
 }
 
 export type DeserializationFormatType =
   | SerializationFormat
   | "croaring"
   | "portable"
-  | "frozen_croaring"
-  | "frozen_portable"
+  | "unsafe_frozen_croaring"
+  | "unsafe_frozen_portable"
   | boolean;
 
 export enum FrozenViewFormat {
   /** Non portable C/C++ frozen format. Can be larger than the other formats. */
-  frozen_croaring = "frozen_croaring",
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
 
   /** Portable version of the frozen view, compatible with Go and Java. */
-  frozen_portable = "frozen_portable",
+  unsafe_frozen_portable = "unsafe_frozen_portable",
 }
 
-export type FrozenViewFormatType = SerializationFormat | "frozen_croaring" | "frozen_portable" | boolean;
+export type FrozenViewFormatType = SerializationFormat | "unsafe_frozen_croaring" | "unsafe_frozen_portable" | boolean;
 
 /**
  * Roaring bitmap that supports 32 bit unsigned integers.
@@ -154,6 +162,9 @@ export class RoaringBitmap32 implements Set<number> {
   public static readonly FrozenViewFormat: typeof FrozenViewFormat;
 
   public readonly FrozenViewFormat: typeof FrozenViewFormat;
+
+  /** Gets the approximate memory allocated by the roaring bitmap library. */
+  public static getRoaringUsedMemory(): number;
 
   /**
    * Creates a new buffer with the given size and alignment.
@@ -483,9 +494,9 @@ export class RoaringBitmap32 implements Set<number> {
    * This function is considered unsafe because if the buffer gets modified, the bitmap will be corrupted and the application can crash.
    * There is a risk for buffer overrun or arbitrary code execution here. Be careful and do not allow the buffer to be modified while or after the bitmap is in use.
    *
-   * Using "frozen_croaring" the buffer data must be aligned to 32 bytes.
+   * Using "unsafe_frozen_croaring" the buffer data must be aligned to 32 bytes.
    * The roaring library provides the functions bufferAlignedAlloc, bufferAlignedAllocUnsafe, isBufferAligned, ensureBufferAligned that helps allocating and managing aligned buffers.
-   * If you read a file, or read from database, be careful to use an aligned buffer or copy to an aligned buffer before calling this function with "frozen_croaring" format.
+   * If you read a file, or read from database, be careful to use an aligned buffer or copy to an aligned buffer before calling this function with "unsafe_frozen_croaring" format.
    *
    * @static
    * @param {Buffer} storage A Buffer that contains the serialized data.
@@ -1611,6 +1622,12 @@ export interface RoaringBitmap32Statistics {
    * @type {number}
    */
   size: number;
+
+  /**
+   * True if this bitmap is frozen and cannot be modified
+   * @type {boolean}
+   */
+  isFrozen: boolean;
 }
 
 /**

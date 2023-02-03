@@ -28,7 +28,7 @@ describe("RoaringBitmap32 serialization", () => {
     });
 
     it("returns a value for frozen croaring", () => {
-      expect(new RoaringBitmap32([1, 2, 3]).getSerializationSizeInBytes("frozen_croaring")).gt(0);
+      expect(new RoaringBitmap32([1, 2, 3]).getSerializationSizeInBytes("unsafe_frozen_croaring")).gt(0);
     });
 
     it("returns the correct amount of bytes (non portable)", () => {

@@ -1,6 +1,6 @@
 #include "v8utils.h"
 
-#include <atomic>
+#include <stdlib.h>
 
 #ifdef _MSC_VER
 #  define atomicIncrement32(ptr) InterlockedIncrement(ptr)
@@ -9,6 +9,115 @@
 #  define atomicIncrement32(ptr) __sync_add_and_fetch(ptr, 1)
 #  define atomicDecrement32(ptr) __sync_sub_and_fetch(ptr, 1)
 #endif
+
+#if defined(__APPLE__)
+#  include <malloc/malloc.h>
+#else
+#  include <malloc.h>
+#endif
+
+/** portable version of posix_memalign */
+void * bare_aligned_malloc(size_t alignment, size_t size) {
+  void * p;
+#ifdef _MSC_VER
+  p = _aligned_malloc(size, alignment);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  p = __mingw_aligned_malloc(size, alignment);
+#else
+  // somehow, if this is used before including "x86intrin.h", it creates an
+  // implicit defined warning.
+  if (posix_memalign(&p, alignment, size) != 0) return NULL;
+#endif
+  return p;
+}
+
+/** portable version of free fo aligned allocs */
+void bare_aligned_free(void * memblock) {
+#ifdef _MSC_VER
+  _aligned_free(memblock);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  __mingw_aligned_free(memblock);
+#else
+  free(memblock);
+#endif
+}
+
+/** portable version of malloc_size */
+size_t bare_malloc_size(void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size(ptr);
+#elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
+  return _msize(ptr);
+#else
+  return malloc_usable_size(ptr);
+#endif
+}
+
+/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
+size_t bare_aligned_malloc_size(void * ptr) {
+  if (ptr == nullptr) {
+    return 0;
+  }
+#if defined(__APPLE__)
+  return malloc_size(ptr);
+#elif defined(_WIN32)
+  return _aligned_msize(ptr, 32, 0);
+#else
+  return malloc_usable_size(ptr);
+#endif
+}
+
+std::atomic<uint64_t> gcaware_totalMemCounter{0};
+
+uint64_t gcaware_totalMem() { return gcaware_totalMemCounter.load(std::memory_order_relaxed); }
+
+void gcaware_adjustAllocatedMemory(int64_t size) {
+  if (size != 0) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    if (isolate != nullptr) {
+      isolate->AdjustAmountOfExternalAllocatedMemory(size);
+    }
+    gcaware_totalMemCounter += size;
+  }
+}
+
+void * gcaware_malloc(size_t size) {
+  void * memory = malloc(size);
+  gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  return memory;
+}
+
+void * gcaware_realloc(void * memory, size_t size) {
+  size_t oldSize = bare_malloc_size(memory);
+  memory = realloc(memory, size);
+  if (memory != nullptr) {
+    gcaware_adjustAllocatedMemory(-oldSize);
+    gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+void * gcaware_calloc(size_t count, size_t size) {
+  void * memory = calloc(count, size);
+  gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
+  return memory;
+}
+
+void gcaware_free(void * memory) {
+  gcaware_adjustAllocatedMemory(-bare_malloc_size(memory));
+  free(memory);
+}
+
+void * gcaware_aligned_malloc(size_t alignment, size_t size) {
+  void * memory = bare_aligned_malloc(alignment, size);
+  gcaware_adjustAllocatedMemory(bare_aligned_malloc_size(memory));
+  return memory;
+}
+
+void gcaware_aligned_free(void * memory) {
+  gcaware_adjustAllocatedMemory(-bare_aligned_malloc_size(memory));
+  bare_aligned_free(memory);
+}
 
 /////////////// JSTypes ///////////////
 
@@ -112,10 +221,7 @@ namespace v8utils {
     _task.data = this;
   }
 
-  AsyncWorker::~AsyncWorker() {
-    _callback.Reset();
-    _resolver.Reset();
-  }
+  AsyncWorker::~AsyncWorker() {}
 
   bool AsyncWorker::setCallback(v8::Local<v8::Value> callback) {
     if (callback.IsEmpty() || !callback->IsFunction()) return false;
@@ -281,7 +387,7 @@ namespace v8utils {
   ParallelAsyncWorker::ParallelAsyncWorker(v8::Isolate * isolate) :
     AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {}
 
-  ParallelAsyncWorker::~ParallelAsyncWorker() { delete[] _tasks; }
+  ParallelAsyncWorker::~ParallelAsyncWorker() { gcaware_free(_tasks); }
 
   void ParallelAsyncWorker::work() {
     const uint32_t c = loopCount;
@@ -301,11 +407,12 @@ namespace v8utils {
       return AsyncWorker::_start();
     }
 
-    auto * tasks = new uv_work_t[tasksCount]();
+    uv_work_t * tasks = (uv_work_t *)gcaware_malloc(tasksCount * sizeof(uv_work_t));
     if (tasks == nullptr) {
       this->setError("Failed to allocate memory");
       return false;
     }
+    memset(tasks, 0, tasksCount * sizeof(uv_work_t));
 
     _tasks = tasks;
 

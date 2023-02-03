@@ -1,7 +1,7 @@
 #ifndef __ROARINGBITMAP32__H__
 #define __ROARINGBITMAP32__H__
 
-#include "v8utils/v8utils.h"
+#include "v8utils.h"
 #include "CRoaringUnityBuild/roaring_version_string.h"
 #include "CRoaringUnityBuild/roaring.h"
 
@@ -16,66 +16,54 @@ enum class SerializationFormat {
   INVALID = -1,
   croaring = 0,
   portable = 1,
-  frozen_croaring = 2,
+  unsafe_frozen_croaring = 2,
 };
 
 enum class DeserializationFormat {
   INVALID = -1,
   croaring = 0,
   portable = 1,
-  frozen_croaring = 2,
-  frozen_portable = 3,
+  unsafe_frozen_croaring = 2,
+  unsafe_frozen_portable = 3,
 };
 
 enum class FrozenViewFormat {
   INVALID = -1,
-  frozen_croaring = 2,
-  frozen_portable = 3,
-};
-
-enum class FrozenMode { Counter = 0, SoftFrozen = 1, HardFrozen = 2 };
-
-struct DeserializeResult final {
-  roaring_bitmap_t_ptr bitmap;
-  const char * error;
-
-  inline explicit DeserializeResult(roaring_bitmap_t_ptr bitmap, const char * error = nullptr) :
-    bitmap(bitmap),
-    error(
-      bitmap != nullptr
-        ? nullptr
-        : (error != nullptr ? error : "RoaringBitmap32::deserialize - failed to deserialize roaring bitmap")) {}
+  unsafe_frozen_croaring = 2,
+  unsafe_frozen_portable = 3,
 };
 
 class RoaringBitmap32 final {
  public:
-  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152333221;
+  static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152333221;
+
+  static const constexpr int64_t FROZEN_COUNTER_SOFT_FROZEN = -1;
+  static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
 
   static const uint64_t objectToken = OBJECT_TOKEN;
 
   roaring_bitmap_t * roaring;
   uint64_t version;
-  int64_t amountOfExternalAllocatedMemoryTracker;
-  v8::Persistent<v8::Object> persistent;
-
-  FrozenMode frozenMode;
   int64_t frozenCounter;
-  void * frozenBuffer;
-  size_t frozenBufferSize;
-  v8utils::TypedArrayContent<uint8_t> * frozenStorage;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+  v8utils::TypedArrayContent<uint8_t> frozenStorage;
 
-  inline bool isFrozen() const { return this->frozenMode != FrozenMode::Counter || this->frozenCounter != 0; }
-  inline bool isFrozenHard() const { return this->frozenMode == FrozenMode::HardFrozen || this->frozenCounter != 0; }
+  inline bool isFrozen() const { return this->frozenCounter != 0; }
+  inline bool isFrozenHard() const { return this->frozenCounter > 0 || this->frozenCounter == FROZEN_COUNTER_HARD_FROZEN; }
 
-  inline void beginFreeze() { ++this->frozenCounter; }
-  inline void endFreeze() { --this->frozenCounter; }
+  inline void beginFreeze() {
+    if (this->frozenCounter >= 0) {
+      ++this->frozenCounter;
+    }
+  }
 
-  void hardFreeze(v8::Isolate * isolate);
+  inline void endFreeze() {
+    if (this->frozenCounter > 0) {
+      --this->frozenCounter;
+    }
+  }
 
-  inline void invalidate() { ++version; }
-
-  void updateAmountOfExternalAllocatedMemory(v8::Isolate * isolate);
-  void updateAmountOfExternalAllocatedMemory(v8::Isolate * isolate, size_t newSize);
+  inline void invalidate() { ++this->version; }
 
   bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance);
 
@@ -163,20 +151,6 @@ class RoaringBitmap32 final {
   explicit RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();
 
-  static SerializationFormat tryParseSerializationFormat(
-    const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
-
-  static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
-
-  static DeserializationFormat tryParseDeserializationFormat(
-    const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
-
-  static DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
-
-  static FrozenViewFormat tryParseFrozenViewFormat(const v8::MaybeLocal<v8::Value> & maybeValue, v8::Isolate * isolate);
-
-  static FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate);
-
   static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
 };
 
@@ -199,13 +173,13 @@ class RoaringBitmap32BufferedIterator {
 
   enum { allocatedMemoryDelta = 1024 };
 
-  v8::Persistent<v8::Object> persistent;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
   roaring_uint32_iterator_t it;
   uint64_t bitmapVersion;
   RoaringBitmap32 * bitmapInstance;
   v8utils::TypedArrayContent<uint32_t> bufferContent;
 
-  v8::Persistent<v8::Object> bitmap;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
 
   static v8::Eternal<v8::FunctionTemplate> constructorTemplate;
   static v8::Eternal<v8::Function> constructor;

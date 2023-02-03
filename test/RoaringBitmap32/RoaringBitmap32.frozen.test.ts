@@ -68,11 +68,11 @@ describe("RoaringBitmap32 frozen", () => {
 
   describe("unsafeFrozenView", () => {
     it("throws if the buffer is an invalid type", () => {
-      expect(() => RoaringBitmap32.unsafeFrozenView({} as any, "frozen_croaring")).to.throw();
-      expect(() => RoaringBitmap32.unsafeFrozenView([] as any, "frozen_croaring")).to.throw();
-      expect(() => RoaringBitmap32.unsafeFrozenView(null as any, "frozen_croaring")).to.throw();
-      expect(() => RoaringBitmap32.unsafeFrozenView(undefined as any, "frozen_croaring")).to.throw();
-      expect(() => RoaringBitmap32.unsafeFrozenView(new Uint32Array(1), "frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView({} as any, "unsafe_frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView([] as any, "unsafe_frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(null as any, "unsafe_frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(undefined as any, "unsafe_frozen_croaring")).to.throw();
+      expect(() => RoaringBitmap32.unsafeFrozenView(new Uint32Array(1), "unsafe_frozen_croaring")).to.throw();
     });
 
     it("throws if format is invalid", () => {
@@ -85,9 +85,9 @@ describe("RoaringBitmap32 frozen", () => {
     it("can create a view from a serialized bitmap, and the view is frozen", () => {
       const values = [1, 2, 3, 100, 8772837, 0x7ffffff1, 0x7fffffff];
       const bitmap = new RoaringBitmap32(values);
-      const serialized = bitmap.serialize("frozen_croaring");
+      const serialized = bitmap.serialize("unsafe_frozen_croaring");
       expect(RoaringBitmap32.isBufferAligned(serialized)).to.be.true;
-      const view = RoaringBitmap32.unsafeFrozenView(serialized, "frozen_croaring");
+      const view = RoaringBitmap32.unsafeFrozenView(serialized, "unsafe_frozen_croaring");
       expect(view.isFrozen).to.be.true;
       expect(view.toArray()).to.deep.equal(values);
       expect(() => view.add(4)).to.throw(ERROR_FROZEN);

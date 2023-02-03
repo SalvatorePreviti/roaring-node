@@ -167,7 +167,7 @@ if (!roaring.PackageVersion) {
     {
       croaring: "croaring",
       portable: "portable",
-      frozen_croaring: "frozen_croaring",
+      unsafe_frozen_croaring: "unsafe_frozen_croaring",
     },
     false,
   );
@@ -177,8 +177,8 @@ if (!roaring.PackageVersion) {
     {
       croaring: "croaring",
       portable: "portable",
-      frozen_croaring: "frozen_croaring",
-      frozen_portable: "frozen_portable",
+      unsafe_frozen_croaring: "unsafe_frozen_croaring",
+      unsafe_frozen_portable: "unsafe_frozen_portable",
     },
     false,
   );
@@ -186,8 +186,8 @@ if (!roaring.PackageVersion) {
   define(
     "FrozenViewFormat",
     {
-      frozen_croaring: "frozen_croaring",
-      frozen_portable: "frozen_portable",
+      unsafe_frozen_croaring: "unsafe_frozen_croaring",
+      unsafe_frozen_portable: "unsafe_frozen_portable",
     },
     false,
   );
@@ -216,6 +216,8 @@ if (!roaring.PackageVersion) {
     }
     return buffer;
   });
+
+  RoaringBitmap32.getRoaringUsedMemory = roaring.getRoaringUsedMemory;
 
   roaring._initTypes({ Uint32Array });
 }
