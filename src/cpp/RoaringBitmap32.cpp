@@ -82,7 +82,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     }
   }
 
-  if ((uint64_t)size > v8::TypedArray::kMaxLength || (uint64_t)size + alignment >= v8::TypedArray::kMaxLength) {
+  if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
     return v8utils::throwTypeError(isolate, "Buffer size is too large");
   }
 
@@ -182,7 +182,11 @@ static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value
       return SerializationFormat::croaring;
     }
   } else if (value->IsString()) {
+#if NODE_MAJOR_VERSION >= 10
     v8::String::Utf8Value formatString(isolate, value);
+#else
+    v8::String::Utf8Value formatString(value);
+#endif
     if (strcmp(*formatString, "croaring") == 0) {
       return SerializationFormat::croaring;
     }
@@ -208,7 +212,11 @@ static DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::V
       return DeserializationFormat::croaring;
     }
   } else if (value->IsString()) {
+#if NODE_MAJOR_VERSION >= 10
     v8::String::Utf8Value formatString(isolate, value);
+#else
+    v8::String::Utf8Value formatString(value);
+#endif
     if (strcmp(*formatString, "croaring") == 0) {
       return DeserializationFormat::croaring;
     }
@@ -230,7 +238,11 @@ static FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & va
     return FrozenViewFormat::INVALID;
   }
   if (value->IsString()) {
+#if NODE_MAJOR_VERSION >= 11
     v8::String::Utf8Value formatString(isolate, value);
+#else
+    v8::String::Utf8Value formatString(value);
+#endif
     if (strcmp(*formatString, "unsafe_frozen_croaring") == 0) {
       return FrozenViewFormat::unsafe_frozen_croaring;
     }

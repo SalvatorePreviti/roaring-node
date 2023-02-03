@@ -22,7 +22,10 @@ jobs:
       - run: npm i -g node-gyp@latest
       - run: npm install
       - run: npm test
-      - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+      - name: Prebuild
+        env:
+          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+        run: node ./scripts/prebuild
 
   prebuild-macos:
     name: macOS
@@ -39,7 +42,10 @@ jobs:
       - run: npm i -g node-gyp@latest
       - run: npm install
       - run: npm test
-      - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+      - name: Prebuild
+        env:
+          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+        run: node ./scripts/prebuild
 
   prebuild-windows:
     name: Windows
@@ -57,4 +63,7 @@ jobs:
       - run: npm install
       - run: npm i node-gyp@latest
       - run: npm test
-      - run: node ./scripts/prebuild ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+      - name: Prebuild
+        env:
+          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+        run: node ./scripts/prebuild
