@@ -42,14 +42,19 @@ class RoaringBitmap32 final {
   roaring_bitmap_t * roaring;
   const uint64_t objectToken = OBJECT_TOKEN;
   int64_t sizeCache;
-  uint64_t version;
+  int64_t _version;
   int64_t frozenCounter;
-  v8utils::TypedArrayContent<uint8_t> frozenStorage;
+  RoaringBitmap32 * const readonlyViewOf;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> readonlyViewPersistent;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+  v8utils::TypedArrayContent<uint8_t> frozenStorage;
 
   inline size_t getSize() const {
     int64_t size = this->sizeCache;
     if (size < 0) {
+      if (this->readonlyViewOf != nullptr) {
+        return this->readonlyViewOf->getSize();
+      }
       const roaring_bitmap_t_ptr roaring = this->roaring;
       size = roaring != nullptr ? (int64_t)roaring_bitmap_get_cardinality(roaring) : 0;
       const_cast<RoaringBitmap32 *>(this)->sizeCache = size;
@@ -59,6 +64,7 @@ class RoaringBitmap32 final {
 
   inline bool isFrozen() const { return this->frozenCounter != 0; }
   inline bool isFrozenHard() const { return this->frozenCounter > 0 || this->frozenCounter == FROZEN_COUNTER_HARD_FROZEN; }
+  inline bool isFrozenForever() const { return this->frozenCounter < 0; }
 
   inline void beginFreeze() {
     if (this->frozenCounter >= 0) {
@@ -72,21 +78,17 @@ class RoaringBitmap32 final {
     }
   }
 
+  inline int64_t getVersion() const { return this->_version; }
+
   inline void invalidate() {
     this->sizeCache = -1;
-    ++this->version;
+    ++this->_version;
   }
 
   bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance);
 
-  static v8::Eternal<v8::FunctionTemplate> constructorTemplate;
-  static v8::Eternal<v8::Function> constructor;
+  static void asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info);
 
-  static void Init(v8::Local<v8::Object> exports);
-
-  static void New(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void hasRange(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void flipRange(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void addRange(const v8::FunctionCallbackInfo<v8::Value> & info);
@@ -139,6 +141,7 @@ class RoaringBitmap32 final {
 
   static void unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 
+  static void fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
   static void fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
@@ -164,10 +167,9 @@ class RoaringBitmap32 final {
 
   static void getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 
+  explicit RoaringBitmap32(RoaringBitmap32 * readonlyViewOf);
   explicit RoaringBitmap32(uint32_t capacity);
   ~RoaringBitmap32();
-
-  static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info);
 };
 
 class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
@@ -190,18 +192,12 @@ class RoaringBitmap32BufferedIterator {
   enum { allocatedMemoryDelta = 1024 };
 
   roaring_uint32_iterator_t it;
-  uint64_t bitmapVersion;
+  int64_t bitmapVersion;
   RoaringBitmap32 * bitmapInstance;
   v8utils::TypedArrayContent<uint32_t> bufferContent;
 
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
-
-  static v8::Eternal<v8::FunctionTemplate> constructorTemplate;
-  static v8::Eternal<v8::Function> constructor;
-
-  static void Init(v8::Local<v8::Object> exports);
-  static void New(const v8::FunctionCallbackInfo<v8::Value> & info);
 
   static void fill(const v8::FunctionCallbackInfo<v8::Value> & info);
 
@@ -210,8 +206,6 @@ class RoaringBitmap32BufferedIterator {
 
  private:
   void destroy();
-  static v8::Eternal<v8::String> nPropertyName;
-  static void WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info);
 };
 
 #endif

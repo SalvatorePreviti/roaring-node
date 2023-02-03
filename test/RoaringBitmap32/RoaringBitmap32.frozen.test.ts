@@ -101,4 +101,52 @@ describe("RoaringBitmap32 frozen", () => {
       expect(copy.tryAdd(4)).to.be.true;
     });
   });
+
+  describe("asReadonlyView", () => {
+    it("offers a readonly view", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      const readonlyView = bitmap.asReadonlyView() as RoaringBitmap32;
+      expect(readonlyView).to.not.eq(bitmap);
+      expect(readonlyView.isFrozen).to.be.true;
+      expect(readonlyView.asReadonlyView()).eq(readonlyView);
+      expect(bitmap.asReadonlyView()).to.equal(readonlyView);
+
+      expect(() => readonlyView.copyFrom([1])).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.add(1)).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.tryAdd(1)).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.addMany([1])).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.remove(1)).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.removeMany([1])).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.delete(1)).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.clear()).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.orInPlace([1])).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.andNotInPlace([1])).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.andInPlace([1])).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.xorInPlace([1])).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.flipRange(0, 10)).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.addRange(0, 9)).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.removeRange(0, 8)).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.removeRunCompression()).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.runOptimize()).to.throw(ERROR_FROZEN);
+      expect(() => readonlyView.shrinkToFit()).to.throw(ERROR_FROZEN);
+
+      bitmap.add(100);
+      expect(readonlyView.toArray()).to.deep.equal([1, 2, 3, 100]);
+      expect(readonlyView.size).to.equal(4);
+      bitmap.add(200);
+      expect(readonlyView.toArray()).to.deep.equal([1, 2, 3, 100, 200]);
+      expect(readonlyView.size).to.equal(5);
+      expect(readonlyView.size).to.equal(5);
+
+      bitmap.freeze();
+      expect(readonlyView.isFrozen).to.be.true;
+      expect(bitmap.asReadonlyView()).eq(readonlyView);
+    });
+  });
+
+  it("returns this if the bitmap is frozen", () => {
+    const bitmap = new RoaringBitmap32();
+    bitmap.freeze();
+    expect(bitmap.asReadonlyView()).to.equal(bitmap);
+  });
 });

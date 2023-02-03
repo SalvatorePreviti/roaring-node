@@ -133,7 +133,7 @@ export enum DeserializationFormat {
   portable = "portable",
 
   /**
-   * Non portable C/C++ frozen format. Can be larger than the other formats.
+   * Non portable C/C++ frozen format.
    * Is considered unsafe and unstable because the format might change at any new version.
    * Can be useful for temporary storage or for sending data over the network between similar machines.
    * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
@@ -142,7 +142,7 @@ export enum DeserializationFormat {
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
 
   /**
-   * Portable version of the frozen view, compatible with Go and Java. Can be larger than the other formats.
+   * Portable version of the frozen view, compatible with Go and Java.
    * Is considered unsafe and unstable because the format might change at any new version.
    * Can be useful for temporary storage or for sending data over the network between similar machines.
    * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
@@ -1162,6 +1162,16 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * @memberof RoaringBitmap32
    */
   freeze(): this;
+
+  /**
+   * A readonly view on this bitmap.
+   * It returns always the same instance.
+   * Can return this if this bitmap is fully hard frozen.
+   * The bitmap will contain the same data, and if the first bitmap is modified
+   * the readonlyView bitmap one will be modified too.
+   * The readonlyView bitmap is readonly, so it is not possible to modify it.
+   */
+  asReadonlyView(): ReadonlyRoaringBitmap32;
 }
 
 /**
@@ -1279,18 +1289,7 @@ export class RoaringBitmap32 {
   public static get PackageVersion(): string;
 
   /**
-   * Property. True if the bitmap is read-only.
-   * A read-only bitmap cannot be modified, every operation will throw an error.
-   * You can freeze a bitmap using the freeze() method.
-   * A bitmap cannot be unfrozen.
-   *
-   * @type {boolean}
-   * @memberof RoaringBitmap32
-   */
-  public readonly isFrozen: boolean;
-
-  /**
-   * Creates an instance of RoaringBitmap32.
+   * Creates an instance of RoaringBitmap32, or copies the given bitmap.
    *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
    *
@@ -1300,6 +1299,18 @@ export class RoaringBitmap32 {
    * @memberof RoaringBitmap32
    */
   public constructor(values?: Iterable<number>);
+
+  /**
+   * Creates a new frozen readonly view of the given bitmap.
+   * The bitmap will contain the same data, and if the first bitmap is modified
+   * the second one will be modified too.
+   * The created bitmap is frozen, so it is not possible to modify it.
+   *
+   * @param {RoaringBitmap32} roaringBitmap32 The source RoaringBitmap32.
+   * @param {"frozen"} frozen Must be "frozen"
+   * @memberof RoaringBitmap32Iterator
+   */
+  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, frozen: "frozen");
 
   /**
    * Creates an instance of RoaringBitmap32 from the given Iterable.
