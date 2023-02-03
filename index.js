@@ -1,5 +1,28 @@
 "use strict";
 
+/*
+Copyright 2018 Salvatore Previti
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Source code at: https://github.com/SalvatorePreviti/roaring-node 
+
+Documentation at: https://salvatorepreviti.github.io/roaring-node/modules.html
+
+Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32-1.html
+
+*/
+
 const { isUint8Array, isInt8Array, isArrayBuffer } = require("util/types");
 const roaring = require("./build/Release/roaring.node");
 // const { version: packageVersion } = require("./package.json");

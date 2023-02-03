@@ -12,6 +12,13 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+Source code at: https://github.com/SalvatorePreviti/roaring-node 
+
+Documentation at: https://salvatorepreviti.github.io/roaring-node/modules.html
+
+Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-node/classes/RoaringBitmap32-1.html
+
 */
 
 import roaring = require("./");
