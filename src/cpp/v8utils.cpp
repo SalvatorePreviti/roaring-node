@@ -68,10 +68,7 @@ inline static size_t bare_aligned_malloc_size(void * ptr) {
 
 std::atomic<int64_t> gcaware_totalMemCounter{0};
 
-int64_t gcaware_totalMem() { return gcaware_totalMemCounter.load(std::memory_order_relaxed); }
-
-#include <execinfo.h>
-#include <iostream>
+int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
 
 static thread_local v8::Isolate * thread_local_isolate = nullptr;
 
@@ -84,20 +81,7 @@ void gcaware_adjustAllocatedMemory(int64_t size) {
     if (isolate != nullptr) {
       isolate->AdjustAmountOfExternalAllocatedMemory(size);
     }
-    int64_t old = gcaware_totalMemCounter;
     gcaware_totalMemCounter += size;
-
-    if (old >= 0 && gcaware_totalMemCounter < 0) {
-      std::cout << std::endl;
-      void * callstack[128];
-      int i, frames = backtrace(callstack, 128);
-      char ** strs = backtrace_symbols(callstack, frames);
-      for (i = 0; i < frames; ++i) {
-        printf("%s\n", strs[i]);
-      }
-      free(strs);
-      std::cout << "old: " << old << " gcaware_totalMemCounter: " << gcaware_totalMemCounter << std::endl << std::endl;
-    }
   }
 }
 
