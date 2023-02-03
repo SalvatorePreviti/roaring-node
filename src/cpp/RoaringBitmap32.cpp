@@ -25,6 +25,12 @@
 #  pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #  pragma clang diagnostic ignored "-Wunused-but-set-parameter"
 #  pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#elif defined(__GNUC__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wunused-variable"
+#  pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#  pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+#  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #endif
 
 #ifdef small
@@ -35,6 +41,8 @@
 
 #if defined(__clang__)
 #  pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#  pragma GCC diagnostic pop
 #endif
 
 #undef printf
