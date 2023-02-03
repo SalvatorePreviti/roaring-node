@@ -405,7 +405,7 @@ void RoaringBitmap32::Init(v8::Local<v8::Object> exports) {
 }
 
 RoaringBitmap32::RoaringBitmap32(uint32_t capacity) :
-  roaring(roaring_bitmap_create_with_capacity(capacity)), version(0), frozenCounter(0) {
+  roaring(roaring_bitmap_create_with_capacity(capacity)), sizeCache(0), version(0), frozenCounter(0) {
   ++RoaringBitmap32InstancesCounter;
   gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
 }
@@ -493,32 +493,25 @@ void RoaringBitmap32::New(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32::size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
   const RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<const RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  if (self == nullptr) {
-    return info.GetReturnValue().Set(0U);
-  }
-
-  size_t size = roaring_bitmap_get_cardinality(self->roaring);
-  if (size <= 0xFFFFFFFF) {
-    return info.GetReturnValue().Set((uint32_t)size);
-  }
-
-  info.GetReturnValue().Set((double)size);
+  auto size = self != nullptr ? self->getSize() : 0U;
+  return size <= 0xFFFFFFFF ? info.GetReturnValue().Set((uint32_t)size) : info.GetReturnValue().Set((double)size);
 }
 
 void RoaringBitmap32::isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
-  const RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<const RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  if (self == nullptr) {
+  RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  if (self == nullptr || self->sizeCache == 0) {
     return info.GetReturnValue().Set(true);
   }
-  info.GetReturnValue().Set(roaring_bitmap_is_empty(self->roaring) ? true : false);
+  if (roaring_bitmap_is_empty(self->roaring)) {
+    self->sizeCache = 0;
+    return info.GetReturnValue().Set(true);
+  }
+  return info.GetReturnValue().Set(false);
 }
 
 void RoaringBitmap32::isFrozen_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
   const RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<const RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  if (self == nullptr) {
-    return info.GetReturnValue().Set(true);
-  }
-  info.GetReturnValue().Set(self->isFrozen());
+  info.GetReturnValue().Set(self == nullptr || self->isFrozen());
 }
 
 void RoaringBitmap32::has(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -656,7 +649,27 @@ void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & 
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
 
-  auto size = static_cast<size_t>(roaring_bitmap_get_cardinality(self->roaring));
+  size_t size = self->getSize();
+
+  v8utils::TypedArrayContent<uint32_t> typedArrayContent;
+
+  // Check if the first argument is a UInt32Array or a Int32Array
+  if (info.Length() >= 1 && !info[0]->IsUndefined()) {
+    v8::Local<v8::Object> obj;
+    if (
+      !info[0]->IsObject() || !info[0]->ToObject(isolate->GetCurrentContext()).ToLocal(&obj) ||
+      (!obj->IsUint32Array() && !obj->IsInt32Array() && !obj->IsArrayBuffer()) || !typedArrayContent.set(isolate, obj)) {
+      return v8utils::throwError(
+        isolate, "RoaringBitmap32::toUint32Array - argument must be a UInt32Array, Int32Array or ArrayBuffer");
+    }
+    if (size > typedArrayContent.length) {
+      return v8utils::throwError(isolate, "RoaringBitmap32::toUint32Array - the array is too small");
+    }
+    if (size != 0) {
+      roaring_bitmap_to_uint32_array(self->roaring, typedArrayContent.data);
+    }
+    return info.GetReturnValue().Set(obj);
+  }
 
   v8utils::TypedArrayContent<uint32_t> typedArrayContent;
 
@@ -741,7 +754,7 @@ class ToUint32ArrayAsyncWorker final : public v8utils::AsyncWorker {
   }
 
   void work() final {
-    auto size = static_cast<size_t>(roaring_bitmap_get_cardinality(this->bitmap->roaring));
+    auto size = this->bitmap->getSize();
     if (size == 0) {
       return;
     }
@@ -829,7 +842,7 @@ void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value>
     return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - second argument must be a valid uint32");
   }
 
-  auto cardinality = roaring_bitmap_get_cardinality(self->roaring);
+  auto cardinality = self->getSize();
   auto size = limit < cardinality - offset ? limit : cardinality - offset;
 
   if (offset > cardinality) {
@@ -876,10 +889,7 @@ void RoaringBitmap32::toArray(const v8::FunctionCallbackInfo<v8::Value> & info) 
   v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
-  if (self == nullptr) {
-    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-  }
-  size_t cardinality = self ? roaring_bitmap_get_cardinality(self->roaring) : 0;
+  size_t cardinality = self ? self->getSize() : 0;
 
   struct iter_data {
     uint32_t index;
@@ -1234,7 +1244,7 @@ void RoaringBitmap32::getSerializationSizeInBytes(const v8::FunctionCallbackInfo
 
   switch (format) {
     case SerializationFormat::croaring: {
-      auto cardinality = roaring_bitmap_get_cardinality(self->roaring);
+      auto cardinality = self->getSize();
       auto sizeasarray = cardinality * sizeof(uint32_t) + sizeof(uint32_t);
       auto portablesize = roaring_bitmap_portable_size_in_bytes(self->roaring);
       if (portablesize < sizeasarray || sizeasarray >= MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES - 1) {
@@ -1492,7 +1502,7 @@ class RoaringBitmapSerializer final {
     bool serializeArray = 0;
     switch (this->format) {
       case SerializationFormat::croaring: {
-        cardinality = roaring_bitmap_get_cardinality(this->self->roaring);
+        cardinality = this->self->getSize();
         auto sizeasarray = cardinality * sizeof(uint32_t) + sizeof(uint32_t);
         auto portablesize = roaring_bitmap_portable_size_in_bytes(this->self->roaring);
         if (portablesize < sizeasarray || sizeasarray >= MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES - 1) {
@@ -2496,8 +2506,11 @@ void RoaringBitmap32::swapStatic(const v8::FunctionCallbackInfo<v8::Value> & inf
 
   if (a != b) {
     auto * a_roaring = a->roaring;
+    auto a_sizeCache = a->sizeCache;
     a->roaring = b->roaring;
+    a->sizeCache = b->sizeCache;
     b->roaring = a_roaring;
+    b->sizeCache = a_sizeCache;
 
     a->invalidate();
     b->invalidate();

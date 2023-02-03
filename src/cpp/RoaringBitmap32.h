@@ -39,13 +39,23 @@ class RoaringBitmap32 final {
   static const constexpr int64_t FROZEN_COUNTER_SOFT_FROZEN = -1;
   static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
 
-  static const uint64_t objectToken = OBJECT_TOKEN;
-
   roaring_bitmap_t * roaring;
+  const uint64_t objectToken = OBJECT_TOKEN;
+  int64_t sizeCache;
   uint64_t version;
   int64_t frozenCounter;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
   v8utils::TypedArrayContent<uint8_t> frozenStorage;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+
+  inline size_t getSize() const {
+    int64_t size = this->sizeCache;
+    if (size < 0) {
+      const roaring_bitmap_t_ptr roaring = this->roaring;
+      size = roaring != nullptr ? (int64_t)roaring_bitmap_get_cardinality(roaring) : 0;
+      const_cast<RoaringBitmap32 *>(this)->sizeCache = size;
+    }
+    return (size_t)size;
+  }
 
   inline bool isFrozen() const { return this->frozenCounter != 0; }
   inline bool isFrozenHard() const { return this->frozenCounter > 0 || this->frozenCounter == FROZEN_COUNTER_HARD_FROZEN; }
@@ -62,7 +72,10 @@ class RoaringBitmap32 final {
     }
   }
 
-  inline void invalidate() { ++this->version; }
+  inline void invalidate() {
+    this->sizeCache = -1;
+    ++this->version;
+  }
 
   bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance);
 
@@ -172,17 +185,17 @@ class RoaringBitmap32BufferedIterator {
  public:
   static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152495421;
 
-  static const uint64_t objectToken = OBJECT_TOKEN;
+  const uint64_t objectToken = OBJECT_TOKEN;
 
   enum { allocatedMemoryDelta = 1024 };
 
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
   roaring_uint32_iterator_t it;
   uint64_t bitmapVersion;
   RoaringBitmap32 * bitmapInstance;
   v8utils::TypedArrayContent<uint32_t> bufferContent;
 
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
 
   static v8::Eternal<v8::FunctionTemplate> constructorTemplate;
   static v8::Eternal<v8::Function> constructor;
