@@ -595,6 +595,14 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   rangeUint32Array(offset: number, output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
 
   /**
+   * Same as toUint32Array
+   * @param {TOutput} output The output array.
+   * @returns {Uint32Array} The output array. Limited to the resulting size.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  rangeUint32Array(output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
+
+  /**
    * Creates a new plain JS array and fills it with all the values in the bitmap.
    *
    * The returned array may be very big, use this function only when you know what you are doing.

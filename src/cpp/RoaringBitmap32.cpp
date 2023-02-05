@@ -980,38 +980,46 @@ void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value>
   int offsetArgIndex = -1;
   int limitArgIndex = -1;
 
-  if (info.Length() < 2) {
-    return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - missing arguments");
-  }
-
   if (info[0]->IsNumber()) {
     offsetArgIndex = 0;
-    limitArgIndex = 1;
-    if (info.Length() > 2 && !info[2]->IsUndefined()) {
-      outputArgIndex = 2;
+
+    if (info.Length() > 1) {
+      if (info[1]->IsNumber()) {
+        limitArgIndex = 1;
+        if (info.Length() > 2 && !info[2]->IsUndefined()) {
+          outputArgIndex = 2;
+        }
+      } else {
+        outputArgIndex = 1;
+      }
     }
   } else {
     outputArgIndex = 0;
-    offsetArgIndex = 1;
-    if (info.Length() > 2 && !info[2]->IsUndefined()) {
-      limitArgIndex = 2;
+    if (info.Length() > 1) {
+      offsetArgIndex = 1;
+      if (info.Length() > 2 && !info[2]->IsUndefined()) {
+        limitArgIndex = 2;
+      }
     }
   }
 
+  size_t offset = 0;
   if (offsetArgIndex == -1) {
-    return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - missing offset argument");
+    if (outputArgIndex == -1) {
+      return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - offset or output argument is missing");
+    }
+  } else {
+    if (!info[offsetArgIndex]->NumberValue(isolate->GetCurrentContext()).To(&num) || std::isnan(num)) {
+      return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - limit argument must be a valid integer");
+    }
+    offset = (size_t)std::min(std::max(num, 0.0), 4294967296.0);
   }
-
-  if (!info[offsetArgIndex]->NumberValue(isolate->GetCurrentContext()).To(&num) || std::isnan(num)) {
-    return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - limit argument must be a valid integer");
-  }
-  size_t offset = (size_t)std::min(std::max(num, 0.0), 4294967296.0);
 
   if (limitArgIndex == -1 && outputArgIndex == -1) {
     return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - missing limit or output argument");
   }
 
-  size_t limit = 0x100000000;
+  size_t limit = 4294967296;
   if (limitArgIndex != -1) {
     if (!info[limitArgIndex]->NumberValue(isolate->GetCurrentContext()).To(&num) || std::isnan(num)) {
       return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - limit argument must be a valid integer");
@@ -1022,17 +1030,12 @@ void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value>
   v8utils::TypedArrayContent<uint32_t> typedArrayContent;
 
   if (outputArgIndex != -1) {
-    if (!argumentIsValidUint32ArrayOutput(info[2]) || !typedArrayContent.set(isolate, info[2])) {
+    if (!argumentIsValidUint32ArrayOutput(info[outputArgIndex]) || !typedArrayContent.set(isolate, info[outputArgIndex])) {
       return v8utils::throwError(
         isolate, "RoaringBitmap32::rangeUint32Array - output argument must be a UInt32Array, Int32Array or ArrayBuffer");
     }
     limit = std::min(limit, typedArrayContent.length);
   }
-
-  if (info.Length() < 2 || !info[0]->NumberValue(isolate->GetCurrentContext()).To(&num) || std::isnan(num)) {
-    return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - first argument must be a valid integer");
-  }
-  offset = (size_t)std::min(std::max(num, 0.0), 4294967296.0);
 
   size_t size;
   auto cardinality = self->getSize();
@@ -1063,8 +1066,12 @@ void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value>
   }
 
   if (size > 0) {
-    if (!roaring_bitmap_range_uint32_array(self->roaring, offset, limit, typedArrayContent.data)) {
-      return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - failed to build the range");
+    if (offset == 0 && limit == cardinality) {
+      roaring_bitmap_to_uint32_array(self->roaring, typedArrayContent.data);
+    } else {
+      if (!roaring_bitmap_range_uint32_array(self->roaring, offset, limit, typedArrayContent.data)) {
+        return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - failed to build the range");
+      }
     }
   }
 

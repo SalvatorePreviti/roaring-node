@@ -409,8 +409,38 @@ describe("RoaringBitmap32 basic", () => {
     it("limits correctly if the output array is too small", () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
       const output = new Uint32Array(3);
-      expect(Array.from(bitmap.rangeUint32Array(0, 2, output))).to.deep.eq([1, 2]);
+      const result = bitmap.rangeUint32Array(0, 2, output);
+      expect(Array.from(result)).to.deep.eq([1, 2]);
       expect(Array.from(output)).deep.equal([1, 2, 0]);
+      expect(result.buffer).eq(output.buffer);
+    });
+
+    it("limits correctly if the output array is too small with two arguments", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
+      const output = new Uint32Array(3);
+      expect(Array.from(bitmap.rangeUint32Array(4, output))).to.deep.eq([50, 70, 100]);
+      expect(output).eq(output);
+    });
+
+    it("limits correctly if the output array is too small with two arguments", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
+      const output = new Uint32Array(3);
+      expect(Array.from(bitmap.rangeUint32Array(output, 4))).to.deep.eq([50, 70, 100]);
+      expect(output).eq(output);
+    });
+
+    it("limits correctly if the output array is too small with 3 arguments", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
+      const output = new Uint32Array(3);
+      expect(Array.from(bitmap.rangeUint32Array(output, 4, 200))).to.deep.eq([50, 70, 100]);
+      expect(output).eq(output);
+    });
+
+    it("accepts a single argument of UInt32Array", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
+      const output = new Uint32Array(3);
+      expect(Array.from(bitmap.rangeUint32Array(output))).to.deep.eq([1, 2, 10]);
+      expect(output).eq(output);
     });
   });
 
