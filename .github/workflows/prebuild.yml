@@ -22,7 +22,7 @@ jobs:
       - run: npm i -g node-gyp@latest
       - run: npm install
       - run: npm test
-      - run: ./scripts/test-memory-leaks.js
+      - run: node --expose-gc ./scripts/test-memory-leaks.js
       - name: Prebuild
         env:
           PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
@@ -43,7 +43,7 @@ jobs:
       - run: npm i -g node-gyp@latest
       - run: npm install
       - run: npm test
-      - run: ./scripts/test-memory-leaks.js
+      - run: node --expose-gc ./scripts/test-memory-leaks.js
       - name: Prebuild
         env:
           PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
@@ -65,7 +65,7 @@ jobs:
       - run: npm install
       - run: npm i node-gyp@latest
       - run: npm test
-      - run: ./scripts/test-memory-leaks.js
+      - run: node --expose-gc ./scripts/test-memory-leaks.js
       - name: Prebuild
         env:
           PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
