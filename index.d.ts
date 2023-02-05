@@ -761,22 +761,6 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   ): Promise<Buffer>;
 
   /**
-   * Deserializes the bitmap from an Uint8Array or a Buffer.
-   *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
-   * The portable version is meant to be compatible with Java and Go versions.
-   *
-   * @param {Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer} serialized An Uint8Array or a node Buffer that contains the serialized data.
-   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
-   * @returns {this} This ReadonlyRoaringBitmap32 instance.
-   * @memberof ReadonlyRoaringBitmap32
-   */
-  deserialize(
-    serialized: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
-    format: DeserializationFormatType,
-  ): this;
-
-  /**
    * Returns a new ReadonlyRoaringBitmap32 that is a copy of this bitmap, same as new ReadonlyRoaringBitmap32(copy)
    *
    * @returns {RoaringBitmap32} A cloned RoaringBitmap32 instance
@@ -1160,6 +1144,22 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * The readonlyView bitmap is readonly, so it is not possible to modify it.
    */
   asReadonlyView(): ReadonlyRoaringBitmap32;
+
+  /**
+   * Deserializes the bitmap from an Uint8Array or a Buffer.
+   *
+   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
+   * The portable version is meant to be compatible with Java and Go versions.
+   *
+   * @param {Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
+   * @returns {this} This ReadonlyRoaringBitmap32 instance.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  deserialize(
+    serialized: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
+    format: DeserializationFormatType,
+  ): this;
 }
 
 /**
