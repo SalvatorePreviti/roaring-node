@@ -497,10 +497,22 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    *
    * This function is faster than calling new Uint32Array(bitmap);
    *
+   * See rangeUint32Array to paginate.
+   *
    * @returns A new Uint32Array instance containing all the items in the set in order.
    * @memberof ReadonlyRoaringBitmap32
    */
   toUint32Array(): Uint32Array;
+
+  /**
+   * Creates a new Uint32Array and fills it with all the values in the bitmap up to the given length.
+   *
+   * See rangeUint32Array to paginate.
+   *
+   * @returns A new Uint32Array instance containing all the items in the set in order.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  toUint32Array(maxSize: number): Uint32Array;
 
   /**
    * Copies all the values in the roaring bitmap to an Uint32Array.
@@ -508,12 +520,13 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * This function is faster than calling new Uint32Array(bitmap);
    * Throws if the given array is not a valid Uint32Array or Int32Array or is not big enough.
    *
-   * @template TOutput The type of the output array.
+   * See rangeUint32Array to paginate.
+   *
    * @param {TOutput} output The output array.
-   * @returns {TOutput} The output array.
+   * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  toUint32Array<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(output: TOutput): TOutput;
+  toUint32Array(output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
 
   /**
    * Creates a new Uint32Array and fills it with all the values in the bitmap, asynchronously.
@@ -524,6 +537,8 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * Use this function only when you know what you are doing.
    *
    * This function is faster than calling new Uint32Array(bitmap);
+   *
+   * See rangeUint32Array to paginate.
    *
    * @returns A new Uint32Array instance containing all the items in the set in order.
    * @memberof ReadonlyRoaringBitmap32
@@ -537,14 +552,24 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * This function is faster than calling new Uint32Array(bitmap);
    * Throws if the given array is not a valid Uint32Array or Int32Array or is not big enough.
    *
-   * @template TOutput The type of the output array.
+   * See rangeUint32Array to paginate.
+   *
    * @param {TOutput} output The output array.
-   * @returns {TOutput} The output array.
+   * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  toUint32ArrayAsync<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(
-    output: TOutput,
-  ): Promise<TOutput>;
+  toUint32ArrayAsync(output: Uint32Array | Int32Array | ArrayBuffer): Promise<Uint32Array>;
+
+  /**
+   * toUint32Array array with pagination
+   * @returns A new Uint32Array instance containing paginated items in the set in order.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  rangeUint32Array(
+    output: Uint32Array | Int32Array | ArrayBuffer,
+    offset: number,
+    limit?: number | undefined,
+  ): Uint32Array;
 
   /**
    * toUint32Array array with pagination
@@ -555,16 +580,19 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
 
   /**
    * toUint32Array array with pagination
-   * @template TOutput The type of the output array.
    * @param {TOutput} output The output array.
-   * @returns {TOutput} The output array.
+   * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  rangeUint32Array<TOutput extends Uint32Array | Int32Array | ArrayBuffer = Uint32Array>(
-    offset: number,
-    limit: number,
-    output: TOutput,
-  ): TOutput;
+  rangeUint32Array(offset: number, limit: number, output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
+
+  /**
+   * toUint32Array array with pagination
+   * @param {TOutput} output The output array.
+   * @returns {Uint32Array} The output array. Limited to the resulting size.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  rangeUint32Array(offset: number, output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
 
   /**
    * Creates a new plain JS array and fills it with all the values in the bitmap.
@@ -585,7 +613,6 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @template TOutput The type of the output array.
    * @param {TOutput} output The output array.
    * @param {number} [maxLength] The maximum number of elements to return.
-   * @param {number} [offset] The offset in the output array to start writing.
    * @returns {TOutput} The output array.
    * @memberof ReadonlyRoaringBitmap32
    */
@@ -646,7 +673,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Buffer} A new node Buffer that contains the serialized bitmap.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serialize(format: SerializationFormatType): Buffer;
+  serialize(format: SerializationFormatType, _output?: undefined): Buffer;
 
   /**
    * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
@@ -657,15 +684,10 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    *
    * @param {boolean} format If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @param {Buffer} output The node Buffer where to write the serialized data.
-   * @param {number} [outputStartIndex=0] The index where to start writing the serialized data.
-   * @returns {Buffer} The output Buffer.
+   * @returns {Buffer} The output Buffer. If the input buffer was exactly of the same size. Otherwise, a new buffer backed by the same storage is returned, with the correct offset and length.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
-    format: SerializationFormatType,
-    output: TOutput,
-    outputStartIndex?: number,
-  ): TOutput;
+  serialize(format: SerializationFormatType, output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer): Buffer;
 
   /**
    * Serializes the bitmap into the given Buffer, starting to write at position 0.
@@ -676,31 +698,10 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    *
    * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @param {Buffer} output The node Buffer where to write the serialized data.
-   * @returns {Buffer} The output Buffer.
+   * @returns {Buffer} The output Buffer. If the input buffer was exactly of the same size. Otherwise, a new buffer backed by the same storage is returned, with the correct offset and length.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
-    output: TOutput,
-    format: SerializationFormatType,
-  ): TOutput;
-
-  /**
-   * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
-   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
-   *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
-   * The portable version is meant to be compatible with Java and Go versions.
-   *
-   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
-   * @param {Buffer} output The node Buffer where to write the serialized data.
-   * @returns {Buffer} The output Buffer.
-   * @memberof ReadonlyRoaringBitmap32
-   */
-  serialize<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
-    output: TOutput,
-    outputStartIndex: number,
-    format: SerializationFormatType,
-  ): TOutput;
+  serialize(output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer, format: SerializationFormatType): Buffer;
 
   /**
    * Serializes the bitmap into a new Buffer.
@@ -713,7 +714,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Buffer} A new node Buffer that contains the serialized bitmap.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serializeAsync(format: SerializationFormatType): Promise<Buffer>;
+  serializeAsync(format: SerializationFormatType, _output?: undefined): Promise<Buffer>;
 
   /**
    * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
@@ -725,15 +726,13 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    *
    * @param {boolean} format If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @param {Buffer} output The node Buffer where to write the serialized data.
-   * @param {number} [outputStartIndex=0] The index where to start writing the serialized data.
-   * @returns {Buffer} The output Buffer.
+   * @returns {Promise<Buffer>} The output Buffer. If the input buffer was exactly of the same size, the same buffer is returned. Otherwise, a new buffer backed by the same storage is returned, with the correct offset and length.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
+  serializeAsync(
     format: SerializationFormatType,
-    output: TOutput,
-    outputStartIndex?: number,
-  ): Promise<TOutput>;
+    output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
+  ): Promise<Buffer>;
 
   /**
    * Serializes the bitmap into the given Buffer, starting to write at position 0.
@@ -745,32 +744,13 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    *
    * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @param {Buffer} output The node Buffer where to write the serialized data.
-   * @returns {Buffer} The output Buffer.
+   * @returns {Promise<Buffer>} The output Buffer. If the input buffer was exactly of the same size, the same buffer is returned. Otherwise, a new buffer backed by the same storage is returned, with the correct offset and length.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
-    output: TOutput,
+  serializeAsync(
+    output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
     format: SerializationFormatType,
-  ): Promise<TOutput>;
-
-  /**
-   * Serializes the bitmap into the given Buffer, starting to write at the given outputStartIndex position.
-   * The bitmap will be temporarily frozen until the operation completes.
-   * The operation will fail with an error if the buffer is smaller than what getSerializationSizeInBytes(format) returns.
-   *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
-   * The portable version is meant to be compatible with Java and Go versions.
-   *
-   * @param {boolean} portable If false, optimized C/C++ format is used. If true, Java and Go portable format is used.
-   * @param {Buffer} output The node Buffer where to write the serialized data.
-   * @returns {Buffer} The output Buffer.
-   * @memberof ReadonlyRoaringBitmap32
-   */
-  serializeAsync<TOutput extends Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer>(
-    output: TOutput,
-    outputStartIndex: number,
-    format: SerializationFormatType,
-  ): Promise<TOutput>;
+  ): Promise<Buffer>;
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.

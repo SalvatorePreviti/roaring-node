@@ -73,7 +73,6 @@ describe("bufferAlignedAllocUnsafe", () => {
     expect(isBufferAligned(buffer)).to.eq(true);
     expect(RoaringBitmap32.isBufferAligned(buffer, 32)).to.eq(true);
     expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).to.eq(true);
-    expect(RoaringBitmap32.isBufferAligned(buffer, 111)).to.eq(false);
   });
 
   describe("ensureBufferAligned", () => {

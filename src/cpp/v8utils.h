@@ -116,6 +116,12 @@ namespace v8utils {
     }
   }
 
+  v8::MaybeLocal<v8::Uint8Array> v8ValueToBufferWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length);
+
+  v8::MaybeLocal<v8::Uint32Array> v8ValueToUint32ArrayWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length);
+
   template <typename T>
   class TypedArrayContent final {
    public:
@@ -198,9 +204,11 @@ namespace v8utils {
     static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
       v8::Local<v8::Object> obj;
       if (isolate && value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
-        T * result = (T *)(obj->GetAlignedPointerFromInternalField(0));
-        if (result && result->objectToken == T::OBJECT_TOKEN) {
-          return result;
+        if (obj->InternalFieldCount() > 0) {
+          T * result = (T *)(obj->GetAlignedPointerFromInternalField(0));
+          if (result && result->objectToken == T::OBJECT_TOKEN) {
+            return result;
+          }
         }
       }
       return nullptr;
@@ -267,6 +275,8 @@ namespace v8utils {
 
     bool setCallback(v8::Local<v8::Value> callback);
 
+    inline bool hasStarted() const { return this->_started; }
+
     inline bool hasError() const { return this->_error != nullptr; }
 
     inline void setError(const_char_ptr_t error) {
@@ -287,7 +297,7 @@ namespace v8utils {
     virtual void work() = 0;
 
     // Called after the thread completes without errors, in the main thread.
-    virtual v8::Local<v8::Value> done();
+    virtual void done(v8::Local<v8::Value> & result);
 
     // Called after the thread completes, with or without errors, in the main thread.
     virtual void finally();
@@ -295,16 +305,17 @@ namespace v8utils {
    private:
     uv_work_t _task{};
     volatile const_char_ptr_t _error;
+    bool _started;
     volatile bool _completed;
     v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> _callback;
     v8::Persistent<v8::Promise::Resolver, v8::CopyablePersistentTraits<v8::Promise::Resolver>> _resolver;
 
-    v8::Local<v8::Value> _invokeDone();
     virtual bool _start();
     static void _complete(AsyncWorker * worker);
-    static void _resolveOrReject(AsyncWorker * worker);
+    static void _resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error);
     static void _work(uv_work_t * request);
     static void _done(uv_work_t * request, int status);
+    v8::Local<v8::Value> _makeError(v8::Local<v8::Value> error);
 
     friend class ParallelAsyncWorker;
   };

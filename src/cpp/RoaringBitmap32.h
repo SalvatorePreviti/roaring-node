@@ -49,6 +49,21 @@ class RoaringBitmap32 final {
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
   v8utils::TypedArrayContent<uint8_t> frozenStorage;
 
+  inline bool isEmpty() const {
+    if (this->sizeCache == 0) {
+      return true;
+    }
+    if (this->readonlyViewOf != nullptr) {
+      return this->readonlyViewOf->isEmpty();
+    }
+    const roaring_bitmap_t_ptr roaring = this->roaring;
+    bool result = roaring == nullptr || roaring_bitmap_is_empty(roaring);
+    if (result) {
+      const_cast<RoaringBitmap32 *>(this)->sizeCache = 0;
+    }
+    return result;
+  }
+
   inline size_t getSize() const {
     int64_t size = this->sizeCache;
     if (size < 0) {
@@ -180,7 +195,7 @@ class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
   virtual ~RoaringBitmap32FactoryAsyncWorker();
 
  protected:
-  v8::Local<v8::Value> done() override;
+  void done(v8::Local<v8::Value> & result) override;
 };
 
 class RoaringBitmap32BufferedIterator {

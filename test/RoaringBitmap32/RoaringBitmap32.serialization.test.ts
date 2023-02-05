@@ -215,17 +215,6 @@ describe("RoaringBitmap32 serialization", () => {
       expect(() => bitmap.serialize(true, buffer)).to.throw();
     });
 
-    it("throws if offset is not a number, infinity, NaN or negative or too big", () => {
-      const bitmap = new RoaringBitmap32(data);
-      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true));
-      expect(() => bitmap.serialize(true, buffer, 10.1)).to.throw();
-      expect(() => bitmap.serialize(true, buffer, Infinity)).to.throw();
-      expect(() => bitmap.serialize(true, buffer, NaN)).to.throw();
-      expect(() => bitmap.serialize(true, buffer, -1)).to.throw();
-      expect(() => bitmap.serialize(true, buffer, Number.MAX_SAFE_INTEGER)).to.throw();
-      expect(() => bitmap.serialize(true, buffer, buffer.length - 1)).to.throw();
-    });
-
     it("serializes to buffer (non portable)", () => {
       const bitmap = new RoaringBitmap32(data);
       const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(false));
@@ -249,16 +238,11 @@ describe("RoaringBitmap32 serialization", () => {
 
     it("handles offset correctly and deserialize correctly", () => {
       const bitmap = new RoaringBitmap32(data);
-      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) + 10);
-      expect(bitmap.serialize("portable", buffer, 10)).to.eq(buffer);
-      expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
-    });
-
-    it("handles offset correctly and deserialize correctly, inverted arguments", () => {
-      const bitmap = new RoaringBitmap32(data);
-      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) + 11);
-      expect(bitmap.serialize(buffer, 11, "portable")).to.eq(buffer);
-      expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 11), true).toArray()).to.deep.eq(data);
+      const serlength = bitmap.getSerializationSizeInBytes(true);
+      const buffer = Buffer.alloc(serlength + 30);
+      const serialized = bitmap.serialize("portable", Buffer.from(buffer.buffer, 10));
+      expect(Array.from(serialized)).to.deep.eq(Array.from(Buffer.from(buffer.buffer, 10, serlength)));
+      expect(RoaringBitmap32.deserialize(serialized, true).toArray()).to.deep.eq(data);
     });
   });
 
@@ -279,8 +263,11 @@ describe("RoaringBitmap32 serialization", () => {
 
     it("handles offset correctly and deserialize correctly", async () => {
       const bitmap = new RoaringBitmap32(data);
-      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) + 10);
-      expect(await bitmap.serializeAsync(true, buffer, 10)).to.eq(buffer);
+      const serlength = bitmap.getSerializationSizeInBytes(true);
+      const buffer = Buffer.alloc(serlength + 30);
+      const offsetted = await bitmap.serializeAsync(true, Buffer.from(buffer.buffer, 10));
+      expect(Array.from(offsetted)).to.deep.eq(Array.from(Buffer.from(buffer.buffer, 10, serlength)));
+      expect(offsetted.buffer).to.eq(buffer.buffer);
       expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
     });
 
@@ -304,17 +291,6 @@ describe("RoaringBitmap32 serialization", () => {
       await expect(bitmap.serializeAsync(true, buffer)).to.be.rejected;
     });
 
-    it("throws if offset is not a number, infinity, NaN or negative or too big", async () => {
-      const bitmap = new RoaringBitmap32(data);
-      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true));
-      await expect(bitmap.serializeAsync(true, buffer, 10.1)).to.be.rejected;
-      await expect(bitmap.serializeAsync(true, buffer, Infinity)).to.be.rejected;
-      await expect(bitmap.serializeAsync(true, buffer, NaN)).to.be.rejected;
-      await expect(bitmap.serializeAsync(true, buffer, -1)).to.be.rejected;
-      await expect(bitmap.serializeAsync(true, buffer, Number.MAX_SAFE_INTEGER)).to.be.rejected;
-      await expect(bitmap.serializeAsync(true, buffer, buffer.length - 1)).to.be.rejected;
-    });
-
     it("serializes to buffer (non portable)", async () => {
       const bitmap = new RoaringBitmap32(data);
       const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(false));
@@ -331,8 +307,11 @@ describe("RoaringBitmap32 serialization", () => {
 
     it("handles offset correctly and deserialize correctly", async () => {
       const bitmap = new RoaringBitmap32(data);
-      const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) + 10);
-      expect(await bitmap.serializeAsync(true, buffer, 10)).to.eq(buffer);
+      const serlength = bitmap.getSerializationSizeInBytes(true);
+      const buffer = Buffer.alloc(serlength + 20);
+      const offsetted = await bitmap.serializeAsync(true, Buffer.from(buffer.buffer, 10));
+      expect(Array.from(offsetted)).to.deep.eq(Array.from(Buffer.from(buffer.buffer, 10, serlength)));
+      expect(offsetted.buffer).to.eq(buffer.buffer);
       expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
     });
   });

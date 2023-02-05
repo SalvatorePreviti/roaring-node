@@ -233,9 +233,87 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
+  v8::MaybeLocal<v8::Uint8Array> v8ValueToBufferWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length) {
+    v8::EscapableHandleScope scope(isolate);
+    v8::Local<v8::Value> localValue;
+    if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
+      if (localValue->IsUint8Array()) {
+        v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
+        if (!array.IsEmpty()) {
+          if (node::Buffer::HasInstance(localValue) && node::Buffer::Length(localValue) == length) {
+            return scope.Escape(array);
+          }
+          if (array->ByteLength() >= length) {
+            return scope.EscapeMaybe(node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length));
+          }
+        }
+        v8utils::throwError(isolate, "Output Buffer is too small");
+      } else if (localValue->IsTypedArray()) {
+        auto array = localValue.As<v8::TypedArray>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return scope.EscapeMaybe(node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length));
+        }
+        v8utils::throwError(isolate, "Output typed array is too small");
+      } else if (localValue->IsArrayBufferView()) {
+        auto array = localValue.As<v8::ArrayBufferView>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return scope.EscapeMaybe(node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length));
+        }
+        v8utils::throwError(isolate, "Output ArrayBufferView is too small");
+      } else if (localValue->IsArrayBuffer()) {
+        auto array = localValue.As<v8::ArrayBuffer>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return scope.EscapeMaybe(node::Buffer::New(isolate, array, 0, length));
+        }
+        v8utils::throwError(isolate, "Output ArrayBuffer is too small");
+      }
+    }
+    return {};
+  }
+
+  v8::MaybeLocal<v8::Uint32Array> v8ValueToUint32ArrayWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length) {
+    v8::EscapableHandleScope scope(isolate);
+    v8::Local<v8::Value> localValue;
+    if (!value.ToLocal(&localValue)) {
+      return {};
+    }
+    if (localValue->IsUint32Array()) {
+      auto array = localValue.As<v8::Uint32Array>();
+      auto arrayLength = array->Length();
+      if (arrayLength == length) {
+        return scope.Escape(array);
+      }
+      if (arrayLength > length) {
+        return scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
+      }
+      v8utils::throwError(isolate, "Output Uint32Array is too small");
+    } else if (localValue->IsTypedArray()) {
+      auto array = localValue.As<v8::TypedArray>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        return scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
+      }
+      v8utils::throwError(isolate, "Output Typed array is too small");
+    } else if (localValue->IsArrayBufferView()) {
+      auto array = localValue.As<v8::ArrayBufferView>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        return scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
+      }
+      v8utils::throwError(isolate, "Output ArrayBufferView is too small");
+    } else if (localValue->IsArrayBuffer()) {
+      auto array = localValue.As<v8::ArrayBuffer>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        return scope.Escape(v8::Uint32Array::New(array, 0, length));
+      }
+      v8utils::throwError(isolate, "Output ArrayBuffer is too small");
+    }
+    return {};
+  }
+
   /////////////// AsyncWorker ///////////////
 
-  AsyncWorker::AsyncWorker(v8::Isolate * isolate) : isolate(isolate), _error(nullptr), _completed(false) {
+  AsyncWorker::AsyncWorker(v8::Isolate * isolate) : isolate(isolate), _error(nullptr), _started(false), _completed(false) {
     _task.data = this;
   }
 
@@ -248,22 +326,31 @@ namespace v8utils {
   }
 
   bool AsyncWorker::_start() {
-    if (this->hasError()) {
-      return false;
-    }
-    this->before();
-    if (this->hasError()) {
-      return false;
-    }
+    this->_started = true;
     if (uv_queue_work(uv_default_loop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
       setError("Error starting async thread");
       return false;
     }
-
     return true;
   }
 
+  v8::Local<v8::Value> AsyncWorker::_makeError(v8::Local<v8::Value> error) {
+    if (error.IsEmpty() || error->IsNull() || error->IsUndefined()) {
+      this->setError("Exception in async operation");
+      return {};
+    }
+    if (!error->IsObject()) {
+      v8::MaybeLocal<v8::String> message = error->ToString(isolate->GetCurrentContext());
+      if (message.IsEmpty()) {
+        message = NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized);
+      }
+      error = v8::Exception::Error(error.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
+    }
+    return error;
+  }
+
   v8::Local<v8::Value> AsyncWorker::run(AsyncWorker * worker) {
+    v8::EscapableHandleScope scope(worker->isolate);
     v8::Local<v8::Value> returnValue;
 
     if (worker->_callback.IsEmpty()) {
@@ -278,20 +365,40 @@ namespace v8utils {
       v8::Local<v8::Promise::Resolver> resolver = resolverMaybe.ToLocalChecked();
 
       returnValue = resolver->GetPromise();
-
-      worker->_resolver.Reset(isolate, resolver);
+      if (returnValue.IsEmpty()) {
+        worker->setError("Failed to create Promise");
+      } else {
+        worker->_resolver.Reset(isolate, resolver);
+      }
     }
 
-    if (!worker->_start()) {
-      _resolveOrReject(worker);
+    v8::TryCatch tryCatch(worker->isolate);
+    worker->before();
+
+    v8::Local<v8::Value> error;
+
+    if (worker->hasError()) {
+      _resolveOrReject(worker, error);
+    } else if (tryCatch.HasCaught()) {
+      error = worker->_makeError(tryCatch.Exception());
+      _resolveOrReject(worker, error);
+    } else if (!worker->_start()) {
+      if (tryCatch.HasCaught()) {
+        error = worker->_makeError(tryCatch.Exception());
+      }
+      _resolveOrReject(worker, error);
     }
 
-    return returnValue;
+    if (returnValue.IsEmpty()) {
+      returnValue = v8::Undefined(worker->isolate);
+    }
+
+    return scope.Escape(returnValue);
   }
 
   void AsyncWorker::before() {}
 
-  v8::Local<v8::Value> AsyncWorker::done() { return {}; }
+  void AsyncWorker::done(v8::Local<v8::Value> & result) {}
 
   void AsyncWorker::finally() {}
 
@@ -316,48 +423,7 @@ namespace v8utils {
     _complete(worker);
   }
 
-  v8::Local<v8::Value> AsyncWorker::_invokeDone() {
-    v8::EscapableHandleScope scope(isolate);
-
-    bool isError = false;
-
-    v8::Local<v8::Value> result;
-    if (_error == nullptr) {
-      v8::TryCatch tryCatch(isolate);
-
-      result = this->done();
-
-      if (tryCatch.HasCaught()) {
-        isError = true;
-        result = tryCatch.Exception();
-        if (result.IsEmpty() || result->IsNull() || result->IsUndefined()) {
-          setError("Exception in async operation");
-        } else if (!result->IsObject()) {
-          v8::MaybeLocal<v8::String> message = result->ToString(isolate->GetCurrentContext());
-          if (message.IsEmpty()) {
-            message = NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized);
-          }
-          result = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
-        }
-      }
-    }
-
-    if (_error != nullptr && result.IsEmpty()) {
-      isError = true;
-      v8::MaybeLocal<v8::String> message = v8::String::NewFromUtf8(isolate, _error, v8::NewStringType::kNormal);
-      result = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
-    }
-
-    if (isError && _error == nullptr) {
-      _error = "Async generated an exception";
-    }
-
-    this->finally();
-
-    return scope.Escape(result);
-  }
-
-  void AsyncWorker::_resolveOrReject(AsyncWorker * worker) {
+  void AsyncWorker::_resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error) {
     if (worker->_completed) {
       return;
     }
@@ -367,16 +433,43 @@ namespace v8utils {
     v8::Isolate * isolate = worker->isolate;
     v8::HandleScope scope(isolate);
 
-    v8::Local<v8::Value> result = worker->_invokeDone();
+    v8::TryCatch tryCatch(isolate);
 
-    bool hasError = worker->hasError();
+    v8::Local<v8::Value> result;
+
+    if (worker->_error == nullptr && error.IsEmpty()) {
+      worker->done(result);
+
+      if (tryCatch.HasCaught()) {
+        error = worker->_makeError(tryCatch.Exception());
+        tryCatch.Reset();
+      }
+    }
+
+    worker->finally();
+
+    if (tryCatch.HasCaught()) {
+      error = worker->_makeError(tryCatch.Exception());
+      tryCatch.Reset();
+    }
+
+    if (result.IsEmpty() && error.IsEmpty()) {
+      worker->setError("Async operation failed");
+    }
+
+    if (worker->hasError() && error.IsEmpty()) {
+      v8::MaybeLocal<v8::String> message =
+        v8::String::NewFromUtf8(isolate, worker->_error, v8::NewStringType::kInternalized);
+      error = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
+    }
+
     auto context = isolate->GetCurrentContext();
     if (worker->_resolver.IsEmpty()) {
       v8::Local<v8::Function> callback = worker->_callback.Get(isolate);
       std::atomic_thread_fence(std::memory_order_seq_cst);
       delete worker;
-      if (hasError) {
-        v8::Local<v8::Value> argv[] = {result, v8::Undefined(isolate)};
+      if (!error.IsEmpty()) {
+        v8::Local<v8::Value> argv[] = {error, v8::Undefined(isolate)};
         v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
       } else {
         v8::Local<v8::Value> argv[] = {v8::Null(isolate), result};
@@ -386,10 +479,12 @@ namespace v8utils {
       v8::Local<v8::Promise::Resolver> resolver = worker->_resolver.Get(isolate);
       std::atomic_thread_fence(std::memory_order_seq_cst);
       delete worker;
-      if (hasError) {
-        v8utils::ignoreMaybeResult(resolver->Reject(context, result));
-      } else {
+      if (!error.IsEmpty()) {
+        v8utils::ignoreMaybeResult(resolver->Reject(context, error));
+      } else if (!result.IsEmpty()) {
         v8utils::ignoreMaybeResult(resolver->Resolve(context, result));
+      } else {
+        v8utils::ignoreMaybeResult(resolver->Reject(context, v8::Undefined(isolate)));
       }
     }
   }
@@ -397,7 +492,8 @@ namespace v8utils {
   void AsyncWorker::_complete(AsyncWorker * worker) {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     v8::Isolate * isolate = worker->isolate;
-    _resolveOrReject(worker);
+    v8::Local<v8::Value> error;
+    _resolveOrReject(worker, error);
 #if NODE_MAJOR_VERSION > 13
     isolate->PerformMicrotaskCheckpoint();
 #else
