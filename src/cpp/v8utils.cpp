@@ -10,6 +10,8 @@
 #  define atomicDecrement32(ptr) __sync_sub_and_fetch(ptr, 1)
 #endif
 
+#include <iostream>
+
 #if defined(__APPLE__)
 #  include <malloc/malloc.h>
 #else
@@ -141,6 +143,7 @@ void gcaware_aligned_free(void * memory) {
 
 v8::Eternal<v8::Object> JSTypes::Uint32Array;
 v8::Eternal<v8::Function> JSTypes::Uint32Array_from;
+v8::Eternal<v8::Function> JSTypes::Buffer_from;
 
 void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
   v8::HandleScope scope(isolate);
@@ -150,6 +153,12 @@ void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & g
                        .ToLocalChecked()
                        ->ToObject(context)
                        .ToLocalChecked();
+
+  Buffer_from.Set(
+    isolate,
+    global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Buffer_from", v8::NewStringType::kInternalized))
+      .ToLocalChecked()
+      .As<v8::Function>());
 
   JSTypes::Uint32Array.Set(isolate, uint32Array);
   JSTypes::Uint32Array_from.Set(
@@ -233,82 +242,111 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  v8::MaybeLocal<v8::Uint8Array> v8ValueToBufferWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length) {
-    v8::EscapableHandleScope scope(isolate);
+  static bool _bufferFromArrayBuffer(
+    v8::Isolate * isolate, v8::Local<v8::Value> buffer, size_t offset, size_t length, v8::Local<v8::Value> & result) {
+    if (buffer.IsEmpty()) {
+      return false;
+    }
+#if NODE_MAJOR_VERSION > 12
+    auto buf = buffer.As<v8::ArrayBuffer>();
+    return !buf.IsEmpty() && node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
+#else
+    v8::Local<v8::Value> argv[] = {
+      buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
+    return JSTypes::Buffer_from.Get(isolate)
+      ->Call(isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 3, argv)
+      .ToLocal(&result);
+#endif
+  }
+
+  bool v8ValueToBufferWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
     v8::Local<v8::Value> localValue;
     if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
       if (localValue->IsUint8Array()) {
         v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
         if (!array.IsEmpty()) {
           if (node::Buffer::HasInstance(localValue) && node::Buffer::Length(localValue) == length) {
-            return scope.Escape(array);
+            result = array;
+            return true;
           }
           if (array->ByteLength() >= length) {
-            return scope.EscapeMaybe(node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length));
+            return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
           }
         }
-        v8utils::throwError(isolate, "Output Buffer is too small");
-      } else if (localValue->IsTypedArray()) {
+        return false;
+      }
+      if (localValue->IsTypedArray()) {
         auto array = localValue.As<v8::TypedArray>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return scope.EscapeMaybe(node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length));
+          return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
         }
-        v8utils::throwError(isolate, "Output typed array is too small");
-      } else if (localValue->IsArrayBufferView()) {
+        return false;
+      }
+      if (localValue->IsArrayBufferView()) {
         auto array = localValue.As<v8::ArrayBufferView>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return scope.EscapeMaybe(node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length));
+          return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
         }
-        v8utils::throwError(isolate, "Output ArrayBufferView is too small");
-      } else if (localValue->IsArrayBuffer()) {
+        return false;
+      }
+      if (localValue->IsArrayBuffer()) {
         auto array = localValue.As<v8::ArrayBuffer>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return scope.EscapeMaybe(node::Buffer::New(isolate, array, 0, length));
+          return _bufferFromArrayBuffer(isolate, array, 0, length, result);
         }
-        v8utils::throwError(isolate, "Output ArrayBuffer is too small");
+        return false;
       }
     }
-    return {};
+    return false;
   }
 
-  v8::MaybeLocal<v8::Uint32Array> v8ValueToUint32ArrayWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length) {
-    v8::EscapableHandleScope scope(isolate);
+  bool v8ValueToUint32ArrayWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
     v8::Local<v8::Value> localValue;
     if (!value.ToLocal(&localValue)) {
       return {};
     }
     if (localValue->IsUint32Array()) {
       auto array = localValue.As<v8::Uint32Array>();
-      auto arrayLength = array->Length();
-      if (arrayLength == length) {
-        return scope.Escape(array);
+      if (!array.IsEmpty()) {
+        auto arrayLength = array->Length();
+        if (arrayLength == length) {
+          result = array;
+          return true;
+        }
+        if (arrayLength > length) {
+          result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+          return !result.IsEmpty();
+        }
       }
-      if (arrayLength > length) {
-        return scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
-      }
-      v8utils::throwError(isolate, "Output Uint32Array is too small");
-    } else if (localValue->IsTypedArray()) {
+      return false;
+    }
+    if (localValue->IsTypedArray()) {
       auto array = localValue.As<v8::TypedArray>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        return scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
+        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+        return !result.IsEmpty();
       }
-      v8utils::throwError(isolate, "Output Typed array is too small");
-    } else if (localValue->IsArrayBufferView()) {
+      return false;
+    }
+    if (localValue->IsArrayBufferView()) {
       auto array = localValue.As<v8::ArrayBufferView>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        return scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
+        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+        return !result.IsEmpty();
       }
-      v8utils::throwError(isolate, "Output ArrayBufferView is too small");
-    } else if (localValue->IsArrayBuffer()) {
+      return false;
+    }
+    if (localValue->IsArrayBuffer()) {
       auto array = localValue.As<v8::ArrayBuffer>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        return scope.Escape(v8::Uint32Array::New(array, 0, length));
+        result = v8::Uint32Array::New(array, 0, length);
+        return !result.IsEmpty();
       }
-      v8utils::throwError(isolate, "Output ArrayBuffer is too small");
+      return false;
     }
-    return {};
+    return false;
   }
 
   /////////////// AsyncWorker ///////////////

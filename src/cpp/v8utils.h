@@ -44,6 +44,7 @@ class JSTypes {
  public:
   static v8::Eternal<v8::Object> Uint32Array;
   static v8::Eternal<v8::Function> Uint32Array_from;
+  static v8::Eternal<v8::Function> Buffer_from;
 
   static void initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
 };
@@ -116,11 +117,11 @@ namespace v8utils {
     }
   }
 
-  v8::MaybeLocal<v8::Uint8Array> v8ValueToBufferWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length);
+  bool v8ValueToBufferWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result);
 
-  v8::MaybeLocal<v8::Uint32Array> v8ValueToUint32ArrayWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length);
+  bool v8ValueToUint32ArrayWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result);
 
   template <typename T>
   class TypedArrayContent final {
