@@ -6676,7 +6676,7 @@ static inline container_t *container_remove_range(
 
             if (result_cardinality == 0) {
                 return NULL;
-            } else if (result_cardinality < DEFAULT_MAX_SIZE) {
+            } else if (result_cardinality <= DEFAULT_MAX_SIZE) {
                 *result_type = ARRAY_CONTAINER_TYPE;
                 bitset_reset_range(bitset->words, min, max+1);
                 bitset->cardinality = result_cardinality;
@@ -6715,15 +6715,7 @@ static inline container_t *container_remove_range(
             }
 
             run_container_remove_range(run, min, max);
-
-            if (run_container_serialized_size_in_bytes(run->n_runs) <=
-                    bitset_container_serialized_size_in_bytes()) {
-                *result_type = RUN_CONTAINER_TYPE;
-                return run;
-            } else {
-                *result_type = BITSET_CONTAINER_TYPE;
-                return bitset_container_from_run(run);
-            }
+            return convert_run_to_efficient_container(run, result_type);
         }
         default:
             __builtin_unreachable();
@@ -18135,7 +18127,7 @@ bool run_container_is_subset_array(const run_container_t* container1,
                                  container2->cardinality, start);
         stop_pos = advanceUntil(container2->array, stop_pos,
                                 container2->cardinality, stop);
-        if (start_pos == container2->cardinality) {
+        if (stop_pos == container2->cardinality) {
             return false;
         } else if (stop_pos - start_pos != stop - start ||
                    container2->array[start_pos] != start ||
