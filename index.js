@@ -23,7 +23,7 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 
 */
 
-const { isUint8Array, isInt8Array, isArrayBuffer } = require("util/types");
+const util = require("util");
 const roaring = require("./build/Release/roaring.node");
 // const { version: packageVersion } = require("./package.json");
 
@@ -125,6 +125,22 @@ defineProperty(RoaringBitmap32Iterator, "RoaringBitmap32Iterator", roaringBitmap
 
 function iterator() {
   return new RoaringBitmap32Iterator(this);
+}
+
+let isUint8Array;
+let isInt8Array;
+let isArrayBuffer;
+
+// eslint-disable-next-line node/no-unsupported-features/node-builtins
+const utilTypes = util.types; // util.types is supported only in Node.js 10+
+if (utilTypes) {
+  isUint8Array = utilTypes.isUint8Array;
+  isInt8Array = utilTypes.isInt8Array;
+  isArrayBuffer = utilTypes.isArrayBuffer;
+} else {
+  isUint8Array = (v) => v instanceof Uint8Array;
+  isInt8Array = (v) => v instanceof Int8Array;
+  isArrayBuffer = (v) => v instanceof ArrayBuffer;
 }
 
 if (!roaring.PackageVersion) {
