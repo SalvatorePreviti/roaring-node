@@ -1,4 +1,5 @@
 import {
+  asBuffer,
   RoaringBitmap32,
   bufferAlignedAlloc,
   bufferAlignedAllocUnsafe,
@@ -6,6 +7,63 @@ import {
   ensureBufferAligned,
 } from "../";
 import { expect } from "chai";
+
+describe("asBuffer", () => {
+  it("returns a buffer", () => {
+    const input = Buffer.alloc(3);
+    expect(input).to.eq(input);
+  });
+
+  it("wraps an array buffer", () => {
+    const input = new ArrayBuffer(3);
+    const output = asBuffer(input);
+    expect(output).to.be.instanceOf(Buffer);
+    expect(output.buffer).to.eq(input);
+  });
+
+  it("wraps an arraybuffer view", () => {
+    for (const ctor of [
+      Uint8Array,
+      Uint16Array,
+      Uint32Array,
+      Int8Array,
+      Int16Array,
+      Int32Array,
+      Float32Array,
+      Float64Array,
+      Uint8ClampedArray,
+    ]) {
+      const input = new ctor(3);
+      const output = asBuffer(input);
+      expect(output).to.be.instanceOf(Buffer);
+      expect(output.buffer).to.eq(input.buffer);
+      expect(output.byteOffset).to.eq(0);
+      expect(output.byteLength).to.eq(input.byteLength);
+    }
+  });
+
+  it("wraps an arraybuffer view with offset", () => {
+    for (const ctor of [
+      Uint8Array,
+      Uint16Array,
+      Uint32Array,
+      Int8Array,
+      Int16Array,
+      Int32Array,
+      Float32Array,
+      Float64Array,
+      Uint8ClampedArray,
+    ]) {
+      const sourceArrayBuffer = new ArrayBuffer(20 * ctor.BYTES_PER_ELEMENT);
+      const input = new ctor(sourceArrayBuffer, 8, 8);
+      const output = asBuffer(input);
+      expect(output).to.be.instanceOf(Buffer);
+      expect(output.buffer).to.eq(input.buffer);
+      expect(output.byteOffset).to.eq(input.byteOffset);
+      expect(output.byteLength).to.eq(input.byteLength);
+    }
+  });
+});
 
 describe("bufferAlignedAlloc", () => {
   it("exposes the bufferAlignedAlloc function", () => {

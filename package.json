@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -93,5 +93,5 @@
     "typescript": "^4.9.5"
   },
   "gypfile": true,
-  "roaring_version": "0.9.6"
+  "roaring_version": "0.9.8"
 }

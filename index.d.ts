@@ -54,6 +54,15 @@ export function bufferAlignedAlloc(size: number, alignment?: number): Buffer;
  */
 export function bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
 
+/**
+ * Given some kind of buffer or array buffer, returns a nodejs Buffer instance that contains the same data.
+ * The underlying ArrayBuffer is the same.
+ *
+ * @param buffer The source
+ * @returns A nodejs Buffer instance that contains the same data.
+ */
+export function asBuffer(buffer: Buffer | ArrayBufferView | TypedArray | ArrayBuffer): Buffer;
+
 export type TypedArray =
   | Uint8Array
   | Uint16Array

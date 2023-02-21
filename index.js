@@ -127,23 +127,42 @@ function iterator() {
   return new RoaringBitmap32Iterator(this);
 }
 
-let isUint8Array;
-let isInt8Array;
 let isArrayBuffer;
+let isArrayBufView;
 
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 const utilTypes = util.types; // util.types is supported only in Node.js 10+
 if (utilTypes) {
-  isUint8Array = utilTypes.isUint8Array;
-  isInt8Array = utilTypes.isInt8Array;
   isArrayBuffer = utilTypes.isArrayBuffer;
+  isArrayBufView = utilTypes.isArrayBufferView;
 } else {
-  isUint8Array = (v) => v instanceof Uint8Array;
-  isInt8Array = (v) => v instanceof Int8Array;
   isArrayBuffer = (v) => v instanceof ArrayBuffer;
+  isArrayBufView = (v) => ArrayBuffer.isView(v);
 }
 
-if (!roaring.PackageVersion) {
+function asBuffer(buffer) {
+  const result = asBufferUnsafe(buffer);
+  return Buffer.isBuffer(result) ? result : Buffer.from(result);
+}
+
+function asBufferUnsafe(buffer) {
+  if (Buffer.isBuffer(buffer)) {
+    return buffer;
+  }
+  if (isArrayBuffer(buffer)) {
+    return Buffer.from(buffer);
+  }
+  if (isArrayBufView(buffer)) {
+    return Buffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  }
+  return buffer;
+}
+
+const initializedSym = Symbol.for("roaring-node");
+
+if (!roaring[initializedSym]) {
+  Reflect.defineProperty(roaring, initializedSym, { value: true });
+
   const roaringBitmap32_proto = RoaringBitmap32.prototype;
   roaringBitmap32_proto[Symbol.iterator] = iterator;
   roaringBitmap32_proto.iterator = iterator;
@@ -169,7 +188,7 @@ if (!roaring.PackageVersion) {
   };
 
   roaringBitmap32_proto.map = function (fn, self, output = []) {
-    let index = 0;
+    let index = output.length;
     if (self === undefined) {
       for (const v of this) {
         output.push(fn(v, index++, this));
@@ -243,14 +262,9 @@ if (!roaring.PackageVersion) {
     if (typeof alignment !== "number" || alignment < 0 || alignment > 1024 || !Number.isInteger(alignment)) {
       throw new TypeError("ensureBufferAligned alignment must be an integer number between 0 and 1024");
     }
+    buffer = asBufferUnsafe(buffer);
     if (!Buffer.isBuffer(buffer)) {
-      if (buffer instanceof ArrayBuffer) {
-        buffer = Buffer.from(buffer);
-      } else if (isUint8Array(buffer) || isInt8Array(buffer) || isInt8Array(buffer) || isArrayBuffer(buffer)) {
-        buffer = Buffer.from(buffer.buffer);
-      } else {
-        throw new TypeError("ensureBufferAligned expects a Buffer instance");
-      }
+      throw new TypeError("ensureBufferAligned expects a Buffer instance");
     }
     if (!roaring.isBufferAligned(buffer, alignment)) {
       const aligned = roaring.bufferAlignedAlloc(buffer.length, alignment);
@@ -261,6 +275,8 @@ if (!roaring.PackageVersion) {
   });
 
   RoaringBitmap32.getRoaringUsedMemory = roaring.getRoaringUsedMemory;
+
+  roaring.asBuffer = asBuffer;
 
   roaring._initTypes({ Uint32Array, Buffer_from: Buffer.from });
 }
