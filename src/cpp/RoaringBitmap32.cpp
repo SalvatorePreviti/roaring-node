@@ -181,7 +181,9 @@ void InitModule(v8::Local<v8::Object> exports) {
   RoaringBitmap32BufferedIterator_Init(exports);
 }
 
-NODE_MODULE(roaring, InitModule);
+NODE_MODULE_INIT() { 
+  InitModule(exports); 
+};
 
 /////// enum parsing ///////
 
