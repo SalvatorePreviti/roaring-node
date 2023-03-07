@@ -12,10 +12,11 @@ class AddonData {
   v8::Eternal<v8::Function> Uint32Array_from;
   v8::Eternal<v8::Function> Buffer_from;
 
+  std::atomic<uint64_t> RoaringBitmap32_instances;
+
   v8::Eternal<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
   v8::Eternal<v8::Function> RoaringBitmap32_constructor;
 
-  std::atomic<uint64_t> RoaringBitmap32_instances;
   v8::Eternal<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
   v8::Eternal<v8::Function> RoaringBitmap32BufferedIterator_constructor;
 

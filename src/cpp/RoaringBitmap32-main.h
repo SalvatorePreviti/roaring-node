@@ -415,7 +415,7 @@ void RoaringBitmap32_swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info
 void RoaringBitmap32_toString(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
-  info.GetReturnValue().Set(NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32", v8::NewStringType::kInternalized));
+  info.GetReturnValue().Set(globalAddonData.strings.RoaringBitmap32.Get(isolate));
 }
 
 void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -613,7 +613,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports) {
   auto ctorFunction = ctor->GetFunction(context).ToLocalChecked();
   auto ctorObject = ctorFunction->ToObject(context).ToLocalChecked();
 
-  ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), versionString);
+  ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), globalAddonData.strings.RoaringBitmap32.Get(isolate));
   ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
 
   NODE_SET_METHOD(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);

@@ -69,23 +69,6 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  bool _bufferFromArrayBuffer(
-    v8::Isolate * isolate, v8::Local<v8::Value> buffer, size_t offset, size_t length, v8::Local<v8::Value> & result) {
-    if (buffer.IsEmpty()) {
-      return false;
-    }
-#if NODE_MAJOR_VERSION > 12
-    auto buf = buffer.As<v8::ArrayBuffer>();
-    return !buf.IsEmpty() && node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
-#else
-    v8::Local<v8::Value> argv[] = {
-      buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
-    return JSTypes::Buffer_from.Get(isolate)
-      ->Call(isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 3, argv)
-      .ToLocal(&result);
-#endif
-  }
-
   template <int N>
   void defineHiddenField(
     v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
@@ -129,8 +112,34 @@ namespace v8utils {
     }
   }
 
+  bool _bufferFromArrayBuffer(
+    v8::Isolate * isolate,
+    AddonData * addonData,
+    v8::Local<v8::Value> buffer,
+    size_t offset,
+    size_t length,
+    v8::Local<v8::Value> & result) {
+    if (buffer.IsEmpty()) {
+      return false;
+    }
+#if NODE_MAJOR_VERSION > 12
+    auto buf = buffer.As<v8::ArrayBuffer>();
+    return !buf.IsEmpty() && node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
+#else
+    v8::Local<v8::Value> argv[] = {
+      buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
+    return addonData->Buffer_from.Get(isolate)
+      ->Call(isolate->GetCurrentContext(), addonData->Uint32Array.Get(isolate), 3, argv)
+      .ToLocal(&result);
+#endif
+  }
+
   bool v8ValueToBufferWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
+    v8::Isolate * isolate,
+    AddonData * addonData,
+    v8::MaybeLocal<v8::Value> value,
+    size_t length,
+    v8::Local<v8::Value> & result) {
     v8::Local<v8::Value> localValue;
     if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
       if (localValue->IsUint8Array()) {
@@ -141,7 +150,7 @@ namespace v8utils {
             return true;
           }
           if (array->ByteLength() >= length) {
-            return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
+            return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
           }
         }
         return false;
@@ -149,21 +158,21 @@ namespace v8utils {
       if (localValue->IsTypedArray()) {
         auto array = localValue.As<v8::TypedArray>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
+          return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
         }
         return false;
       }
       if (localValue->IsArrayBufferView()) {
         auto array = localValue.As<v8::ArrayBufferView>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
+          return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
         }
         return false;
       }
       if (localValue->IsArrayBuffer()) {
         auto array = localValue.As<v8::ArrayBuffer>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, array, 0, length, result);
+          return _bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
         }
         return false;
       }

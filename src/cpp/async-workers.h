@@ -1,9 +1,27 @@
 #ifndef ROARING_NODE_ASYNC_WORKERS_
 #define ROARING_NODE_ASYNC_WORKERS_
 
-#include "cpus-count.h"
 #include "RoaringBitmap32.h"
 #include "RoaringBitmap32-serialization.h"
+
+uint32_t getCpusCount() {
+  static uint32_t _cpusCountCache = 0;
+
+  uint32_t result = _cpusCountCache;
+  if (result != 0) {
+    return result;
+  }
+
+  uv_cpu_info_t * tmp = nullptr;
+  int count = 0;
+  uv_cpu_info(&tmp, &count);
+  if (tmp != nullptr) {
+    uv_free_cpu_info(tmp, count);
+  }
+  result = count <= 0 ? 1 : (uint32_t)count;
+  _cpusCountCache = result;
+  return result;
+}
 
 class AsyncWorker {
  public:
@@ -217,7 +235,7 @@ class AsyncWorker {
     if (!error->IsObject()) {
       v8::MaybeLocal<v8::String> message = error->ToString(isolate->GetCurrentContext());
       if (message.IsEmpty()) {
-        message = NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized);
+        message = globalAddonData.strings.OperationFailed.Get(isolate);
       }
       error = v8::Exception::Error(error.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
     }
