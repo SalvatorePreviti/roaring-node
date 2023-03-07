@@ -1,53 +1,10 @@
-#ifndef __V8UTILS__H__
-#define __V8UTILS__H__
+#ifndef ROARING_NODE_V8UTILS_
+#define ROARING_NODE_V8UTILS_
 
-#include <stdint.h>
-#include <stddef.h>
-#include <node.h>
-#include <node_buffer.h>
-#include <uv.h>
-#include <atomic>
-
-/** portable version of posix_memalign */
-void * bare_aligned_malloc(size_t alignment, size_t size);
-
-/** portable version of free fo aligned allocs */
-void bare_aligned_free(void * memblock);
-
-int64_t gcaware_totalMem();
-
-/** Updates amount of used memory */
-void gcaware_addAllocatedMemory(size_t size);
-
-/** Updates amount of used memory */
-void gcaware_removeAllocatedMemory(size_t size);
-
-void * gcaware_malloc(size_t size);
-
-void * gcaware_realloc(void * memory, size_t size);
-
-void * gcaware_calloc(size_t count, size_t size);
-
-void gcaware_free(void * memory);
-
-void * gcaware_aligned_malloc(size_t alignment, size_t size);
-
-void gcaware_aligned_free(void * memory);
-
-#if NODE_MAJOR_VERSION > 14
-#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8Literal(isolate, str, type)
-#else
-#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8(isolate, str, type).ToLocalChecked()
-#endif
-
-class JSTypes {
- public:
-  static v8::Eternal<v8::Object> Uint32Array;
-  static v8::Eternal<v8::Function> Uint32Array_from;
-  static v8::Eternal<v8::Function> Buffer_from;
-
-  static void initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
-};
+#include "includes.h"
+#include "addon-data.h"
+#include "addon-strings.h"
+#include "memory.h"
 
 namespace v8utils {
 
@@ -347,4 +304,4 @@ namespace v8utils {
 
 }  // namespace v8utils
 
-#endif
+#endif  // ROARING_NODE_V8UTILS_

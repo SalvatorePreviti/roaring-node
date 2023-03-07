@@ -277,6 +277,4 @@ if (!roaring[initializedSym]) {
   RoaringBitmap32.getRoaringUsedMemory = roaring.getRoaringUsedMemory;
 
   roaring.asBuffer = asBuffer;
-
-  roaring._initTypes({ Uint32Array, Buffer_from: Buffer.from });
 }

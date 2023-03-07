@@ -1,378 +1,30 @@
-#include <iostream>
-
 
 // #include "RoaringBitmap32.cpp"
+
+
+// #include "includes.h"
+
+#ifndef ROARING_NODE_INCLUDES_
+#define ROARING_NODE_INCLUDES_
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <node.h>
+#include <node_buffer.h>
+#include <uv.h>
+#include <atomic>
 #include <string.h>
 #include <math.h>
 #include <cmath>
 #include <limits>
 #include <string>
 
-/////////////////// unity build ///////////////////
-
-
-// #include "v8utils.cpp"
-
-
-// #include "v8utils.h"
-
-#ifndef __V8UTILS__H__
-#define __V8UTILS__H__
-
-#include <stdint.h>
-#include <stddef.h>
-#include <node.h>
-#include <node_buffer.h>
-#include <uv.h>
-#include <atomic>
-
-/** portable version of posix_memalign */
-void * bare_aligned_malloc(size_t alignment, size_t size);
-
-/** portable version of free fo aligned allocs */
-void bare_aligned_free(void * memblock);
-
-int64_t gcaware_totalMem();
-
-/** Updates amount of used memory */
-void gcaware_addAllocatedMemory(size_t size);
-
-/** Updates amount of used memory */
-void gcaware_removeAllocatedMemory(size_t size);
-
-void * gcaware_malloc(size_t size);
-
-void * gcaware_realloc(void * memory, size_t size);
-
-void * gcaware_calloc(size_t count, size_t size);
-
-void gcaware_free(void * memory);
-
-void * gcaware_aligned_malloc(size_t alignment, size_t size);
-
-void gcaware_aligned_free(void * memory);
-
-#if NODE_MAJOR_VERSION > 14
-#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8Literal(isolate, str, type)
+#if defined(__APPLE__)
+#  include <malloc/malloc.h>
 #else
-#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8(isolate, str, type).ToLocalChecked()
+#  include <malloc.h>
 #endif
-
-class JSTypes {
- public:
-  static v8::Eternal<v8::Object> Uint32Array;
-  static v8::Eternal<v8::Function> Uint32Array_from;
-  static v8::Eternal<v8::Function> Buffer_from;
-
-  static void initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
-};
-
-namespace v8utils {
-
-  uint32_t getCpusCount();
-
-  template <typename T>
-  inline void ignoreMaybeResult(v8::Maybe<T>) {}
-
-  template <typename T>
-  inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
-
-  template <int N>
-  inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
-    isolate->ThrowException(v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
-  }
-
-  template <int N>
-  inline void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
-    isolate->ThrowException(
-      v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
-  }
-
-  void throwError(v8::Isolate * isolate, const char * message);
-  void throwTypeError(v8::Isolate * isolate, const char * message);
-  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message);
-
-  template <int N>
-  void defineHiddenField(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
-    v8::HandleScope scope(isolate);
-    v8::PropertyDescriptor propertyDescriptor(value, false);
-    propertyDescriptor.set_configurable(false);
-    propertyDescriptor.set_enumerable(false);
-
-    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
-    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
-  }
-
-  template <int N>
-  void defineReadonlyField(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
-    v8::HandleScope scope(isolate);
-    v8::PropertyDescriptor propertyDescriptor(value, false);
-    propertyDescriptor.set_configurable(false);
-    propertyDescriptor.set_enumerable(true);
-
-    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
-    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
-  }
-
-  template <int N>
-  void defineHiddenFunction(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::FunctionCallback callback) {
-    v8::HandleScope scope(isolate);
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
-
-    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
-    t->SetClassName(name);
-
-    auto fn = t->GetFunction(isolate->GetCurrentContext());
-    v8::Local<v8::Function> fnLocal;
-    if (fn.ToLocal(&fnLocal)) {
-      v8::PropertyDescriptor propertyDescriptor(fnLocal, false);
-      propertyDescriptor.set_configurable(false);
-      propertyDescriptor.set_enumerable(false);
-      ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
-    }
-  }
-
-  bool v8ValueToBufferWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result);
-
-  bool v8ValueToUint32ArrayWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result);
-
-  template <typename T>
-  class TypedArrayContent final {
-   public:
-    size_t length;
-    T * data;
-    v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
-#if NODE_MAJOR_VERSION > 13
-    std::shared_ptr<v8::BackingStore> backingStore;
-#endif
-
-    inline TypedArrayContent() : length(0), data(nullptr) {}
-
-    template <typename Q>
-    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::Local<Q> from) {
-      set(isolate, from);
-    }
-
-    template <typename Q>
-    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::MaybeLocal<Q> from) {
-      set(isolate, from);
-    }
-
-    inline void reset() {
-      this->length = 0;
-      this->data = nullptr;
-#if NODE_MAJOR_VERSION > 13
-      this->backingStore = nullptr;
-#endif
-      this->bufferPersistent.Reset();
-    }
-
-    template <typename Q>
-    bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
-      v8::Local<Q> local;
-      if (from.ToLocal(&local)) {
-        return this->set(isolate, local);
-      }
-      this->reset();
-      return false;
-    }
-
-    template <typename Q>
-    bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
-      if (!from.IsEmpty()) {
-        if (from->IsArrayBufferView()) {
-          bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
-          this->length = array->ByteLength() / sizeof(T);
-          auto arrayBuffer = array->Buffer();
-#if NODE_MAJOR_VERSION > 13
-          this->backingStore = arrayBuffer->GetBackingStore();
-          this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
-#else
-          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()) + array->ByteOffset());
-#endif
-          return true;
-        }
-
-        if (from->IsArrayBuffer()) {
-          bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
-          this->length = arrayBuffer->ByteLength() / sizeof(T);
-#if NODE_MAJOR_VERSION > 13
-          this->backingStore = arrayBuffer->GetBackingStore();
-          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
-#else
-          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
-#endif
-          return true;
-        }
-      }
-
-      this->reset();
-      return false;
-    }
-  };
-
-  namespace ObjectWrap {
-    template <class T>
-    static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
-      v8::Local<v8::Object> obj;
-      if (isolate && value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
-        if (obj->InternalFieldCount() > 0) {
-          T * result = (T *)(obj->GetAlignedPointerFromInternalField(0));
-          if (result && result->objectToken == T::OBJECT_TOKEN) {
-            return result;
-          }
-        }
-      }
-      return nullptr;
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::Local<v8::Value> & value, const v8::Local<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
-      return !ctorTemplate.IsEmpty() && ctorTemplate->HasInstance(value) ? ObjectWrap::TryUnwrap<T>(value, isolate)
-                                                                         : nullptr;
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::Local<v8::Value> & value,
-      const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate,
-      v8::Isolate * isolate) {
-      return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::Local<v8::Value> & value, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
-      return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::FunctionCallbackInfo<v8::Value> & info,
-      int argumentIndex,
-      const v8::Local<v8::FunctionTemplate> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr
-                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::FunctionCallbackInfo<v8::Value> & info,
-      int argumentIndex,
-      const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr
-                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::FunctionCallbackInfo<v8::Value> & info,
-      int argumentIndex,
-      const v8::Eternal<v8::FunctionTemplate> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr
-                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
-    }
-  }  // namespace ObjectWrap
-
-  typedef const char * const_char_ptr_t;
-
-  class AsyncWorker {
-   public:
-    v8::Isolate * const isolate;
-
-    explicit AsyncWorker(v8::Isolate * isolate);
-
-    virtual ~AsyncWorker();
-
-    bool setCallback(v8::Local<v8::Value> callback);
-
-    inline bool hasStarted() const { return this->_started; }
-
-    inline bool hasError() const { return this->_error != nullptr; }
-
-    inline void setError(const_char_ptr_t error) {
-      if (error != nullptr && this->_error == nullptr) {
-        this->_error = error;
-      }
-    }
-
-    inline void clearError() { this->_error = nullptr; }
-
-    static v8::Local<v8::Value> run(AsyncWorker * worker);
-
-   protected:
-    // Called before the thread starts, in the main thread.
-    virtual void before();
-
-    // Called in a thread to execute the workload
-    virtual void work() = 0;
-
-    // Called after the thread completes without errors, in the main thread.
-    virtual void done(v8::Local<v8::Value> & result);
-
-    // Called after the thread completes, with or without errors, in the main thread.
-    virtual void finally();
-
-   private:
-    uv_work_t _task{};
-    volatile const_char_ptr_t _error;
-    bool _started;
-    volatile bool _completed;
-    v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> _callback;
-    v8::Persistent<v8::Promise::Resolver, v8::CopyablePersistentTraits<v8::Promise::Resolver>> _resolver;
-
-    virtual bool _start();
-    static void _complete(AsyncWorker * worker);
-    static void _resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error);
-    static void _work(uv_work_t * request);
-    static void _done(uv_work_t * request, int status);
-    v8::Local<v8::Value> _makeError(v8::Local<v8::Value> error);
-
-    friend class ParallelAsyncWorker;
-  };
-
-  class ParallelAsyncWorker : public AsyncWorker {
-   public:
-    uint32_t loopCount;
-    uint32_t concurrency;
-
-    explicit ParallelAsyncWorker(v8::Isolate * isolate);
-    virtual ~ParallelAsyncWorker();
-
-   protected:
-    void work() override;
-
-    virtual void parallelWork(uint32_t index) = 0;
-
-   private:
-    uv_work_t * _tasks;
-    volatile int32_t _pendingTasks;
-    volatile uint32_t _currentIndex;
-
-    bool _start() override;
-
-    static void _parallelWork(uv_work_t * request);
-    static void _parallelDone(uv_work_t * request, int status);
-  };
-
-}  // namespace v8utils
-
-#endif
-
-
-#include <stdlib.h>
 
 #ifdef _MSC_VER
 #  define atomicIncrement32(ptr) InterlockedIncrement(ptr)
@@ -382,641 +34,38 @@ namespace v8utils {
 #  define atomicDecrement32(ptr) __sync_sub_and_fetch(ptr, 1)
 #endif
 
-#include <iostream>
 
-#if defined(__APPLE__)
-#  include <malloc/malloc.h>
-#else
-#  include <malloc.h>
-#endif
+// #include "croaring.h"
 
-/** portable version of posix_memalign */
-void * bare_aligned_malloc(size_t alignment, size_t size) {
-  void * p;
-#ifdef _MSC_VER
-  p = _aligned_malloc(size, alignment);
-#elif defined(__MINGW32__) || defined(__MINGW64__)
-  p = __mingw_aligned_malloc(size, alignment);
-#else
-  // somehow, if this is used before including "x86intrin.h", it creates an
-  // implicit defined warning.
-  if (posix_memalign(&p, alignment, size) != 0) return NULL;
-#endif
-  return p;
-}
-
-/** portable version of free fo aligned allocs */
-void bare_aligned_free(void * memblock) {
-  if (memblock != nullptr) {
-#ifdef _MSC_VER
-    _aligned_free(memblock);
-#elif defined(__MINGW32__) || defined(__MINGW64__)
-    __mingw_aligned_free(memblock);
-#else
-    free(memblock);
-#endif
-  }
-}
-
-/** portable version of malloc_size */
-inline static size_t bare_malloc_size(void * ptr) {
-#if defined(__APPLE__)
-  return malloc_size(ptr);
-#elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
-  return _msize(ptr);
-#else
-  return malloc_usable_size(ptr);
-#endif
-}
-
-/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
-inline static size_t bare_aligned_malloc_size(void * ptr) {
-#if defined(__APPLE__)
-  return malloc_size(ptr);
-#elif defined(_WIN32)
-  return _aligned_msize(ptr, 32, 0);
-#else
-  return malloc_usable_size(ptr);
-#endif
-}
-
-std::atomic<int64_t> gcaware_totalMemCounter{0};
-
-int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
-
-static thread_local v8::Isolate * thread_local_isolate = nullptr;
-
-inline static void _gcaware_adjustAllocatedMemory(int64_t size) {
-  if (size != 0) {
-    v8::Isolate * isolate = v8::Isolate::GetCurrent();
-    if (isolate == nullptr) {
-      isolate = thread_local_isolate;
-    }
-    if (isolate != nullptr) {
-      isolate->AdjustAmountOfExternalAllocatedMemory(size);
-    }
-    gcaware_totalMemCounter += size;
-  }
-}
-
-void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
-
-void gcaware_removeAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory(-(int64_t)size); }
-
-void * gcaware_malloc(size_t size) {
-  void * memory = malloc(size);
-  if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
-  }
-  return memory;
-}
-
-void * gcaware_realloc(void * memory, size_t size) {
-  size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
-  memory = realloc(memory, size);
-  if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(oldSize);
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
-  }
-  return memory;
-}
-
-void * gcaware_calloc(size_t count, size_t size) {
-  void * memory = calloc(count, size);
-  if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
-  }
-  return memory;
-}
-
-void gcaware_free(void * memory) {
-  if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(bare_malloc_size(memory));
-  }
-  free(memory);
-}
-
-void * gcaware_aligned_malloc(size_t alignment, size_t size) {
-  void * memory = bare_aligned_malloc(alignment, size);
-  if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));
-  }
-  return memory;
-}
-
-void gcaware_aligned_free(void * memory) {
-  if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(bare_aligned_malloc_size(memory));
-  }
-  bare_aligned_free(memory);
-}
-
-/////////////// JSTypes ///////////////
-
-v8::Eternal<v8::Object> JSTypes::Uint32Array;
-v8::Eternal<v8::Function> JSTypes::Uint32Array_from;
-v8::Eternal<v8::Function> JSTypes::Buffer_from;
-
-void JSTypes::initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global) {
-  v8::HandleScope scope(isolate);
-  auto context = isolate->GetCurrentContext();
-
-  auto uint32Array = global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Uint32Array", v8::NewStringType::kInternalized))
-                       .ToLocalChecked()
-                       ->ToObject(context)
-                       .ToLocalChecked();
-
-  Buffer_from.Set(
-    isolate,
-    global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Buffer_from", v8::NewStringType::kInternalized))
-      .ToLocalChecked()
-      .As<v8::Function>());
-
-  JSTypes::Uint32Array.Set(isolate, uint32Array);
-  JSTypes::Uint32Array_from.Set(
-    isolate,
-    v8::Local<v8::Function>::Cast(
-      uint32Array->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized)).ToLocalChecked()));
-}
-
-/////////////// v8utils ///////////////
-
-namespace v8utils {
-
-  static uint32_t _cpusCountCache = 0;
-
-  uint32_t getCpusCount() {
-    uint32_t result = _cpusCountCache;
-    if (result != 0) {
-      return result;
-    }
-
-    uv_cpu_info_t * tmp = nullptr;
-    int count = 0;
-    uv_cpu_info(&tmp, &count);
-    if (tmp != nullptr) {
-      uv_free_cpu_info(tmp, count);
-    }
-    result = count <= 0 ? 1 : (uint32_t)count;
-    _cpusCountCache = result;
-    return result;
-  }
-
-  // Creates a new Error from string
-  v8::Local<v8::Value> createError(v8::Isolate * isolate, const char * message) {
-    v8::EscapableHandleScope scope(isolate);
-    auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
-    v8::Local<v8::String> msgLocal;
-    if (msg.ToLocal(&msgLocal)) {
-      return scope.Escape(v8::Exception::Error(msgLocal));
-    }
-    return scope.Escape(
-      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
-  }
-
-  void throwError(v8::Isolate * isolate, const char * message) {
-    v8::HandleScope scope(isolate);
-    if (message != nullptr && message[0] != '\0') {
-      auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
-      v8::Local<v8::String> msgLocal;
-      if (msg.ToLocal(&msgLocal)) {
-        isolate->ThrowException(v8::Exception::Error(msgLocal));
-        return;
-      }
-    }
-    isolate->ThrowException(
-      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
-  }
-
-  void throwTypeError(v8::Isolate * isolate, const char * message) {
-    v8::HandleScope scope(isolate);
-    if (message != nullptr && message[0] != '\0') {
-      auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
-      v8::Local<v8::String> msgLocal;
-      if (msg.ToLocal(&msgLocal)) {
-        isolate->ThrowException(v8::Exception::TypeError(msgLocal));
-        return;
-      }
-    }
-    isolate->ThrowException(
-      v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
-  }
-
-  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message) {
-    v8::HandleScope scope(isolate);
-    auto a = v8::String::NewFromUtf8(isolate, context, v8::NewStringType::kInternalized);
-    auto b = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
-#if NODE_MAJOR_VERSION > 10
-    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(isolate, a.ToLocalChecked(), b.ToLocalChecked());
-#else
-    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(a.ToLocalChecked(), b.ToLocalChecked());
-#endif
-    isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
-  }
-
-  static bool _bufferFromArrayBuffer(
-    v8::Isolate * isolate, v8::Local<v8::Value> buffer, size_t offset, size_t length, v8::Local<v8::Value> & result) {
-    if (buffer.IsEmpty()) {
-      return false;
-    }
-#if NODE_MAJOR_VERSION > 12
-    auto buf = buffer.As<v8::ArrayBuffer>();
-    return !buf.IsEmpty() && node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
-#else
-    v8::Local<v8::Value> argv[] = {
-      buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
-    return JSTypes::Buffer_from.Get(isolate)
-      ->Call(isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 3, argv)
-      .ToLocal(&result);
-#endif
-  }
-
-  bool v8ValueToBufferWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
-    v8::Local<v8::Value> localValue;
-    if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
-      if (localValue->IsUint8Array()) {
-        v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
-        if (!array.IsEmpty()) {
-          if (node::Buffer::HasInstance(localValue) && node::Buffer::Length(localValue) == length) {
-            result = array;
-            return true;
-          }
-          if (array->ByteLength() >= length) {
-            return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
-          }
-        }
-        return false;
-      }
-      if (localValue->IsTypedArray()) {
-        auto array = localValue.As<v8::TypedArray>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
-        }
-        return false;
-      }
-      if (localValue->IsArrayBufferView()) {
-        auto array = localValue.As<v8::ArrayBufferView>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
-        }
-        return false;
-      }
-      if (localValue->IsArrayBuffer()) {
-        auto array = localValue.As<v8::ArrayBuffer>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, array, 0, length, result);
-        }
-        return false;
-      }
-    }
-    return false;
-  }
-
-  bool v8ValueToUint32ArrayWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
-    v8::Local<v8::Value> localValue;
-    if (!value.ToLocal(&localValue)) {
-      return {};
-    }
-    if (localValue->IsUint32Array()) {
-      auto array = localValue.As<v8::Uint32Array>();
-      if (!array.IsEmpty()) {
-        auto arrayLength = array->Length();
-        if (arrayLength == length) {
-          result = array;
-          return true;
-        }
-        if (arrayLength > length) {
-          result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
-          return !result.IsEmpty();
-        }
-      }
-      return false;
-    }
-    if (localValue->IsTypedArray()) {
-      auto array = localValue.As<v8::TypedArray>();
-      if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
-        return !result.IsEmpty();
-      }
-      return false;
-    }
-    if (localValue->IsArrayBufferView()) {
-      auto array = localValue.As<v8::ArrayBufferView>();
-      if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
-        return !result.IsEmpty();
-      }
-      return false;
-    }
-    if (localValue->IsArrayBuffer()) {
-      auto array = localValue.As<v8::ArrayBuffer>();
-      if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array, 0, length);
-        return !result.IsEmpty();
-      }
-      return false;
-    }
-    return false;
-  }
-
-  /////////////// AsyncWorker ///////////////
-
-  AsyncWorker::AsyncWorker(v8::Isolate * isolate) : isolate(isolate), _error(nullptr), _started(false), _completed(false) {
-    _task.data = this;
-  }
-
-  AsyncWorker::~AsyncWorker() {}
-
-  bool AsyncWorker::setCallback(v8::Local<v8::Value> callback) {
-    if (callback.IsEmpty() || !callback->IsFunction()) return false;
-    _callback.Reset(isolate, v8::Local<v8::Function>::Cast(callback));
-    return true;
-  }
-
-  bool AsyncWorker::_start() {
-    this->_started = true;
-    if (uv_queue_work(uv_default_loop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
-      setError("Error starting async thread");
-      return false;
-    }
-    return true;
-  }
-
-  v8::Local<v8::Value> AsyncWorker::_makeError(v8::Local<v8::Value> error) {
-    if (error.IsEmpty() || error->IsNull() || error->IsUndefined()) {
-      this->setError("Exception in async operation");
-      return {};
-    }
-    if (!error->IsObject()) {
-      v8::MaybeLocal<v8::String> message = error->ToString(isolate->GetCurrentContext());
-      if (message.IsEmpty()) {
-        message = NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized);
-      }
-      error = v8::Exception::Error(error.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
-    }
-    return error;
-  }
-
-  v8::Local<v8::Value> AsyncWorker::run(AsyncWorker * worker) {
-    v8::EscapableHandleScope scope(worker->isolate);
-    v8::Local<v8::Value> returnValue;
-
-    if (worker->_callback.IsEmpty()) {
-      v8::Isolate * isolate = worker->isolate;
-      v8::MaybeLocal<v8::Promise::Resolver> resolverMaybe = v8::Promise::Resolver::New(isolate->GetCurrentContext());
-
-      if (resolverMaybe.IsEmpty()) {
-        v8utils::throwTypeError(isolate, "Failed to create Promise");
-        return returnValue;
-      }
-
-      v8::Local<v8::Promise::Resolver> resolver = resolverMaybe.ToLocalChecked();
-
-      returnValue = resolver->GetPromise();
-      if (returnValue.IsEmpty()) {
-        worker->setError("Failed to create Promise");
-      } else {
-        worker->_resolver.Reset(isolate, resolver);
-      }
-    }
-
-    v8::TryCatch tryCatch(worker->isolate);
-    worker->before();
-
-    v8::Local<v8::Value> error;
-
-    if (worker->hasError()) {
-      _resolveOrReject(worker, error);
-    } else if (tryCatch.HasCaught()) {
-      error = worker->_makeError(tryCatch.Exception());
-      _resolveOrReject(worker, error);
-    } else if (!worker->_start()) {
-      if (tryCatch.HasCaught()) {
-        error = worker->_makeError(tryCatch.Exception());
-      }
-      _resolveOrReject(worker, error);
-    }
-
-    if (returnValue.IsEmpty()) {
-      returnValue = v8::Undefined(worker->isolate);
-    }
-
-    return scope.Escape(returnValue);
-  }
-
-  void AsyncWorker::before() {}
-
-  void AsyncWorker::done(v8::Local<v8::Value> & result) {}
-
-  void AsyncWorker::finally() {}
-
-  void AsyncWorker::_work(uv_work_t * request) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
-    auto * worker = static_cast<AsyncWorker *>(request->data);
-    if (worker && !worker->hasError()) {
-      auto oldIsolate = thread_local_isolate;
-      thread_local_isolate = worker->isolate;
-      worker->work();
-      thread_local_isolate = oldIsolate;
-      std::atomic_thread_fence(std::memory_order_seq_cst);
-    }
-  }
-
-  void AsyncWorker::_done(uv_work_t * request, int status) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
-    auto * worker = static_cast<AsyncWorker *>(request->data);
-    if (status != 0) {
-      worker->setError("Error executing async thread");
-    }
-    _complete(worker);
-  }
-
-  void AsyncWorker::_resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error) {
-    if (worker->_completed) {
-      return;
-    }
-
-    worker->_completed = true;
-
-    v8::Isolate * isolate = worker->isolate;
-    v8::HandleScope scope(isolate);
-
-    v8::TryCatch tryCatch(isolate);
-
-    v8::Local<v8::Value> result;
-
-    if (worker->_error == nullptr && error.IsEmpty()) {
-      worker->done(result);
-
-      if (tryCatch.HasCaught()) {
-        error = worker->_makeError(tryCatch.Exception());
-        tryCatch.Reset();
-      }
-    }
-
-    worker->finally();
-
-    if (tryCatch.HasCaught()) {
-      error = worker->_makeError(tryCatch.Exception());
-      tryCatch.Reset();
-    }
-
-    if (result.IsEmpty() && error.IsEmpty()) {
-      worker->setError("Async operation failed");
-    }
-
-    if (worker->hasError() && error.IsEmpty()) {
-      v8::MaybeLocal<v8::String> message =
-        v8::String::NewFromUtf8(isolate, worker->_error, v8::NewStringType::kInternalized);
-      error = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
-    }
-
-    auto context = isolate->GetCurrentContext();
-    if (worker->_resolver.IsEmpty()) {
-      v8::Local<v8::Function> callback = worker->_callback.Get(isolate);
-      std::atomic_thread_fence(std::memory_order_seq_cst);
-      delete worker;
-      if (!error.IsEmpty()) {
-        v8::Local<v8::Value> argv[] = {error, v8::Undefined(isolate)};
-        v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
-      } else {
-        v8::Local<v8::Value> argv[] = {v8::Null(isolate), result};
-        v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
-      }
-    } else {
-      v8::Local<v8::Promise::Resolver> resolver = worker->_resolver.Get(isolate);
-      std::atomic_thread_fence(std::memory_order_seq_cst);
-      delete worker;
-      if (!error.IsEmpty()) {
-        v8utils::ignoreMaybeResult(resolver->Reject(context, error));
-      } else if (!result.IsEmpty()) {
-        v8utils::ignoreMaybeResult(resolver->Resolve(context, result));
-      } else {
-        v8utils::ignoreMaybeResult(resolver->Reject(context, v8::Undefined(isolate)));
-      }
-    }
-  }
-
-  void AsyncWorker::_complete(AsyncWorker * worker) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
-    v8::Isolate * isolate = worker->isolate;
-    v8::Local<v8::Value> error;
-    _resolveOrReject(worker, error);
-#if NODE_MAJOR_VERSION > 13
-    isolate->PerformMicrotaskCheckpoint();
-#else
-    isolate->RunMicrotasks();
-#endif
-  }
-
-  /////////////// ParallelAsyncWorker ///////////////
-
-  ParallelAsyncWorker::ParallelAsyncWorker(v8::Isolate * isolate) :
-    AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {}
-
-  ParallelAsyncWorker::~ParallelAsyncWorker() { gcaware_free(_tasks); }
-
-  void ParallelAsyncWorker::work() {
-    const uint32_t c = loopCount;
-    for (uint32_t i = 0; i != c && !hasError() && !_completed; ++i) {
-      parallelWork(i);
-    }
-  }
-
-  bool ParallelAsyncWorker::_start() {
-    if (concurrency == 0) {
-      concurrency = getCpusCount();
-    }
-
-    uint32_t tasksCount = concurrency < loopCount ? concurrency : loopCount;
-
-    if (tasksCount <= 1) {
-      return AsyncWorker::_start();
-    }
-
-    uv_work_t * tasks = (uv_work_t *)gcaware_malloc(tasksCount * sizeof(uv_work_t));
-    if (tasks == nullptr) {
-      this->setError("Failed to allocate memory");
-      return false;
-    }
-    memset(tasks, 0, tasksCount * sizeof(uv_work_t));
-
-    _tasks = tasks;
-
-    for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
-      tasks[taskIndex].data = this;
-    }
-
-    for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
-      if (
-        uv_queue_work(
-          uv_default_loop(), &tasks[taskIndex], ParallelAsyncWorker::_parallelWork, ParallelAsyncWorker::_parallelDone) !=
-        0) {
-        setError("Error starting async parallel task");
-        break;
-      }
-      ++_pendingTasks;
-    }
-
-    return _pendingTasks > 0;
-  }
-
-  void ParallelAsyncWorker::_parallelWork(uv_work_t * request) {
-    auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
-
-    if (worker) {
-      auto oldIsolate = thread_local_isolate;
-      thread_local_isolate = worker->isolate;
-      uint32_t loopCount = worker->loopCount;
-      while (!worker->hasError() && !worker->_completed) {
-        const uint32_t prevIndex = worker->_currentIndex;
-        const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
-        if (index >= loopCount || index < prevIndex) {
-          break;
-        }
-        worker->parallelWork(index);
-      }
-      thread_local_isolate = oldIsolate;
-    }
-  }
-
-  void ParallelAsyncWorker::_parallelDone(uv_work_t * request, int /*status*/) {
-    auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
-
-    if (worker->_completed) {
-#if NODE_MAJOR_VERSION > 13
-      worker->isolate->PerformMicrotaskCheckpoint();
-#else
-      worker->isolate->RunMicrotasks();
-#endif
-      return;
-    }
-
-    if (--worker->_pendingTasks <= 0) {
-      _complete(worker);
-      return;
-    }
-
-#if NODE_MAJOR_VERSION > 13
-    worker->isolate->PerformMicrotaskCheckpoint();
-#else
-    worker->isolate->RunMicrotasks();
-#endif
-  }
-
-}  // namespace v8utils
+#ifndef ROARING_NODE_CROARING_
+#define ROARING_NODE_CROARING_
 
 
 #define printf(...) ((void)0)
 #define fprintf(...) ((void)0)
 
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wunused-variable"
+#  pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#  pragma clang diagnostic ignored "-Wunused-but-set-parameter"
+#  pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#  pragma clang diagnostic ignored "-Wunused-function"
+#elif defined(__GNUC__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wunused-variable"
+#  pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#  pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+#  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#  pragma GCC diagnostic ignored "-Wunused-function"
+#elif defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4244)  // possible loss of data
+#endif
 
-// #include "RoaringBitmap32.h"
-
-#ifndef __ROARINGBITMAP32__H__
-#define __ROARINGBITMAP32__H__
+#ifdef small
+#  undef small  // on windows this seems to be defined to something...
+#endif
 
 
 // #include "CRoaringUnityBuild/roaring.h"
@@ -2168,253 +1217,6 @@ void roaring_aligned_free(void*);
 
 #endif  // INCLUDE_ROARING_MEMORY_H_
 /* end file include/roaring/memory.h */
-
-
-using namespace roaring;
-using namespace roaring::api;
-
-class RoaringBitmap32;
-
-typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
-
-enum class SerializationFormat {
-  INVALID = -1,
-  croaring = 0,
-  portable = 1,
-  unsafe_frozen_croaring = 2,
-};
-
-enum class DeserializationFormat {
-  INVALID = -1,
-  croaring = 0,
-  portable = 1,
-  unsafe_frozen_croaring = 2,
-  unsafe_frozen_portable = 3,
-};
-
-enum class FrozenViewFormat {
-  INVALID = -1,
-  unsafe_frozen_croaring = 2,
-  unsafe_frozen_portable = 3,
-};
-
-class RoaringBitmap32 final {
- public:
-  static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152333221;
-
-  static const constexpr int64_t FROZEN_COUNTER_SOFT_FROZEN = -1;
-  static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
-
-  roaring_bitmap_t * roaring;
-  const uint64_t objectToken = OBJECT_TOKEN;
-  int64_t sizeCache;
-  int64_t _version;
-  int64_t frozenCounter;
-  RoaringBitmap32 * const readonlyViewOf;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> readonlyViewPersistent;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
-  v8utils::TypedArrayContent<uint8_t> frozenStorage;
-
-  inline bool isEmpty() const {
-    if (this->sizeCache == 0) {
-      return true;
-    }
-    if (this->readonlyViewOf != nullptr) {
-      return this->readonlyViewOf->isEmpty();
-    }
-    const roaring_bitmap_t_ptr roaring = this->roaring;
-    bool result = roaring == nullptr || roaring_bitmap_is_empty(roaring);
-    if (result) {
-      const_cast<RoaringBitmap32 *>(this)->sizeCache = 0;
-    }
-    return result;
-  }
-
-  inline size_t getSize() const {
-    int64_t size = this->sizeCache;
-    if (size < 0) {
-      if (this->readonlyViewOf != nullptr) {
-        return this->readonlyViewOf->getSize();
-      }
-      const roaring_bitmap_t_ptr roaring = this->roaring;
-      size = roaring != nullptr ? (int64_t)roaring_bitmap_get_cardinality(roaring) : 0;
-      const_cast<RoaringBitmap32 *>(this)->sizeCache = size;
-    }
-    return (size_t)size;
-  }
-
-  inline bool isFrozen() const { return this->frozenCounter != 0; }
-  inline bool isFrozenHard() const { return this->frozenCounter > 0 || this->frozenCounter == FROZEN_COUNTER_HARD_FROZEN; }
-  inline bool isFrozenForever() const { return this->frozenCounter < 0; }
-
-  inline void beginFreeze() {
-    if (this->frozenCounter >= 0) {
-      ++this->frozenCounter;
-    }
-  }
-
-  inline void endFreeze() {
-    if (this->frozenCounter > 0) {
-      --this->frozenCounter;
-    }
-  }
-
-  inline int64_t getVersion() const { return this->_version; }
-
-  inline void invalidate() {
-    this->sizeCache = -1;
-    ++this->_version;
-  }
-
-  bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance);
-
-  static void asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void hasRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void flipRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void addRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void removeRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void has(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void add(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void addMany(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void remove(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void removeMany(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void removeChecked(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void clear(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void minimum(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void maximum(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void isSubset(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void isStrictSubset(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void intersects(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void intersectsWithRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void isEqual(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void orCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andNotCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void xorCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void jaccardIndex(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void rank(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void select(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void rangeCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void removeRunCompression(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void runOptimize(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void shrinkToFit(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void toArray(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void toSet(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void serialize(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void deserialize(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void orStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void xorManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void clone(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void toString(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void contentToString(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void statistics(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void freeze(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-  static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-  static void isFrozen_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-
-  static void getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  explicit RoaringBitmap32(RoaringBitmap32 * readonlyViewOf);
-  explicit RoaringBitmap32(uint32_t capacity);
-  ~RoaringBitmap32();
-};
-
-class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
- public:
-  volatile roaring_bitmap_t_ptr bitmap;
-
-  explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate);
-  virtual ~RoaringBitmap32FactoryAsyncWorker();
-
- protected:
-  void done(v8::Local<v8::Value> & result) override;
-};
-
-class RoaringBitmap32BufferedIterator {
- public:
-  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152495421;
-
-  const uint64_t objectToken = OBJECT_TOKEN;
-
-  enum { allocatedMemoryDelta = 1024 };
-
-  roaring_uint32_iterator_t it;
-  int64_t bitmapVersion;
-  RoaringBitmap32 * bitmapInstance;
-  v8utils::TypedArrayContent<uint32_t> bufferContent;
-
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
-
-  static void fill(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  RoaringBitmap32BufferedIterator();
-  ~RoaringBitmap32BufferedIterator();
-
- private:
-  void destroy();
-};
-
-#endif
-
-
-#define CROARING_SERIALIZATION_ARRAY_UINT32 1
-#define CROARING_SERIALIZATION_CONTAINER 2
-
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#  pragma clang diagnostic ignored "-Wunused-variable"
-#  pragma clang diagnostic ignored "-Wunused-but-set-variable"
-#  pragma clang diagnostic ignored "-Wunused-but-set-parameter"
-#  pragma clang diagnostic ignored "-Wmissing-field-initializers"
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wunused-variable"
-#  pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#  pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
-#  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#elif defined(_MSC_VER)
-#  pragma warning(push)
-#  pragma warning(disable: 4244)  // possible loss of data
-#endif
-
-#ifdef small
-#  undef small  // on windows this seems to be defined to something...
-#endif
 
 
 // #include "CRoaringUnityBuild/roaring.c"
@@ -22064,19 +20866,1247 @@ void bitset_flip_list(uint64_t *words, const uint16_t *list, uint64_t length) {
 #undef printf
 #undef fprintf
 
-static void buffer_bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
+#endif  // ROARING_NODE_CROARING_
+
+
+#if NODE_MAJOR_VERSION > 14
+#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8Literal(isolate, str, type)
+#else
+#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8(isolate, str, type).ToLocalChecked()
+#endif
+
+#endif  // ROARING_NODE_INCLUDES_
+
+
+/////////////////// unity build ///////////////////
+
+
+// #include "v8utils.cpp"
+
+
+// #include "v8utils.h"
+
+#ifndef ROARING_NODE_V8UTILS_
+#define ROARING_NODE_V8UTILS_
+
+
+// #include "addon-data.h"
+
+#ifndef ROARING_NODE_ADDON_DATA_
+#define ROARING_NODE_ADDON_DATA_
+
+
+// #include "addon-strings.h"
+
+#ifndef ROARING_NODE_ADDON_STRINGS_
+#define ROARING_NODE_ADDON_STRINGS_
+
+
+class AddonDataStrings {
+ public:
+  v8::Eternal<v8::String> n;
+  v8::Eternal<v8::String> readonly;
+
+  void initialize(v8::Isolate * isolate) {
+    this->literal(isolate, this->n, "n");
+    this->literal(isolate, this->readonly, "readonly");
+  }
+
+ private:
+  template <int N>
+  void literal(v8::Isolate * isolate, v8::Eternal<v8::String> & result, const char (&literal)[N]) {
+    result.Set(isolate, NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized));
+  }
+};
+
+#endif
+
+
+class AddonData {
+ public:
+  AddonDataStrings strings;
+
+  v8::Eternal<v8::Object> Uint32Array;
+  v8::Eternal<v8::Function> Uint32Array_from;
+  v8::Eternal<v8::Function> Buffer_from;
+
+  v8::Eternal<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
+  v8::Eternal<v8::Function> RoaringBitmap32_constructor;
+
+  v8::Eternal<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
+  v8::Eternal<v8::Function> RoaringBitmap32BufferedIterator_constructor;
+
+  void initialize(v8::Isolate * isolate) {
+    v8::HandleScope scope(isolate);
+
+    this->strings.initialize(isolate);
+
+    auto context = isolate->GetCurrentContext();
+
+    auto global = context->Global();
+
+    auto uint32Array = global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Uint32Array", v8::NewStringType::kInternalized))
+                         .ToLocalChecked()
+                         ->ToObject(context)
+                         .ToLocalChecked();
+
+    this->Buffer_from.Set(
+      isolate,
+      global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Buffer_from", v8::NewStringType::kInternalized))
+        .ToLocalChecked()
+        .As<v8::Function>());
+
+    this->Uint32Array.Set(isolate, uint32Array);
+    this->Uint32Array_from.Set(
+      isolate,
+      v8::Local<v8::Function>::Cast(
+        uint32Array->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized))
+          .ToLocalChecked()));
+  }
+};
+
+AddonData globalAddonData;
+
+#endif
+
+
+// #include "memory.h"
+
+#ifndef ROARING_NODE_MEMORY_
+#define ROARING_NODE_MEMORY_
+
+
+/** portable version of posix_memalign */
+static void * bare_aligned_malloc(size_t alignment, size_t size) {
+  void * p;
+#ifdef _MSC_VER
+  p = _aligned_malloc(size, alignment);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  p = __mingw_aligned_malloc(size, alignment);
+#else
+  // somehow, if this is used before including "x86intrin.h", it creates an
+  // implicit defined warning.
+  if (posix_memalign(&p, alignment, size) != 0) return NULL;
+#endif
+  return p;
+}
+
+/** portable version of free fo aligned allocs */
+static void bare_aligned_free(void * memblock) {
+  if (memblock != nullptr) {
+#ifdef _MSC_VER
+    _aligned_free(memblock);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+    __mingw_aligned_free(memblock);
+#else
+    free(memblock);
+#endif
+  }
+}
+
+/** portable version of malloc_size */
+inline static size_t bare_malloc_size(const void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size(ptr);
+#elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
+  return _msize(ptr);
+#else
+  return malloc_usable_size(ptr);
+#endif
+}
+
+/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
+inline static size_t bare_aligned_malloc_size(const void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size(ptr);
+#elif defined(_WIN32)
+  return _aligned_msize(ptr, 32, 0);
+#else
+  return malloc_usable_size(ptr);
+#endif
+}
+
+std::atomic<int64_t> gcaware_totalMemCounter{0};
+
+int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
+
+static thread_local v8::Isolate * thread_local_isolate = nullptr;
+
+inline static void _gcaware_adjustAllocatedMemory(int64_t size) {
+  if (size != 0) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    if (isolate == nullptr) {
+      isolate = thread_local_isolate;
+    }
+    if (isolate != nullptr) {
+      isolate->AdjustAmountOfExternalAllocatedMemory(size);
+    }
+    gcaware_totalMemCounter += size;
+  }
+}
+
+inline static void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
+
+inline static void gcaware_removeAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory(-(int64_t)size); }
+
+static void * gcaware_malloc(size_t size) {
+  void * memory = malloc(size);
+  if (memory != nullptr) {
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+static void * gcaware_realloc(void * memory, size_t size) {
+  size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
+  memory = realloc(memory, size);
+  if (memory != nullptr) {
+    gcaware_removeAllocatedMemory(oldSize);
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+static void * gcaware_calloc(size_t count, size_t size) {
+  void * memory = calloc(count, size);
+  if (memory != nullptr) {
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+static void gcaware_free(void * memory) {
+  if (memory != nullptr) {
+    gcaware_removeAllocatedMemory(bare_malloc_size(memory));
+  }
+  free(memory);
+}
+
+static void * gcaware_aligned_malloc(size_t alignment, size_t size) {
+  void * memory = bare_aligned_malloc(alignment, size);
+  if (memory != nullptr) {
+    gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));
+  }
+  return memory;
+}
+
+static void gcaware_aligned_free(void * memory) {
+  if (memory != nullptr) {
+    gcaware_removeAllocatedMemory(bare_aligned_malloc_size(memory));
+  }
+  bare_aligned_free(memory);
+}
+
+static void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
+
+#endif  // ROARING_NODE_MEMORY_
+
+
+namespace v8utils {
+
+  uint32_t getCpusCount();
+
+  template <typename T>
+  inline void ignoreMaybeResult(v8::Maybe<T>) {}
+
+  template <typename T>
+  inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
+
+  template <int N>
+  inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
+    isolate->ThrowException(v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
+  }
+
+  template <int N>
+  inline void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
+    isolate->ThrowException(
+      v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
+  }
+
+  void throwError(v8::Isolate * isolate, const char * message);
+  void throwTypeError(v8::Isolate * isolate, const char * message);
+  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message);
+
+  template <int N>
+  void defineHiddenField(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
+    v8::HandleScope scope(isolate);
+    v8::PropertyDescriptor propertyDescriptor(value, false);
+    propertyDescriptor.set_configurable(false);
+    propertyDescriptor.set_enumerable(false);
+
+    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
+    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
+  }
+
+  template <int N>
+  void defineReadonlyField(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
+    v8::HandleScope scope(isolate);
+    v8::PropertyDescriptor propertyDescriptor(value, false);
+    propertyDescriptor.set_configurable(false);
+    propertyDescriptor.set_enumerable(true);
+
+    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
+    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
+  }
+
+  template <int N>
+  void defineHiddenFunction(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::FunctionCallback callback) {
+    v8::HandleScope scope(isolate);
+    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
+
+    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
+    t->SetClassName(name);
+
+    auto fn = t->GetFunction(isolate->GetCurrentContext());
+    v8::Local<v8::Function> fnLocal;
+    if (fn.ToLocal(&fnLocal)) {
+      v8::PropertyDescriptor propertyDescriptor(fnLocal, false);
+      propertyDescriptor.set_configurable(false);
+      propertyDescriptor.set_enumerable(false);
+      ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
+    }
+  }
+
+  bool v8ValueToBufferWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result);
+
+  bool v8ValueToUint32ArrayWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result);
+
+  template <typename T>
+  class TypedArrayContent final {
+   public:
+    size_t length;
+    T * data;
+    v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
+#if NODE_MAJOR_VERSION > 13
+    std::shared_ptr<v8::BackingStore> backingStore;
+#endif
+
+    inline TypedArrayContent() : length(0), data(nullptr) {}
+
+    template <typename Q>
+    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::Local<Q> from) {
+      set(isolate, from);
+    }
+
+    template <typename Q>
+    inline explicit TypedArrayContent(v8::Isolate * isolate, v8::MaybeLocal<Q> from) {
+      set(isolate, from);
+    }
+
+    inline void reset() {
+      this->length = 0;
+      this->data = nullptr;
+#if NODE_MAJOR_VERSION > 13
+      this->backingStore = nullptr;
+#endif
+      this->bufferPersistent.Reset();
+    }
+
+    template <typename Q>
+    bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
+      v8::Local<Q> local;
+      if (from.ToLocal(&local)) {
+        return this->set(isolate, local);
+      }
+      this->reset();
+      return false;
+    }
+
+    template <typename Q>
+    bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
+      if (!from.IsEmpty()) {
+        if (from->IsArrayBufferView()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
+          this->length = array->ByteLength() / sizeof(T);
+          auto arrayBuffer = array->Buffer();
+#if NODE_MAJOR_VERSION > 13
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
+#else
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()) + array->ByteOffset());
+#endif
+          return true;
+        }
+
+        if (from->IsArrayBuffer()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
+          this->length = arrayBuffer->ByteLength() / sizeof(T);
+#if NODE_MAJOR_VERSION > 13
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+#else
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
+#endif
+          return true;
+        }
+      }
+
+      this->reset();
+      return false;
+    }
+  };
+
+  namespace ObjectWrap {
+    template <class T>
+    static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+      v8::Local<v8::Object> obj;
+      if (isolate && value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
+        if (obj->InternalFieldCount() > 0) {
+          T * result = (T *)(obj->GetAlignedPointerFromInternalField(0));
+          if (result && result->objectToken == T::OBJECT_TOKEN) {
+            return result;
+          }
+        }
+      }
+      return nullptr;
+    }
+
+    template <class T>
+    static T * TryUnwrap(
+      const v8::Local<v8::Value> & value, const v8::Local<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
+      return !ctorTemplate.IsEmpty() && ctorTemplate->HasInstance(value) ? ObjectWrap::TryUnwrap<T>(value, isolate)
+                                                                         : nullptr;
+    }
+
+    template <class T>
+    static T * TryUnwrap(
+      const v8::Local<v8::Value> & value,
+      const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate,
+      v8::Isolate * isolate) {
+      return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
+    }
+
+    template <class T>
+    static T * TryUnwrap(
+      const v8::Local<v8::Value> & value, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
+      return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
+    }
+
+    template <class T>
+    static T * TryUnwrap(
+      const v8::FunctionCallbackInfo<v8::Value> & info,
+      int argumentIndex,
+      const v8::Local<v8::FunctionTemplate> & ctorTemplate) {
+      return info.Length() <= argumentIndex ? nullptr
+                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
+    }
+
+    template <class T>
+    static T * TryUnwrap(
+      const v8::FunctionCallbackInfo<v8::Value> & info,
+      int argumentIndex,
+      const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate) {
+      return info.Length() <= argumentIndex ? nullptr
+                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
+    }
+
+    template <class T>
+    static T * TryUnwrap(
+      const v8::FunctionCallbackInfo<v8::Value> & info,
+      int argumentIndex,
+      const v8::Eternal<v8::FunctionTemplate> & ctorTemplate) {
+      return info.Length() <= argumentIndex ? nullptr
+                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
+    }
+  }  // namespace ObjectWrap
+
+  typedef const char * const_char_ptr_t;
+
+  class AsyncWorker {
+   public:
+    v8::Isolate * const isolate;
+
+    explicit AsyncWorker(v8::Isolate * isolate);
+
+    virtual ~AsyncWorker();
+
+    bool setCallback(v8::Local<v8::Value> callback);
+
+    inline bool hasStarted() const { return this->_started; }
+
+    inline bool hasError() const { return this->_error != nullptr; }
+
+    inline void setError(const_char_ptr_t error) {
+      if (error != nullptr && this->_error == nullptr) {
+        this->_error = error;
+      }
+    }
+
+    inline void clearError() { this->_error = nullptr; }
+
+    static v8::Local<v8::Value> run(AsyncWorker * worker);
+
+   protected:
+    // Called before the thread starts, in the main thread.
+    virtual void before();
+
+    // Called in a thread to execute the workload
+    virtual void work() = 0;
+
+    // Called after the thread completes without errors, in the main thread.
+    virtual void done(v8::Local<v8::Value> & result);
+
+    // Called after the thread completes, with or without errors, in the main thread.
+    virtual void finally();
+
+   private:
+    uv_work_t _task{};
+    volatile const_char_ptr_t _error;
+    bool _started;
+    volatile bool _completed;
+    v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> _callback;
+    v8::Persistent<v8::Promise::Resolver, v8::CopyablePersistentTraits<v8::Promise::Resolver>> _resolver;
+
+    virtual bool _start();
+    static void _complete(AsyncWorker * worker);
+    static void _resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error);
+    static void _work(uv_work_t * request);
+    static void _done(uv_work_t * request, int status);
+    v8::Local<v8::Value> _makeError(v8::Local<v8::Value> error);
+
+    friend class ParallelAsyncWorker;
+  };
+
+  class ParallelAsyncWorker : public AsyncWorker {
+   public:
+    uint32_t loopCount;
+    uint32_t concurrency;
+
+    explicit ParallelAsyncWorker(v8::Isolate * isolate);
+    virtual ~ParallelAsyncWorker();
+
+   protected:
+    void work() override;
+
+    virtual void parallelWork(uint32_t index) = 0;
+
+   private:
+    uv_work_t * _tasks;
+    volatile int32_t _pendingTasks;
+    volatile uint32_t _currentIndex;
+
+    bool _start() override;
+
+    static void _parallelWork(uv_work_t * request);
+    static void _parallelDone(uv_work_t * request, int status);
+  };
+
+}  // namespace v8utils
+
+#endif  // ROARING_NODE_V8UTILS_
+
+
+/////////////// v8utils ///////////////
+
+namespace v8utils {
+
+  static uint32_t _cpusCountCache = 0;
+
+  uint32_t getCpusCount() {
+    uint32_t result = _cpusCountCache;
+    if (result != 0) {
+      return result;
+    }
+
+    uv_cpu_info_t * tmp = nullptr;
+    int count = 0;
+    uv_cpu_info(&tmp, &count);
+    if (tmp != nullptr) {
+      uv_free_cpu_info(tmp, count);
+    }
+    result = count <= 0 ? 1 : (uint32_t)count;
+    _cpusCountCache = result;
+    return result;
+  }
+
+  // Creates a new Error from string
+  v8::Local<v8::Value> createError(v8::Isolate * isolate, const char * message) {
+    v8::EscapableHandleScope scope(isolate);
+    auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+    v8::Local<v8::String> msgLocal;
+    if (msg.ToLocal(&msgLocal)) {
+      return scope.Escape(v8::Exception::Error(msgLocal));
+    }
+    return scope.Escape(
+      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
+  }
+
+  void throwError(v8::Isolate * isolate, const char * message) {
+    v8::HandleScope scope(isolate);
+    if (message != nullptr && message[0] != '\0') {
+      auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+      v8::Local<v8::String> msgLocal;
+      if (msg.ToLocal(&msgLocal)) {
+        isolate->ThrowException(v8::Exception::Error(msgLocal));
+        return;
+      }
+    }
+    isolate->ThrowException(
+      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
+  }
+
+  void throwTypeError(v8::Isolate * isolate, const char * message) {
+    v8::HandleScope scope(isolate);
+    if (message != nullptr && message[0] != '\0') {
+      auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+      v8::Local<v8::String> msgLocal;
+      if (msg.ToLocal(&msgLocal)) {
+        isolate->ThrowException(v8::Exception::TypeError(msgLocal));
+        return;
+      }
+    }
+    isolate->ThrowException(
+      v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
+  }
+
+  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message) {
+    v8::HandleScope scope(isolate);
+    auto a = v8::String::NewFromUtf8(isolate, context, v8::NewStringType::kInternalized);
+    auto b = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+#if NODE_MAJOR_VERSION > 10
+    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(isolate, a.ToLocalChecked(), b.ToLocalChecked());
+#else
+    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(a.ToLocalChecked(), b.ToLocalChecked());
+#endif
+    isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
+  }
+
+  static bool _bufferFromArrayBuffer(
+    v8::Isolate * isolate, v8::Local<v8::Value> buffer, size_t offset, size_t length, v8::Local<v8::Value> & result) {
+    if (buffer.IsEmpty()) {
+      return false;
+    }
+#if NODE_MAJOR_VERSION > 12
+    auto buf = buffer.As<v8::ArrayBuffer>();
+    return !buf.IsEmpty() && node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
+#else
+    v8::Local<v8::Value> argv[] = {
+      buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
+    return JSTypes::Buffer_from.Get(isolate)
+      ->Call(isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 3, argv)
+      .ToLocal(&result);
+#endif
+  }
+
+  bool v8ValueToBufferWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
+    v8::Local<v8::Value> localValue;
+    if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
+      if (localValue->IsUint8Array()) {
+        v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
+        if (!array.IsEmpty()) {
+          if (node::Buffer::HasInstance(localValue) && node::Buffer::Length(localValue) == length) {
+            result = array;
+            return true;
+          }
+          if (array->ByteLength() >= length) {
+            return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
+          }
+        }
+        return false;
+      }
+      if (localValue->IsTypedArray()) {
+        auto array = localValue.As<v8::TypedArray>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
+        }
+        return false;
+      }
+      if (localValue->IsArrayBufferView()) {
+        auto array = localValue.As<v8::ArrayBufferView>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return _bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
+        }
+        return false;
+      }
+      if (localValue->IsArrayBuffer()) {
+        auto array = localValue.As<v8::ArrayBuffer>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return _bufferFromArrayBuffer(isolate, array, 0, length, result);
+        }
+        return false;
+      }
+    }
+    return false;
+  }
+
+  bool v8ValueToUint32ArrayWithLimit(
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
+    v8::Local<v8::Value> localValue;
+    if (!value.ToLocal(&localValue)) {
+      return {};
+    }
+    if (localValue->IsUint32Array()) {
+      auto array = localValue.As<v8::Uint32Array>();
+      if (!array.IsEmpty()) {
+        auto arrayLength = array->Length();
+        if (arrayLength == length) {
+          result = array;
+          return true;
+        }
+        if (arrayLength > length) {
+          result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+          return !result.IsEmpty();
+        }
+      }
+      return false;
+    }
+    if (localValue->IsTypedArray()) {
+      auto array = localValue.As<v8::TypedArray>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    if (localValue->IsArrayBufferView()) {
+      auto array = localValue.As<v8::ArrayBufferView>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    if (localValue->IsArrayBuffer()) {
+      auto array = localValue.As<v8::ArrayBuffer>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array, 0, length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    return false;
+  }
+
+  /////////////// AsyncWorker ///////////////
+
+  AsyncWorker::AsyncWorker(v8::Isolate * isolate) : isolate(isolate), _error(nullptr), _started(false), _completed(false) {
+    _task.data = this;
+  }
+
+  AsyncWorker::~AsyncWorker() {}
+
+  bool AsyncWorker::setCallback(v8::Local<v8::Value> callback) {
+    if (callback.IsEmpty() || !callback->IsFunction()) return false;
+    _callback.Reset(isolate, v8::Local<v8::Function>::Cast(callback));
+    return true;
+  }
+
+  bool AsyncWorker::_start() {
+    this->_started = true;
+    if (uv_queue_work(uv_default_loop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
+      setError("Error starting async thread");
+      return false;
+    }
+    return true;
+  }
+
+  v8::Local<v8::Value> AsyncWorker::_makeError(v8::Local<v8::Value> error) {
+    if (error.IsEmpty() || error->IsNull() || error->IsUndefined()) {
+      this->setError("Exception in async operation");
+      return {};
+    }
+    if (!error->IsObject()) {
+      v8::MaybeLocal<v8::String> message = error->ToString(isolate->GetCurrentContext());
+      if (message.IsEmpty()) {
+        message = NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized);
+      }
+      error = v8::Exception::Error(error.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
+    }
+    return error;
+  }
+
+  v8::Local<v8::Value> AsyncWorker::run(AsyncWorker * worker) {
+    v8::EscapableHandleScope scope(worker->isolate);
+    v8::Local<v8::Value> returnValue;
+
+    if (worker->_callback.IsEmpty()) {
+      v8::Isolate * isolate = worker->isolate;
+      v8::MaybeLocal<v8::Promise::Resolver> resolverMaybe = v8::Promise::Resolver::New(isolate->GetCurrentContext());
+
+      if (resolverMaybe.IsEmpty()) {
+        v8utils::throwTypeError(isolate, "Failed to create Promise");
+        return returnValue;
+      }
+
+      v8::Local<v8::Promise::Resolver> resolver = resolverMaybe.ToLocalChecked();
+
+      returnValue = resolver->GetPromise();
+      if (returnValue.IsEmpty()) {
+        worker->setError("Failed to create Promise");
+      } else {
+        worker->_resolver.Reset(isolate, resolver);
+      }
+    }
+
+    v8::TryCatch tryCatch(worker->isolate);
+    worker->before();
+
+    v8::Local<v8::Value> error;
+
+    if (worker->hasError()) {
+      _resolveOrReject(worker, error);
+    } else if (tryCatch.HasCaught()) {
+      error = worker->_makeError(tryCatch.Exception());
+      _resolveOrReject(worker, error);
+    } else if (!worker->_start()) {
+      if (tryCatch.HasCaught()) {
+        error = worker->_makeError(tryCatch.Exception());
+      }
+      _resolveOrReject(worker, error);
+    }
+
+    if (returnValue.IsEmpty()) {
+      returnValue = v8::Undefined(worker->isolate);
+    }
+
+    return scope.Escape(returnValue);
+  }
+
+  void AsyncWorker::before() {}
+
+  void AsyncWorker::done(v8::Local<v8::Value> & result) {}
+
+  void AsyncWorker::finally() {}
+
+  void AsyncWorker::_work(uv_work_t * request) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+    auto * worker = static_cast<AsyncWorker *>(request->data);
+    if (worker && !worker->hasError()) {
+      auto oldIsolate = thread_local_isolate;
+      thread_local_isolate = worker->isolate;
+      worker->work();
+      thread_local_isolate = oldIsolate;
+      std::atomic_thread_fence(std::memory_order_seq_cst);
+    }
+  }
+
+  void AsyncWorker::_done(uv_work_t * request, int status) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+    auto * worker = static_cast<AsyncWorker *>(request->data);
+    if (status != 0) {
+      worker->setError("Error executing async thread");
+    }
+    _complete(worker);
+  }
+
+  void AsyncWorker::_resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error) {
+    if (worker->_completed) {
+      return;
+    }
+
+    worker->_completed = true;
+
+    v8::Isolate * isolate = worker->isolate;
+    v8::HandleScope scope(isolate);
+
+    v8::TryCatch tryCatch(isolate);
+
+    v8::Local<v8::Value> result;
+
+    if (worker->_error == nullptr && error.IsEmpty()) {
+      worker->done(result);
+
+      if (tryCatch.HasCaught()) {
+        error = worker->_makeError(tryCatch.Exception());
+        tryCatch.Reset();
+      }
+    }
+
+    worker->finally();
+
+    if (tryCatch.HasCaught()) {
+      error = worker->_makeError(tryCatch.Exception());
+      tryCatch.Reset();
+    }
+
+    if (result.IsEmpty() && error.IsEmpty()) {
+      worker->setError("Async operation failed");
+    }
+
+    if (worker->hasError() && error.IsEmpty()) {
+      v8::MaybeLocal<v8::String> message =
+        v8::String::NewFromUtf8(isolate, worker->_error, v8::NewStringType::kInternalized);
+      error = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
+    }
+
+    auto context = isolate->GetCurrentContext();
+    if (worker->_resolver.IsEmpty()) {
+      v8::Local<v8::Function> callback = worker->_callback.Get(isolate);
+      std::atomic_thread_fence(std::memory_order_seq_cst);
+      delete worker;
+      if (!error.IsEmpty()) {
+        v8::Local<v8::Value> argv[] = {error, v8::Undefined(isolate)};
+        v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
+      } else {
+        v8::Local<v8::Value> argv[] = {v8::Null(isolate), result};
+        v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
+      }
+    } else {
+      v8::Local<v8::Promise::Resolver> resolver = worker->_resolver.Get(isolate);
+      std::atomic_thread_fence(std::memory_order_seq_cst);
+      delete worker;
+      if (!error.IsEmpty()) {
+        v8utils::ignoreMaybeResult(resolver->Reject(context, error));
+      } else if (!result.IsEmpty()) {
+        v8utils::ignoreMaybeResult(resolver->Resolve(context, result));
+      } else {
+        v8utils::ignoreMaybeResult(resolver->Reject(context, v8::Undefined(isolate)));
+      }
+    }
+  }
+
+  void AsyncWorker::_complete(AsyncWorker * worker) {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+    v8::Isolate * isolate = worker->isolate;
+    v8::Local<v8::Value> error;
+    _resolveOrReject(worker, error);
+#if NODE_MAJOR_VERSION > 13
+    isolate->PerformMicrotaskCheckpoint();
+#else
+    isolate->RunMicrotasks();
+#endif
+  }
+
+  /////////////// ParallelAsyncWorker ///////////////
+
+  ParallelAsyncWorker::ParallelAsyncWorker(v8::Isolate * isolate) :
+    AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {}
+
+  ParallelAsyncWorker::~ParallelAsyncWorker() { gcaware_free(_tasks); }
+
+  void ParallelAsyncWorker::work() {
+    const uint32_t c = loopCount;
+    for (uint32_t i = 0; i != c && !hasError() && !_completed; ++i) {
+      parallelWork(i);
+    }
+  }
+
+  bool ParallelAsyncWorker::_start() {
+    if (concurrency == 0) {
+      concurrency = getCpusCount();
+    }
+
+    uint32_t tasksCount = concurrency < loopCount ? concurrency : loopCount;
+
+    if (tasksCount <= 1) {
+      return AsyncWorker::_start();
+    }
+
+    uv_work_t * tasks = (uv_work_t *)gcaware_malloc(tasksCount * sizeof(uv_work_t));
+    if (tasks == nullptr) {
+      this->setError("Failed to allocate memory");
+      return false;
+    }
+    memset(tasks, 0, tasksCount * sizeof(uv_work_t));
+
+    _tasks = tasks;
+
+    for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
+      tasks[taskIndex].data = this;
+    }
+
+    for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
+      if (
+        uv_queue_work(
+          uv_default_loop(), &tasks[taskIndex], ParallelAsyncWorker::_parallelWork, ParallelAsyncWorker::_parallelDone) !=
+        0) {
+        setError("Error starting async parallel task");
+        break;
+      }
+      ++_pendingTasks;
+    }
+
+    return _pendingTasks > 0;
+  }
+
+  void ParallelAsyncWorker::_parallelWork(uv_work_t * request) {
+    auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
+
+    if (worker) {
+      auto oldIsolate = thread_local_isolate;
+      thread_local_isolate = worker->isolate;
+      uint32_t loopCount = worker->loopCount;
+      while (!worker->hasError() && !worker->_completed) {
+        const uint32_t prevIndex = worker->_currentIndex;
+        const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
+        if (index >= loopCount || index < prevIndex) {
+          break;
+        }
+        worker->parallelWork(index);
+      }
+      thread_local_isolate = oldIsolate;
+    }
+  }
+
+  void ParallelAsyncWorker::_parallelDone(uv_work_t * request, int /*status*/) {
+    auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
+
+    if (worker->_completed) {
+#if NODE_MAJOR_VERSION > 13
+      worker->isolate->PerformMicrotaskCheckpoint();
+#else
+      worker->isolate->RunMicrotasks();
+#endif
+      return;
+    }
+
+    if (--worker->_pendingTasks <= 0) {
+      _complete(worker);
+      return;
+    }
+
+#if NODE_MAJOR_VERSION > 13
+    worker->isolate->PerformMicrotaskCheckpoint();
+#else
+    worker->isolate->RunMicrotasks();
+#endif
+  }
+
+}  // namespace v8utils
+
+
+
+// #include "RoaringBitmap32.h"
+
+#ifndef __ROARINGBITMAP32__H__
+#define __ROARINGBITMAP32__H__
+
+
+using namespace roaring;
+using namespace roaring::api;
+
+class RoaringBitmap32;
+
+typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
+
+enum class SerializationFormat {
+  INVALID = -1,
+  croaring = 0,
+  portable = 1,
+  unsafe_frozen_croaring = 2,
+};
+
+enum class DeserializationFormat {
+  INVALID = -1,
+  croaring = 0,
+  portable = 1,
+  unsafe_frozen_croaring = 2,
+  unsafe_frozen_portable = 3,
+};
+
+enum class FrozenViewFormat {
+  INVALID = -1,
+  unsafe_frozen_croaring = 2,
+  unsafe_frozen_portable = 3,
+};
+
+class RoaringBitmap32 final {
+ public:
+  static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152333221;
+
+  static const constexpr int64_t FROZEN_COUNTER_SOFT_FROZEN = -1;
+  static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
+
+  roaring_bitmap_t * roaring;
+  const uint64_t objectToken = OBJECT_TOKEN;
+  int64_t sizeCache;
+  int64_t _version;
+  int64_t frozenCounter;
+  RoaringBitmap32 * const readonlyViewOf;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> readonlyViewPersistent;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+  v8utils::TypedArrayContent<uint8_t> frozenStorage;
+
+  inline bool isEmpty() const {
+    if (this->sizeCache == 0) {
+      return true;
+    }
+    if (this->readonlyViewOf != nullptr) {
+      return this->readonlyViewOf->isEmpty();
+    }
+    const roaring_bitmap_t_ptr roaring = this->roaring;
+    bool result = roaring == nullptr || roaring_bitmap_is_empty(roaring);
+    if (result) {
+      const_cast<RoaringBitmap32 *>(this)->sizeCache = 0;
+    }
+    return result;
+  }
+
+  inline size_t getSize() const {
+    int64_t size = this->sizeCache;
+    if (size < 0) {
+      if (this->readonlyViewOf != nullptr) {
+        return this->readonlyViewOf->getSize();
+      }
+      const roaring_bitmap_t_ptr roaring = this->roaring;
+      size = roaring != nullptr ? (int64_t)roaring_bitmap_get_cardinality(roaring) : 0;
+      const_cast<RoaringBitmap32 *>(this)->sizeCache = size;
+    }
+    return (size_t)size;
+  }
+
+  inline bool isFrozen() const { return this->frozenCounter != 0; }
+  inline bool isFrozenHard() const { return this->frozenCounter > 0 || this->frozenCounter == FROZEN_COUNTER_HARD_FROZEN; }
+  inline bool isFrozenForever() const { return this->frozenCounter < 0; }
+
+  inline void beginFreeze() {
+    if (this->frozenCounter >= 0) {
+      ++this->frozenCounter;
+    }
+  }
+
+  inline void endFreeze() {
+    if (this->frozenCounter > 0) {
+      --this->frozenCounter;
+    }
+  }
+
+  inline int64_t getVersion() const { return this->_version; }
+
+  inline void invalidate() {
+    this->sizeCache = -1;
+    ++this->_version;
+  }
+
+  bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance);
+
+  static void asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void hasRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void flipRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void addRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void removeRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void has(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void add(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void addMany(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void remove(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void removeMany(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void removeChecked(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void clear(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void minimum(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void maximum(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void isSubset(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void isStrictSubset(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void intersects(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void intersectsWithRange(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void isEqual(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void andCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void orCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void andNotCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void xorCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void jaccardIndex(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void rank(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void select(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void rangeCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void removeRunCompression(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void runOptimize(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void shrinkToFit(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void toArray(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void toSet(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void serialize(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void deserialize(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void andStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void orStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void xorManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void clone(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void toString(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void contentToString(const v8::FunctionCallbackInfo<v8::Value> & info);
+  static void statistics(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void freeze(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+  static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+  static void isFrozen_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
+
+  static void getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  explicit RoaringBitmap32(RoaringBitmap32 * readonlyViewOf);
+  explicit RoaringBitmap32(uint32_t capacity);
+  ~RoaringBitmap32();
+};
+
+class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
+ public:
+  volatile roaring_bitmap_t_ptr bitmap;
+
+  explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate);
+  virtual ~RoaringBitmap32FactoryAsyncWorker();
+
+ protected:
+  void done(v8::Local<v8::Value> & result) override;
+};
+
+class RoaringBitmap32BufferedIterator {
+ public:
+  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152495421;
+
+  const uint64_t objectToken = OBJECT_TOKEN;
+
+  enum { allocatedMemoryDelta = 1024 };
+
+  roaring_uint32_iterator_t it;
+  int64_t bitmapVersion;
+  RoaringBitmap32 * bitmapInstance;
+  v8utils::TypedArrayContent<uint32_t> bufferContent;
+
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+
+  static void fill(const v8::FunctionCallbackInfo<v8::Value> & info);
+
+  RoaringBitmap32BufferedIterator();
+  ~RoaringBitmap32BufferedIterator();
+
+ private:
+  void destroy();
+};
+
+#endif
+
 
 /////////////////// RoaringBitmap32 ///////////////////
 
 const uint32_t MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES = 0x00FFFFFF;
 
 std::atomic<uint64_t> RoaringBitmap32InstancesCounter{0};
-
-void initTypes(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
-  JSTypes::initJSTypes(isolate, info[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked());
-}
 
 void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe) {
   v8::Isolate * isolate = info.GetIsolate();
@@ -22114,7 +22144,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
   }
 
   v8::MaybeLocal<v8::Object> bufferMaybe =
-    node::Buffer::New(isolate, (char *)ptr, size, buffer_bare_aligned_free_callback, nullptr);
+    node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
 
   v8::Local<v8::Object> bufferObj;
   if (!bufferMaybe.ToLocal(&bufferObj)) {
@@ -22170,17 +22200,11 @@ static void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports);
 static void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Value> & info);
 static void RoaringBitmap32BufferedIterator_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info);
 
-v8::Eternal<v8::String> string_readonly;
-
 void InitModule(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
-  string_readonly.Set(isolate, NEW_LITERAL_V8_STRING(isolate, "readonly", v8::NewStringType::kInternalized));
-
-  JSTypes::initJSTypes(isolate, isolate->GetCurrentContext()->Global());
-
-  v8utils::defineHiddenFunction(isolate, exports, "_initTypes", initTypes);
+  globalAddonData.initialize(isolate);
   v8utils::defineHiddenField(isolate, exports, "default", exports);
 
   NODE_SET_METHOD(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
@@ -22284,9 +22308,6 @@ static FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & va
 const char * const ERROR_FROZEN = "This bitmap is frozen and cannot be modified";
 const char * const ERROR_INVALID_OBJECT = "Invalid RoaringBitmap32 object";
 
-v8::Eternal<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
-v8::Eternal<v8::Function> RoaringBitmap32_constructor;
-
 std::atomic<bool> _roaringBitMemoryInitialized(false);
 
 static void RoaringBitmap32_Init(v8::Local<v8::Object> exports) {
@@ -22311,7 +22332,7 @@ static void RoaringBitmap32_Init(v8::Local<v8::Object> exports) {
   if (ctor.IsEmpty()) {
     return;
   }
-  RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
+  globalAddonData.RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
 
@@ -22431,7 +22452,7 @@ static void RoaringBitmap32_Init(v8::Local<v8::Object> exports) {
 
   v8utils::ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
-  RoaringBitmap32_constructor.Set(isolate, ctorFunction);
+  globalAddonData.RoaringBitmap32_constructor.Set(isolate, ctorFunction);
 }
 
 RoaringBitmap32::RoaringBitmap32(RoaringBitmap32 * readonlyViewOf) :
@@ -22500,7 +22521,7 @@ static void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info
   v8::HandleScope scope(isolate);
 
   if (!info.IsConstructCall()) {
-    v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+    v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
     v8::MaybeLocal<v8::Object> v;
     if (info.Length() < 1) {
       v = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
@@ -22557,7 +22578,7 @@ static void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info
   } else {
     bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
     if (hasParameter) {
-      if (RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
+      if (globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
         RoaringBitmap32::copyFrom(info);
       } else {
         RoaringBitmap32::addMany(info);
@@ -22592,9 +22613,9 @@ void RoaringBitmap32::asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> &
     return;
   }
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
   v8::MaybeLocal<v8::Object> v;
-  v8::Local<v8::Value> argv[2] = {info.Holder(), string_readonly.Get(isolate)};
+  v8::Local<v8::Value> argv[2] = {info.Holder(), globalAddonData.strings.readonly.Get(isolate)};
   v = cons->NewInstance(isolate->GetCurrentContext(), 2, argv);
 
   if (!v.ToLocal(&vlocal)) {
@@ -22933,7 +22954,7 @@ class ToUint32ArrayAsyncWorker final : public v8utils::AsyncWorker {
     if (allocatedBuffer && this->outputSize != 0) {
       // Create a new buffer using the allocated memory
       v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate, (char *)allocatedBuffer, this->outputSize * sizeof(uint32_t), buffer_bare_aligned_free_callback, nullptr);
+        isolate, (char *)allocatedBuffer, this->outputSize * sizeof(uint32_t), bare_aligned_free_callback, nullptr);
       if (!nodeBufferMaybeLocal.IsEmpty()) {
         this->allocatedBuffer = nullptr;
       }
@@ -23308,7 +23329,7 @@ void RoaringBitmap32::clone(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   v8::Local<v8::Value> argv[1] = {info.Holder()};
   auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
@@ -23410,7 +23431,7 @@ void RoaringBitmap32FactoryAsyncWorker::done(v8::Local<v8::Value> & result) {
     return this->setError("Error deserializing roaring bitmap");
   }
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(this->isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(this->isolate);
 
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
 
@@ -23752,8 +23773,8 @@ class RoaringBitmapSerializer final {
 
     if (allocatedBuffer) {
       // Create a new buffer using the allocated memory
-      v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate, (char *)allocatedBuffer, this->serializedSize, buffer_bare_aligned_free_callback, nullptr);
+      v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal =
+        node::Buffer::New(isolate, (char *)allocatedBuffer, this->serializedSize, bare_aligned_free_callback, nullptr);
       if (!nodeBufferMaybeLocal.ToLocal(&result)) {
         return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create a new buffer");
       }
@@ -23840,7 +23861,7 @@ void RoaringBitmap32::unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -23917,7 +23938,7 @@ void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -23985,7 +24006,7 @@ class DeserializeWorker final : public v8utils::AsyncWorker {
   void done(v8::Local<v8::Value> & result) final {
     v8::Isolate * isolate = this->isolate;
 
-    v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+    v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
     if (!cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr).ToLocal(&result)) {
       return this->setError("RoaringBitmap32 deserialization failed to create a new instance");
@@ -24043,7 +24064,7 @@ class DeserializeParallelWorker : public v8utils::ParallelAsyncWorker {
   }
 
   void done(v8::Local<v8::Value> & result) final {
-    v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+    v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
     const uint32_t itemsCount = this->loopCount;
     RoaringBitmapDeserializer * items = this->items;
@@ -24137,44 +24158,51 @@ void RoaringBitmap32::deserializeParallelStaticAsync(const v8::FunctionCallbackI
 
 void RoaringBitmap32::isSubset(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(self == other || (self && other && roaring_bitmap_is_subset(self->roaring, other->roaring)));
 }
 
 void RoaringBitmap32::isStrictSubset(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(self && other && roaring_bitmap_is_strict_subset(self->roaring, other->roaring));
 }
 
 void RoaringBitmap32::isEqual(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(
     self == other || (self && other && roaring_bitmap_equals(self->roaring, other->roaring) ? true : false));
 }
 
 void RoaringBitmap32::intersects(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(self && other && roaring_bitmap_intersect(self->roaring, other->roaring) ? true : false);
 }
 
 void RoaringBitmap32::andCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(self && other ? (double)roaring_bitmap_and_cardinality(self->roaring, other->roaring) : -1);
 }
 
 void RoaringBitmap32::orCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(self && other ? (double)roaring_bitmap_or_cardinality(self->roaring, other->roaring) : -1);
 }
 
 void RoaringBitmap32::andNotCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(self && other ? (double)roaring_bitmap_andnot_cardinality(self->roaring, other->roaring) : -1);
 }
 
@@ -24183,13 +24211,15 @@ void RoaringBitmap32::xorCardinality(const v8::FunctionCallbackInfo<v8::Value> &
   if (self == nullptr) {
     return info.GetReturnValue().Set(0);
   }
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(self && other ? (double)roaring_bitmap_xor_cardinality(self->roaring, other->roaring) : -1);
 }
 
 void RoaringBitmap32::jaccardIndex(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other =
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
   info.GetReturnValue().Set(self && other ? roaring_bitmap_jaccard_index(self->roaring, other->roaring) : -1);
 }
 
@@ -24225,7 +24255,7 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
   }
 
   RoaringBitmap32 * other =
-    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, RoaringBitmap32_constructorTemplate, isolate);
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
   if (other != nullptr) {
     if (self != other) {
       if (replace || self->roaring->high_low_container.containers == nullptr) {
@@ -24239,8 +24269,8 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
   }
 
   v8::Local<v8::Value> argv[] = {arg};
-  auto tMaybe =
-    JSTypes::Uint32Array_from.Get(isolate)->Call(isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 1, argv);
+  auto tMaybe = globalAddonData.Uint32Array_from.Get(isolate)->Call(
+    isolate->GetCurrentContext(), globalAddonData.Uint32Array.Get(isolate), 1, argv);
   v8::Local<v8::Value> t;
   if (!tMaybe.ToLocal(&t)) return false;
 
@@ -24352,15 +24382,15 @@ void RoaringBitmap32::removeMany(const v8::FunctionCallbackInfo<v8::Value> & inf
       done = true;
     } else {
       RoaringBitmap32 * other =
-        v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, RoaringBitmap32_constructorTemplate, isolate);
+        v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
       if (other != nullptr) {
         roaring_bitmap_andnot_inplace(self->roaring, other->roaring);
         self->invalidate();
         done = true;
       } else {
         v8::Local<v8::Value> argv[] = {arg};
-        auto tMaybe = JSTypes::Uint32Array_from.Get(isolate)->Call(
-          isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 1, argv);
+        auto tMaybe = globalAddonData.Uint32Array_from.Get(isolate)->Call(
+          isolate->GetCurrentContext(), globalAddonData.Uint32Array.Get(isolate), 1, argv);
         v8::Local<v8::Value> t;
         if (tMaybe.ToLocal(&t)) {
           const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, t);
@@ -24398,7 +24428,7 @@ void RoaringBitmap32::andInPlace(const v8::FunctionCallbackInfo<v8::Value> & inf
   if (info.Length() > 0) {
     auto const & arg = info[0];
     RoaringBitmap32 * other =
-      v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, RoaringBitmap32_constructorTemplate, isolate);
+      v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
     if (other != nullptr) {
       roaring_bitmap_and_inplace(self->roaring, other->roaring);
       self->invalidate();
@@ -24428,7 +24458,7 @@ void RoaringBitmap32::xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & inf
   if (info.Length() > 0) {
     auto const & arg = info[0];
     RoaringBitmap32 * other =
-      v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, RoaringBitmap32_constructorTemplate, isolate);
+      v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
     if (other != nullptr) {
       roaring_bitmap_xor_inplace(self->roaring, other->roaring);
       self->invalidate();
@@ -24619,7 +24649,7 @@ void RoaringBitmap32::swapStatic(const v8::FunctionCallbackInfo<v8::Value> & inf
   v8::Isolate * isolate = info.GetIsolate();
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::swap expects 2 arguments");
 
-  auto constructorTemplate = RoaringBitmap32_constructorTemplate.Get(isolate);
+  auto constructorTemplate = globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate);
 
   RoaringBitmap32 * a = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], constructorTemplate, isolate);
   if (a == nullptr)
@@ -24656,7 +24686,7 @@ void RoaringBitmap32::addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> 
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  auto constructorTemplate = RoaringBitmap32_constructorTemplate.Get(isolate);
+  auto constructorTemplate = globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate);
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset expects 2 arguments");
 
@@ -24664,7 +24694,7 @@ void RoaringBitmap32::addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> 
   if (a == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset first argument must be a RoaringBitmap32");
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -24700,7 +24730,7 @@ void RoaringBitmap32::andStatic(const v8::FunctionCallbackInfo<v8::Value> & info
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  auto constructorTemplate = RoaringBitmap32_constructorTemplate.Get(isolate);
+  auto constructorTemplate = globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate);
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::and expects 2 arguments");
 
@@ -24711,7 +24741,7 @@ void RoaringBitmap32::andStatic(const v8::FunctionCallbackInfo<v8::Value> & info
   if (b == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::and second argument must be a RoaringBitmap32");
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -24740,7 +24770,7 @@ void RoaringBitmap32::orStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::or expects 2 arguments");
 
-  auto constructorTemplate = RoaringBitmap32_constructorTemplate.Get(isolate);
+  auto constructorTemplate = globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate);
 
   RoaringBitmap32 * a = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], constructorTemplate, isolate);
   if (a == nullptr) return v8utils::throwTypeError(isolate, "RoaringBitmap32::or first argument must be a RoaringBitmap32");
@@ -24748,7 +24778,7 @@ void RoaringBitmap32::orStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
   RoaringBitmap32 * b = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], constructorTemplate, isolate);
   if (b == nullptr) return v8utils::throwTypeError(isolate, "RoaringBitmap32::or second argument must be a RoaringBitmap32");
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -24773,7 +24803,7 @@ void RoaringBitmap32::xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor expects 2 arguments");
 
-  auto constructorTemplate = RoaringBitmap32_constructorTemplate.Get(isolate);
+  auto constructorTemplate = globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate);
 
   RoaringBitmap32 * a = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], constructorTemplate, isolate);
   if (a == nullptr) return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor first argument must be a RoaringBitmap32");
@@ -24782,7 +24812,7 @@ void RoaringBitmap32::xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info
   if (b == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor second argument must be a RoaringBitmap32");
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -24807,7 +24837,7 @@ void RoaringBitmap32::andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & i
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::andnot expects 2 arguments");
 
-  auto constructorTemplate = RoaringBitmap32_constructorTemplate.Get(isolate);
+  auto constructorTemplate = globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate);
 
   RoaringBitmap32 * a = v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], constructorTemplate, isolate);
   if (a == nullptr)
@@ -24817,7 +24847,7 @@ void RoaringBitmap32::andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & i
   if (b == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::andnot second argument must be a RoaringBitmap32");
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -24842,7 +24872,7 @@ void RoaringBitmap32::fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> 
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -24883,8 +24913,8 @@ void RoaringBitmap32_opManyStatic(
 
   int length = info.Length();
 
-  v8::Local<v8::FunctionTemplate> ctorType = RoaringBitmap32_constructorTemplate.Get(isolate);
-  v8::Local<v8::Function> cons = RoaringBitmap32_constructor.Get(isolate);
+  v8::Local<v8::FunctionTemplate> ctorType = globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate);
+  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
 
   auto context = isolate->GetCurrentContext();
 
@@ -25073,13 +25103,13 @@ void RoaringBitmap32::fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Va
       worker->buffer.set(isolate, arg);
       const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
     } else if (arg->IsObject()) {
-      if (RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(arg)) {
+      if (globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(arg)) {
         return v8utils::throwTypeError(
           isolate, "RoaringBitmap32::fromArrayAsync cannot be called with a RoaringBitmap32 instance");
       }
       v8::Local<v8::Value> argv[] = {arg};
-      auto carg = JSTypes::Uint32Array_from.Get(isolate)->Call(
-        isolate->GetCurrentContext(), JSTypes::Uint32Array.Get(isolate), 1, argv);
+      auto carg = globalAddonData.Uint32Array_from.Get(isolate)->Call(
+        isolate->GetCurrentContext(), globalAddonData.Uint32Array.Get(isolate), 1, argv);
       v8::Local<v8::Value> local;
       if (carg.ToLocal(&local)) {
         worker->buffer.set(isolate, local);
@@ -25100,10 +25130,6 @@ void RoaringBitmap32::fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Va
 }
 
 ////////////// RoaringBitmap32BufferedIterator //////////////
-
-v8::Eternal<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
-v8::Eternal<v8::Function> RoaringBitmap32BufferedIterator_constructor;
-v8::Eternal<v8::String> RoaringBitmap32BufferedIterator_nPropertyName;
 
 RoaringBitmap32BufferedIterator::RoaringBitmap32BufferedIterator() {
   this->it.parent = nullptr;
@@ -25130,15 +25156,12 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports) {
 
   auto className = NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32BufferedIterator", v8::NewStringType::kInternalized);
 
-  auto stringN = NEW_LITERAL_V8_STRING(isolate, "n", v8::NewStringType::kInternalized);
-  RoaringBitmap32BufferedIterator_nPropertyName.Set(isolate, stringN);
-
   v8::Local<v8::FunctionTemplate> ctor = v8::FunctionTemplate::New(isolate, RoaringBitmap32BufferedIterator_New);
 
   ctor->SetClassName(className);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
 
-  RoaringBitmap32BufferedIterator_constructorTemplate.Set(isolate, ctor);
+  globalAddonData.RoaringBitmap32BufferedIterator_constructorTemplate.Set(isolate, ctor);
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "fill", RoaringBitmap32BufferedIterator::fill);
 
@@ -25149,7 +25172,7 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports) {
     return v8utils::throwError(isolate, "Failed to instantiate RoaringBitmap32BufferedIterator");
   }
 
-  RoaringBitmap32BufferedIterator_constructor.Set(isolate, ctorFunction);
+  globalAddonData.RoaringBitmap32BufferedIterator_constructor.Set(isolate, ctorFunction);
   v8utils::defineHiddenField(isolate, exports, "RoaringBitmap32BufferedIterator", ctorFunction);
 }
 
@@ -25168,7 +25191,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
   }
 
   RoaringBitmap32 * bitmapInstance =
-    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], RoaringBitmap32_constructorTemplate, isolate);
+    v8utils::ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
   if (bitmapInstance == nullptr) {
     return v8utils::throwTypeError(
       isolate, "RoaringBitmap32BufferedIterator::ctor - first argument must be of type RoaringBitmap32");
@@ -25222,9 +25245,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
     instance->bitmapInstance = nullptr;
   }
 
-  if (holder
-        ->Set(context, RoaringBitmap32BufferedIterator_nPropertyName.Get(isolate), v8::Uint32::NewFromUnsigned(isolate, n))
-        .IsNothing()) {
+  if (holder->Set(context, globalAddonData.strings.n.Get(isolate), v8::Uint32::NewFromUnsigned(isolate, n)).IsNothing()) {
     return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - instantiation failed");
   }
 

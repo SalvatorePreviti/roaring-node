@@ -9,6 +9,7 @@ const SRC_CPP_FOLDER = path.resolve(ROOT_FOLDER, "src/cpp");
 const OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "src/roaring-node.cpp");
 const INCLUDE_REGEX = /^#\s*include\s+["<](.+)[">]/;
 const ROARING_VERSION = /#\s*define\s+ROARING_VERSION\s+"(.+)"/;
+const BINARY_OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "build/Release/roaring.node");
 
 const existsCache = new Map();
 
@@ -96,6 +97,16 @@ async function build() {
     devLog.log();
   }
   await devChildTask.runModuleBin("node-gyp", "node-gyp", [process.argv[2]]);
+
+  if (exists(BINARY_OUTPUT_FILE_PATH)) {
+    devLog.log();
+    devLog.logGreen(
+      `${path.relative(ROOT_FOLDER, BINARY_OUTPUT_FILE_PATH)} compiled. ${prettySize(
+        fs.statSync(BINARY_OUTPUT_FILE_PATH).size,
+        { appendBytes: true },
+      )}`,
+    );
+  }
 }
 
 void devRunMain(build);
