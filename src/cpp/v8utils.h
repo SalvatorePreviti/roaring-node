@@ -8,8 +8,6 @@
 
 namespace v8utils {
 
-  uint32_t getCpusCount();
-
   template <typename T>
   inline void ignoreMaybeResult(v8::Maybe<T>) {}
 

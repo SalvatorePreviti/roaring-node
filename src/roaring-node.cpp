@@ -21104,8 +21104,6 @@ static void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_
 
 namespace v8utils {
 
-  uint32_t getCpusCount();
-
   template <typename T>
   inline void ignoreMaybeResult(v8::Maybe<T>) {}
 
@@ -21403,28 +21401,37 @@ namespace v8utils {
 #endif  // ROARING_NODE_V8UTILS_
 
 
+// #include "cpus-count.h"
+
+#ifndef ROARING_NODE_CPUS_COUNT_
+#define ROARING_NODE_CPUS_COUNT_
+
+
+static uint32_t _cpusCountCache = 0;
+
+static uint32_t getCpusCount() {
+  uint32_t result = _cpusCountCache;
+  if (result != 0) {
+    return result;
+  }
+
+  uv_cpu_info_t * tmp = nullptr;
+  int count = 0;
+  uv_cpu_info(&tmp, &count);
+  if (tmp != nullptr) {
+    uv_free_cpu_info(tmp, count);
+  }
+  result = count <= 0 ? 1 : (uint32_t)count;
+  _cpusCountCache = result;
+  return result;
+}
+
+#endif  // ROARING_NODE_CPUS_COUNT_
+
+
 /////////////// v8utils ///////////////
 
 namespace v8utils {
-
-  static uint32_t _cpusCountCache = 0;
-
-  uint32_t getCpusCount() {
-    uint32_t result = _cpusCountCache;
-    if (result != 0) {
-      return result;
-    }
-
-    uv_cpu_info_t * tmp = nullptr;
-    int count = 0;
-    uv_cpu_info(&tmp, &count);
-    if (tmp != nullptr) {
-      uv_free_cpu_info(tmp, count);
-    }
-    result = count <= 0 ? 1 : (uint32_t)count;
-    _cpusCountCache = result;
-    return result;
-  }
 
   // Creates a new Error from string
   v8::Local<v8::Value> createError(v8::Isolate * isolate, const char * message) {

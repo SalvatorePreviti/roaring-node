@@ -1,28 +1,10 @@
 #include "v8utils.h"
 #include "memory.h"
+#include "cpus-count.h"
 
 /////////////// v8utils ///////////////
 
 namespace v8utils {
-
-  static uint32_t _cpusCountCache = 0;
-
-  uint32_t getCpusCount() {
-    uint32_t result = _cpusCountCache;
-    if (result != 0) {
-      return result;
-    }
-
-    uv_cpu_info_t * tmp = nullptr;
-    int count = 0;
-    uv_cpu_info(&tmp, &count);
-    if (tmp != nullptr) {
-      uv_free_cpu_info(tmp, count);
-    }
-    result = count <= 0 ? 1 : (uint32_t)count;
-    _cpusCountCache = result;
-    return result;
-  }
 
   // Creates a new Error from string
   v8::Local<v8::Value> createError(v8::Isolate * isolate, const char * message) {
