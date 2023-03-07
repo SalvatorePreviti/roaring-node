@@ -29,8 +29,7 @@
   "types": "index.d.ts",
   "typings": "index.d.ts",
   "files": [
-    "src/**/*.*",
-    "lib/*.js",
+    "src/roaring-node.cpp",
     "LICENSE.md",
     "README.md",
     "binding.gyp",
@@ -44,6 +43,8 @@
   ],
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",
+    "build": "node ./scripts/build.js build",
+    "rebuild": "node ./scripts/build.js rebuild",
     "compile": "node-gyp build",
     "recompile": "node-gyp rebuild",
     "test": "mocha -r ts-node/register test/**/*.test.ts test/*.test.ts",
@@ -63,24 +64,24 @@
     "prebuild-install": "^7.1.1"
   },
   "devDependencies": {
-    "@balsamic/eslint-config": "^0.3.0",
+    "@balsamic/eslint-config": "^0.3.1",
+    "@balsamic/dev": "^0.5.19",
     "@types/chai": "^4.3.4",
     "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^18.13.0",
-    "@typescript-eslint/eslint-plugin": "^5.51.0",
-    "@typescript-eslint/parser": "^5.51.0",
+    "@types/node": "^18.14.6",
+    "@typescript-eslint/eslint-plugin": "^5.54.1",
+    "@typescript-eslint/parser": "^5.54.1",
     "benchmark": "^2.1.4",
     "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
-    "chalk": "^4.1.2",
-    "eslint": "^8.34.0",
+    "eslint": "^8.35.0",
     "eslint-plugin-chai-expect": "^3.0.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-node": "^11.1.0",
     "fastbitset": "^0.4.0",
     "husky": "^8.0.3",
-    "lint-staged": "^13.1.1",
+    "lint-staged": "^13.1.2",
     "mocha": "^10.2.0",
     "node-abi": "^3.33.0",
     "physical-cpu-count": "^2.0.0",
@@ -93,5 +94,5 @@
     "typescript": "^4.9.5"
   },
   "gypfile": true,
-  "roaring_version": "0.9.8"
+  "roaring_version": "0.9.9"
 }

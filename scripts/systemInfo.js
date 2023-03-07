@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const chalk = require("chalk");
+const { colors } = require("@balsamic/dev");
 const os = require("os");
 
 function getSystemInfo() {
@@ -23,35 +23,35 @@ function getSystemInfo() {
   systemInfo.print = function print() {
     console.log();
     console.log(
-      chalk.whiteBright("Platform"),
+      colors.whiteBright("Platform"),
       ":",
-      chalk.cyanBright(os.type()),
-      chalk.greenBright(os.release()),
-      chalk.yellowBright(process.arch),
+      colors.cyanBright(os.type()),
+      colors.greenBright(os.release()),
+      colors.yellowBright(process.arch),
     );
-    console.log(chalk.whiteBright("CPU     "), ":", chalk.cyanBright(cpus[0].model));
+    console.log(colors.whiteBright("CPU     "), ":", colors.cyanBright(cpus[0].model));
     console.log(
-      chalk.whiteBright("Cores   "),
+      colors.whiteBright("Cores   "),
       ":",
-      chalk.cyanBright(physicalCpuCount),
-      chalk.cyan("physical"),
+      colors.cyanBright(physicalCpuCount),
+      colors.cyan("physical"),
       "-",
-      chalk.greenBright(cpus.length),
-      chalk.green("logical"),
+      colors.greenBright(cpus.length),
+      colors.green("logical"),
     );
     console.log(
-      chalk.whiteBright("Memory  "),
+      colors.whiteBright("Memory  "),
       ":",
-      chalk.cyanBright((os.totalmem() / 1073741824).toFixed(2)),
-      chalk.cyan("GB"),
+      colors.cyanBright((os.totalmem() / 1073741824).toFixed(2)),
+      colors.cyan("GB"),
     );
     console.log(
-      chalk.whiteBright("NodeJS  "),
+      colors.whiteBright("NodeJS  "),
       ":",
-      chalk.cyanBright(process.version),
+      colors.cyanBright(process.version),
       "-",
-      chalk.green("V8"),
-      chalk.greenBright(`v${process.versions.v8}`),
+      colors.green("V8"),
+      colors.greenBright(`v${process.versions.v8}`),
     );
     console.log();
   };
