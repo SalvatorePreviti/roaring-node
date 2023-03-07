@@ -36,4 +36,6 @@
 #  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8(isolate, str, type).ToLocalChecked()
 #endif
 
+typedef const char * const_char_ptr_t;
+
 #endif  // ROARING_NODE_INCLUDES_

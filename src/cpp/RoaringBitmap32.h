@@ -32,7 +32,7 @@ enum class FrozenViewFormat {
   unsafe_frozen_portable = 3,
 };
 
-class RoaringBitmap32 final {
+class RoaringBitmap32 final : public ObjectWrap {
  public:
   static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152333221;
 
@@ -40,7 +40,6 @@ class RoaringBitmap32 final {
   static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
 
   roaring_bitmap_t * roaring;
-  const uint64_t objectToken = OBJECT_TOKEN;
   int64_t sizeCache;
   int64_t _version;
   int64_t frozenCounter;
@@ -182,8 +181,8 @@ class RoaringBitmap32 final {
 
   static void getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 
-  explicit RoaringBitmap32(RoaringBitmap32 * readonlyViewOf);
-  explicit RoaringBitmap32(uint32_t capacity);
+  explicit RoaringBitmap32(AddonData * addonData, RoaringBitmap32 * readonlyViewOf);
+  explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity);
   ~RoaringBitmap32();
 };
 
@@ -196,31 +195,6 @@ class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
 
  protected:
   void done(v8::Local<v8::Value> & result) override;
-};
-
-class RoaringBitmap32BufferedIterator {
- public:
-  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152495421;
-
-  const uint64_t objectToken = OBJECT_TOKEN;
-
-  enum { allocatedMemoryDelta = 1024 };
-
-  roaring_uint32_iterator_t it;
-  int64_t bitmapVersion;
-  RoaringBitmap32 * bitmapInstance;
-  v8utils::TypedArrayContent<uint32_t> bufferContent;
-
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
-
-  static void fill(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  RoaringBitmap32BufferedIterator();
-  ~RoaringBitmap32BufferedIterator();
-
- private:
-  void destroy();
 };
 
 #endif
