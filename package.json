@@ -46,6 +46,8 @@
     "build": "node ./scripts/build.js build",
     "rebuild": "node ./scripts/build.js rebuild",
     "compile": "node-gyp build",
+    "build-dev": "node ./scripts/build.js build --dev",
+    "rebuild-dev": "node ./scripts/build.js rebuild --dev",
     "recompile": "node-gyp rebuild",
     "test": "mocha -r ts-node/register test/**/*.test.ts test/*.test.ts",
     "lint": "eslint .",

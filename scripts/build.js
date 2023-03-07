@@ -91,9 +91,27 @@ async function unity() {
   }
 }
 
+async function development() {
+  const outputText = `#include "cpp/main.cpp"`;
+  let oldContent;
+  try {
+    oldContent = fs.readFileSync(OUTPUT_FILE_PATH, "utf8");
+  } catch {}
+  if (oldContent !== outputText) {
+    fs.writeFileSync(path.resolve(OUTPUT_FILE_PATH), outputText, "utf8");
+    devLog.logYellow(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} updated`);
+  } else {
+    devLog.logBlackBright(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} is up to date`);
+  }
+}
+
 async function build() {
   if (exists(SRC_CPP_FOLDER)) {
-    await devLog.timed(unity);
+    if (process.argv.includes("--dev")) {
+      await devLog.timed(development);
+    } else {
+      await devLog.timed(unity);
+    }
     devLog.log();
   }
   await devChildTask.runModuleBin("node-gyp", "node-gyp", [process.argv[2]]);

@@ -3,6 +3,7 @@
 
 #include "v8utils.h"
 #include "CRoaringUnityBuild/roaring.h"
+#include "serialization-format.h"
 
 using namespace roaring;
 using namespace roaring::api;
@@ -10,27 +11,6 @@ using namespace roaring::api;
 class RoaringBitmap32;
 
 typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
-
-enum class SerializationFormat {
-  INVALID = -1,
-  croaring = 0,
-  portable = 1,
-  unsafe_frozen_croaring = 2,
-};
-
-enum class DeserializationFormat {
-  INVALID = -1,
-  croaring = 0,
-  portable = 1,
-  unsafe_frozen_croaring = 2,
-  unsafe_frozen_portable = 3,
-};
-
-enum class FrozenViewFormat {
-  INVALID = -1,
-  unsafe_frozen_croaring = 2,
-  unsafe_frozen_portable = 3,
-};
 
 class RoaringBitmap32 final : public ObjectWrap {
  public:
@@ -99,7 +79,21 @@ class RoaringBitmap32 final : public ObjectWrap {
     ++this->_version;
   }
 
-  bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance);
+  bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance) {
+    roaring_bitmap_t * oldInstance = this->roaring;
+    if (oldInstance == newInstance) {
+      return false;
+    }
+    if (oldInstance != nullptr) {
+      roaring_bitmap_free(oldInstance);
+    }
+    if (newInstance != nullptr && is_frozen(newInstance)) {
+      this->frozenCounter = RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN;
+    }
+    this->roaring = newInstance;
+    this->invalidate();
+    return true;
+  }
 
   static void asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info);
 
@@ -181,20 +175,48 @@ class RoaringBitmap32 final : public ObjectWrap {
 
   static void getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
 
-  explicit RoaringBitmap32(AddonData * addonData, RoaringBitmap32 * readonlyViewOf);
-  explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity);
-  ~RoaringBitmap32();
+  explicit RoaringBitmap32(AddonData * addonData, RoaringBitmap32 * readonlyViewOf) :
+    ObjectWrap(addonData, RoaringBitmap32::OBJECT_TOKEN),
+    roaring(readonlyViewOf->roaring),
+    sizeCache(-1),
+    frozenCounter(RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN),
+    readonlyViewOf(readonlyViewOf->readonlyViewOf ? readonlyViewOf->readonlyViewOf : readonlyViewOf) {
+    gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
+  }
+
+  explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity) :
+    ObjectWrap(addonData, RoaringBitmap32::OBJECT_TOKEN),
+    roaring(roaring_bitmap_create_with_capacity(capacity)),
+    sizeCache(0),
+    _version(0),
+    frozenCounter(0),
+    readonlyViewOf(nullptr) {
+    ++addonData->RoaringBitmap32_instances;
+    gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
+  }
+
+  ~RoaringBitmap32() {
+    gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32));
+    if (!this->readonlyViewOf) {
+      --this->addonData->RoaringBitmap32_instances;
+      if (this->roaring != nullptr) {
+        roaring_bitmap_free(this->roaring);
+      }
+      if (this->frozenStorage.data != nullptr && this->frozenStorage.length == std::numeric_limits<size_t>::max()) {
+        gcaware_aligned_free(this->frozenStorage.data);
+      }
+    }
+    if (!this->persistent.IsEmpty()) {
+      this->persistent.ClearWeak();
+    }
+  }
 };
 
-class RoaringBitmap32FactoryAsyncWorker : public v8utils::AsyncWorker {
- public:
-  volatile roaring_bitmap_t_ptr bitmap;
-
-  explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate);
-  virtual ~RoaringBitmap32FactoryAsyncWorker();
-
- protected:
-  void done(v8::Local<v8::Value> & result) override;
-};
+static void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
+  RoaringBitmap32 * p = info.GetParameter();
+  if (p != nullptr) {
+    delete p;
+  }
+}
 
 #endif

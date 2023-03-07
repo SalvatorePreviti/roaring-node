@@ -74,5 +74,8 @@
     "**/node_modules": true,
     "**/bower_components": true,
     "**/*.code-search": true
+  },
+  "files.associations": {
+    "__mutex_base": "cpp"
   }
 }

@@ -3,6 +3,9 @@
 
 #include "includes.h"
 
+const char * const ERROR_FROZEN = "This bitmap is frozen and cannot be modified";
+const char * const ERROR_INVALID_OBJECT = "Invalid RoaringBitmap32 object";
+
 class AddonDataStrings {
  public:
   v8::Eternal<v8::String> n;

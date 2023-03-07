@@ -131,4 +131,8 @@ inline static bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment
   return !(iptr % alignment);
 }
 
+void getRoaringUsedMemory(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetReturnValue().Set((double)gcaware_totalMem());
+}
+
 #endif  // ROARING_NODE_MEMORY_

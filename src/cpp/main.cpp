@@ -1,4 +1,5 @@
-#include "RoaringBitmap32.cpp"
+#include "aligned-buffers.h"
+#include "RoaringBitmap32-main.h"
 #include "RoaringBitmap32BufferedIterator.h"
 
 static void InitModule(v8::Local<v8::Object> exports) {
@@ -8,11 +9,9 @@ static void InitModule(v8::Local<v8::Object> exports) {
   globalAddonData.initialize(isolate);
   v8utils::defineHiddenField(isolate, exports, "default", exports);
 
-  NODE_SET_METHOD(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
-  NODE_SET_METHOD(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
-  NODE_SET_METHOD(exports, "isBufferAligned", isBufferAligned);
   NODE_SET_METHOD(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
+  AlignedBuffers_Init(exports);
   RoaringBitmap32_Init(exports);
   RoaringBitmap32BufferedIterator_Init(exports);
 }
