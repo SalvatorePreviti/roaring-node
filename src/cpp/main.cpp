@@ -2,8 +2,9 @@
 #include "RoaringBitmap32-main.h"
 #include "RoaringBitmap32BufferedIterator.h"
 
-static void InitModule(v8::Local<v8::Object> exports) {
+void InitModule(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
+
   v8::HandleScope scope(isolate);
 
   globalAddonData.initialize(isolate);

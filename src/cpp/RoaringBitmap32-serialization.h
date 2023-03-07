@@ -5,7 +5,7 @@
 #include "serialization.h"
 #include "async-workers.h"
 
-void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_serialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -24,12 +24,12 @@ void RoaringBitmap32::serialize(const v8::FunctionCallbackInfo<v8::Value> & info
   }
 }
 
-void RoaringBitmap32::serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   SerializeWorker * worker = new SerializeWorker(info);
   info.GetReturnValue().Set(AsyncWorker::run(worker));
 }
 
-void RoaringBitmap32::unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -71,7 +71,7 @@ void RoaringBitmap32::unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::
     return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView buffer argument was invalid");
   }
 
-  self->frozenCounter = FROZEN_COUNTER_HARD_FROZEN;
+  self->frozenCounter = RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN;
 
   roaring_bitmap_t * bitmap = nullptr;
 
@@ -106,7 +106,7 @@ void RoaringBitmap32::unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::
   info.GetReturnValue().Set(result);
 }
 
-void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -138,7 +138,7 @@ void RoaringBitmap32::deserializeStatic(const v8::FunctionCallbackInfo<v8::Value
   info.GetReturnValue().Set(result);
 }
 
-void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -158,7 +158,7 @@ void RoaringBitmap32::deserialize(const v8::FunctionCallbackInfo<v8::Value> & in
   info.GetReturnValue().Set(info.Holder());
 }
 
-void RoaringBitmap32::deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
@@ -175,7 +175,7 @@ void RoaringBitmap32::deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::
   info.GetReturnValue().Set(returnValue);
 }
 
-void RoaringBitmap32::deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
@@ -233,7 +233,7 @@ void RoaringBitmap32::deserializeParallelStaticAsync(const v8::FunctionCallbackI
   info.GetReturnValue().Set(AsyncWorker::run(worker));
 }
 
-void RoaringBitmap32::getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {

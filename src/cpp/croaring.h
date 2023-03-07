@@ -44,21 +44,23 @@
 #undef printf
 #undef fprintf
 
-static bool _roaringBitMemoryInitialized = false;
-static std::mutex _roaringBitMemoryInitializedMutex;
+void croaringMemoryInitialize() {
+  static std::atomic<bool> _roaringBitMemoryInitialized{false};
+  static std::mutex _roaringBitMemoryInitializedMutex;
 
-static void croaringMemoryInitialize() {
   if (!_roaringBitMemoryInitialized) {
     std::lock_guard<std::mutex> guard(_roaringBitMemoryInitializedMutex);
-    roaring_memory_t roaringMemory;
-    roaringMemory.malloc = gcaware_malloc;
-    roaringMemory.realloc = gcaware_realloc;
-    roaringMemory.calloc = gcaware_calloc;
-    roaringMemory.free = gcaware_free;
-    roaringMemory.aligned_malloc = gcaware_aligned_malloc;
-    roaringMemory.aligned_free = gcaware_aligned_free;
-    roaring_init_memory_hook(roaringMemory);
-    _roaringBitMemoryInitialized = true;
+    if (_roaringBitMemoryInitialized) {
+      roaring_memory_t roaringMemory;
+      roaringMemory.malloc = gcaware_malloc;
+      roaringMemory.realloc = gcaware_realloc;
+      roaringMemory.calloc = gcaware_calloc;
+      roaringMemory.free = gcaware_free;
+      roaringMemory.aligned_malloc = gcaware_aligned_malloc;
+      roaringMemory.aligned_free = gcaware_aligned_free;
+      roaring_init_memory_hook(roaringMemory);
+      _roaringBitMemoryInitialized = true;
+    }
   }
 }
 

@@ -3,9 +3,9 @@
 
 #include "includes.h"
 
-static uint32_t _cpusCountCache = 0;
+uint32_t getCpusCount() {
+  static uint32_t _cpusCountCache = 0;
 
-static uint32_t getCpusCount() {
   uint32_t result = _cpusCountCache;
   if (result != 0) {
     return result;

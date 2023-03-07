@@ -26,7 +26,7 @@ enum class FrozenViewFormat {
   unsafe_frozen_portable = 3,
 };
 
-static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
   if (!isolate || value.IsEmpty()) {
     return SerializationFormat::INVALID;
   }
@@ -56,7 +56,7 @@ static SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value
   return SerializationFormat::INVALID;
 }
 
-static DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
   if (!isolate || value.IsEmpty()) {
     return DeserializationFormat::INVALID;
   }
@@ -89,7 +89,7 @@ static DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::V
   return DeserializationFormat::INVALID;
 }
 
-static FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
   if (!isolate || value.IsEmpty()) {
     return FrozenViewFormat::INVALID;
   }

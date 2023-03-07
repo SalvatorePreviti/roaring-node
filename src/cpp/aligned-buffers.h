@@ -4,7 +4,7 @@
 #include "v8utils.h"
 #include "memory.h"
 
-static void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe) {
+void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -51,11 +51,11 @@ static void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info
   info.GetReturnValue().Set(bufferObj);
 }
 
-static void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false); }
+void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false); }
 
-static void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, true); }
+void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, true); }
 
-static void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -79,7 +79,7 @@ static void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   info.GetReturnValue().Set(is_pointer_aligned(content.data, alignment));
 }
 
-static void AlignedBuffers_Init(v8::Local<v8::Object> exports) {
+void AlignedBuffers_Init(v8::Local<v8::Object> exports) {
   NODE_SET_METHOD(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
   NODE_SET_METHOD(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
   NODE_SET_METHOD(exports, "isBufferAligned", isBufferAligned);

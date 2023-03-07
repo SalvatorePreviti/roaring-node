@@ -95,86 +95,6 @@ class RoaringBitmap32 final : public ObjectWrap {
     return true;
   }
 
-  static void asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void hasRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void flipRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void addRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void removeRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void has(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void add(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void addMany(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void remove(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void removeMany(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void removeChecked(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void clear(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void minimum(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void maximum(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void isSubset(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void isStrictSubset(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void intersects(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void intersectsWithRange(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void isEqual(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void orCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andNotCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void xorCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void jaccardIndex(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void rank(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void select(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void rangeCardinality(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void removeRunCompression(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void runOptimize(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void shrinkToFit(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void toArray(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void toSet(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void serialize(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void deserialize(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void orStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void orManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void xorManyStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void clone(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void toString(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void contentToString(const v8::FunctionCallbackInfo<v8::Value> & info);
-  static void statistics(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void freeze(const v8::FunctionCallbackInfo<v8::Value> & info);
-
-  static void isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-  static void size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-  static void isFrozen_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info);
-
-  static void getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info);
-
   explicit RoaringBitmap32(AddonData * addonData, RoaringBitmap32 * readonlyViewOf) :
     ObjectWrap(addonData, RoaringBitmap32::OBJECT_TOKEN),
     roaring(readonlyViewOf->roaring),
@@ -212,7 +132,7 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 };
 
-static void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
+void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
   RoaringBitmap32 * p = info.GetParameter();
   if (p != nullptr) {
     delete p;

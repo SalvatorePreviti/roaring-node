@@ -13,23 +13,23 @@ bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
 namespace v8utils {
 
   template <typename T>
-  inline static void ignoreMaybeResult(v8::Maybe<T>) {}
+  inline void ignoreMaybeResult(v8::Maybe<T>) {}
 
   template <typename T>
-  inline static void ignoreMaybeResult(v8::MaybeLocal<T>) {}
+  inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
 
   template <int N>
-  inline static void throwError(v8::Isolate * isolate, const char (&message)[N]) {
+  inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
   }
 
   template <int N>
-  inline static void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
+  inline void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(
       v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
   }
 
-  static void throwError(v8::Isolate * isolate, const char * message) {
+  void throwError(v8::Isolate * isolate, const char * message) {
     v8::HandleScope scope(isolate);
     if (message != nullptr && message[0] != '\0') {
       auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
@@ -43,7 +43,7 @@ namespace v8utils {
       v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
   }
 
-  static void throwTypeError(v8::Isolate * isolate, const char * message) {
+  void throwTypeError(v8::Isolate * isolate, const char * message) {
     v8::HandleScope scope(isolate);
     if (message != nullptr && message[0] != '\0') {
       auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
@@ -57,7 +57,7 @@ namespace v8utils {
       v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
   }
 
-  static void throwTypeError(v8::Isolate * isolate, const char * context, const char * message) {
+  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message) {
     v8::HandleScope scope(isolate);
     auto a = v8::String::NewFromUtf8(isolate, context, v8::NewStringType::kInternalized);
     auto b = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
@@ -69,7 +69,7 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  static bool _bufferFromArrayBuffer(
+  bool _bufferFromArrayBuffer(
     v8::Isolate * isolate, v8::Local<v8::Value> buffer, size_t offset, size_t length, v8::Local<v8::Value> & result) {
     if (buffer.IsEmpty()) {
       return false;
@@ -87,7 +87,7 @@ namespace v8utils {
   }
 
   template <int N>
-  static void defineHiddenField(
+  void defineHiddenField(
     v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
     v8::HandleScope scope(isolate);
     v8::PropertyDescriptor propertyDescriptor(value, false);
@@ -99,7 +99,7 @@ namespace v8utils {
   }
 
   template <int N>
-  static void defineReadonlyField(
+  void defineReadonlyField(
     v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
     v8::HandleScope scope(isolate);
     v8::PropertyDescriptor propertyDescriptor(value, false);
@@ -111,7 +111,7 @@ namespace v8utils {
   }
 
   template <int N>
-  static void defineHiddenFunction(
+  void defineHiddenFunction(
     v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::FunctionCallback callback) {
     v8::HandleScope scope(isolate);
     v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);

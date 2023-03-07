@@ -39,7 +39,7 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
   }
 };
 
-static void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -66,15 +66,14 @@ static void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<
   info.GetReturnValue().Set(n);
 }
 
-static void RoaringBitmap32BufferedIterator_WeakCallback(
-  v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info) {
+void RoaringBitmap32BufferedIterator_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info) {
   RoaringBitmap32BufferedIterator * p = info.GetParameter();
   if (p != nullptr) {
     delete p;
   }
 }
 
-static void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -150,7 +149,7 @@ static void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v
   info.GetReturnValue().Set(holder);
 }
 
-static void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports) {
+void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 

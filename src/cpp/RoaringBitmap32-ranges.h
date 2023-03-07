@@ -4,7 +4,7 @@
 #include "RoaringBitmap32.h"
 #include "async-workers.h"
 
-inline static bool getRangeOperationParameters(
+inline bool getRangeOperationParameters(
   const v8::FunctionCallbackInfo<v8::Value> & info, uint64_t & minInteger, uint64_t & maxInteger) {
   v8::Isolate * isolate = info.GetIsolate();
   double minimum = 0, maximum = 4294967296;
@@ -47,7 +47,7 @@ inline static bool getRangeOperationParameters(
   return minimum < 4294967296 && minInteger < maxInteger;
 }
 
-void RoaringBitmap32::rangeCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_rangeCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
   uint64_t minInteger, maxInteger;
   if (getRangeOperationParameters(info, minInteger, maxInteger)) {
     RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
@@ -63,7 +63,7 @@ void RoaringBitmap32::rangeCardinality(const v8::FunctionCallbackInfo<v8::Value>
   return info.GetReturnValue().Set(0u);
 }
 
-void RoaringBitmap32::flipRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_flipRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
   uint64_t minInteger, maxInteger;
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
   if (!self) {
@@ -81,7 +81,7 @@ void RoaringBitmap32::flipRange(const v8::FunctionCallbackInfo<v8::Value> & info
   info.GetReturnValue().Set(info.Holder());
 }
 
-void RoaringBitmap32::addRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_addRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
   uint64_t minInteger, maxInteger;
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
   if (!self) {
@@ -99,7 +99,7 @@ void RoaringBitmap32::addRange(const v8::FunctionCallbackInfo<v8::Value> & info)
   info.GetReturnValue().Set(info.Holder());
 }
 
-void RoaringBitmap32::removeRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_removeRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
   uint64_t minInteger, maxInteger;
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
   if (!self) {
@@ -117,7 +117,7 @@ void RoaringBitmap32::removeRange(const v8::FunctionCallbackInfo<v8::Value> & in
   info.GetReturnValue().Set(info.Holder());
 }
 
-void RoaringBitmap32::intersectsWithRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_intersectsWithRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
   uint64_t minInteger, maxInteger;
   info.GetReturnValue().Set(
@@ -125,7 +125,7 @@ void RoaringBitmap32::intersectsWithRange(const v8::FunctionCallbackInfo<v8::Val
     roaring_bitmap_intersect_with_range(self->roaring, (uint64_t)minInteger, (uint64_t)(maxInteger - 1)));
 }
 
-void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -193,7 +193,7 @@ void RoaringBitmap32::toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & 
   info.GetReturnValue().Set(typedArray);
 }
 
-void RoaringBitmap32::toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
   ToUint32ArrayAsyncWorker * worker = new ToUint32ArrayAsyncWorker(info);
@@ -203,7 +203,7 @@ void RoaringBitmap32::toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Valu
   info.GetReturnValue().Set(AsyncWorker::run(worker));
 }
 
-void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -320,7 +320,7 @@ void RoaringBitmap32::rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value>
   info.GetReturnValue().Set(result);
 }
 
-void RoaringBitmap32::toArray(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_toArray(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -405,7 +405,7 @@ void RoaringBitmap32::toArray(const v8::FunctionCallbackInfo<v8::Value> & info) 
   }
 }
 
-void RoaringBitmap32::toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
@@ -468,7 +468,7 @@ void RoaringBitmap32::toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
   }
 }
 
-void RoaringBitmap32::hasRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_hasRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
@@ -504,7 +504,7 @@ void RoaringBitmap32::hasRange(const v8::FunctionCallbackInfo<v8::Value> & info)
   info.GetReturnValue().Set(roaring_bitmap_contains_range(self->roaring, minInteger, maxInteger));
 }
 
-void RoaringBitmap32::fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
