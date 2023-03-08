@@ -55,7 +55,7 @@ class AsyncWorker {
 
   static v8::Local<v8::Value> run(AsyncWorker * worker) {
     v8::EscapableHandleScope scope(worker->isolate);
-    v8::Local<v8::Value> returnValue;
+    v8::Local<v8::Value> returnValue(v8::Undefined(worker->isolate));
 
     if (worker->_callback.IsEmpty()) {
       v8::Isolate * isolate = worker->isolate;
@@ -68,33 +68,49 @@ class AsyncWorker {
 
       v8::Local<v8::Promise::Resolver> resolver = resolverMaybe.ToLocalChecked();
 
-      returnValue = resolver->GetPromise();
-      if (returnValue.IsEmpty()) {
+      auto promise = resolver->GetPromise();
+      if (promise.IsEmpty()) {
         worker->setError("Failed to create Promise");
       } else {
+        returnValue = promise;
         worker->_resolver.Reset(isolate, resolver);
       }
     }
 
-    v8::TryCatch tryCatch(worker->isolate);
-    worker->before();
+    {
+      v8::TryCatch tryCatch(worker->isolate);
 
-    v8::Local<v8::Value> error;
-
-    if (worker->hasError()) {
-      _resolveOrReject(worker, error);
-    } else if (tryCatch.HasCaught()) {
-      error = worker->_makeError(tryCatch.Exception());
-      _resolveOrReject(worker, error);
-    } else if (!worker->_start()) {
-      if (tryCatch.HasCaught()) {
-        error = worker->_makeError(tryCatch.Exception());
+      if (!worker->hasError()) {
+        worker->before();
       }
-      _resolveOrReject(worker, error);
-    }
 
-    if (returnValue.IsEmpty()) {
-      returnValue = v8::Undefined(worker->isolate);
+      v8::Local<v8::Value> error;
+
+      bool canContinue = true;
+
+      if (tryCatch.HasCaught()) {
+        canContinue = false;
+        error = worker->_makeError(tryCatch.Exception());
+        tryCatch.Reset();
+        _resolveOrReject(worker, error);
+      }
+
+      if (canContinue && worker->hasError()) {
+        canContinue = false;
+        _resolveOrReject(worker, error);
+      }
+
+      if (canContinue && !worker->_start()) {
+        if (tryCatch.HasCaught()) {
+          error = worker->_makeError(tryCatch.Exception());
+          tryCatch.Reset();
+        }
+        _resolveOrReject(worker, error);
+      } else if (tryCatch.HasCaught()) {
+        error = worker->_makeError(tryCatch.Exception());
+        tryCatch.Reset();
+        _resolveOrReject(worker, error);
+      }
     }
 
     return scope.Escape(returnValue);
@@ -146,11 +162,11 @@ class AsyncWorker {
 
     if (worker->_error == nullptr && error.IsEmpty()) {
       worker->done(result);
+    }
 
-      if (tryCatch.HasCaught()) {
-        error = worker->_makeError(tryCatch.Exception());
-        tryCatch.Reset();
-      }
+    if (tryCatch.HasCaught()) {
+      error = worker->_makeError(tryCatch.Exception());
+      tryCatch.Reset();
     }
 
     worker->finally();
@@ -171,10 +187,10 @@ class AsyncWorker {
     }
 
     auto context = isolate->GetCurrentContext();
+
     if (worker->_resolver.IsEmpty()) {
       v8::Local<v8::Function> callback = worker->_callback.Get(isolate);
       std::atomic_thread_fence(std::memory_order_seq_cst);
-      delete worker;
       if (!error.IsEmpty()) {
         v8::Local<v8::Value> argv[] = {error, v8::Undefined(isolate)};
         v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
@@ -182,6 +198,7 @@ class AsyncWorker {
         v8::Local<v8::Value> argv[] = {v8::Null(isolate), result};
         v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
       }
+      delete worker;
     } else {
       v8::Local<v8::Promise::Resolver> resolver = worker->_resolver.Get(isolate);
       std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -605,11 +622,13 @@ class DeserializeWorker final : public AsyncWorker {
  protected:
   void before() final {
     this->setError(this->deserializer.parseArguments(this->info, false));
-    if (this->maybeAddonData == nullptr && this->deserializer.targetBitmap != nullptr) {
-      this->maybeAddonData = this->deserializer.targetBitmap->addonData;
-    }
-    if (this->maybeAddonData == nullptr && !this->hasError()) {
-      this->setError("RoaringBitmap32 deserialization failed to get the addon data");
+    if (this->maybeAddonData == nullptr) {
+      if (this->deserializer.targetBitmap != nullptr) {
+        this->maybeAddonData = this->deserializer.targetBitmap->addonData;
+      }
+      if (this->maybeAddonData == nullptr && !this->hasError()) {
+        this->setError("RoaringBitmap32 deserialization failed to get the addon data");
+      }
     }
   }
 
@@ -634,8 +653,6 @@ class DeserializeWorker final : public AsyncWorker {
     this->deserializer.finalizeTargetBitmap(self);
   }
 };
-
-#include <iostream>
 
 class DeserializeParallelWorker : public ParallelAsyncWorker {
  public:

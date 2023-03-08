@@ -14,7 +14,7 @@ typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
 
 class RoaringBitmap32 final : public ObjectWrap {
  public:
-  static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152333221;
+  static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152330000;
 
   static const constexpr int64_t FROZEN_COUNTER_SOFT_FROZEN = -1;
   static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
@@ -96,7 +96,7 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   explicit RoaringBitmap32(AddonData * addonData, RoaringBitmap32 * readonlyViewOf) :
-    ObjectWrap(addonData, RoaringBitmap32::OBJECT_TOKEN),
+    ObjectWrap(addonData),
     roaring(readonlyViewOf->roaring),
     sizeCache(-1),
     frozenCounter(RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN),
@@ -105,7 +105,7 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity) :
-    ObjectWrap(addonData, RoaringBitmap32::OBJECT_TOKEN),
+    ObjectWrap(addonData),
     roaring(roaring_bitmap_create_with_capacity(capacity)),
     sizeCache(0),
     _version(0),
@@ -131,12 +131,5 @@ class RoaringBitmap32 final : public ObjectWrap {
     }
   }
 };
-
-void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
-  RoaringBitmap32 * p = info.GetParameter();
-  if (p != nullptr) {
-    delete p;
-  }
-}
 
 #endif

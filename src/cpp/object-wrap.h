@@ -3,74 +3,41 @@
 
 #include "addon-data.h"
 
+#include <iostream>
+
 class ObjectWrap {
  public:
-  const uint64_t objectToken;
   AddonData * const addonData;
 
   template <class T>
   static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
     v8::Local<v8::Object> obj;
-    if (isolate && value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
-      if (obj->InternalFieldCount() > 0) {
-        T * result = (T *)(obj->GetAlignedPointerFromInternalField(0));
-        if (result && result->objectToken == T::OBJECT_TOKEN) {
-          return result;
-        }
-      }
+    if (!value->IsObject()) {
+      return nullptr;
     }
-    return nullptr;
+
+    if (!value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
+      return nullptr;
+    }
+
+    if (obj->InternalFieldCount() != 2) {
+      return nullptr;
+    }
+
+    if ((uintptr_t)obj->GetAlignedPointerFromInternalField(1) != T::OBJECT_TOKEN) {
+      return nullptr;
+    }
+
+    return (T *)(obj->GetAlignedPointerFromInternalField(0));
   }
 
   template <class T>
-  static T * TryUnwrap(
-    const v8::Local<v8::Value> & value, const v8::Local<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
-    return !ctorTemplate.IsEmpty() && ctorTemplate->HasInstance(value) ? ObjectWrap::TryUnwrap<T>(value, isolate) : nullptr;
-  }
-
-  template <class T>
-  static T * TryUnwrap(
-    const v8::Local<v8::Value> & value,
-    const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate,
-    v8::Isolate * isolate) {
-    return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
-  }
-
-  template <class T>
-  static T * TryUnwrap(
-    const v8::Local<v8::Value> & value, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
-    return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
-  }
-
-  template <class T>
-  static T * TryUnwrap(
-    const v8::FunctionCallbackInfo<v8::Value> & info,
-    int argumentIndex,
-    const v8::Local<v8::FunctionTemplate> & ctorTemplate) {
-    return info.Length() <= argumentIndex ? nullptr
-                                          : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
-  }
-
-  template <class T>
-  static T * TryUnwrap(
-    const v8::FunctionCallbackInfo<v8::Value> & info,
-    int argumentIndex,
-    const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate) {
-    return info.Length() <= argumentIndex ? nullptr
-                                          : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
-  }
-
-  template <class T>
-  static T * TryUnwrap(
-    const v8::FunctionCallbackInfo<v8::Value> & info,
-    int argumentIndex,
-    const v8::Eternal<v8::FunctionTemplate> & ctorTemplate) {
-    return info.Length() <= argumentIndex ? nullptr
-                                          : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
+  static T * TryUnwrap(const v8::FunctionCallbackInfo<v8::Value> & info, int argumentIndex) {
+    return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], info.GetIsolate());
   }
 
  protected:
-  explicit ObjectWrap(AddonData * addonData, uint64_t objectToken) : objectToken(objectToken), addonData(addonData) {}
+  explicit ObjectWrap(AddonData * addonData) : addonData(addonData) {}
 };
 
 #endif  // ROARING_NODE_OBJECT_WRAP_

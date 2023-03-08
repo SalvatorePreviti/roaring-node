@@ -25,6 +25,14 @@ void RoaringBitmap32_copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) 
   info.GetReturnValue().Set(info.Holder());
 }
 
+void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
+  RoaringBitmap32 * p = info.GetParameter();
+  if (p != nullptr) {
+    p->~RoaringBitmap32();
+    bare_aligned_free(p);
+  }
+}
+
 void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
@@ -72,8 +80,9 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
     }
   }
 
-  RoaringBitmap32 * instance =
-    readonlyViewOf ? new RoaringBitmap32(addonData, readonlyViewOf) : new RoaringBitmap32(addonData, 0U);
+  auto * instanceMemory = bare_aligned_malloc(32, sizeof(RoaringBitmap32));
+  RoaringBitmap32 * instance = readonlyViewOf ? new (instanceMemory) RoaringBitmap32(addonData, readonlyViewOf)
+                                              : new (instanceMemory) RoaringBitmap32(addonData, 0U);
 
   if (instance == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32::ctor - failed to create RoaringBitmap32 instance");
@@ -84,7 +93,10 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
     return v8utils::throwError(isolate, "RoaringBitmap32::ctor - failed to create native RoaringBitmap32 instance");
   }
 
-  holder->SetAlignedPointerInInternalField(0, instance);
+  int indices[2] = {0, 1};
+  void * values[2] = {instance, (void *)(RoaringBitmap32::OBJECT_TOKEN)};
+  holder->SetAlignedPointerInInternalFields(2, indices, values);
+
   instance->persistent.Reset(isolate, holder);
   instance->persistent.SetWeak(instance, RoaringBitmap32_WeakCallback, v8::WeakCallbackType::kParameter);
 
@@ -360,37 +372,32 @@ void RoaringBitmap32_statistics(const v8::FunctionCallbackInfo<v8::Value> & info
 
 void RoaringBitmap32_isSubset(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other =
-    ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self == other || (self && other && roaring_bitmap_is_subset(self->roaring, other->roaring)));
 }
 
 void RoaringBitmap32_isStrictSubset(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other =
-    ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self && other && roaring_bitmap_is_strict_subset(self->roaring, other->roaring));
 }
 
 void RoaringBitmap32_isEqual(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other =
-    ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(
     self == other || (self && other && roaring_bitmap_equals(self->roaring, other->roaring) ? true : false));
 }
 
 void RoaringBitmap32_intersects(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other =
-    ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self && other && roaring_bitmap_intersect(self->roaring, other->roaring) ? true : false);
 }
 
 void RoaringBitmap32_jaccardIndex(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
-  RoaringBitmap32 * other =
-    ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0, globalAddonData.RoaringBitmap32_constructorTemplate);
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self && other ? roaring_bitmap_jaccard_index(self->roaring, other->roaring) : -1);
 }
 
@@ -398,13 +405,11 @@ void RoaringBitmap32_swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info
   v8::Isolate * isolate = info.GetIsolate();
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::swap expects 2 arguments");
 
-  auto constructorTemplate = globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate);
-
-  RoaringBitmap32 * a = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], constructorTemplate, isolate);
+  RoaringBitmap32 * a = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
   if (a == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::swap first argument must be a RoaringBitmap32");
 
-  RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], constructorTemplate, isolate);
+  RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
   if (b == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::swap second argument must be a RoaringBitmap32");
 
@@ -533,8 +538,10 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
-  auto className = NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32", v8::NewStringType::kInternalized);
+  v8::Local<v8::String> className = addonData->strings.RoaringBitmap32.Get(isolate);
+
   auto versionString = NEW_LITERAL_V8_STRING(isolate, ROARING_VERSION, v8::NewStringType::kInternalized);
 
   v8::Local<v8::FunctionTemplate> ctor =
@@ -543,10 +550,11 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     return;
   }
   addonData->RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
-  ctor->InstanceTemplate()->SetInternalFieldCount(1);
-  ctor->SetClassName(className);
 
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
+  ctor->SetClassName(className);
+
+  ctorInstanceTemplate->SetInternalFieldCount(2);
 
   ctorInstanceTemplate->SetAccessor(
     NEW_LITERAL_V8_STRING(isolate, "isEmpty", v8::NewStringType::kInternalized),
@@ -625,11 +633,10 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   NODE_SET_PROTOTYPE_METHOD(ctor, "xorCardinality", RoaringBitmap32_xorCardinality);
   NODE_SET_PROTOTYPE_METHOD(ctor, "xorInPlace", RoaringBitmap32_xorInPlace);
 
-  auto context = isolate->GetCurrentContext();
   auto ctorFunction = ctor->GetFunction(context).ToLocalChecked();
   auto ctorObject = ctorFunction->ToObject(context).ToLocalChecked();
 
-  ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), addonData->strings.RoaringBitmap32.Get(isolate));
+  ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), className);
   ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
 
   NODE_SET_METHOD(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);
@@ -658,7 +665,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   v8utils::defineReadonlyField(isolate, ctorObject, "CRoaringVersion", versionString);
   v8utils::defineReadonlyField(isolate, exports, "CRoaringVersion", versionString);
 
-  v8utils::defineHiddenField(isolate, ctorObject, "RoaringBitmap32", ctorFunction);
+  v8utils::defineHiddenField(isolate, ctorObject, className, ctorFunction);
 
   v8utils::ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 

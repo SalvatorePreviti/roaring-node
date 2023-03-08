@@ -77,8 +77,16 @@ namespace v8utils {
     v8::PropertyDescriptor propertyDescriptor(value, false);
     propertyDescriptor.set_configurable(false);
     propertyDescriptor.set_enumerable(false);
-
     auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
+    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
+  }
+
+  void defineHiddenField(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, v8::Local<v8::Name> name, v8::Local<v8::Value> value) {
+    v8::HandleScope scope(isolate);
+    v8::PropertyDescriptor propertyDescriptor(value, false);
+    propertyDescriptor.set_configurable(false);
+    propertyDescriptor.set_enumerable(false);
     ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
   }
 

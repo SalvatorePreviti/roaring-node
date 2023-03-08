@@ -5,7 +5,7 @@
 
 class RoaringBitmap32BufferedIterator final : public ObjectWrap {
  public:
-  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152495421;
+  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152490000;
 
   enum { allocatedMemoryDelta = 1024 };
 
@@ -17,8 +17,7 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
 
-  explicit RoaringBitmap32BufferedIterator(AddonData * addonData) :
-    ObjectWrap(addonData, RoaringBitmap32BufferedIterator::OBJECT_TOKEN) {
+  explicit RoaringBitmap32BufferedIterator(AddonData * addonData) : ObjectWrap(addonData) {
     this->it.parent = nullptr;
     this->it.has_value = false;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
@@ -69,7 +68,8 @@ void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Val
 void RoaringBitmap32BufferedIterator_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info) {
   RoaringBitmap32BufferedIterator * p = info.GetParameter();
   if (p != nullptr) {
-    delete p;
+    p->~RoaringBitmap32BufferedIterator();
+    bare_aligned_free(p);
   }
 }
 
@@ -92,8 +92,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
     return v8utils::throwTypeError(isolate, ERROR_INVALID_OBJECT);
   }
 
-  RoaringBitmap32 * bitmapInstance =
-    ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], addonData->RoaringBitmap32_constructorTemplate, isolate);
+  RoaringBitmap32 * bitmapInstance = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
   if (bitmapInstance == nullptr) {
     return v8utils::throwTypeError(
       isolate, "RoaringBitmap32BufferedIterator::ctor - first argument must be of type RoaringBitmap32");
@@ -111,12 +110,16 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - invalid Uint32Array buffer");
   }
 
-  auto * instance = new RoaringBitmap32BufferedIterator(addonData);
+  auto * instanceMemory = bare_aligned_malloc(16, sizeof(RoaringBitmap32BufferedIterator));
+  auto * instance = instanceMemory ? new (instanceMemory) RoaringBitmap32BufferedIterator(addonData) : nullptr;
   if (instance == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
   }
 
-  holder->SetAlignedPointerInInternalField(0, instance);
+  int indices[2] = {0, 1};
+  void * values[2] = {instance, (void *)(RoaringBitmap32BufferedIterator::OBJECT_TOKEN)};
+  holder->SetAlignedPointerInInternalFields(2, indices, values);
+
   instance->persistent.Reset(isolate, holder);
   instance->persistent.SetWeak(instance, RoaringBitmap32BufferedIterator_WeakCallback, v8::WeakCallbackType::kParameter);
 
@@ -164,7 +167,7 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
     v8::FunctionTemplate::New(isolate, RoaringBitmap32BufferedIterator_New, addonData->external.Get(isolate));
 
   ctor->SetClassName(className);
-  ctor->InstanceTemplate()->SetInternalFieldCount(1);
+  ctor->InstanceTemplate()->SetInternalFieldCount(2);
 
   addonData->RoaringBitmap32BufferedIterator_constructorTemplate.Set(isolate, ctor);
 
