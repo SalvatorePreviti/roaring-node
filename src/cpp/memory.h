@@ -45,7 +45,7 @@ inline size_t bare_malloc_size(const void * ptr) {
 /** portable version of malloc_size for memory allocated with bare_aligned_malloc */
 inline size_t bare_aligned_malloc_size(const void * ptr) {
 #if defined(__APPLE__)
-  return malloc_size((void *)tr);
+  return malloc_size((void *)ptr);
 #elif defined(_WIN32)
   return _aligned_msize((void *)ptr, 32, 0);
 #else
