@@ -4,7 +4,9 @@
 #include "includes.h"
 #include "addon-strings.h"
 
-class AddonData {
+void AddonData_DeleteInstance(void * addonData);
+
+class AddonData final {
  public:
   AddonDataStrings strings;
 
@@ -20,10 +22,28 @@ class AddonData {
   v8::Eternal<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
   v8::Eternal<v8::Function> RoaringBitmap32BufferedIterator_constructor;
 
-  AddonData() : RoaringBitmap32_instances(0) {}
+  v8::Eternal<v8::External> external;
 
-  void initialize(v8::Isolate * isolate) {
+  inline AddonData() : RoaringBitmap32_instances(0) {}
+
+  static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
+    v8::Local<v8::Value> data = info.Data();
+    if (data.IsEmpty()) {
+      return nullptr;
+    }
+    v8::Local<v8::External> external = data.As<v8::External>();
+    if (external.IsEmpty()) {
+      return nullptr;
+    }
+    return reinterpret_cast<AddonData *>(external->Value());
+  }
+
+  inline void initialize(v8::Isolate * isolate) {
     v8::HandleScope scope(isolate);
+
+    external.Set(isolate, v8::External::New(isolate, this));
+
+    // node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, this);
 
     this->strings.initialize(isolate);
 
@@ -120,6 +140,8 @@ class ObjectWrap {
  protected:
   explicit ObjectWrap(AddonData * addonData, uint64_t objectToken) : objectToken(objectToken), addonData(addonData) {}
 };
+
+void AddonData_DeleteInstance(void * addonData) { delete (AddonData *)addonData; }
 
 AddonData globalAddonData;
 

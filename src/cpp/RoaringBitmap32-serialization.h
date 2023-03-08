@@ -25,7 +25,7 @@ void RoaringBitmap32_serialize(const v8::FunctionCallbackInfo<v8::Value> & info)
 }
 
 void RoaringBitmap32_serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  SerializeWorker * worker = new SerializeWorker(info);
+  SerializeWorker * worker = new SerializeWorker(info, nullptr);
   info.GetReturnValue().Set(AsyncWorker::run(worker));
 }
 
@@ -162,7 +162,7 @@ void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::V
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
-  auto * worker = new DeserializeWorker(info);
+  auto * worker = new DeserializeWorker(info, &globalAddonData);
   if (worker == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32 deserialization failed to allocate async worker");
   }
@@ -179,7 +179,7 @@ void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackIn
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
-  auto * worker = new DeserializeParallelWorker(isolate);
+  auto * worker = new DeserializeParallelWorker(isolate, &globalAddonData);
   if (worker == nullptr) {
     return v8utils::throwError(isolate, "Failed to allocate async worker");
   }

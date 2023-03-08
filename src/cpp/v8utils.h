@@ -93,25 +93,6 @@ namespace v8utils {
     ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
   }
 
-  template <int N>
-  void defineHiddenFunction(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::FunctionCallback callback) {
-    v8::HandleScope scope(isolate);
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
-
-    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
-    t->SetClassName(name);
-
-    auto fn = t->GetFunction(isolate->GetCurrentContext());
-    v8::Local<v8::Function> fnLocal;
-    if (fn.ToLocal(&fnLocal)) {
-      v8::PropertyDescriptor propertyDescriptor(fnLocal, false);
-      propertyDescriptor.set_configurable(false);
-      propertyDescriptor.set_enumerable(false);
-      ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
-    }
-  }
-
   bool _bufferFromArrayBuffer(
     v8::Isolate * isolate,
     AddonData * addonData,

@@ -76,6 +76,7 @@
     "**/*.code-search": true
   },
   "files.associations": {
-    "__mutex_base": "cpp"
+    "__mutex_base": "cpp",
+    "complex": "cpp"
   }
 }

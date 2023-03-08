@@ -34,8 +34,10 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
     return true;
   }
 
+  AddonData * addonData = self->addonData;
+
   RoaringBitmap32 * other =
-    ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
+    ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, addonData->RoaringBitmap32_constructorTemplate, isolate);
   if (other != nullptr) {
     if (self != other) {
       if (replace || self->roaring->high_low_container.containers == nullptr) {
@@ -49,8 +51,8 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
   }
 
   v8::Local<v8::Value> argv[] = {arg};
-  auto tMaybe = globalAddonData.Uint32Array_from.Get(isolate)->Call(
-    isolate->GetCurrentContext(), globalAddonData.Uint32Array.Get(isolate), 1, argv);
+  auto tMaybe = addonData->Uint32Array_from.Get(isolate)->Call(
+    isolate->GetCurrentContext(), addonData->Uint32Array.Get(isolate), 1, argv);
   v8::Local<v8::Value> t;
   if (!tMaybe.ToLocal(&t)) return false;
 
@@ -232,16 +234,17 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
       self->invalidate();
       done = true;
     } else {
+      AddonData * addonData = self->addonData;
       RoaringBitmap32 * other =
-        ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
+        ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, addonData->RoaringBitmap32_constructorTemplate, isolate);
       if (other != nullptr) {
         roaring_bitmap_andnot_inplace(self->roaring, other->roaring);
         self->invalidate();
         done = true;
       } else {
         v8::Local<v8::Value> argv[] = {arg};
-        auto tMaybe = globalAddonData.Uint32Array_from.Get(isolate)->Call(
-          isolate->GetCurrentContext(), globalAddonData.Uint32Array.Get(isolate), 1, argv);
+        auto tMaybe = addonData->Uint32Array_from.Get(isolate)->Call(
+          isolate->GetCurrentContext(), addonData->Uint32Array.Get(isolate), 1, argv);
         v8::Local<v8::Value> t;
         if (tMaybe.ToLocal(&t)) {
           const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, t);
@@ -249,7 +252,7 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
           self->invalidate();
           done = true;
         } else {
-          RoaringBitmap32 tmp(&globalAddonData, 0U);
+          RoaringBitmap32 tmp(addonData, 0U);
           if (roaringAddMany(isolate, &tmp, arg)) {
             roaring_bitmap_andnot_inplace(self->roaring, tmp.roaring);
             self->invalidate();
@@ -277,15 +280,16 @@ void RoaringBitmap32_andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
     return v8utils::throwError(isolate, ERROR_FROZEN);
   }
   if (info.Length() > 0) {
+    AddonData * addonData = self->addonData;
     auto const & arg = info[0];
     RoaringBitmap32 * other =
-      ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
+      ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, addonData->RoaringBitmap32_constructorTemplate, isolate);
     if (other != nullptr) {
       roaring_bitmap_and_inplace(self->roaring, other->roaring);
       self->invalidate();
       return info.GetReturnValue().Set(info.Holder());
     } else {
-      RoaringBitmap32 tmp(&globalAddonData, 0U);
+      RoaringBitmap32 tmp(addonData, 0U);
       if (roaringAddMany(isolate, &tmp, arg)) {
         roaring_bitmap_and_inplace(self->roaring, tmp.roaring);
         self->invalidate();
@@ -308,14 +312,15 @@ void RoaringBitmap32_xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
   }
   if (info.Length() > 0) {
     auto const & arg = info[0];
+    AddonData * addonData = self->addonData;
     RoaringBitmap32 * other =
-      ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, globalAddonData.RoaringBitmap32_constructorTemplate, isolate);
+      ObjectWrap::TryUnwrap<RoaringBitmap32>(arg, addonData->RoaringBitmap32_constructorTemplate, isolate);
     if (other != nullptr) {
       roaring_bitmap_xor_inplace(self->roaring, other->roaring);
       self->invalidate();
       return info.GetReturnValue().Set(info.Holder());
     } else {
-      RoaringBitmap32 tmp(&globalAddonData, 0U);
+      RoaringBitmap32 tmp(addonData, 0U);
       roaringAddMany(info.GetIsolate(), &tmp, arg);
       roaring_bitmap_xor_inplace(self->roaring, tmp.roaring);
       self->invalidate();

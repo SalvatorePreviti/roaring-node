@@ -26,8 +26,10 @@ uint32_t getCpusCount() {
 class AsyncWorker {
  public:
   v8::Isolate * const isolate;
+  AddonData * maybeAddonData;
 
-  explicit AsyncWorker(v8::Isolate * isolate) : isolate(isolate), _error(nullptr), _started(false), _completed(false) {
+  explicit AsyncWorker(v8::Isolate * isolate, AddonData * maybeAddonData) :
+    isolate(isolate), maybeAddonData(maybeAddonData), _error(nullptr), _started(false), _completed(false) {
     _task.data = this;
   }
 
@@ -235,7 +237,11 @@ class AsyncWorker {
     if (!error->IsObject()) {
       v8::MaybeLocal<v8::String> message = error->ToString(isolate->GetCurrentContext());
       if (message.IsEmpty()) {
-        message = globalAddonData.strings.OperationFailed.Get(isolate);
+        if (this->maybeAddonData != nullptr) {
+          message = this->maybeAddonData->strings.OperationFailed.Get(isolate);
+        } else {
+          message = v8::String::NewFromUtf8(isolate, "Operation failed", v8::NewStringType::kInternalized);
+        }
       }
       error = v8::Exception::Error(error.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
     }
@@ -250,8 +256,13 @@ class ParallelAsyncWorker : public AsyncWorker {
   uint32_t loopCount;
   uint32_t concurrency;
 
-  explicit ParallelAsyncWorker(v8::Isolate * isolate) :
-    AsyncWorker(isolate), loopCount(0), concurrency(0), _tasks(nullptr), _pendingTasks(0), _currentIndex(0) {}
+  explicit ParallelAsyncWorker(v8::Isolate * isolate, AddonData * maybeAddonData) :
+    AsyncWorker(isolate, maybeAddonData),
+    loopCount(0),
+    concurrency(0),
+    _tasks(nullptr),
+    _pendingTasks(0),
+    _currentIndex(0) {}
 
   virtual ~ParallelAsyncWorker() { gcaware_free(_tasks); }
 
@@ -358,7 +369,8 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
  public:
   volatile roaring_bitmap_t_ptr bitmap;
 
-  explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate) : AsyncWorker(isolate), bitmap(nullptr) {}
+  explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate, AddonData * addonData) :
+    AsyncWorker(isolate, addonData), bitmap(nullptr) {}
 
   virtual ~RoaringBitmap32FactoryAsyncWorker() {
     if (this->bitmap != nullptr) {
@@ -373,7 +385,7 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
       return this->setError("Error deserializing roaring bitmap");
     }
 
-    v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(this->isolate);
+    v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(this->isolate);
 
     v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
 
@@ -402,8 +414,8 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
   size_t maxSize = std::numeric_limits<size_t>::max();
   bool hasInput = false;
 
-  explicit ToUint32ArrayAsyncWorker(const v8::FunctionCallbackInfo<v8::Value> & info) :
-    AsyncWorker(info.GetIsolate()), info(info) {
+  explicit ToUint32ArrayAsyncWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
+    AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
     gcaware_addAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
   }
 
@@ -422,6 +434,9 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
     if (self == nullptr) {
       return this->setError(ERROR_INVALID_OBJECT);
+    }
+    if (this->maybeAddonData == nullptr) {
+      this->maybeAddonData = self->addonData;
     }
 
     if (info.Length() >= 1 && !info[0]->IsUndefined()) {
@@ -540,7 +555,8 @@ class SerializeWorker final : public AsyncWorker {
   v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bitmapPersistent;
   RoaringBitmapSerializer serializer;
 
-  explicit SerializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info) : AsyncWorker(info.GetIsolate()), info(info) {
+  explicit SerializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
+    AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
     gcaware_addAllocatedMemory(sizeof(SerializeWorker));
   }
 
@@ -551,6 +567,9 @@ class SerializeWorker final : public AsyncWorker {
   void before() final {
     this->serializer.parseArguments(this->info);
     if (this->serializer.self) {
+      if (this->maybeAddonData == nullptr) {
+        this->maybeAddonData = this->serializer.self->addonData;
+      }
       this->bitmapPersistent.Reset(isolate, this->info.Holder());
       this->serializer.self->beginFreeze();
     }
@@ -576,21 +595,30 @@ class DeserializeWorker final : public AsyncWorker {
   RoaringBitmapDeserializer deserializer;
   const v8::FunctionCallbackInfo<v8::Value> & info;
 
-  explicit DeserializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info) : AsyncWorker(info.GetIsolate()), info(info) {
+  explicit DeserializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * addonData) :
+    AsyncWorker(info.GetIsolate(), addonData), info(info) {
     gcaware_addAllocatedMemory(sizeof(DeserializeWorker));
   }
 
   virtual ~DeserializeWorker() { gcaware_removeAllocatedMemory(sizeof(DeserializeWorker)); }
 
  protected:
-  void before() final { this->setError(this->deserializer.parseArguments(this->info, false)); }
+  void before() final {
+    this->setError(this->deserializer.parseArguments(this->info, false));
+    if (this->maybeAddonData == nullptr && this->deserializer.targetBitmap != nullptr) {
+      this->maybeAddonData = this->deserializer.targetBitmap->addonData;
+    }
+    if (this->maybeAddonData == nullptr && !this->hasError()) {
+      this->setError("RoaringBitmap32 deserialization failed to get the addon data");
+    }
+  }
 
   void work() final { this->setError(this->deserializer.deserialize()); }
 
   void done(v8::Local<v8::Value> & result) final {
     v8::Isolate * isolate = this->isolate;
 
-    v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
+    v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
 
     if (!cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr).ToLocal(&result)) {
       return this->setError("RoaringBitmap32 deserialization failed to create a new instance");
@@ -607,13 +635,16 @@ class DeserializeWorker final : public AsyncWorker {
   }
 };
 
+#include <iostream>
+
 class DeserializeParallelWorker : public ParallelAsyncWorker {
  public:
   v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
 
   RoaringBitmapDeserializer * items;
 
-  explicit DeserializeParallelWorker(v8::Isolate * isolate) : ParallelAsyncWorker(isolate), items(nullptr) {}
+  explicit DeserializeParallelWorker(v8::Isolate * isolate, AddonData * maybeAddonData) :
+    ParallelAsyncWorker(isolate, maybeAddonData), items(nullptr) {}
 
   virtual ~DeserializeParallelWorker() {
     if (items) {
@@ -631,7 +662,7 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
   }
 
   void done(v8::Local<v8::Value> & result) final {
-    v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
+    v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
 
     const uint32_t itemsCount = this->loopCount;
     RoaringBitmapDeserializer * items = this->items;
@@ -670,7 +701,8 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
   v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> argPersistent;
   v8utils::TypedArrayContent<uint32_t> buffer;
 
-  explicit FromArrayAsyncWorker(v8::Isolate * isolate) : RoaringBitmap32FactoryAsyncWorker(isolate) {
+  explicit FromArrayAsyncWorker(v8::Isolate * isolate, AddonData * addonData) :
+    RoaringBitmap32FactoryAsyncWorker(isolate, addonData) {
     gcaware_addAllocatedMemory(sizeof(FromArrayAsyncWorker));
   }
 

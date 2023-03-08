@@ -196,7 +196,7 @@ void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & i
 void RoaringBitmap32_toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
-  ToUint32ArrayAsyncWorker * worker = new ToUint32ArrayAsyncWorker(info);
+  ToUint32ArrayAsyncWorker * worker = new ToUint32ArrayAsyncWorker(info, nullptr);
   if (!worker) {
     return v8utils::throwError(isolate, "RoaringBitmap32::toUint32ArrayAsync - allocation failed");
   }

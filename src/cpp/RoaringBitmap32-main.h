@@ -29,8 +29,13 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
   if (!info.IsConstructCall()) {
-    v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
+    v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
     v8::MaybeLocal<v8::Object> v;
     if (info.Length() < 1) {
       v = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
@@ -68,7 +73,7 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   }
 
   RoaringBitmap32 * instance =
-    readonlyViewOf ? new RoaringBitmap32(&globalAddonData, readonlyViewOf) : new RoaringBitmap32(&globalAddonData, 0U);
+    readonlyViewOf ? new RoaringBitmap32(addonData, readonlyViewOf) : new RoaringBitmap32(addonData, 0U);
 
   if (instance == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32::ctor - failed to create RoaringBitmap32 instance");
@@ -88,7 +93,7 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   } else {
     bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
     if (hasParameter) {
-      if (globalAddonData.RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
+      if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
         RoaringBitmap32_copyFrom(info);
       } else {
         RoaringBitmap32_addMany(info);
@@ -127,9 +132,10 @@ void RoaringBitmap32_asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & 
     return;
   }
 
-  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
+  AddonData * addonData = self->addonData;
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
   v8::MaybeLocal<v8::Object> v;
-  v8::Local<v8::Value> argv[2] = {info.Holder(), globalAddonData.strings.readonly.Get(isolate)};
+  v8::Local<v8::Value> argv[2] = {info.Holder(), addonData->strings.readonly.Get(isolate)};
   v = cons->NewInstance(isolate->GetCurrentContext(), 2, argv);
 
   if (!v.ToLocal(&vlocal)) {
@@ -262,7 +268,12 @@ void RoaringBitmap32_clone(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  if (self == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  v8::Local<v8::Function> cons = self->addonData->RoaringBitmap32_constructor.Get(isolate);
 
   v8::Local<v8::Value> argv[1] = {info.Holder()};
   auto v = cons->NewInstance(isolate->GetCurrentContext(), 1, argv);
@@ -415,7 +426,11 @@ void RoaringBitmap32_swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info
 void RoaringBitmap32_toString(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
-  info.GetReturnValue().Set(globalAddonData.strings.RoaringBitmap32.Get(isolate));
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  if (self == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+  info.GetReturnValue().Set(self->addonData->strings.RoaringBitmap32.Get(isolate));
 }
 
 void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -477,7 +492,7 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
     arg = info[0];
   }
 
-  auto * worker = new FromArrayAsyncWorker(isolate);
+  auto * worker = new FromArrayAsyncWorker(isolate, &globalAddonData);
   if (worker == nullptr) {
     return v8utils::throwError(isolate, "Failed to allocate async worker");
   }
@@ -513,7 +528,7 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
   info.GetReturnValue().Set(returnValue);
 }
 
-void RoaringBitmap32_Init(v8::Local<v8::Object> exports) {
+void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
   croaringMemoryInitialize();
 
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
@@ -522,11 +537,12 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports) {
   auto className = NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32", v8::NewStringType::kInternalized);
   auto versionString = NEW_LITERAL_V8_STRING(isolate, ROARING_VERSION, v8::NewStringType::kInternalized);
 
-  v8::Local<v8::FunctionTemplate> ctor = v8::FunctionTemplate::New(isolate, RoaringBitmap32_New);
+  v8::Local<v8::FunctionTemplate> ctor =
+    v8::FunctionTemplate::New(isolate, RoaringBitmap32_New, addonData->external.Get(isolate));
   if (ctor.IsEmpty()) {
     return;
   }
-  globalAddonData.RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
+  addonData->RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
   ctor->SetClassName(className);
 
@@ -613,7 +629,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports) {
   auto ctorFunction = ctor->GetFunction(context).ToLocalChecked();
   auto ctorObject = ctorFunction->ToObject(context).ToLocalChecked();
 
-  ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), globalAddonData.strings.RoaringBitmap32.Get(isolate));
+  ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), addonData->strings.RoaringBitmap32.Get(isolate));
   ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
 
   NODE_SET_METHOD(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);
@@ -646,5 +662,5 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports) {
 
   v8utils::ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
-  globalAddonData.RoaringBitmap32_constructor.Set(isolate, ctorFunction);
+  addonData->RoaringBitmap32_constructor.Set(isolate, ctorFunction);
 }

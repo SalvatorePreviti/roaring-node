@@ -13,8 +13,8 @@ void InitModule(v8::Local<v8::Object> exports) {
   NODE_SET_METHOD(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
   AlignedBuffers_Init(exports);
-  RoaringBitmap32_Init(exports);
-  RoaringBitmap32BufferedIterator_Init(exports);
+  RoaringBitmap32_Init(exports, &globalAddonData);
+  RoaringBitmap32BufferedIterator_Init(exports, &globalAddonData);
 }
 
 NODE_MODULE(roaring, InitModule);
