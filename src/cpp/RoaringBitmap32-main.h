@@ -309,63 +309,63 @@ void RoaringBitmap32_statistics(const v8::FunctionCallbackInfo<v8::Value> & info
   roaring_bitmap_statistics(self->roaring, &stats);
   auto context = isolate->GetCurrentContext();
   auto result = v8::Object::New(isolate);
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "containers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "arrayContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_array_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "runContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_run_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "bitsetContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_bitset_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "valuesInArrayContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_values_array_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "valuesInRunContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_values_run_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "valuesInBitsetContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_values_bitset_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "bytesInArrayContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_array_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "bytesInRunContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_run_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "bytesInBitsetContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_bitset_containers)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "maxValue", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.max_value)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "minValue", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.min_value)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "sumOfAllValues", v8::NewStringType::kInternalized),
     v8::Number::New(isolate, (double)stats.sum_value)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "size", v8::NewStringType::kInternalized),
     v8::Number::New(isolate, (double)stats.cardinality)));
-  v8utils::ignoreMaybeResult(result->Set(
+  ignoreMaybeResult(result->Set(
     context,
     NEW_LITERAL_V8_STRING(isolate, "isFrozen", v8::NewStringType::kInternalized),
     v8::Boolean::New(isolate, self->isFrozen())));
@@ -656,7 +656,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   AddonData_setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeStaticAsync, addonData);
   AddonData_setMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync, addonData);
 
-  v8utils::ignoreMaybeResult(
+  ignoreMaybeResult(
     ctorObject->Set(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized), ctorFunction));
 
   AddonData_setMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync, addonData);
@@ -674,7 +674,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   v8utils::defineHiddenField(isolate, ctorObject, className, ctorFunction);
 
-  v8utils::ignoreMaybeResult(exports->Set(context, className, ctorFunction));
+  ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
   addonData->RoaringBitmap32_constructor.Set(isolate, ctorFunction);
 }

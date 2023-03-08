@@ -13,12 +13,6 @@ bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
 
 namespace v8utils {
 
-  template <typename T>
-  inline void ignoreMaybeResult(v8::Maybe<T>) {}
-
-  template <typename T>
-  inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
-
   template <int N>
   inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));

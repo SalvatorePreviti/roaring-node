@@ -4,6 +4,12 @@
 #include "includes.h"
 #include "addon-strings.h"
 
+template <typename T>
+inline void ignoreMaybeResult(v8::Maybe<T>) {}
+
+template <typename T>
+inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
+
 class AddonData final {
  public:
   v8::Isolate * isolate;
@@ -78,7 +84,7 @@ inline void AddonData_setMethod(
   v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
   v8::Local<v8::String> fn_name = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
   fn->SetName(fn_name);
-  recv->Set(context, fn_name, fn).Check();
+  ignoreMaybeResult(recv->Set(context, fn_name, fn));
 }
 
 #endif

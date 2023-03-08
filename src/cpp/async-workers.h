@@ -202,10 +202,10 @@ class AsyncWorker {
       std::atomic_thread_fence(std::memory_order_seq_cst);
       if (!error.IsEmpty()) {
         v8::Local<v8::Value> argv[] = {error, v8::Undefined(isolate)};
-        v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
+        ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
       } else {
         v8::Local<v8::Value> argv[] = {v8::Null(isolate), result};
-        v8utils::ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
+        ignoreMaybeResult(callback->Call(context, context->Global(), 2, argv));
       }
       delete worker;
     } else {
@@ -213,11 +213,11 @@ class AsyncWorker {
       std::atomic_thread_fence(std::memory_order_seq_cst);
       delete worker;
       if (!error.IsEmpty()) {
-        v8utils::ignoreMaybeResult(resolver->Reject(context, error));
+        ignoreMaybeResult(resolver->Reject(context, error));
       } else if (!result.IsEmpty()) {
-        v8utils::ignoreMaybeResult(resolver->Resolve(context, result));
+        ignoreMaybeResult(resolver->Resolve(context, result));
       } else {
-        v8utils::ignoreMaybeResult(resolver->Reject(context, v8::Undefined(isolate)));
+        ignoreMaybeResult(resolver->Reject(context, v8::Undefined(isolate)));
       }
     }
   }
@@ -725,7 +725,7 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
 
       RoaringBitmapDeserializer & item = items[i];
       item.finalizeTargetBitmap(unwrapped);
-      v8utils::ignoreMaybeResult(resultArray->Set(currentContext, i, instance));
+      ignoreMaybeResult(resultArray->Set(currentContext, i, instance));
     }
 
     result = resultArray;
