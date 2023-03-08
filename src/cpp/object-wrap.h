@@ -3,8 +3,6 @@
 
 #include "addon-data.h"
 
-#include <iostream>
-
 class ObjectWrap {
  public:
   AddonData * const addonData;

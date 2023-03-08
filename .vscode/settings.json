@@ -70,7 +70,7 @@
   "typescript.format.semicolons": "insert",
   "files.eol": "\n",
   "search.exclude": {
-    "**/roaring-node.cpp": true,
+    "roaring-node.cpp": true,
     "**/node_modules": true,
     "**/bower_components": true,
     "**/*.code-search": true

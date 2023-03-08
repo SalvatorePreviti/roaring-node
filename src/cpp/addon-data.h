@@ -6,6 +6,8 @@
 
 class AddonData final {
  public:
+  v8::Isolate * isolate;
+
   AddonDataStrings strings;
 
   v8::Eternal<v8::Object> Uint32Array;
@@ -22,7 +24,7 @@ class AddonData final {
 
   v8::Eternal<v8::External> external;
 
-  inline AddonData() : RoaringBitmap32_instances(0) {}
+  inline AddonData() : isolate(nullptr), RoaringBitmap32_instances(0) {}
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Local<v8::Value> data = info.Data();
@@ -37,7 +39,7 @@ class AddonData final {
   }
 
   inline void initialize(v8::Isolate * isolate) {
-    v8::HandleScope scope(isolate);
+    this->isolate = isolate;
 
     external.Set(isolate, v8::External::New(isolate, this));
 
@@ -66,8 +68,6 @@ class AddonData final {
           .ToLocalChecked()));
   }
 };
-
-void AddonData_DeleteInstance(void * addonData) { delete (AddonData *)addonData; }
 
 inline void AddonData_setMethod(
   v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback, AddonData * addonData) {

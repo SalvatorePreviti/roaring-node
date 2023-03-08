@@ -23,6 +23,15 @@ uint32_t getCpusCount() {
   return result;
 }
 
+inline uv_loop_t * GetCurrentEventLoop() {
+#if NODE_MAJOR_VERSION >= 10 || NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3 || \
+  NODE_MAJOR_VERSION == 8 && NODE_MINOR_VERSION >= 10
+  return node::GetCurrentEventLoop(v8::Isolate::GetCurrent());
+#else
+  return uv_default_loop();
+#endif
+}
+
 class AsyncWorker {
  public:
   v8::Isolate * const isolate;
@@ -139,7 +148,7 @@ class AsyncWorker {
 
   virtual bool _start() {
     this->_started = true;
-    if (uv_queue_work(uv_default_loop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
+    if (uv_queue_work(GetCurrentEventLoop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
       setError("Error starting async thread");
       return false;
     }
@@ -231,7 +240,9 @@ class AsyncWorker {
     if (worker && !worker->hasError()) {
       auto oldIsolate = thread_local_isolate;
       thread_local_isolate = worker->isolate;
+
       worker->work();
+
       thread_local_isolate = oldIsolate;
       std::atomic_thread_fence(std::memory_order_seq_cst);
     }
@@ -240,10 +251,16 @@ class AsyncWorker {
   static void _done(uv_work_t * request, int status) {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
+
+    auto oldIsolate = thread_local_isolate;
+    thread_local_isolate = worker->isolate;
+
     if (status != 0) {
       worker->setError("Error executing async thread");
     }
     _complete(worker);
+
+    thread_local_isolate = oldIsolate;
   }
 
   v8::Local<v8::Value> _makeError(v8::Local<v8::Value> error) {
@@ -325,8 +342,10 @@ class ParallelAsyncWorker : public AsyncWorker {
     for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
       if (
         uv_queue_work(
-          uv_default_loop(), &tasks[taskIndex], ParallelAsyncWorker::_parallelWork, ParallelAsyncWorker::_parallelDone) !=
-        0) {
+          GetCurrentEventLoop(),
+          &tasks[taskIndex],
+          ParallelAsyncWorker::_parallelWork,
+          ParallelAsyncWorker::_parallelDone) != 0) {
         setError("Error starting async parallel task");
         break;
       }

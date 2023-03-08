@@ -4,11 +4,21 @@
 
 using namespace v8;
 
+void AddonData_DeleteInstance(void * addonData) {
+  if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
+    thread_local_isolate = nullptr;
+  }
+
+  delete (AddonData *)addonData;
+}
+
 extern "C" NODE_MODULE_EXPORT void NODE_MODULE_INITIALIZER(Local<Object> exports
                                                            // Local<Value> module
                                                            // Local<Context> context
 ) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
+
+  thread_local_isolate = isolate;
 
   v8::HandleScope scope(isolate);
 

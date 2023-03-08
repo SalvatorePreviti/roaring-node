@@ -5,6 +5,8 @@ Official port of [Roaring Bitmaps](http://roaringbitmap.org) for NodeJS as a nat
 It is interoperable with other implementations via the [Roaring format](https://github.com/RoaringBitmap/RoaringFormatSpec/).
 It takes advantage of AVX2 or SSE4.2 instructions on 64 bit platforms that supports it.
 
+It can be used with worker threads, but directly transferring a bitmap between worker threads is not currently supported.
+
 Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
 
 For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10.0, use [roaring-aws](https://www.npmjs.com/package/roaring-aws).

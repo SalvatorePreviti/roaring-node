@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "1.4.4",
+  "version": "1.5.0",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -29,12 +29,11 @@
   "types": "index.d.ts",
   "typings": "index.d.ts",
   "files": [
-    "src/roaring-node.cpp",
+    "roaring-node.cpp",
     "LICENSE.md",
     "README.md",
     "binding.gyp",
     "index.js",
-    "version.js",
     "index.d.ts",
     "RoaringBitmap32.js",
     "RoaringBitmap32.d.ts",
@@ -90,7 +89,7 @@
     "prebuild": "^11.0.4",
     "prettier": "^2.8.4",
     "pretty-quick": "^3.1.3",
-    "typedoc": "^0.23.25",
+    "typedoc": "^0.23.26",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
     "typescript": "^4.9.5"

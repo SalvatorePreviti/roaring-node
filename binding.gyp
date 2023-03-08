@@ -11,7 +11,7 @@
                 'OTHER_CFLAGS': ["-O3", "-std=c++14", "-fno-rtti", "-fno-exceptions", "-fvisibility=hidden", "-flto"],
             },
             "sources": [
-                "src/roaring-node.cpp"
+                "roaring-node.cpp"
             ],
             "conditions": [
                 [
