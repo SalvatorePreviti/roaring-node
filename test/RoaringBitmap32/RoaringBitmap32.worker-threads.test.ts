@@ -4,7 +4,7 @@ import { resolve as pathResolve } from "path";
 
 describe("RoaringBitmap32 worker-threads", () => {
   it("can be used and works inside a worker thread", () => {
-    const worker = new Worker(pathResolve(__dirname, "worker-thread/worker-thread-test-runner.js"));
+    const worker = new Worker(pathResolve(__dirname, "worker-thread-test.js"));
     return new Promise<void>((resolve, reject) => {
       worker.on("message", (message) => {
         if (message === "ok") {

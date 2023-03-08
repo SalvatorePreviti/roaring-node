@@ -1,10 +1,17 @@
-import { expect } from "chai";
-
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
-import { parentPort } from "worker_threads";
+const { parentPort } = require("worker_threads");
+const { expect } = require("chai");
+
+process.on("uncaughtException", (err) => {
+  // eslint-disable-next-line no-console
+  console.error("worker thread uncaughtException", err);
+  if (parentPort) {
+    parentPort.postMessage(err);
+  }
+});
 
 async function main() {
-  const RoaringBitmap32 = (await import("../../../")).RoaringBitmap32;
+  const { RoaringBitmap32 } = require("../..");
 
   const bitmap = new RoaringBitmap32();
   bitmap.add(1);
