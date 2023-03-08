@@ -5,6 +5,7 @@
 #include "addon-data.h"
 #include "addon-strings.h"
 #include "memory.h"
+#include "object-wrap.h"
 
 bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
   return !value.IsEmpty() && (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer());
