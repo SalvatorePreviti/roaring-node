@@ -23,16 +23,12 @@ describe("asBuffer", () => {
     expect(output.buffer).to.eq(input);
   });
 
-  // eslint-disable-next-line node/no-unsupported-features/es-builtins
-  if (typeof SharedArrayBuffer !== "undefined") {
-    it("wraps a SharedArrayBuffer", () => {
-      // eslint-disable-next-line node/no-unsupported-features/es-builtins
-      const input = new SharedArrayBuffer(3);
-      const output = asBuffer(input);
-      expect(output).to.be.instanceOf(Buffer);
-      expect(output.buffer).to.eq(input);
-    });
-  }
+  it("wraps a SharedArrayBuffer", () => {
+    const input = new SharedArrayBuffer(3);
+    const output = asBuffer(input);
+    expect(output).to.be.instanceOf(Buffer);
+    expect(output.buffer).to.eq(input);
+  });
 
   it("wraps an arraybuffer view", () => {
     for (const ctor of [
@@ -243,20 +239,15 @@ describe("ensureBufferAligned", () => {
     expect(isBufferAligned(result, 256)).to.eq(true);
   });
 
-  // eslint-disable-next-line node/no-unsupported-features/es-builtins
-  if (typeof SharedArrayBuffer !== "undefined") {
-    it("works with SharedArrayBuffer", () => {
-      // eslint-disable-next-line node/no-unsupported-features/es-builtins
-      const sab = new SharedArrayBuffer(32);
-      const unalignedBuffer = Buffer.from(sab, 1, 30);
-      expect(unalignedBuffer.buffer).to.eq(sab);
-      const result = ensureBufferAligned(unalignedBuffer);
-      expect(result).to.not.eq(unalignedBuffer);
-      expect(result).to.be.instanceOf(Buffer);
-      // eslint-disable-next-line node/no-unsupported-features/es-builtins
-      expect(result.buffer).to.be.instanceOf(SharedArrayBuffer);
-      expect(result.length).to.eq(30);
-      expect(isBufferAligned(result)).to.eq(true);
-    });
-  }
+  it("works with SharedArrayBuffer", () => {
+    const sab = new SharedArrayBuffer(32);
+    const unalignedBuffer = Buffer.from(sab, 1, 30);
+    expect(unalignedBuffer.buffer).to.eq(sab);
+    const result = ensureBufferAligned(unalignedBuffer);
+    expect(result).to.not.eq(unalignedBuffer);
+    expect(result).to.be.instanceOf(Buffer);
+    expect(result.buffer).to.be.instanceOf(SharedArrayBuffer);
+    expect(result.length).to.eq(30);
+    expect(isBufferAligned(result)).to.eq(true);
+  });
 });
