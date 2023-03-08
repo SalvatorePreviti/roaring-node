@@ -182,6 +182,8 @@ void gcaware_aligned_free(void * memory) {
 
 void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
 
+void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) { bare_aligned_free(data); }
+
 inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexcept {
   auto iptr = reinterpret_cast<std::uintptr_t>(ptr);
   return !(iptr % alignment);
@@ -21225,7 +21227,8 @@ class ObjectWrap {
 
 
 bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
-  return !value.IsEmpty() && (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer());
+  return !value.IsEmpty() &&
+    (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer() || value->IsSharedArrayBuffer());
 }
 
 namespace v8utils {
@@ -21313,7 +21316,7 @@ namespace v8utils {
     ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
   }
 
-  bool _bufferFromArrayBuffer(
+  bool bufferFromArrayBuffer(
     v8::Isolate * isolate,
     AddonData * addonData,
     v8::Local<v8::Value> buffer,
@@ -21324,8 +21327,23 @@ namespace v8utils {
       return false;
     }
 #if NODE_MAJOR_VERSION > 12
-    auto buf = buffer.As<v8::ArrayBuffer>();
-    return !buf.IsEmpty() && node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
+    if (buffer->IsSharedArrayBuffer()) {
+      auto buf = buffer.As<v8::SharedArrayBuffer>();
+      if (buf.IsEmpty()) {
+        return false;
+      }
+      auto uint8Array = v8::Uint8Array::New(buf, offset, length);
+      if (uint8Array.IsEmpty()) {
+        return false;
+      }
+      return node::Buffer::New(isolate, uint8Array->Buffer(), 0, length).ToLocal(&result);
+    } else {
+      auto buf = buffer.As<v8::ArrayBuffer>();
+      if (buf.IsEmpty()) {
+        return false;
+      }
+      return node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
+    }
 #else
     v8::Local<v8::Value> argv[] = {
       buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
@@ -21351,7 +21369,7 @@ namespace v8utils {
             return true;
           }
           if (array->ByteLength() >= length) {
-            return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+            return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
           }
         }
         return false;
@@ -21359,21 +21377,28 @@ namespace v8utils {
       if (localValue->IsTypedArray()) {
         auto array = localValue.As<v8::TypedArray>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
         }
         return false;
       }
       if (localValue->IsArrayBufferView()) {
         auto array = localValue.As<v8::ArrayBufferView>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
         }
         return false;
       }
       if (localValue->IsArrayBuffer()) {
         auto array = localValue.As<v8::ArrayBuffer>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
+          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
+        }
+        return false;
+      }
+      if (localValue->IsSharedArrayBuffer()) {
+        auto array = localValue.As<v8::SharedArrayBuffer>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
         }
         return false;
       }
@@ -21420,6 +21445,14 @@ namespace v8utils {
     }
     if (localValue->IsArrayBuffer()) {
       auto array = localValue.As<v8::ArrayBuffer>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array, 0, length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    if (localValue->IsSharedArrayBuffer()) {
+      auto array = localValue.As<v8::SharedArrayBuffer>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
         result = v8::Uint32Array::New(array, 0, length);
         return !result.IsEmpty();
@@ -21499,6 +21532,19 @@ namespace v8utils {
 #endif
           return true;
         }
+
+        if (from->IsSharedArrayBuffer()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
+          this->length = arrayBuffer->ByteLength() / sizeof(T);
+#if NODE_MAJOR_VERSION > 13
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+#else
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
+#endif
+          return true;
+        }
       }
 
       this->reset();
@@ -21511,7 +21557,7 @@ namespace v8utils {
 #endif  // ROARING_NODE_V8UTILS_
 
 
-void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe) {
+void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -21527,6 +21573,10 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     if (!info[1]->IsNumber() || !info[1]->Int32Value(isolate->GetCurrentContext()).To(&alignment) || alignment <= 0) {
       return v8utils::throwTypeError(isolate, "Buffer alignment must be a positive integer");
     }
+  }
+
+  if (size < 0) {
+    size = 0;
   }
 
   if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
@@ -21546,21 +21596,46 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     memset(ptr, 0, size);
   }
 
-  v8::MaybeLocal<v8::Object> bufferMaybe =
-    node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
+  if (shared) {
+    AddonData * addonData = AddonData::get(info);
+    if (addonData == nullptr) {
+      return v8utils::throwError(isolate, "Addon data is not available");
+    }
 
-  v8::Local<v8::Object> bufferObj;
+    auto backingStore = v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
+    if (!backingStore) {
+      bare_aligned_free(ptr);
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
+    auto sharedBuf = v8::SharedArrayBuffer::New(isolate, std::move(backingStore));
+    v8::Local<v8::Value> bufferObj;
+    if (sharedBuf.IsEmpty() || !v8utils::bufferFromArrayBuffer(isolate, addonData, sharedBuf, 0, size, bufferObj)) {
+      bare_aligned_free(ptr);
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
+    info.GetReturnValue().Set(bufferObj);
+    return;
+  }
+
+  v8::MaybeLocal<v8::Object> bufferMaybe;
+  bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
+  v8::Local<v8::Value> bufferObj;
   if (!bufferMaybe.ToLocal(&bufferObj)) {
     bare_aligned_free(ptr);
     return v8utils::throwError(isolate, "Buffer creation failed");
   }
-
   info.GetReturnValue().Set(bufferObj);
 }
 
-void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false); }
+void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, false); }
 
-void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, true); }
+void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, true, false); }
+
+void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, true); }
+
+void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  _bufferAlignedAlloc(info, true, true);
+}
 
 void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
@@ -21589,6 +21664,8 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
 void AlignedBuffers_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
   AddonData_setMethod(exports, "bufferAlignedAlloc", bufferAlignedAlloc, addonData);
   AddonData_setMethod(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe, addonData);
+  AddonData_setMethod(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared, addonData);
+  AddonData_setMethod(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe, addonData);
   AddonData_setMethod(exports, "isBufferAligned", isBufferAligned, addonData);
 }
 
@@ -21879,7 +21956,7 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
     return false;
   }
 
-  if (arg->IsUint32Array() || arg->IsInt32Array() || arg->IsArrayBuffer()) {
+  if (arg->IsUint32Array() || arg->IsInt32Array() || arg->IsArrayBuffer() || arg->IsSharedArrayBuffer()) {
     if (replace && self->roaring->high_low_container.containers != nullptr) {
       roaring_bitmap_clear(self->roaring);
     }
@@ -22565,11 +22642,14 @@ class RoaringBitmapSerializer final {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization format argument was not provided");
     }
     if (info.Length() > 1) {
-      if (info[0]->IsUint8Array() || info[0]->IsInt8Array() || info[0]->IsUint8ClampedArray() || info[0]->IsArrayBuffer()) {
+      if (
+        info[0]->IsUint8Array() || info[0]->IsInt8Array() || info[0]->IsUint8ClampedArray() || info[0]->IsArrayBuffer() ||
+        info[0]->IsSharedArrayBuffer()) {
         bufferArgIndex = 0;
         formatArgIndex = 1;
       } else if (
-        info[1]->IsUint8Array() || info[1]->IsInt8Array() || info[1]->IsUint8ClampedArray() || info[1]->IsArrayBuffer()) {
+        info[1]->IsUint8Array() || info[1]->IsInt8Array() || info[1]->IsUint8ClampedArray() || info[1]->IsArrayBuffer() ||
+        info[1]->IsSharedArrayBuffer()) {
         bufferArgIndex = 1;
       } else if (!info[1]->IsUndefined()) {
         return v8utils::throwError(isolate, "RoaringBitmap32 serialization buffer argument was invalid");
@@ -25342,7 +25422,9 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
+#if NODE_MAJOR_VERSION >= 10 || NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3
   node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
+#endif
 
   addonData->initialize(isolate);
 

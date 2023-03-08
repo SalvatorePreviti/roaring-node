@@ -8,7 +8,8 @@
 #include "object-wrap.h"
 
 bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
-  return !value.IsEmpty() && (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer());
+  return !value.IsEmpty() &&
+    (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer() || value->IsSharedArrayBuffer());
 }
 
 namespace v8utils {
@@ -96,7 +97,7 @@ namespace v8utils {
     ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
   }
 
-  bool _bufferFromArrayBuffer(
+  bool bufferFromArrayBuffer(
     v8::Isolate * isolate,
     AddonData * addonData,
     v8::Local<v8::Value> buffer,
@@ -107,8 +108,23 @@ namespace v8utils {
       return false;
     }
 #if NODE_MAJOR_VERSION > 12
-    auto buf = buffer.As<v8::ArrayBuffer>();
-    return !buf.IsEmpty() && node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
+    if (buffer->IsSharedArrayBuffer()) {
+      auto buf = buffer.As<v8::SharedArrayBuffer>();
+      if (buf.IsEmpty()) {
+        return false;
+      }
+      auto uint8Array = v8::Uint8Array::New(buf, offset, length);
+      if (uint8Array.IsEmpty()) {
+        return false;
+      }
+      return node::Buffer::New(isolate, uint8Array->Buffer(), 0, length).ToLocal(&result);
+    } else {
+      auto buf = buffer.As<v8::ArrayBuffer>();
+      if (buf.IsEmpty()) {
+        return false;
+      }
+      return node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
+    }
 #else
     v8::Local<v8::Value> argv[] = {
       buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
@@ -134,7 +150,7 @@ namespace v8utils {
             return true;
           }
           if (array->ByteLength() >= length) {
-            return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+            return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
           }
         }
         return false;
@@ -142,21 +158,28 @@ namespace v8utils {
       if (localValue->IsTypedArray()) {
         auto array = localValue.As<v8::TypedArray>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
         }
         return false;
       }
       if (localValue->IsArrayBufferView()) {
         auto array = localValue.As<v8::ArrayBufferView>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
         }
         return false;
       }
       if (localValue->IsArrayBuffer()) {
         auto array = localValue.As<v8::ArrayBuffer>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return _bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
+          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
+        }
+        return false;
+      }
+      if (localValue->IsSharedArrayBuffer()) {
+        auto array = localValue.As<v8::SharedArrayBuffer>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
         }
         return false;
       }
@@ -203,6 +226,14 @@ namespace v8utils {
     }
     if (localValue->IsArrayBuffer()) {
       auto array = localValue.As<v8::ArrayBuffer>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array, 0, length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    if (localValue->IsSharedArrayBuffer()) {
+      auto array = localValue.As<v8::SharedArrayBuffer>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
         result = v8::Uint32Array::New(array, 0, length);
         return !result.IsEmpty();
@@ -273,6 +304,19 @@ namespace v8utils {
         if (from->IsArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
+          this->length = arrayBuffer->ByteLength() / sizeof(T);
+#if NODE_MAJOR_VERSION > 13
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+#else
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
+#endif
+          return true;
+        }
+
+        if (from->IsSharedArrayBuffer()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
 #if NODE_MAJOR_VERSION > 13
           this->backingStore = arrayBuffer->GetBackingStore();

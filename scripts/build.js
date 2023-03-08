@@ -92,7 +92,8 @@ async function unity() {
 }
 
 async function development() {
-  const outputText = `#include "cpp/main.cpp"`;
+  devLog.warn("Development mode is enabled. Rebuild for production before publishing.");
+  const outputText = `#include "src/cpp/main.cpp"`;
   let oldContent;
   try {
     oldContent = fs.readFileSync(OUTPUT_FILE_PATH, "utf8");

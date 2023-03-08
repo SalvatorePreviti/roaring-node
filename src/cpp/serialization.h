@@ -26,11 +26,14 @@ class RoaringBitmapSerializer final {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization format argument was not provided");
     }
     if (info.Length() > 1) {
-      if (info[0]->IsUint8Array() || info[0]->IsInt8Array() || info[0]->IsUint8ClampedArray() || info[0]->IsArrayBuffer()) {
+      if (
+        info[0]->IsUint8Array() || info[0]->IsInt8Array() || info[0]->IsUint8ClampedArray() || info[0]->IsArrayBuffer() ||
+        info[0]->IsSharedArrayBuffer()) {
         bufferArgIndex = 0;
         formatArgIndex = 1;
       } else if (
-        info[1]->IsUint8Array() || info[1]->IsInt8Array() || info[1]->IsUint8ClampedArray() || info[1]->IsArrayBuffer()) {
+        info[1]->IsUint8Array() || info[1]->IsInt8Array() || info[1]->IsUint8ClampedArray() || info[1]->IsArrayBuffer() ||
+        info[1]->IsSharedArrayBuffer()) {
         bufferArgIndex = 1;
       } else if (!info[1]->IsUndefined()) {
         return v8utils::throwError(isolate, "RoaringBitmap32 serialization buffer argument was invalid");

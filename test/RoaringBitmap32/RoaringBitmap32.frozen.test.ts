@@ -100,6 +100,26 @@ describe("RoaringBitmap32 frozen", () => {
       expect(copy.toArray()).to.deep.equal(values);
       expect(copy.tryAdd(4)).to.be.true;
     });
+
+    it("can create a view from a serialized bitmap in a SharedArrayBuffer, and the view is frozen", () => {
+      const values = [1, 2, 3, 100, 8772837, 0x7ffffff1, 0x7fffffff];
+      const bitmap = new RoaringBitmap32(values);
+      const sharedBuffer = RoaringBitmap32.bufferAlignedAllocShared(
+        bitmap.getSerializationSizeInBytes("unsafe_frozen_croaring"),
+      );
+      expect(sharedBuffer.buffer).to.be.instanceOf(SharedArrayBuffer);
+      const serialized = bitmap.serialize("unsafe_frozen_croaring", sharedBuffer);
+      expect(serialized).to.eq(sharedBuffer);
+
+      const view = RoaringBitmap32.unsafeFrozenView(sharedBuffer, "unsafe_frozen_croaring");
+      expect(view.isFrozen).to.be.true;
+      expect(view.toArray()).to.deep.equal(values);
+
+      const copy = view.clone();
+      expect(copy.isFrozen).to.be.false;
+      expect(copy.toArray()).to.deep.equal(values);
+      expect(copy.tryAdd(4)).to.be.true;
+    });
   });
 
   describe("asReadonlyView", () => {

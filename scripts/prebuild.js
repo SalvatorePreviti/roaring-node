@@ -5,7 +5,7 @@ const { colors, devRunMain } = require("@balsamic/dev");
 function prebuild() {
   const args = [];
   args.push(process.argv[0]);
-  args.push("-t", "8.0.0");
+  args.push("-t", "8.10.0");
   args.push("-t", "10.0.0");
   args.push("-t", "12.0.0");
   args.push("-t", "14.0.0");

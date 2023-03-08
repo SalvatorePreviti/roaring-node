@@ -34,7 +34,9 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
+#if NODE_MAJOR_VERSION >= 10 || NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3
   node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
+#endif
 
   addonData->initialize(isolate);
 

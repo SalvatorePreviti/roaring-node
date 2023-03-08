@@ -126,6 +126,8 @@ void gcaware_aligned_free(void * memory) {
 
 void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
 
+void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) { bare_aligned_free(data); }
+
 inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexcept {
   auto iptr = reinterpret_cast<std::uintptr_t>(ptr);
   return !(iptr % alignment);

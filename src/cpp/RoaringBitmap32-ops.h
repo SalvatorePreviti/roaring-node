@@ -24,7 +24,7 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
     return false;
   }
 
-  if (arg->IsUint32Array() || arg->IsInt32Array() || arg->IsArrayBuffer()) {
+  if (arg->IsUint32Array() || arg->IsInt32Array() || arg->IsArrayBuffer() || arg->IsSharedArrayBuffer()) {
     if (replace && self->roaring->high_low_container.containers != nullptr) {
       roaring_bitmap_clear(self->roaring);
     }
