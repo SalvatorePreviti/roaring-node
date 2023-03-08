@@ -33,7 +33,12 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
 
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -110,7 +115,12 @@ void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value>
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
-  v8::Local<v8::Function> cons = globalAddonData.RoaringBitmap32_constructor.Get(isolate);
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
 
   v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -162,7 +172,12 @@ void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::V
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
-  auto * worker = new DeserializeWorker(info, &globalAddonData);
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  auto * worker = new DeserializeWorker(info, addonData);
   if (worker == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32 deserialization failed to allocate async worker");
   }
@@ -179,7 +194,12 @@ void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackIn
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::HandleScope scope(isolate);
 
-  auto * worker = new DeserializeParallelWorker(isolate, &globalAddonData);
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  auto * worker = new DeserializeParallelWorker(isolate, addonData);
   if (worker == nullptr) {
     return v8utils::throwError(isolate, "Failed to allocate async worker");
   }

@@ -79,10 +79,10 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   info.GetReturnValue().Set(is_pointer_aligned(content.data, alignment));
 }
 
-void AlignedBuffers_Init(v8::Local<v8::Object> exports) {
-  NODE_SET_METHOD(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
-  NODE_SET_METHOD(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
-  NODE_SET_METHOD(exports, "isBufferAligned", isBufferAligned);
+void AlignedBuffers_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
+  AddonData_setMethod(exports, "bufferAlignedAlloc", bufferAlignedAlloc, addonData);
+  AddonData_setMethod(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe, addonData);
+  AddonData_setMethod(exports, "isBufferAligned", isBufferAligned, addonData);
 }
 
 #endif  // ROARING_NODE_ALIGNED_BUFFERS_

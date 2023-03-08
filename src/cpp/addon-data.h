@@ -4,8 +4,6 @@
 #include "includes.h"
 #include "addon-strings.h"
 
-void AddonData_DeleteInstance(void * addonData);
-
 class AddonData final {
  public:
   AddonDataStrings strings;
@@ -43,8 +41,6 @@ class AddonData final {
 
     external.Set(isolate, v8::External::New(isolate, this));
 
-    // node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, this);
-
     this->strings.initialize(isolate);
 
     auto context = isolate->GetCurrentContext();
@@ -73,6 +69,16 @@ class AddonData final {
 
 void AddonData_DeleteInstance(void * addonData) { delete (AddonData *)addonData; }
 
-AddonData globalAddonData;
+inline void AddonData_setMethod(
+  v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback, AddonData * addonData) {
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::HandleScope handle_scope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonData->external.Get(isolate));
+  v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
+  v8::Local<v8::String> fn_name = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
+  fn->SetName(fn_name);
+  recv->Set(context, fn_name, fn).Check();
+}
 
 #endif

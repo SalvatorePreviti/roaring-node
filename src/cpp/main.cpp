@@ -2,19 +2,29 @@
 #include "RoaringBitmap32-main.h"
 #include "RoaringBitmap32BufferedIterator.h"
 
-void InitModule(v8::Local<v8::Object> exports) {
+using namespace v8;
+
+extern "C" NODE_MODULE_EXPORT void NODE_MODULE_INITIALIZER(Local<Object> exports
+                                                           // Local<Value> module
+                                                           // Local<Context> context
+) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
   v8::HandleScope scope(isolate);
 
-  globalAddonData.initialize(isolate);
+  AddonData * addonData = new AddonData();
+
+  node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
+
+  addonData->initialize(isolate);
+
+  AlignedBuffers_Init(exports, addonData);
+  RoaringBitmap32_Init(exports, addonData);
+  RoaringBitmap32BufferedIterator_Init(exports, addonData);
+
+  AddonData_setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory, addonData);
+
   v8utils::defineHiddenField(isolate, exports, "default", exports);
-
-  NODE_SET_METHOD(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
-
-  AlignedBuffers_Init(exports);
-  RoaringBitmap32_Init(exports, &globalAddonData);
-  RoaringBitmap32BufferedIterator_Init(exports, &globalAddonData);
 }
 
-NODE_MODULE(roaring, InitModule);
+// NODE_MODULE(roaring, InitModule);
