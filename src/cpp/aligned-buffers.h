@@ -43,22 +43,19 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     memset(ptr, 0, size);
   }
 
+#if NODE_MAJOR_VERSION >= 12
   if (shared) {
     AddonData * addonData = AddonData::get(info);
     if (addonData == nullptr) {
       return v8utils::throwError(isolate, "Addon data is not available");
     }
 
-#if NODE_MAJOR_VERSION >= 12
     auto backingStore = v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
     if (!backingStore) {
       bare_aligned_free(ptr);
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
     auto sharedBuf = v8::SharedArrayBuffer::New(isolate, std::move(backingStore));
-#else
-    auto sharedBuf = v8::SharedArrayBuffer::New(isolate, ptr, size, bare_aligned_free_callback2, nullptr);
-#endif
     v8::Local<v8::Value> bufferObj;
     if (sharedBuf.IsEmpty() || !v8utils::bufferFromArrayBuffer(isolate, addonData, sharedBuf, 0, size, bufferObj)) {
       bare_aligned_free(ptr);
@@ -67,6 +64,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     info.GetReturnValue().Set(bufferObj);
     return;
   }
+#endif
 
   v8::MaybeLocal<v8::Object> bufferMaybe;
   bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);

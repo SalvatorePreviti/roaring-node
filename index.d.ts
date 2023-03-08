@@ -62,6 +62,8 @@ export function bufferAlignedAllocUnsafe(size: number, alignment?: number): Buff
  * Is the same as Buffer.alloc but is aligned and uses a SharedArrayBuffer as storage.
  * We need an aligned buffer to create a roaring bitmap frozen view.
  *
+ * WARNING: in node < 12, it reutrns a standard ArrayBuffer and not a SharedArrayBuffer.
+ *
  * @param {number} size The size of the buffer to allocate.
  * @param {number} [alignment=32] The alignment of the buffer to allocate.
  */
@@ -74,6 +76,8 @@ export function bufferAlignedAllocShared(size: number, alignment?: number): Buff
  *
  * Is the same as Buffer.allocUnsafe but is aligned and uses a SharedArrayBuffer as storage.
  * We need an aligned buffer to create a roaring bitmap frozen view.
+ *
+ * WARNING: in node < 12, it reutrns a standard ArrayBuffer and not a SharedArrayBuffer
  *
  * WARNING: this function is unsafe because the returned buffer may contain previously unallocated memory that may contain sensitive data.
  *
