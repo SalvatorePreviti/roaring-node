@@ -12,16 +12,21 @@ const roaringNodeCpp = fs.readFileSync(OUTPUT_FILE_PATH, "utf8");
 const unityResult = unity();
 console.log();
 if (unityResult.outputText !== roaringNodeCpp) {
-  throw new Error(
-    "roaring-node.cpp is not the production version. Run `npm run rebuild` before committing and pushing.",
+  const chalk = require("chalk");
+  console.error(
+    chalk.redBright(
+      `${chalk.underline.bold(
+        "ERROR",
+      )}: ${OUTPUT_FILE_PATH} is outdated or not a production version. Run \`npm run rebuild\` before committing and pushing.`,
+    ),
   );
+  process.exitCode = 1;
+} else {
+  if (!fs.existsSync(BINARY_OUTPUT_FILE_PATH)) {
+    execSync("npx node-gyp rebuild", { stdio: "inherit" });
+  }
+
+  execSync("npm run lint", { stdio: "inherit" });
+
+  execSync("npm run test", { stdio: "inherit" });
 }
-
-if (!fs.existsSync(BINARY_OUTPUT_FILE_PATH)) {
-  process.argv.push("build");
-  require("node-gyp/bin/node-gyp.js");
-}
-
-execSync("npm run lint", { stdio: "inherit" });
-
-execSync("npm run test", { stdio: "inherit" });
