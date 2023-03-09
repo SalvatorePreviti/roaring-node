@@ -1,30 +1,36 @@
 #!/usr/bin/env node
 
+const path = require("path");
+
 console.time("test");
 process.on("exit", () => {
   console.timeEnd("test");
 });
 
-const url = require("url");
+require("ts-node/register");
 
-if (!url.pathToFileURL) {
-  url.pathToFileURL = (v) => {
-    const result = new url.URL(`file://`);
-    result.pathname = v;
-    return result;
+const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
+if (nodeVersion < 14) {
+  const url = require("url");
+  if (!url.pathToFileURL) {
+    url.pathToFileURL = (filePath) => {
+      let pathName = path.resolve(filePath).replace(/\\/g, "/");
+      if (!pathName.startsWith("/")) {
+        pathName = `/${pathName}`;
+      }
+      return encodeURI(`file://${pathName}`).replace(/[?#]/g, encodeURIComponent);
+    };
+  }
+
+  require("mocha/lib/nodejs/esm-utils.js").doImport = (v) => {
+    if (typeof v === "object") {
+      v = v.pathname;
+    }
+    return new Promise((resolve) => resolve(require(v)));
   };
 }
 
-require("ts-node/register");
-
 const { print: printSystemInfo } = require("./systemInfo.js");
-
-require("mocha/lib/nodejs/esm-utils.js").doImport = (v) => {
-  if (typeof v === "object") {
-    v = v.pathname;
-  }
-  return new Promise((resolve) => resolve(require(v)));
-};
 
 printSystemInfo();
 
