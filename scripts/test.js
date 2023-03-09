@@ -5,6 +5,16 @@ process.on("exit", () => {
   console.timeEnd("test");
 });
 
+const url = require("url");
+
+if (!url.pathToFileURL) {
+  url.pathToFileURL = (v) => {
+    const result = new url.URL(`file://`);
+    result.pathname = v;
+    return result;
+  };
+}
+
 require("ts-node/register");
 
 const { print: printSystemInfo } = require("./systemInfo.js");
