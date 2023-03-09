@@ -3,6 +3,7 @@
 const colors = require("chalk");
 const path = require("path");
 const fs = require("fs");
+const { execSync } = require("child_process");
 
 const { SRC_CPP_FOLDER, ROOT_FOLDER, OUTPUT_FILE_PATH, BINARY_OUTPUT_FILE_PATH, unity } = require("./lib/unity");
 
@@ -87,7 +88,9 @@ async function build() {
     console.log();
   });
 
-  require("node-gyp/bin/node-gyp.js");
+  const buildMode = process.argv.slice(2).includes("build") ? "build" : "rebuild";
+
+  execSync(`npx node-gyp ${buildMode}`, { stdio: "inherit" });
 }
 
 build().catch((e) => {
