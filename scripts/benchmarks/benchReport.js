@@ -1,9 +1,9 @@
-const chalk = require("chalk");
+const colors = require("chalk");
 
-const hasIcons = chalk.supportsColor.has256;
+const hasIcons = colors.supportsColor.has256;
 
 const icons = {
-  success: chalk.green(hasIcons ? "✔" : "√"),
+  success: colors.green(hasIcons ? "✔" : "√"),
   error: hasIcons ? "✖" : "×",
   arrow: hasIcons ? "➔" : "-",
   bullet: hasIcons ? "•" : "*",
@@ -12,20 +12,20 @@ const icons = {
 function printBenchError(suiteName, bench, error) {
   console.log(
     "\n",
-    chalk.red("-"),
-    chalk.yellowBright(
-      `Suite ${chalk.yellow.bold.italic(suiteName)}${
-        bench ? `Benchmark ${chalk.yellow.bold.italic(bench.name)}` : ""
+    colors.red("-"),
+    colors.yellowBright(
+      `Suite ${colors.yellow.bold.italic(suiteName)}${
+        bench ? `Benchmark ${colors.yellow.bold.italic(bench.name)}` : ""
       } failed`,
     ),
     "-",
-    chalk.redBright(error),
+    colors.redBright(error),
   );
 }
 
 module.exports = {
   printSuiteName(name) {
-    console.log(`${chalk.cyan(icons.bullet)} ${chalk.cyan("suite")} ${chalk.cyanBright(name)}`);
+    console.log(`${colors.cyan(icons.bullet)} ${colors.cyan("suite")} ${colors.cyanBright(name)}`);
   },
 
   printSuiteReport(report) {
@@ -40,7 +40,7 @@ module.exports = {
     }
 
     for (const detail of report.details) {
-      console.log(`  ${chalk.gray(detail)}`);
+      console.log(`  ${colors.gray(detail)}`);
     }
 
     let errors = 0;
@@ -63,33 +63,33 @@ module.exports = {
     for (const bench of report.benchs) {
       const s = [];
       if (bench.aborted || bench.error) {
-        const errorKind = chalk.red.bold(bench.error ? "error" : "aborted");
-        s.push(`  ${chalk.red(icons.error)} ${chalk.redBright(bench.name.padEnd(cells.name))} ${errorKind}`);
+        const errorKind = colors.red.bold(bench.error ? "error" : "aborted");
+        s.push(`  ${colors.red(icons.error)} ${colors.redBright(bench.name.padEnd(cells.name))} ${errorKind}`);
       } else {
-        s.push(`  ${chalk.green(icons.success)} ${chalk.greenBright(bench.name.padEnd(cells.name))}`);
-        s.push(` ${chalk.cyanBright(bench.ops.padStart(cells.ops))}${chalk.cyan(" ops/sec")}`);
+        s.push(`  ${colors.green(icons.success)} ${colors.greenBright(bench.name.padEnd(cells.name))}`);
+        s.push(` ${colors.cyanBright(bench.ops.padStart(cells.ops))}${colors.cyan(" ops/sec")}`);
         s.push(`±${bench.rme}%`.padStart(cells.rme + 3));
         s.push(`${bench.runs} runs`.padStart(cells.runs + 6));
         if (bench.fastest) {
-          s.push(chalk.green(chalk.italic(" fastest")));
+          s.push(colors.green(colors.italic(" fastest")));
         } else {
-          s.push(chalk.yellow(bench.diff.padStart(cells.diff + 1)));
+          s.push(colors.yellow(bench.diff.padStart(cells.diff + 1)));
         }
       }
       console.log(...s);
     }
     if (report.benchs.length) {
       if (report.fastest) {
-        console.log(chalk.cyan(`  ${icons.arrow} Fastest is ${chalk.greenBright(report.fastest)}\n`));
+        console.log(colors.cyan(`  ${icons.arrow} Fastest is ${colors.greenBright(report.fastest)}\n`));
       } else {
-        console.log(chalk.gray(`  ${icons.arrow} No winner\n`));
+        console.log(colors.gray(`  ${icons.arrow} No winner\n`));
       }
     } else {
-      console.log(chalk.gray(`  ${icons.arrow} No benchmarks\n`));
+      console.log(colors.gray(`  ${icons.arrow} No benchmarks\n`));
     }
   },
 
   get colorFlags() {
-    return chalk.supportsColor.hasBasic ? (chalk.supportsColor.has256 ? "--color=256" : "--colors") : "";
+    return colors.supportsColor.hasBasic ? (colors.supportsColor.has256 ? "--color=256" : "--colors") : "";
   },
 };

@@ -2,7 +2,7 @@
 
 const systemInfo = require("./systemInfo");
 const promiseMap = require("./benchmarks/promiseMap");
-const chalk = require("chalk");
+const colors = require("chalk");
 const path = require("path");
 const fs = require("fs");
 const { fork } = require("child_process");
@@ -68,10 +68,10 @@ async function benchmarks() {
   try {
     const benchFiles = await listBenchFiles();
     console.log(
-      chalk.green("*"),
-      chalk.greenBright("running"),
-      chalk.cyanBright(benchFiles.length),
-      chalk.greenBright("files..."),
+      colors.green("*"),
+      colors.greenBright("running"),
+      colors.cyanBright(benchFiles.length),
+      colors.greenBright("files..."),
       "\n",
     );
     await promiseMap(
@@ -94,7 +94,7 @@ async function benchmarks() {
 }
 
 function run() {
-  const completedMessage = `\n${chalk.green("*")} ${chalk.greenBright("completed")}`;
+  const completedMessage = `\n${colors.green("*")} ${colors.greenBright("completed")}`;
   console.time(completedMessage);
 
   return benchmarks()
@@ -106,7 +106,7 @@ function run() {
     })
     .catch((error) => {
       spinner.clear();
-      console.error(chalk.red("*"), chalk.redBright("FAIL"), chalk.red("-"), error, "\n");
+      console.error(colors.red("*"), colors.redBright("FAIL"), colors.red("-"), error, "\n");
       if (!process.exitCode) {
         process.exitCode = 1;
       }

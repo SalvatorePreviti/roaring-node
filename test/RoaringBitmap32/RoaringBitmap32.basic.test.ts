@@ -172,6 +172,13 @@ describe("RoaringBitmap32 basic", () => {
       expect(Array.from(output)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
     });
 
+    it("supports SharedArrayBuffer", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      const output = new Uint32Array(new SharedArrayBuffer(6 * 4));
+      expect(bitmap.toUint32Array(output)).to.eq(output);
+      expect(Array.from(output)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+    });
+
     it("writes the bitmap to the output array if the output array is bigger", () => {
       const data = [1, 2, 10, 30, 0x7fffffff, 0xffffffff];
       const bitmap = new RoaringBitmap32(data);
@@ -245,6 +252,14 @@ describe("RoaringBitmap32 basic", () => {
       const output = new Uint32Array(6);
       expect(await bitmap.toUint32ArrayAsync(output)).to.eq(output);
       expect(Array.from(output)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+    });
+
+    it("writes the bitmap to the output SharedArrayBuffer", async () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
+      const output = new SharedArrayBuffer(6 * 4);
+      const result = await bitmap.toUint32ArrayAsync(output);
+      expect(result.buffer).to.eq(output);
+      expect(Array.from(result)).deep.equal([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
     });
 
     it("writes the bitmap to the output array if the output array is the same size", async () => {
@@ -418,29 +433,41 @@ describe("RoaringBitmap32 basic", () => {
     it("limits correctly if the output array is too small with two arguments", () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
       const output = new Uint32Array(3);
-      expect(Array.from(bitmap.rangeUint32Array(4, output))).to.deep.eq([50, 70, 100]);
-      expect(output).eq(output);
+      const result = bitmap.rangeUint32Array(4, output);
+      expect(Array.from(result)).to.deep.eq([50, 70, 100]);
+      expect(result).eq(output);
     });
 
     it("limits correctly if the output array is too small with two arguments", () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
       const output = new Uint32Array(3);
-      expect(Array.from(bitmap.rangeUint32Array(output, 4))).to.deep.eq([50, 70, 100]);
-      expect(output).eq(output);
+      const result = bitmap.rangeUint32Array(output, 4);
+      expect(Array.from(result)).to.deep.eq([50, 70, 100]);
+      expect(result).eq(output);
     });
 
     it("limits correctly if the output array is too small with 3 arguments", () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
       const output = new Uint32Array(3);
-      expect(Array.from(bitmap.rangeUint32Array(output, 4, 200))).to.deep.eq([50, 70, 100]);
-      expect(output).eq(output);
+      const result = bitmap.rangeUint32Array(output, 4, 200);
+      expect(Array.from(result)).to.deep.eq([50, 70, 100]);
+      expect(result).eq(output);
     });
 
     it("accepts a single argument of UInt32Array", () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
       const output = new Uint32Array(3);
-      expect(Array.from(bitmap.rangeUint32Array(output))).to.deep.eq([1, 2, 10]);
-      expect(output).eq(output);
+      const result = bitmap.rangeUint32Array(output);
+      expect(Array.from(result)).to.deep.eq([1, 2, 10]);
+      expect(result).eq(output);
+    });
+
+    it("accepts a single argument of SharedArrayBuffer", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
+      const output = new SharedArrayBuffer(3 * 4);
+      const result = bitmap.rangeUint32Array(output);
+      expect(Array.from(result)).to.deep.eq([1, 2, 10]);
+      expect(result.buffer).eq(output);
     });
   });
 

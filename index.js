@@ -25,7 +25,6 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 
 const util = require("util");
 const roaring = require("./build/Release/roaring.node");
-// const { version: packageVersion } = require("./package.json");
 
 module.exports = roaring;
 
@@ -129,33 +128,39 @@ function iterator() {
 
 let isArrayBuffer;
 let isArrayBufView;
+let isSharedArrayBuffer;
 
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 const utilTypes = util.types; // util.types is supported only in Node.js 10+
 if (utilTypes) {
   isArrayBuffer = utilTypes.isArrayBuffer;
   isArrayBufView = utilTypes.isArrayBufferView;
+  isSharedArrayBuffer = utilTypes.isSharedArrayBuffer;
 } else {
   isArrayBuffer = (v) => v instanceof ArrayBuffer;
   isArrayBufView = (v) => ArrayBuffer.isView(v);
-}
-
-function asBuffer(buffer) {
-  const result = asBufferUnsafe(buffer);
-  return Buffer.isBuffer(result) ? result : Buffer.from(result);
+  isSharedArrayBuffer = typeof SharedArrayBuffer === "undefined" ? () => false : (v) => v instanceof SharedArrayBuffer;
 }
 
 function asBufferUnsafe(buffer) {
   if (Buffer.isBuffer(buffer)) {
     return buffer;
   }
-  if (isArrayBuffer(buffer)) {
-    return Buffer.from(buffer);
-  }
   if (isArrayBufView(buffer)) {
     return Buffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
   }
+  if (isArrayBuffer(buffer)) {
+    return Buffer.from(buffer);
+  }
+  if (isSharedArrayBuffer(buffer)) {
+    return Buffer.from(buffer);
+  }
   return buffer;
+}
+
+function asBuffer(buffer) {
+  const result = asBufferUnsafe(buffer);
+  return Buffer.isBuffer(result) ? result : Buffer.from(result);
 }
 
 const initializedSym = Symbol.for("roaring-node");
@@ -256,6 +261,8 @@ if (!roaring[initializedSym]) {
 
   defineValue("bufferAlignedAlloc", roaring.bufferAlignedAlloc);
   defineValue("bufferAlignedAllocUnsafe", roaring.bufferAlignedAllocUnsafe);
+  defineValue("bufferAlignedAllocShared", roaring.bufferAlignedAllocShared);
+  defineValue("bufferAlignedAllocSharedUnsafe", roaring.bufferAlignedAllocSharedUnsafe);
   defineValue("isBufferAligned", roaring.isBufferAligned);
 
   defineValue("ensureBufferAligned", function ensureBufferAligned(buffer, alignment = 32) {
@@ -267,7 +274,9 @@ if (!roaring[initializedSym]) {
       throw new TypeError("ensureBufferAligned expects a Buffer instance");
     }
     if (!roaring.isBufferAligned(buffer, alignment)) {
-      const aligned = roaring.bufferAlignedAlloc(buffer.length, alignment);
+      const aligned = isSharedArrayBuffer(buffer.buffer)
+        ? roaring.bufferAlignedAllocSharedUnsafe(buffer.length, alignment)
+        : roaring.bufferAlignedAllocUnsafe(buffer.length, alignment);
       aligned.set(buffer);
       return aligned;
     }
@@ -277,6 +286,4 @@ if (!roaring[initializedSym]) {
   RoaringBitmap32.getRoaringUsedMemory = roaring.getRoaringUsedMemory;
 
   roaring.asBuffer = asBuffer;
-
-  roaring._initTypes({ Uint32Array, Buffer_from: Buffer.from });
 }

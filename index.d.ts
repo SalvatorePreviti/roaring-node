@@ -55,13 +55,45 @@ export function bufferAlignedAlloc(size: number, alignment?: number): Buffer;
 export function bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
 
 /**
+ * Creates a new buffer backed by a SharedArrayBuffer with the given size and alignment.
+ * If alignment is not specified, the default alignment of 32 is used.
+ * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+ *
+ * Is the same as Buffer.alloc but is aligned and uses a SharedArrayBuffer as storage.
+ * We need an aligned buffer to create a roaring bitmap frozen view.
+ *
+ * WARNING: in node < 12, it reutrns a standard ArrayBuffer and not a SharedArrayBuffer.
+ *
+ * @param {number} size The size of the buffer to allocate.
+ * @param {number} [alignment=32] The alignment of the buffer to allocate.
+ */
+export function bufferAlignedAllocShared(size: number, alignment?: number): Buffer;
+
+/**
+ * Creates a new buffer backed by a SharedArrayBuffer with the given size and alignment.
+ * If alignment is not specified, the default alignment of 32 is used.
+ * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+ *
+ * Is the same as Buffer.allocUnsafe but is aligned and uses a SharedArrayBuffer as storage.
+ * We need an aligned buffer to create a roaring bitmap frozen view.
+ *
+ * WARNING: in node < 12, it reutrns a standard ArrayBuffer and not a SharedArrayBuffer
+ *
+ * WARNING: this function is unsafe because the returned buffer may contain previously unallocated memory that may contain sensitive data.
+ *
+ * @param {number} size The size of the buffer to allocate.
+ * @param {number} [alignment=32] The alignment of the buffer to allocate.
+ */
+export function bufferAlignedAllocSharedUnsafe(size: number, alignment?: number): Buffer;
+
+/**
  * Given some kind of buffer or array buffer, returns a nodejs Buffer instance that contains the same data.
  * The underlying ArrayBuffer is the same.
  *
  * @param buffer The source
  * @returns A nodejs Buffer instance that contains the same data.
  */
-export function asBuffer(buffer: Buffer | ArrayBufferView | TypedArray | ArrayBuffer): Buffer;
+export function asBuffer(buffer: Buffer | ArrayBufferView | TypedArray | ArrayBuffer | SharedArrayBuffer): Buffer;
 
 export type TypedArray =
   | Uint8Array
@@ -78,11 +110,11 @@ export type TypedArray =
  * Checks if the given buffer is memory aligned.
  * If alignment is not specified, the default alignment of 32 is used.
  *
- * @param {TypedArray | Buffer | ArrayBuffer | null | undefined} buffer The buffer to check.
+ * @param {TypedArray | Buffer | ArrayBuffer | SharedArrayBuffer | null | undefined} buffer The buffer to check.
  * @param {number} [alignment=32] The alignment to check.
  */
 export function isBufferAligned(
-  buffer: TypedArray | Buffer | ArrayBuffer | null | undefined,
+  buffer: TypedArray | Buffer | ArrayBuffer | SharedArrayBuffer | null | undefined,
   alignment?: number,
 ): boolean;
 
@@ -90,7 +122,7 @@ export function isBufferAligned(
  * Ensures that the given buffer is aligned to the given alignment.
  * If alignment is not specified, the default alignment of 32 is used.
  * If the buffer is already aligned, it is returned.
- * If the buffer is not aligned, a new aligned buffer is created with bufferAlignedAllocUnsafe and the data is copied.
+ * If the buffer is not aligned, a new aligned buffer is created with bufferAlignedAllocUnsafe or bufferAlignedAllocShared and the data is copied.
  *
  * @param {Buffer} buffer The buffer to align.
  * @param {number} [alignment=32] The alignment to align to.
@@ -98,7 +130,7 @@ export function isBufferAligned(
  * @memberof RoaringBitmap32
  */
 export function ensureBufferAligned(
-  buffer: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer,
+  buffer: Buffer | Uint8Array | Uint8ClampedArray | SharedArrayBuffer | Int8Array | ArrayBuffer,
   alignment?: number,
 ): Buffer;
 
@@ -535,7 +567,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  toUint32Array(output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
+  toUint32Array(output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer): Uint32Array;
 
   /**
    * Creates a new Uint32Array and fills it with all the values in the bitmap, asynchronously.
@@ -567,7 +599,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  toUint32ArrayAsync(output: Uint32Array | Int32Array | ArrayBuffer): Promise<Uint32Array>;
+  toUint32ArrayAsync(output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer): Promise<Uint32Array>;
 
   /**
    * toUint32Array array with pagination
@@ -575,7 +607,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @memberof ReadonlyRoaringBitmap32
    */
   rangeUint32Array(
-    output: Uint32Array | Int32Array | ArrayBuffer,
+    output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer,
     offset: number,
     limit?: number | undefined,
   ): Uint32Array;
@@ -593,7 +625,11 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  rangeUint32Array(offset: number, limit: number, output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
+  rangeUint32Array(
+    offset: number,
+    limit: number,
+    output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer,
+  ): Uint32Array;
 
   /**
    * toUint32Array array with pagination
@@ -601,7 +637,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  rangeUint32Array(offset: number, output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
+  rangeUint32Array(offset: number, output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer): Uint32Array;
 
   /**
    * Same as toUint32Array
@@ -609,7 +645,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  rangeUint32Array(output: Uint32Array | Int32Array | ArrayBuffer): Uint32Array;
+  rangeUint32Array(output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer): Uint32Array;
 
   /**
    * Creates a new plain JS array and fills it with all the values in the bitmap.
@@ -704,7 +740,10 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Buffer} The output Buffer. If the input buffer was exactly of the same size. Otherwise, a new buffer backed by the same storage is returned, with the correct offset and length.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serialize(format: SerializationFormatType, output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer): Buffer;
+  serialize(
+    format: SerializationFormatType,
+    output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer | SharedArrayBuffer,
+  ): Buffer;
 
   /**
    * Serializes the bitmap into the given Buffer, starting to write at position 0.
@@ -718,7 +757,10 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Buffer} The output Buffer. If the input buffer was exactly of the same size. Otherwise, a new buffer backed by the same storage is returned, with the correct offset and length.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serialize(output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer, format: SerializationFormatType): Buffer;
+  serialize(
+    output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer | SharedArrayBuffer,
+    format: SerializationFormatType,
+  ): Buffer;
 
   /**
    * Serializes the bitmap into a new Buffer.
@@ -748,7 +790,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    */
   serializeAsync(
     format: SerializationFormatType,
-    output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
+    output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer | SharedArrayBuffer,
   ): Promise<Buffer>;
 
   /**
@@ -765,7 +807,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @memberof ReadonlyRoaringBitmap32
    */
   serializeAsync(
-    output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
+    output: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer | SharedArrayBuffer,
     format: SerializationFormatType,
   ): Promise<Buffer>;
 
@@ -1160,13 +1202,13 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
    *
-   * @param {Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer|SharedArrayBuffer} serialized An Uint8Array or a node Buffer that contains the serialized data.
    * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {this} This ReadonlyRoaringBitmap32 instance.
    * @memberof ReadonlyRoaringBitmap32
    */
   deserialize(
-    serialized: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer,
+    serialized: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer | SharedArrayBuffer,
     format: DeserializationFormatType,
   ): this;
 }
@@ -1237,6 +1279,34 @@ export class RoaringBitmap32 {
   public static bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
 
   /**
+   * Creates a new buffer backed by a SharedArrayBuffer with the given size and alignment.
+   * If alignment is not specified, the default alignment of 32 is used.
+   * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+   *
+   * Is the same as Buffer.alloc but is aligned and uses a SharedArrayBuffer as storage.
+   * We need an aligned buffer to create a roaring bitmap frozen view.
+   *
+   * @param {number} size The size of the buffer to allocate.
+   * @param {number} [alignment=32] The alignment of the buffer to allocate.
+   */
+  public static bufferAlignedAllocShared(size: number, alignment?: number): Buffer;
+
+  /**
+   * Creates a new buffer backed by a SharedArrayBuffer with the given size and alignment.
+   * If alignment is not specified, the default alignment of 32 is used.
+   * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
+   *
+   * Is the same as Buffer.allocUnsafe but is aligned and uses a SharedArrayBuffer as storage.
+   * We need an aligned buffer to create a roaring bitmap frozen view.
+   *
+   * WARNING: this function is unsafe because the returned buffer may contain previously unallocated memory that may contain sensitive data.
+   *
+   * @param {number} size The size of the buffer to allocate.
+   * @param {number} [alignment=32] The alignment of the buffer to allocate.
+   */
+  public static bufferAlignedAllocSharedUnsafe(size: number, alignment?: number): Buffer;
+
+  /**
    * Ensures that the given buffer is aligned to the given alignment.
    * If alignment is not specified, the default alignment of 32 is used.
    * If the buffer is already aligned, it is returned.
@@ -1249,7 +1319,7 @@ export class RoaringBitmap32 {
    * @memberof RoaringBitmap32
    */
   public static ensureBufferAligned(
-    buffer: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer,
+    buffer: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer,
     alignment?: number,
   ): Buffer;
 
@@ -1257,11 +1327,11 @@ export class RoaringBitmap32 {
    * Checks if the given buffer is memory aligned.
    * If alignment is not specified, the default alignment of 32 is used.
    *
-   * @param {TypedArray | Buffer | ArrayBuffer | null | undefined} buffer The buffer to check.
+   * @param {TypedArray | Buffer | ArrayBuffer|SharedArrayBuffer | null | undefined} buffer The buffer to check.
    * @param {number} [alignment=32] The alignment to check.
    */
   public static isBufferAligned(
-    buffer: TypedArray | Buffer | ArrayBuffer | null | undefined,
+    buffer: TypedArray | Buffer | ArrayBuffer | SharedArrayBuffer | null | undefined,
     alignment?: number,
   ): boolean;
 
@@ -1387,13 +1457,13 @@ export class RoaringBitmap32 {
    * NOTE: this field was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
-   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the serialized data.
    * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
   public static deserialize(
-    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined,
+    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined,
     format: DeserializationFormatType,
   ): RoaringBitmap32;
 
@@ -1410,13 +1480,13 @@ export class RoaringBitmap32 {
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
-   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer| SharedArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the serialized data.
    * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
   public static deserializeAsync(
-    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined,
+    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined,
     format: DeserializationFormatType,
   ): Promise<RoaringBitmap32>;
 
@@ -1433,14 +1503,14 @@ export class RoaringBitmap32 {
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
-   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the.
+   * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer| SharedArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the.
    * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @param {RoaringBitmap32Callback} callback The callback to execute when the operation completes.
    * @returns {void}
    * @memberof RoaringBitmap32
    */
   public static deserializeAsync(
-    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined,
+    serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined,
     format: DeserializationFormatType,
     callback: RoaringBitmap32Callback,
   ): void;
@@ -1458,13 +1528,13 @@ export class RoaringBitmap32 {
    * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
-   * @param {(Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined)[]} serialized An Uint8Array or a node Buffer that contains the serialized data.
+   * @param {(Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer| SharedArrayBuffer | null | undefined)[]} serialized An Uint8Array or a node Buffer that contains the serialized data.
    * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {Promise<RoaringBitmap32[]>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
   public static deserializeParallelAsync(
-    serialized: (Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | null | undefined)[],
+    serialized: (Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined)[],
     format: DeserializationFormatType,
   ): Promise<RoaringBitmap32[]>;
 
@@ -1490,7 +1560,7 @@ export class RoaringBitmap32 {
    * @memberof RoaringBitmap32
    */
   public static deserializeParallelAsync(
-    serialized: readonly (Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer)[],
+    serialized: readonly (Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer)[],
     format: DeserializationFormatType,
     callback: RoaringBitmap32ArrayCallback,
   ): void;
@@ -1522,7 +1592,7 @@ export class RoaringBitmap32 {
    * @memberof RoaringBitmap32
    */
   public static unsafeFrozenView(
-    storage: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer,
+    storage: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer,
     format: FrozenViewFormatType,
   ): RoaringBitmap32;
 

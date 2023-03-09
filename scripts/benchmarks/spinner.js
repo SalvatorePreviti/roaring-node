@@ -1,14 +1,14 @@
-const chalk = require("chalk");
+const colors = require("chalk");
 const readline = require("readline");
 
 const spinner = {
   interval: null,
   printed: false,
   start() {
-    if (!spinner.interval && chalk.supportsColor.hasBasic && !process.env.CI) {
-      const dot = chalk.gray(".");
+    if (!spinner.interval && colors.supportsColor.hasBasic && !process.env.CI) {
+      const dot = colors.gray(".");
       spinner.interval =
-        chalk.supportsColor.hasBasic &&
+        colors.supportsColor.hasBasic &&
         setInterval(() => {
           spinner.printed = true;
           process.stderr.write(dot);

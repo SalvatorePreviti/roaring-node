@@ -23,5 +23,4 @@ rm roaring.hh
 
 cd ../../..
 
-node scripts/fix-roaring-amalgamation.js
-node scripts/write-roaring-version.js
+node scripts/remove-amalgamation-date.js

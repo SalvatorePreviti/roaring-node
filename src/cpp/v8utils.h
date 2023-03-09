@@ -1,63 +1,20 @@
-#ifndef __V8UTILS__H__
-#define __V8UTILS__H__
+#ifndef ROARING_NODE_V8UTILS_
+#define ROARING_NODE_V8UTILS_
 
-#include <stdint.h>
-#include <stddef.h>
-#include <node.h>
-#include <node_buffer.h>
-#include <uv.h>
-#include <atomic>
+#include "includes.h"
+#include "addon-data.h"
+#include "addon-strings.h"
+#include "memory.h"
+#include "object-wrap.h"
 
-/** portable version of posix_memalign */
-void * bare_aligned_malloc(size_t alignment, size_t size);
+bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
+  return !value.IsEmpty() &&
+    (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer() || value->IsSharedArrayBuffer());
+}
 
-/** portable version of free fo aligned allocs */
-void bare_aligned_free(void * memblock);
-
-int64_t gcaware_totalMem();
-
-/** Updates amount of used memory */
-void gcaware_addAllocatedMemory(size_t size);
-
-/** Updates amount of used memory */
-void gcaware_removeAllocatedMemory(size_t size);
-
-void * gcaware_malloc(size_t size);
-
-void * gcaware_realloc(void * memory, size_t size);
-
-void * gcaware_calloc(size_t count, size_t size);
-
-void gcaware_free(void * memory);
-
-void * gcaware_aligned_malloc(size_t alignment, size_t size);
-
-void gcaware_aligned_free(void * memory);
-
-#if NODE_MAJOR_VERSION > 14
-#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8Literal(isolate, str, type)
-#else
-#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8(isolate, str, type).ToLocalChecked()
-#endif
-
-class JSTypes {
- public:
-  static v8::Eternal<v8::Object> Uint32Array;
-  static v8::Eternal<v8::Function> Uint32Array_from;
-  static v8::Eternal<v8::Function> Buffer_from;
-
-  static void initJSTypes(v8::Isolate * isolate, const v8::Local<v8::Object> & global);
-};
+#include <iostream>
 
 namespace v8utils {
-
-  uint32_t getCpusCount();
-
-  template <typename T>
-  inline void ignoreMaybeResult(v8::Maybe<T>) {}
-
-  template <typename T>
-  inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
 
   template <int N>
   inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
@@ -70,9 +27,45 @@ namespace v8utils {
       v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
   }
 
-  void throwError(v8::Isolate * isolate, const char * message);
-  void throwTypeError(v8::Isolate * isolate, const char * message);
-  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message);
+  void throwError(v8::Isolate * isolate, const char * message) {
+    v8::HandleScope scope(isolate);
+    if (message != nullptr && message[0] != '\0') {
+      auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+      v8::Local<v8::String> msgLocal;
+      if (msg.ToLocal(&msgLocal)) {
+        isolate->ThrowException(v8::Exception::Error(msgLocal));
+        return;
+      }
+    }
+    isolate->ThrowException(
+      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
+  }
+
+  void throwTypeError(v8::Isolate * isolate, const char * message) {
+    v8::HandleScope scope(isolate);
+    if (message != nullptr && message[0] != '\0') {
+      auto msg = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+      v8::Local<v8::String> msgLocal;
+      if (msg.ToLocal(&msgLocal)) {
+        isolate->ThrowException(v8::Exception::TypeError(msgLocal));
+        return;
+      }
+    }
+    isolate->ThrowException(
+      v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
+  }
+
+  void throwTypeError(v8::Isolate * isolate, const char * context, const char * message) {
+    v8::HandleScope scope(isolate);
+    auto a = v8::String::NewFromUtf8(isolate, context, v8::NewStringType::kInternalized);
+    auto b = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
+#if NODE_MAJOR_VERSION > 10
+    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(isolate, a.ToLocalChecked(), b.ToLocalChecked());
+#else
+    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(a.ToLocalChecked(), b.ToLocalChecked());
+#endif
+    isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
+  }
 
   template <int N>
   void defineHiddenField(
@@ -81,8 +74,16 @@ namespace v8utils {
     v8::PropertyDescriptor propertyDescriptor(value, false);
     propertyDescriptor.set_configurable(false);
     propertyDescriptor.set_enumerable(false);
-
     auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
+    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
+  }
+
+  void defineHiddenField(
+    v8::Isolate * isolate, v8::Local<v8::Object> target, v8::Local<v8::Name> name, v8::Local<v8::Value> value) {
+    v8::HandleScope scope(isolate);
+    v8::PropertyDescriptor propertyDescriptor(value, false);
+    propertyDescriptor.set_configurable(false);
+    propertyDescriptor.set_enumerable(false);
     ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
   }
 
@@ -98,30 +99,152 @@ namespace v8utils {
     ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
   }
 
-  template <int N>
-  void defineHiddenFunction(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::FunctionCallback callback) {
-    v8::HandleScope scope(isolate);
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback);
-
-    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
-    t->SetClassName(name);
-
-    auto fn = t->GetFunction(isolate->GetCurrentContext());
-    v8::Local<v8::Function> fnLocal;
-    if (fn.ToLocal(&fnLocal)) {
-      v8::PropertyDescriptor propertyDescriptor(fnLocal, false);
-      propertyDescriptor.set_configurable(false);
-      propertyDescriptor.set_enumerable(false);
-      ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
+  bool bufferFromArrayBuffer(
+    v8::Isolate * isolate,
+    AddonData * addonData,
+    v8::Local<v8::Value> buffer,
+    size_t offset,
+    size_t length,
+    v8::Local<v8::Value> & result) {
+    if (buffer.IsEmpty()) {
+      return false;
     }
+#if NODE_MAJOR_VERSION > 12 || (NODE_MAJOR_VERSION >= 12 && NODE_MINOR_VERSION >= 16)
+
+    if (buffer->IsSharedArrayBuffer()) {
+      auto buf = buffer.As<v8::SharedArrayBuffer>();
+      if (buf.IsEmpty()) {
+        return false;
+      }
+      auto uint8Array = v8::Uint8Array::New(buf, offset, length);
+      if (uint8Array.IsEmpty()) {
+        return false;
+      }
+      return node::Buffer::New(isolate, uint8Array->Buffer(), offset, length).ToLocal(&result);
+    } else {
+      auto buf = buffer.As<v8::ArrayBuffer>();
+      if (buf.IsEmpty()) {
+        return false;
+      }
+      return node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
+    }
+#else
+    v8::Local<v8::Value> argv[] = {
+      buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
+    return addonData->Buffer_from.Get(isolate)
+      ->Call(isolate->GetCurrentContext(), addonData->Buffer.Get(isolate), 3, argv)
+      .ToLocal(&result);
+#endif
   }
 
   bool v8ValueToBufferWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result);
+    v8::Isolate * isolate,
+    AddonData * addonData,
+    v8::MaybeLocal<v8::Value> value,
+    size_t length,
+    v8::Local<v8::Value> & result) {
+    v8::Local<v8::Value> localValue;
+    if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
+      if (localValue->IsUint8Array()) {
+        v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
+        if (!array.IsEmpty()) {
+          if (node::Buffer::HasInstance(localValue) && node::Buffer::Length(localValue) == length) {
+            result = array;
+            return true;
+          }
+          if (array->ByteLength() >= length) {
+            return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+          }
+        }
+        return false;
+      }
+      if (localValue->IsTypedArray()) {
+        auto array = localValue.As<v8::TypedArray>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+        }
+        return false;
+      }
+      if (localValue->IsArrayBufferView()) {
+        auto array = localValue.As<v8::ArrayBufferView>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+        }
+        return false;
+      }
+      if (localValue->IsArrayBuffer()) {
+        auto array = localValue.As<v8::ArrayBuffer>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
+        }
+        return false;
+      }
+      if (localValue->IsSharedArrayBuffer()) {
+        auto array = localValue.As<v8::SharedArrayBuffer>();
+        if (!array.IsEmpty() && array->ByteLength() >= length) {
+          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
+        }
+        return false;
+      }
+    }
+    return false;
+  }
 
   bool v8ValueToUint32ArrayWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result);
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
+    v8::Local<v8::Value> localValue;
+    if (!value.ToLocal(&localValue)) {
+      return {};
+    }
+    if (localValue->IsUint32Array()) {
+      auto array = localValue.As<v8::Uint32Array>();
+      if (!array.IsEmpty()) {
+        auto arrayLength = array->Length();
+        if (arrayLength == length) {
+          result = array;
+          return true;
+        }
+        if (arrayLength > length) {
+          result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+          return !result.IsEmpty();
+        }
+      }
+      return false;
+    }
+    if (localValue->IsTypedArray()) {
+      auto array = localValue.As<v8::TypedArray>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    if (localValue->IsArrayBufferView()) {
+      auto array = localValue.As<v8::ArrayBufferView>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    if (localValue->IsArrayBuffer()) {
+      auto array = localValue.As<v8::ArrayBuffer>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array, 0, length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    if (localValue->IsSharedArrayBuffer()) {
+      auto array = localValue.As<v8::SharedArrayBuffer>();
+      if (array->ByteLength() >= length * sizeof(uint32_t)) {
+        result = v8::Uint32Array::New(array, 0, length);
+        return !result.IsEmpty();
+      }
+      return false;
+    }
+    return false;
+  }
 
   template <typename T>
   class TypedArrayContent final {
@@ -193,6 +316,19 @@ namespace v8utils {
 #endif
           return true;
         }
+
+        if (from->IsSharedArrayBuffer()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
+          this->length = arrayBuffer->ByteLength() / sizeof(T);
+#if NODE_MAJOR_VERSION > 13
+          this->backingStore = arrayBuffer->GetBackingStore();
+          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+#else
+          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
+#endif
+          return true;
+        }
       }
 
       this->reset();
@@ -200,151 +336,6 @@ namespace v8utils {
     }
   };
 
-  namespace ObjectWrap {
-    template <class T>
-    static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
-      v8::Local<v8::Object> obj;
-      if (isolate && value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
-        if (obj->InternalFieldCount() > 0) {
-          T * result = (T *)(obj->GetAlignedPointerFromInternalField(0));
-          if (result && result->objectToken == T::OBJECT_TOKEN) {
-            return result;
-          }
-        }
-      }
-      return nullptr;
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::Local<v8::Value> & value, const v8::Local<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
-      return !ctorTemplate.IsEmpty() && ctorTemplate->HasInstance(value) ? ObjectWrap::TryUnwrap<T>(value, isolate)
-                                                                         : nullptr;
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::Local<v8::Value> & value,
-      const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate,
-      v8::Isolate * isolate) {
-      return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::Local<v8::Value> & value, const v8::Eternal<v8::FunctionTemplate> & ctorTemplate, v8::Isolate * isolate) {
-      return ObjectWrap::TryUnwrap<T>(value, ctorTemplate.Get(isolate), isolate);
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::FunctionCallbackInfo<v8::Value> & info,
-      int argumentIndex,
-      const v8::Local<v8::FunctionTemplate> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr
-                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::FunctionCallbackInfo<v8::Value> & info,
-      int argumentIndex,
-      const v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr
-                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
-    }
-
-    template <class T>
-    static T * TryUnwrap(
-      const v8::FunctionCallbackInfo<v8::Value> & info,
-      int argumentIndex,
-      const v8::Eternal<v8::FunctionTemplate> & ctorTemplate) {
-      return info.Length() <= argumentIndex ? nullptr
-                                            : ObjectWrap::TryUnwrap<T>(info[argumentIndex], ctorTemplate, info.GetIsolate());
-    }
-  }  // namespace ObjectWrap
-
-  typedef const char * const_char_ptr_t;
-
-  class AsyncWorker {
-   public:
-    v8::Isolate * const isolate;
-
-    explicit AsyncWorker(v8::Isolate * isolate);
-
-    virtual ~AsyncWorker();
-
-    bool setCallback(v8::Local<v8::Value> callback);
-
-    inline bool hasStarted() const { return this->_started; }
-
-    inline bool hasError() const { return this->_error != nullptr; }
-
-    inline void setError(const_char_ptr_t error) {
-      if (error != nullptr && this->_error == nullptr) {
-        this->_error = error;
-      }
-    }
-
-    inline void clearError() { this->_error = nullptr; }
-
-    static v8::Local<v8::Value> run(AsyncWorker * worker);
-
-   protected:
-    // Called before the thread starts, in the main thread.
-    virtual void before();
-
-    // Called in a thread to execute the workload
-    virtual void work() = 0;
-
-    // Called after the thread completes without errors, in the main thread.
-    virtual void done(v8::Local<v8::Value> & result);
-
-    // Called after the thread completes, with or without errors, in the main thread.
-    virtual void finally();
-
-   private:
-    uv_work_t _task{};
-    volatile const_char_ptr_t _error;
-    bool _started;
-    volatile bool _completed;
-    v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> _callback;
-    v8::Persistent<v8::Promise::Resolver, v8::CopyablePersistentTraits<v8::Promise::Resolver>> _resolver;
-
-    virtual bool _start();
-    static void _complete(AsyncWorker * worker);
-    static void _resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error);
-    static void _work(uv_work_t * request);
-    static void _done(uv_work_t * request, int status);
-    v8::Local<v8::Value> _makeError(v8::Local<v8::Value> error);
-
-    friend class ParallelAsyncWorker;
-  };
-
-  class ParallelAsyncWorker : public AsyncWorker {
-   public:
-    uint32_t loopCount;
-    uint32_t concurrency;
-
-    explicit ParallelAsyncWorker(v8::Isolate * isolate);
-    virtual ~ParallelAsyncWorker();
-
-   protected:
-    void work() override;
-
-    virtual void parallelWork(uint32_t index) = 0;
-
-   private:
-    uv_work_t * _tasks;
-    volatile int32_t _pendingTasks;
-    volatile uint32_t _currentIndex;
-
-    bool _start() override;
-
-    static void _parallelWork(uv_work_t * request);
-    static void _parallelDone(uv_work_t * request, int status);
-  };
-
 }  // namespace v8utils
 
-#endif
+#endif  // ROARING_NODE_V8UTILS_
