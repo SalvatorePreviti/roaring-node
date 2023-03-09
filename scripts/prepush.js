@@ -9,6 +9,11 @@ const { OUTPUT_FILE_PATH, BINARY_OUTPUT_FILE_PATH, unity } = require("./lib/unit
 
 const roaringNodeCpp = fs.readFileSync(OUTPUT_FILE_PATH, "utf8");
 
+const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
+if (nodeVersion >= 14) {
+  execSync("npx lint-staged");
+}
+
 const unityResult = unity();
 console.log();
 if (unityResult.outputText !== roaringNodeCpp) {
@@ -26,7 +31,9 @@ if (unityResult.outputText !== roaringNodeCpp) {
     execSync("npx node-gyp rebuild", { stdio: "inherit" });
   }
 
-  execSync("npm run lint", { stdio: "inherit" });
+  if (nodeVersion >= 12) {
+    execSync("npm run lint", { stdio: "inherit" });
+  }
 
   execSync("npm run test", { stdio: "inherit" });
 }
