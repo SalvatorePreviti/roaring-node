@@ -32,7 +32,12 @@ async function development() {
 
 async function build() {
   if (fs.existsSync(SRC_CPP_FOLDER)) {
-    if (process.argv.includes("--dev") || process.argv.includes("--development")) {
+    if (
+      process.argv.includes("--dev") ||
+      process.argv.includes("dev") ||
+      process.argv.includes("--development") ||
+      process.argv.includes("development")
+    ) {
       console.time("Development mode");
       await development();
       console.timeEnd("Development mode");

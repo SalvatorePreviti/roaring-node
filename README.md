@@ -11,7 +11,7 @@ For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10
 
 ## Worker thread support
 
-IMPORTANT: You need Node >= 12 to for roaring-node to work with worker threads correctly. Previous version of node are not supported.
+IMPORTANT: You need Node >= 13 to for roaring-node to work with worker threads correctly. Previous version of node are not supported and will throw an error if this library is loaded inside a worker thread.
 
 Directly transferring a bitmap without copy between worker threads is not currently supported, but you can create a frozen view on a SharedArrayBuffer using bufferAlignedAllocShared and pass it to the worker thread.
 

@@ -2,7 +2,7 @@ import { resolve as pathResolve } from "path";
 
 // Check that node is 12 or higher
 const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
-if (nodeVersion >= 11) {
+if (nodeVersion > 12) {
   describe("RoaringBitmap32 worker-threads", () => {
     it("can be used and works inside a worker thread", () => {
       // eslint-disable-next-line node/no-unsupported-features/node-builtins

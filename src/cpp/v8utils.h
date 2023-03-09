@@ -109,7 +109,7 @@ namespace v8utils {
     if (buffer.IsEmpty()) {
       return false;
     }
-#if NODE_MAJOR_VERSION >= 12
+#if NODE_MAJOR_VERSION > 12 || (NODE_MAJOR_VERSION >= 12 && NODE_MINOR_VERSION >= 16)
 
     if (buffer->IsSharedArrayBuffer()) {
       auto buf = buffer.As<v8::SharedArrayBuffer>();

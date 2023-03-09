@@ -43,7 +43,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     memset(ptr, 0, size);
   }
 
-#if NODE_MAJOR_VERSION >= 14
+#if NODE_MAJOR_VERSION >= 13
   if (shared) {
     AddonData * addonData = AddonData::get(info);
     if (addonData == nullptr) {
