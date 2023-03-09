@@ -2,7 +2,7 @@
 
 const systemInfo = require("./systemInfo");
 const promiseMap = require("./benchmarks/promiseMap");
-const { colors } = require("@balsamic/dev");
+const colors = require("chalk");
 const path = require("path");
 const fs = require("fs");
 const { fork } = require("child_process");

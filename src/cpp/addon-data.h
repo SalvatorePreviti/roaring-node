@@ -16,6 +16,7 @@ class AddonData final {
 
   AddonDataStrings strings;
 
+  v8::Eternal<v8::Object> Buffer;
   v8::Eternal<v8::Object> Uint32Array;
   v8::Eternal<v8::Function> Uint32Array_from;
   v8::Eternal<v8::Function> Buffer_from;
@@ -60,13 +61,20 @@ class AddonData final {
                          ->ToObject(context)
                          .ToLocalChecked();
 
+    auto buffer = global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Buffer", v8::NewStringType::kInternalized))
+                    .ToLocalChecked()
+                    .As<v8::Object>();
+
+    this->Buffer.Set(isolate, buffer);
+
     this->Buffer_from.Set(
       isolate,
-      global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Buffer_from", v8::NewStringType::kInternalized))
+      buffer->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized))
         .ToLocalChecked()
         .As<v8::Function>());
 
     this->Uint32Array.Set(isolate, uint32Array);
+
     this->Uint32Array_from.Set(
       isolate,
       v8::Local<v8::Function>::Cast(

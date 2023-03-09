@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { colors, devRunMain } = require("@balsamic/dev");
+const colors = require("chalk");
 
 function prebuild() {
   const args = [];
@@ -38,4 +38,6 @@ function prebuild() {
   }
 }
 
-void devRunMain(prebuild);
+console.time("prebuild");
+prebuild();
+console.timeEnd("prebuild");

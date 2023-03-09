@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { colors } = require("@balsamic/dev");
+const colors = require("chalk");
 const os = require("os");
 
 function getSystemInfo() {

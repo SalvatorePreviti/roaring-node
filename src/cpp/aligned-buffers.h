@@ -43,11 +43,12 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     memset(ptr, 0, size);
   }
 
-#if NODE_MAJOR_VERSION >= 12
+#if NODE_MAJOR_VERSION >= 14
   if (shared) {
     AddonData * addonData = AddonData::get(info);
     if (addonData == nullptr) {
-      return v8utils::throwError(isolate, "Addon data is not available");
+      bare_aligned_free(ptr);
+      return v8utils::throwError(isolate, "Invalid call");
     }
 
     auto backingStore = v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
@@ -68,12 +69,51 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
 
   v8::MaybeLocal<v8::Object> bufferMaybe;
   bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
-  v8::Local<v8::Value> bufferObj;
-  if (!bufferMaybe.ToLocal(&bufferObj)) {
+  v8::Local<v8::Value> bufferValue;
+  if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
     bare_aligned_free(ptr);
     return v8utils::throwError(isolate, "Buffer creation failed");
   }
-  info.GetReturnValue().Set(bufferObj);
+
+#if NODE_MAJOR_VERSION < 14
+
+  if (shared) {
+    AddonData * addonData = AddonData::get(info);
+    if (addonData == nullptr) {
+      return v8utils::throwError(isolate, "Invalid call");
+    }
+
+    auto sharedBuf = v8::SharedArrayBuffer::New(isolate, ptr, size);
+    if (sharedBuf.IsEmpty()) {
+      return v8utils::throwError(isolate, "Buffer creation failed1");
+    }
+
+    // Add a property to hold the buffer that contains the memory, so it gets properly collected when the shared array buffer
+    // is collected
+    bool propDefineResult = false;
+    if (!sharedBuf
+           ->DefineOwnProperty(
+             isolate->GetCurrentContext(),
+             addonData->strings.symbol_rnshared.Get(isolate),
+             bufferValue,
+             (v8::PropertyAttribute)(
+               v8::PropertyAttribute::ReadOnly | v8::PropertyAttribute::DontEnum | v8::PropertyAttribute::DontDelete))
+           .To(&propDefineResult)) {
+      propDefineResult = false;
+    }
+    if (!propDefineResult) {
+      return v8utils::throwError(isolate, "Buffer creation failed2");
+    }
+
+    // Create a buffer from the shared array buffer
+    if (!v8utils::bufferFromArrayBuffer(isolate, addonData, sharedBuf, 0, size, bufferValue)) {
+      return v8utils::throwError(isolate, "Buffer creation failed3");
+    }
+  }
+
+#endif
+
+  info.GetReturnValue().Set(bufferValue);
 }
 
 void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, false); }

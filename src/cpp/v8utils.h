@@ -12,6 +12,8 @@ bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
     (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer() || value->IsSharedArrayBuffer());
 }
 
+#include <iostream>
+
 namespace v8utils {
 
   template <int N>
@@ -107,7 +109,8 @@ namespace v8utils {
     if (buffer.IsEmpty()) {
       return false;
     }
-#if NODE_MAJOR_VERSION > 12
+#if NODE_MAJOR_VERSION >= 12
+
     if (buffer->IsSharedArrayBuffer()) {
       auto buf = buffer.As<v8::SharedArrayBuffer>();
       if (buf.IsEmpty()) {
@@ -117,7 +120,7 @@ namespace v8utils {
       if (uint8Array.IsEmpty()) {
         return false;
       }
-      return node::Buffer::New(isolate, uint8Array->Buffer(), 0, length).ToLocal(&result);
+      return node::Buffer::New(isolate, uint8Array->Buffer(), offset, length).ToLocal(&result);
     } else {
       auto buf = buffer.As<v8::ArrayBuffer>();
       if (buf.IsEmpty()) {
@@ -129,7 +132,7 @@ namespace v8utils {
     v8::Local<v8::Value> argv[] = {
       buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
     return addonData->Buffer_from.Get(isolate)
-      ->Call(isolate->GetCurrentContext(), addonData->Uint32Array.Get(isolate), 3, argv)
+      ->Call(isolate->GetCurrentContext(), addonData->Buffer.Get(isolate), 3, argv)
       .ToLocal(&result);
 #endif
   }

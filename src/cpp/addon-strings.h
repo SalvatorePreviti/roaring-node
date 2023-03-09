@@ -11,6 +11,7 @@ class AddonDataStrings final {
   v8::Eternal<v8::String> n;
   v8::Eternal<v8::String> readonly;
   v8::Eternal<v8::String> RoaringBitmap32;
+  v8::Eternal<v8::Symbol> symbol_rnshared;
 
   v8::Eternal<v8::String> OperationFailed;
 
@@ -20,6 +21,9 @@ class AddonDataStrings final {
     literal(isolate, this->RoaringBitmap32, "RoaringBitmap32");
 
     literal(isolate, this->OperationFailed, "Operation failed");
+
+    symbol_rnshared.Set(
+      isolate, v8::Symbol::ForApi(isolate, NEW_LITERAL_V8_STRING(isolate, "rnshared", v8::NewStringType::kInternalized)));
   }
 
  private:

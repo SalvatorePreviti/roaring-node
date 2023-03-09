@@ -7,7 +7,7 @@ using namespace v8;
 #define PREPROCESSOR_CONCAT(a, b) PREPROCESSOR_CONCAT_HELPER(a, b)
 #define PREPROCESSOR_CONCAT_HELPER(a, b) a##b
 
-#if NODE_MAJOR_VERSION >= 11
+#if NODE_MAJOR_VERSION >= 10 || NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3
 #  define MODULE_WORKER_ENABLED(module_name, registration)                                               \
     extern "C" NODE_MODULE_EXPORT void PREPROCESSOR_CONCAT(node_register_module_v, NODE_MODULE_VERSION)( \
       v8::Local<v8::Object> exports, v8::Local<v8::Value> module, v8::Local<v8::Context> context) {      \
@@ -34,7 +34,7 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
-#if NODE_MAJOR_VERSION >= 11
+#if NODE_MAJOR_VERSION >= 10 || NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3
   node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
 #endif
 

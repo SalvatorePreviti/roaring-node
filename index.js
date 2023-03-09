@@ -25,7 +25,6 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 
 const util = require("util");
 const roaring = require("./build/Release/roaring.node");
-// const { version: packageVersion } = require("./package.json");
 
 module.exports = roaring;
 

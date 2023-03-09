@@ -33,7 +33,7 @@ async function main() {
 
   const bitmap3 = RoaringBitmap32.orMany([bitmap, bitmap2]);
 
-  expect(bitmap3.toArray()).deep.equal([1, 2, 100, 101, 105, 106, 107, 108, 121, 0x7fffffff, 0xfffffffe, 0xffffffff]);
+  expect(Array.from(bitmap3)).deep.equal([1, 2, 100, 101, 105, 106, 107, 108, 121, 0x7fffffff, 0xfffffffe, 0xffffffff]);
 }
 
 main()

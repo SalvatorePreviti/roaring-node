@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { devRunMain, devChildTask, devLog, prettySize } = require("@balsamic/dev");
+const colors = require("chalk");
 const path = require("path");
 const fs = require("fs");
 
@@ -58,13 +58,11 @@ async function unity() {
 
   processFile(path.resolve(SRC_CPP_FOLDER, "main.cpp"));
 
-  devLog.log();
-  devLog.logCyan(`- roaring version ${roaringVersion}`);
+  console.log();
+  console.log(colors.cyan(`- roaring version ${roaringVersion}`));
 
   const outputText = output.join("\n");
-  devLog.logCyanBright(
-    `- ${includedFiles.size} files included. ${prettySize(outputText, { appendBytes: true })} total.`,
-  );
+  console.log(colors.cyanBright(`- ${includedFiles.size} files included. ${outputText.length} bytes total.`));
 
   let oldContent;
   try {
@@ -72,9 +70,9 @@ async function unity() {
   } catch {}
   if (oldContent !== outputText) {
     fs.writeFileSync(path.resolve(OUTPUT_FILE_PATH), outputText, "utf8");
-    devLog.logYellow(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} updated`);
+    console.log(colors.yellow(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} updated`));
   } else {
-    devLog.logBlackBright(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} is up to date`);
+    console.log(colors.blackBright(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} is up to date`));
   }
 
   const packageJsonPath = path.resolve(ROOT_FOLDER, "package.json");
@@ -85,14 +83,17 @@ async function unity() {
 
   if (newPackageJson !== oldPackageJson) {
     fs.writeFileSync(packageJsonPath, newPackageJson);
-    devLog.logYellow("- package.json updated");
+    console.log(colors.yellow("- package.json updated"));
   } else {
-    devLog.logBlackBright("- package.json is up to date");
+    console.log(colors.blackBright("- package.json is up to date"));
   }
 }
 
 async function development() {
-  devLog.warn("Development mode is enabled. Rebuild for production before publishing.");
+  console.warn(
+    colors.yellowBright.underline.bold("WARNING") +
+      colors.yellow(": Development mode is enabled. Rebuild for production before publishing."),
+  );
   const outputText = `#include "src/cpp/main.cpp"`;
   let oldContent;
   try {
@@ -100,32 +101,48 @@ async function development() {
   } catch {}
   if (oldContent !== outputText) {
     fs.writeFileSync(path.resolve(OUTPUT_FILE_PATH), outputText, "utf8");
-    devLog.logYellow(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} updated`);
+    console.log(colors.yellow(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} updated`));
   } else {
-    devLog.logBlackBright(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} is up to date`);
+    console.log(colors.blackBright(`- ${path.relative(ROOT_FOLDER, OUTPUT_FILE_PATH)} is up to date`));
   }
 }
 
 async function build() {
   if (exists(SRC_CPP_FOLDER)) {
     if (process.argv.includes("--dev")) {
-      await devLog.timed(development);
+      console.time("Development mode");
+      await development();
+      console.timeEnd("Development mode");
     } else {
-      await devLog.timed(unity);
+      console.time("Unity build");
+      await unity();
+      console.timeEnd("Unity build");
     }
-    devLog.log();
+    console.log();
   }
-  await devChildTask.runModuleBin("node-gyp", "node-gyp", [process.argv[2]]);
 
-  if (exists(BINARY_OUTPUT_FILE_PATH)) {
-    devLog.log();
-    devLog.logGreen(
-      `${path.relative(ROOT_FOLDER, BINARY_OUTPUT_FILE_PATH)} compiled. ${prettySize(
-        fs.statSync(BINARY_OUTPUT_FILE_PATH).size,
-        { appendBytes: true },
-      )}`,
-    );
-  }
+  console.time("Build");
+
+  process.on("exit", () => {
+    console.log();
+    console.timeEnd("Build");
+
+    if (exists(BINARY_OUTPUT_FILE_PATH)) {
+      console.log();
+      console.log(
+        colors.green(
+          `* ${path.relative(ROOT_FOLDER, BINARY_OUTPUT_FILE_PATH)} compiled. ${
+            fs.statSync(BINARY_OUTPUT_FILE_PATH).size
+          } bytes`,
+        ),
+      );
+    }
+    console.log();
+  });
+
+  require("node-gyp/bin/node-gyp.js");
 }
 
-void devRunMain(build);
+build().catch((e) => {
+  console.error(e);
+});

@@ -1,4 +1,4 @@
-const { colors } = require("@balsamic/dev");
+const colors = require("chalk");
 
 const hasIcons = colors.supportsColor.has256;
 
