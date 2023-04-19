@@ -50,3 +50,5 @@ void InitRoaringNode(Local<Object> exports) {
 }
 
 MODULE_WORKER_ENABLED(roaring, InitRoaringNode);
+
+#include "croaring.cpp"

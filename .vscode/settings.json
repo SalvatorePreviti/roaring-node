@@ -47,7 +47,7 @@
   "[cpp]": {
     "editor.defaultFormatter": "xaver.clang-format"
   },
-  "clang-tidy.blacklist": ["src/cpp/CRoaringUnityBuild", "submodules"],
+  "clang-tidy.blacklist": ["submodules"],
   "clang-tidy.fixOnSave": true,
   "clang-tidy.compilerArgs": [
     "-std=c++14",
@@ -146,6 +146,12 @@
     "unordered_map": "cpp",
     "variant": "cpp",
     "vector": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "roaring.c": "cpp",
+    "isadetection.c": "cpp",
+    "array_util.c": "cpp",
+    "bitset.c": "cpp",
+    "bitset_util.c": "cpp",
+    "containers.c": "cpp"
   }
 }

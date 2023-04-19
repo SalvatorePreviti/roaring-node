@@ -12,8 +12,6 @@ bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
     (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer() || value->IsSharedArrayBuffer());
 }
 
-#include <iostream>
-
 namespace v8utils {
 
   template <int N>

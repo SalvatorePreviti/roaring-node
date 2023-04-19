@@ -3,6 +3,14 @@
 
 #include "RoaringBitmap32.h"
 
+#ifndef CROARING_SERIALIZATION_ARRAY_UINT32
+constexpr const unsigned char CROARING_SERIALIZATION_ARRAY_UINT32 = 1;
+#endif
+
+#ifndef CROARING_SERIALIZATION_CONTAINER
+constexpr const unsigned char CROARING_SERIALIZATION_CONTAINER = 2;
+#endif
+
 class RoaringBitmapSerializer final {
  public:
   RoaringBitmap32 * self = nullptr;
@@ -163,7 +171,7 @@ class RoaringBitmapDeserializer final {
 
   ~RoaringBitmapDeserializer() {
     if (this->frozenBuffer != nullptr) {
-      roaring_bitmap_aligned_free(this->frozenBuffer);
+      bare_aligned_free(this->frozenBuffer);
     }
     if (this->roaring) {
       roaring_bitmap_free(this->roaring);
@@ -272,7 +280,7 @@ class RoaringBitmapDeserializer final {
 
       case DeserializationFormat::unsafe_frozen_portable:
       case DeserializationFormat::unsafe_frozen_croaring: {
-        this->frozenBuffer = (uint8_t *)roaring_bitmap_aligned_malloc(32, bufLen);
+        this->frozenBuffer = (uint8_t *)bare_aligned_malloc(32, bufLen);
         if (!this->frozenBuffer) {
           return "RoaringBitmap32 deserialization - failed to allocate memory for frozen bitmap";
         }

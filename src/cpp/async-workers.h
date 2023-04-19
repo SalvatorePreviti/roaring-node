@@ -410,7 +410,7 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
 
   virtual ~RoaringBitmap32FactoryAsyncWorker() {
     if (this->bitmap != nullptr) {
-      roaring_bitmap_aligned_free(this->bitmap);
+      roaring_bitmap_free(this->bitmap);
       this->bitmap = nullptr;
     }
   }

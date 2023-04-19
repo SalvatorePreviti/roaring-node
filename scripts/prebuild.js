@@ -12,6 +12,7 @@ function prebuild() {
   args.push("-t", "15.0.0");
   args.push("-t", "16.0.0");
   args.push("-t", "18.0.0");
+  args.push("-t", "20.0.0");
 
   const token = process.argv[2] || process.env.PREBUILD_GITHUB_TOKEN;
 
