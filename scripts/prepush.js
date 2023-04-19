@@ -28,7 +28,7 @@ if (unityResult.outputText !== roaringNodeCpp) {
   process.exitCode = 1;
 } else {
   if (!fs.existsSync(BINARY_OUTPUT_FILE_PATH)) {
-    execSync("npx node-gyp rebuild", { stdio: "inherit" });
+    execSync("npx node-pre-gyp rebuild", { stdio: "inherit" });
   }
 
   if (nodeVersion >= 12) {

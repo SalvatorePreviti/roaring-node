@@ -18,7 +18,12 @@ const OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "roaring-node.cpp");
 
 module.exports.OUTPUT_FILE_PATH = OUTPUT_FILE_PATH;
 
-const BINARY_OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "build/Release/roaring.node");
+let BINARY_OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "build", "Release", "roaring.node");
+if (!fs.existsSync(BINARY_OUTPUT_FILE_PATH)) {
+  BINARY_OUTPUT_FILE_PATH = require("@mapbox/node-pre-gyp/lib/pre-binding").find(
+    path.resolve(ROOT_FOLDER, "package.json"),
+  );
+}
 
 module.exports.BINARY_OUTPUT_FILE_PATH = BINARY_OUTPUT_FILE_PATH;
 

@@ -23,8 +23,22 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 
 */
 
+const path = require("path");
 const util = require("util");
-const roaring = require("./build/Release/roaring.node");
+
+const roaring = (() => {
+  try {
+    return require("./build/Release/roaring.node");
+  } catch (e) {
+    // If the module was not found, try to load from Release/roaring.node
+    if (e && e.code === "MODULE_NOT_FOUND") {
+      return require(require("@mapbox/node-pre-gyp/lib/pre-binding").find(
+        path.resolve(path.join(__dirname, "package.json")),
+      ));
+    }
+    throw e;
+  }
+})();
 
 module.exports = roaring;
 

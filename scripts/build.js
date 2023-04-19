@@ -8,17 +8,13 @@ const { execSync } = require("child_process");
 const { SRC_CPP_FOLDER, ROOT_FOLDER, OUTPUT_FILE_PATH, BINARY_OUTPUT_FILE_PATH, unity } = require("./lib/unity");
 
 async function development() {
-  // Append include dir
-  process.env.CPPFLAGS = `${process.env.CPPFLAGS || ""} -I${path.resolve(ROOT_FOLDER, "submodules/CRoaring/include")}`;
-
   console.log();
-  console.warn(
-    colors.yellowBright.underline.bold("WARNING") +
-      colors.yellow(": Development mode is enabled. Rebuild for production before publishing."),
-  );
+  const warningMessage = "Development mode is enabled. Rebuild for production before publishing.";
+  console.warn(colors.yellowBright.underline.bold("WARNING") + colors.yellow(`: ${warningMessage}`));
   console.log();
   let outputText = "";
   outputText += "#define ROARING_NODE_DEV 1\n\n";
+  outputText += `#pragma message (${JSON.stringify(warningMessage)})\n`;
   outputText += '#include "src/cpp/main.cpp"\n';
 
   let oldContent;
@@ -98,7 +94,7 @@ async function build() {
 
   const buildMode = process.argv.slice(2).includes("build") ? "build" : "rebuild";
 
-  execSync(`npx node-gyp ${buildMode}`, { stdio: "inherit", env: process.env });
+  execSync(`npx node-pre-gyp ${buildMode}`, { stdio: "inherit", env: process.env });
 }
 
 build().catch((e) => {
