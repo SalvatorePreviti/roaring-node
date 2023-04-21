@@ -51,7 +51,14 @@ module.exports.unity = function unity() {
     for (const line of content.split("\n")) {
       const includeMatch = line.match(INCLUDE_REGEX);
       if (includeMatch) {
-        const includePath = path.resolve(path.dirname(filePath), includeMatch[1]);
+        const includeName = includeMatch[1];
+
+        let includePath;
+        if (includeName.startsWith("roaring/") && line.includes("<")) {
+          includePath = path.resolve(__dirname, "../../submodules/CRoaring/include", includeName);
+        } else {
+          includePath = path.resolve(path.dirname(filePath), includeName);
+        }
         if (exists(includePath)) {
           if (!includedFiles.has(includePath)) {
             output.push(`\n// ${line}\n`);
