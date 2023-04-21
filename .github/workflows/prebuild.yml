@@ -39,8 +39,8 @@ jobs:
           python-version: "3.10"
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts
-      - run: npm test
       - run: npx node-pre-gyp --release rebuild package
+      - run: npm test
       - name: Prebuild
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
