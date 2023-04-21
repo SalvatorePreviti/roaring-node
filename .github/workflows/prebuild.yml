@@ -4,69 +4,29 @@ on:
   push:
     branches:
       - deploy
+      - deploy-alpha
 
 jobs:
-  prebuild-linux:
-    name: Linux
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - run: sudo apt-get install g++-multilib
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - uses: actions/checkout@v3
-      - run: npm i -g node-gyp@latest
-      - run: npm install
-      - run: npm test
-      - run: node --expose-gc ./scripts/test-memory-leaks.js
-      - name: Prebuild
-        env:
-          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
-        run: node ./scripts/prebuild
-
-  prebuild-macos:
-    name: macOS
-    runs-on: macos-latest
+  prebuild:
+    strategy:
+      matrix:
+        node-version: ["12.13.0", "14.13.0", "16.0.0", "18.0.0", "19.0.0", "20.0.0"]
+        os: [ubuntu-latest, macos-latest, windows-2019]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
       - uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: ${{ matrix.node-version }}
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - uses: actions/checkout@v3
-      - run: npm i -g node-gyp@latest
       - run: npm install
       - run: npm test
       - run: node --expose-gc ./scripts/test-memory-leaks.js
+      - run: npx node-pre-gyp --release package
       - name: Prebuild
         env:
-          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
-        run: node ./scripts/prebuild
-
-  prebuild-windows:
-    name: Windows
-    runs-on: windows-2019
-    timeout-minutes: 15
-    steps:
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - uses: actions/checkout@v3
-      - run: npm i -g node-gyp@latest
-      - run: npm install
-      - run: npm i node-gyp@latest
-      - run: npm test
-      - run: node --expose-gc ./scripts/test-memory-leaks.js
-      - name: Prebuild
-        env:
-          PREBUILD_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
-        run: node ./scripts/prebuild
+          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+        run: npx node-pre-gyp-github publish

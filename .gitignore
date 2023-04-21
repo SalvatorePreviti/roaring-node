@@ -6,6 +6,7 @@ build/
 package/
 docs/
 .tmp/
+.github-key
 
 temp
 

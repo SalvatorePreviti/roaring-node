@@ -64,6 +64,15 @@ async function main() {
   if (isDeploy) {
     NODE_PRE_GYP_GITHUB_TOKEN = process.argv[3] || process.env.NODE_PRE_GYP_GITHUB_TOKEN;
     if (!NODE_PRE_GYP_GITHUB_TOKEN) {
+      try {
+        NODE_PRE_GYP_GITHUB_TOKEN = fs
+          .readFileSync(path.resolve(__dirname, "../.github-key"), "utf8")
+          .replace("\n", "")
+          .replace("\r", "")
+          .trim();
+      } catch (e) {}
+    }
+    if (!NODE_PRE_GYP_GITHUB_TOKEN) {
       console.log(colors.redBright("\nError: NODE_PRE_GYP_GITHUB_TOKEN environment variable not found"));
       console.log();
       printUsage();
@@ -139,9 +148,9 @@ async function main() {
   console.log(colors.greenBright("\nok\n"));
 }
 
-function spawnAsync(command, args) {
+function spawnAsync(command, args, options) {
   return new Promise((resolve, reject) => {
-    const npx = spawn(command, args, { stdio: "inherit" });
+    const npx = spawn(command, args, { stdio: "inherit", ...options });
     npx.on("error", (e) => {
       reject(e);
     });
