@@ -30,7 +30,7 @@ if (nodeVersion < 14) {
   };
 }
 
-const { print: printSystemInfo } = require("./systemInfo.js");
+const { print: printSystemInfo } = require("./system-info.js");
 
 printSystemInfo();
 

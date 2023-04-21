@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "1.5.2",
+  "version": "2.0.0-alpha.0",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -23,7 +23,7 @@
     "url": "git+https://github.com/SalvatorePreviti/roaring-node.git"
   },
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=12.13.0"
   },
   "main": "index.js",
   "types": "index.d.ts",
@@ -43,12 +43,12 @@
   ],
   "binary": {
     "module_name": "roaring",
-    "module_path": "./lib/binding/roaring-{platform}-{arch}",
+    "module_path": "./native/roaring-{node_abi}-{platform}-{arch}",
     "host": "https://github.com/SalvatorePreviti/roaring-node/releases/download/",
     "remote_path": "v{version}"
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
+    "install": "node-pre-gyp install --fallback-to-build --release",
     "compile": "node-pre-gyp build",
     "recompile": "node-pre-gyp rebuild",
     "build": "node ./scripts/build.js build",
@@ -68,17 +68,6 @@
   },
   "dependencies": {
     "@mapbox/node-pre-gyp": "^1.0.10"
-  },
-  "peerDependencies": {
-    "node-gyp": "9.x"
-  },
-  "peerDependenciesMeta": {
-    "node-gyp": {
-      "optional": true
-    }
-  },
-  "optionalDependencies": {
-    "node-gyp": "9.x"
   },
   "devDependencies": {
     "@balsamic/eslint-config": "^0.4.1",
@@ -100,6 +89,7 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.2.1",
     "mocha": "^10.2.0",
+    "n": "^9.1.0",
     "node-pre-gyp-github": "1.4.4",
     "physical-cpu-count": "^2.0.0",
     "prettier": "^2.8.7",

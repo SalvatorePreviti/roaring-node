@@ -94,7 +94,10 @@ async function build() {
 
   const buildMode = process.argv.slice(2).includes("build") ? "build" : "rebuild";
 
-  execSync(`npx node-pre-gyp ${buildMode}`, { stdio: "inherit", env: process.env });
+  if (!process.argv.includes("--no-compile")) {
+    execSync(`npx node-pre-gyp ${buildMode}`, { stdio: "inherit", env: process.env });
+    execSync(`node ${require.resolve("./test.js")}`, { stdio: "inherit", env: process.env });
+  }
 }
 
 build().catch((e) => {

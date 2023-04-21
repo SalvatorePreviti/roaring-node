@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const systemInfo = require("./systemInfo");
+const systemInfo = require("./system-info");
 const promiseMap = require("./benchmarks/promiseMap");
 const colors = require("chalk");
 const path = require("path");

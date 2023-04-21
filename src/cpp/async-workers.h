@@ -23,15 +23,6 @@ uint32_t getCpusCount() {
   return result;
 }
 
-inline uv_loop_t * GetCurrentEventLoop() {
-#if NODE_MAJOR_VERSION >= 10 || (NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3) || \
-  (NODE_MAJOR_VERSION == 8 && NODE_MINOR_VERSION >= 10)
-  return node::GetCurrentEventLoop(v8::Isolate::GetCurrent());
-#else
-  return uv_default_loop();
-#endif
-}
-
 class AsyncWorker {
  public:
   v8::Isolate * const isolate;
@@ -148,7 +139,9 @@ class AsyncWorker {
 
   virtual bool _start() {
     this->_started = true;
-    if (uv_queue_work(GetCurrentEventLoop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
+    if (
+      uv_queue_work(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &_task, AsyncWorker::_work, AsyncWorker::_done) !=
+      0) {
       setError("Error starting async thread");
       return false;
     }
@@ -342,7 +335,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
       if (
         uv_queue_work(
-          GetCurrentEventLoop(),
+          node::GetCurrentEventLoop(v8::Isolate::GetCurrent()),
           &tasks[taskIndex],
           ParallelAsyncWorker::_parallelWork,
           ParallelAsyncWorker::_parallelDone) != 0) {

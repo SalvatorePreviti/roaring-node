@@ -1419,11 +1419,7 @@ namespace v8utils {
     v8::HandleScope scope(isolate);
     auto a = v8::String::NewFromUtf8(isolate, context, v8::NewStringType::kInternalized);
     auto b = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
-#if NODE_MAJOR_VERSION > 10
     auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(isolate, a.ToLocalChecked(), b.ToLocalChecked());
-#else
-    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(a.ToLocalChecked(), b.ToLocalChecked());
-#endif
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
@@ -1911,11 +1907,7 @@ SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & val
       return SerializationFormat::croaring;
     }
   } else if (value->IsString()) {
-#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
-#else
-    v8::String::Utf8Value formatString(value);
-#endif
     if (strcmp(*formatString, "croaring") == 0) {
       return SerializationFormat::croaring;
     }
@@ -1941,11 +1933,7 @@ DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> &
       return DeserializationFormat::croaring;
     }
   } else if (value->IsString()) {
-#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
-#else
-    v8::String::Utf8Value formatString(value);
-#endif
     if (strcmp(*formatString, "croaring") == 0) {
       return DeserializationFormat::croaring;
     }
@@ -1967,11 +1955,7 @@ FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8
     return FrozenViewFormat::INVALID;
   }
   if (value->IsString()) {
-#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
-#else
-    v8::String::Utf8Value formatString(value);
-#endif
     if (strcmp(*formatString, "unsafe_frozen_croaring") == 0) {
       return FrozenViewFormat::unsafe_frozen_croaring;
     }
@@ -3148,15 +3132,6 @@ uint32_t getCpusCount() {
   return result;
 }
 
-inline uv_loop_t * GetCurrentEventLoop() {
-#if NODE_MAJOR_VERSION >= 10 || (NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3) || \
-  (NODE_MAJOR_VERSION == 8 && NODE_MINOR_VERSION >= 10)
-  return node::GetCurrentEventLoop(v8::Isolate::GetCurrent());
-#else
-  return uv_default_loop();
-#endif
-}
-
 class AsyncWorker {
  public:
   v8::Isolate * const isolate;
@@ -3273,7 +3248,9 @@ class AsyncWorker {
 
   virtual bool _start() {
     this->_started = true;
-    if (uv_queue_work(GetCurrentEventLoop(), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
+    if (
+      uv_queue_work(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &_task, AsyncWorker::_work, AsyncWorker::_done) !=
+      0) {
       setError("Error starting async thread");
       return false;
     }
@@ -3467,7 +3444,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
       if (
         uv_queue_work(
-          GetCurrentEventLoop(),
+          node::GetCurrentEventLoop(v8::Isolate::GetCurrent()),
           &tasks[taskIndex],
           ParallelAsyncWorker::_parallelWork,
           ParallelAsyncWorker::_parallelDone) != 0) {
@@ -4785,11 +4762,7 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * readonlyViewOf = nullptr;
 
   if (info.Length() >= 2 && info[1]->IsString()) {
-#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value arg1String(isolate, info[1]);
-#else
-    v8::String::Utf8Value arg1String(info[1]);
-#endif
     if (strcmp(*arg1String, "readonly") == 0) {
       readonlyViewOf = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
       if (readonlyViewOf == nullptr) {

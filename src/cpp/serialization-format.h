@@ -38,11 +38,7 @@ SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & val
       return SerializationFormat::croaring;
     }
   } else if (value->IsString()) {
-#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
-#else
-    v8::String::Utf8Value formatString(value);
-#endif
     if (strcmp(*formatString, "croaring") == 0) {
       return SerializationFormat::croaring;
     }
@@ -68,11 +64,7 @@ DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> &
       return DeserializationFormat::croaring;
     }
   } else if (value->IsString()) {
-#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
-#else
-    v8::String::Utf8Value formatString(value);
-#endif
     if (strcmp(*formatString, "croaring") == 0) {
       return DeserializationFormat::croaring;
     }
@@ -94,11 +86,7 @@ FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8
     return FrozenViewFormat::INVALID;
   }
   if (value->IsString()) {
-#if NODE_MAJOR_VERSION > 8
     v8::String::Utf8Value formatString(isolate, value);
-#else
-    v8::String::Utf8Value formatString(value);
-#endif
     if (strcmp(*formatString, "unsafe_frozen_croaring") == 0) {
       return FrozenViewFormat::unsafe_frozen_croaring;
     }
