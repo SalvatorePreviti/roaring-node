@@ -7,6 +7,19 @@ on:
       - deploy-alpha
 
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+      - uses: actions/checkout@v3
+      - run: npm install
+      - run: npm test
+      - run: node --expose-gc ./scripts/test-memory-leaks.js
+
   prebuild:
     strategy:
       matrix:
@@ -18,14 +31,10 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
       - uses: actions/checkout@v3
-      - run: npm install
+      - run: npm install --ignore-scripts
       - run: npm test
-      - run: node --expose-gc ./scripts/test-memory-leaks.js
-      - run: npx node-pre-gyp --release package
+      - run: npx node-pre-gyp --release rebuild package
       - name: Prebuild
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
