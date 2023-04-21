@@ -38,6 +38,7 @@ jobs:
         with:
           python-version: "3.10"
       - uses: actions/checkout@v3
+      - run: npm i -g node-gyp@latest
       - run: npm install --ignore-scripts
       - run: npx node-pre-gyp --release rebuild package
       - run: npm test
