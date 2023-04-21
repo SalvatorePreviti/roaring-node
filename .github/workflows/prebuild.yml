@@ -19,7 +19,8 @@ jobs:
         with:
           python-version: "3.7"
       - uses: actions/checkout@v3
-      - run: npm install
+      - run: npm install --ignore-scripts
+      - run: npx node-pre-gyp --release rebuild
       - run: npm test
       - run: node --expose-gc ./scripts/test-memory-leaks.js
 

@@ -13,13 +13,11 @@ const path = require("path");
 
 const supportedNodeVersions = ["12.13.0", "14.13.0", "16.0.0", "18.0.0", "19.0.0", "20.0.0"];
 
-main().catch((error) => {
-  console.error(error);
-});
-
 const NATIVE_DIR = path.resolve(__dirname, "../native");
 const STAGE_DIR = path.resolve(__dirname, "../build/stage");
 const STAGE_TMP_DIR = path.resolve(__dirname, "../.tmp/stage");
+const N_DIR = path.resolve(__dirname, "../.tmp/n");
+const N_EXECUTABLE_PATH = path.resolve(N_DIR, "node_modules/.bin/n");
 
 function clean() {
   console.log(colors.blueBright("cleaning..."));
@@ -98,9 +96,20 @@ async function main() {
 
   printSystemInfo();
 
+  console.time("installing n");
+  fs.mkdirSync(N_DIR, { recursive: true });
+  fs.writeFileSync(
+    path.resolve(N_DIR, "package.json"),
+    JSON.stringify({ name: "n-dir", dependencies: { n: "latest" } }),
+  );
+  await spawnAsync("npm", ["install", "--ignore-scripts", "--no-audit", "--no-save", "--install-strategy", "shallow"], {
+    cwd: N_DIR,
+  });
+  console.timeEnd("installing n");
+
   console.time("installing node versions");
   await Promise.all(
-    supportedNodeVersions.map((nodeVersion) => spawnAsync("npx", ["n", "i", nodeVersion, "--download"])),
+    supportedNodeVersions.map((nodeVersion) => spawnAsync(N_EXECUTABLE_PATH, ["i", nodeVersion, "--download"])),
   );
   console.timeEnd("installing node versions");
 
@@ -109,18 +118,18 @@ async function main() {
   console.time("building");
   for (const nodeVersion of supportedNodeVersions) {
     console.log(colors.blueBright(`\nbuilding node ${nodeVersion}\n`));
-    const args = ["n", "exec", nodeVersion, "npx", "node-pre-gyp", "--release", "rebuild"];
+    const args = ["exec", nodeVersion, "npx", "node-pre-gyp", "--release", "rebuild"];
     if (isPackage) {
       args.push("package");
     }
-    await spawnAsync("npx", args);
+    await spawnAsync(N_EXECUTABLE_PATH, args);
 
     if (isPackage) {
       // Move stage folder to a temporary folder so it does not get clean by node-gyp
       await mergeDirs(STAGE_DIR, STAGE_TMP_DIR);
     }
 
-    testingPromises.push(spawnAsync("npx", ["n", "run", nodeVersion, require.resolve("./test.js")]));
+    testingPromises.push(spawnAsync(N_EXECUTABLE_PATH, ["run", nodeVersion, require.resolve("./test.js")]));
   }
   console.timeEnd("building");
 
@@ -182,3 +191,7 @@ async function mergeDirs(src, dest) {
   }
   return Promise.all(promises);
 }
+
+main().catch((error) => {
+  console.error(error);
+});
