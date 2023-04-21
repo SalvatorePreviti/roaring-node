@@ -69,6 +69,17 @@
   "dependencies": {
     "@mapbox/node-pre-gyp": "^1.0.10"
   },
+  "peerDependencies": {
+    "node-gyp": "9.x"
+  },
+  "peerDependenciesMeta": {
+    "node-gyp": {
+      "optional": true
+    }
+  },
+  "optionalDependencies": {
+    "node-gyp": "9.x"
+  },
   "devDependencies": {
     "@balsamic/eslint-config": "^0.4.1",
     "@types/chai": "^4.3.4",

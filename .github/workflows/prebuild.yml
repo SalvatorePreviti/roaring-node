@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.7"
       - uses: actions/checkout@v3
-      - run: npm install --ignore-scripts
+      - run: npm install --ignore-scripts --no-audit --no-save
       - run: npx node-pre-gyp --release rebuild
       - run: npm test
       - run: node --expose-gc ./scripts/test-memory-leaks.js
@@ -39,7 +39,7 @@ jobs:
         with:
           python-version: "3.7"
       - uses: actions/checkout@v3
-      - run: npm install --ignore-scripts
+      - run: npm install --ignore-scripts --no-audit --no-save
       - run: npx node-pre-gyp --release rebuild package
       - run: npm test
       - name: Prebuild
