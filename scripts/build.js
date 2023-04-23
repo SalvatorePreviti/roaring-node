@@ -4,6 +4,7 @@ const colors = require("chalk");
 const path = require("path");
 const fs = require("fs");
 const { execSync } = require("child_process");
+const { runMain } = require("./lib/utils");
 
 const { SRC_CPP_FOLDER, ROOT_FOLDER, OUTPUT_FILE_PATH, BINARY_OUTPUT_FILE_PATH, unity } = require("./lib/unity");
 
@@ -30,6 +31,8 @@ async function development() {
 }
 
 async function build() {
+  const buildMode = process.argv.slice(2).includes("build") ? "build" : "rebuild";
+
   if (fs.existsSync(SRC_CPP_FOLDER)) {
     if (
       process.argv.includes("--dev") ||
@@ -73,11 +76,8 @@ async function build() {
     console.log();
   }
 
-  console.time("Build");
-
   process.on("exit", () => {
     console.log();
-    console.timeEnd("Build");
 
     if (fs.existsSync(BINARY_OUTPUT_FILE_PATH)) {
       console.log();
@@ -92,14 +92,15 @@ async function build() {
     console.log();
   });
 
-  const buildMode = process.argv.slice(2).includes("build") ? "build" : "rebuild";
-
   if (!process.argv.includes("--no-compile")) {
     execSync(`npx node-pre-gyp ${buildMode}`, { stdio: "inherit", env: process.env });
     execSync(`node ${require.resolve("./test.js")}`, { stdio: "inherit", env: process.env });
   }
 }
 
-build().catch((e) => {
-  console.error(e);
-});
+module.exports.build = build;
+
+if (require.main === module) {
+  const buildMode = process.argv.slice(2).includes("build") ? "build" : "rebuild";
+  runMain(build, buildMode);
+}

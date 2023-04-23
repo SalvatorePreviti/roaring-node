@@ -35,7 +35,8 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "target": "ES2018"
+    "target": "ES2018",
+    "isolatedModules": true
   },
   "exclude": ["node_modules", "node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*"],
   "typeAcquisition": {

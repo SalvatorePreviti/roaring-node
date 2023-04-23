@@ -45,4 +45,4 @@ jobs:
       - name: Prebuild
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
-        run: npx node-pre-gyp-github publish
+        run: node scripts/node-pre-gyp-publish.js
