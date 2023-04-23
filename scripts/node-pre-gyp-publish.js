@@ -29,6 +29,7 @@ SOFTWARE.
 
 const path = require("path");
 const fs = require("fs");
+const colors = require("chalk");
 
 const { Octokit } = require("@octokit/rest");
 
@@ -80,6 +81,24 @@ async function startPublishAssets() {
   }
 
   async function initialize() {
+    const branchName = execSync("git rev-parse --abbrev-ref HEAD")
+      .toString()
+      .replace(/[\n\r]/g, "")
+      .trim();
+
+    console.log(colors.cyanBright(`branchName: ${branchName}`));
+
+    if (!branchName.includes("deploy")) {
+      throw new Error('Can deploy only from "deploy" branches.');
+    }
+
+    if (
+      branchName.includes("alpha") &&
+      (!packageJson.version.includes("alpha") || packageJson.version.includes("beta"))
+    ) {
+      throw new Error("This is not an alpha or beta version, aborting.");
+    }
+
     const ownerRepo = packageJson.repository.url.match(/https?:\/\/([^/]+)\/(.*)(?=\.git)/i);
     const host = `api.${ownerRepo[1]}`;
     [owner, repo] = ownerRepo[2].split("/");
@@ -89,13 +108,6 @@ async function startPublishAssets() {
       auth: getGithubKey(),
       headers: { "user-agent": packageJson.name },
     });
-
-    const branchName = execSync("git rev-parse --abbrev-ref HEAD")
-      .toString()
-      .replace(/[\n\r]/g, "")
-      .trim();
-
-    console.log("branchName:", branchName);
 
     const { data: existingReleases } = await octokit.rest.repos.listReleases({ owner, repo });
 
@@ -115,16 +127,30 @@ async function startPublishAssets() {
           prerelease: /[a-zA-Z]/.test(packageJson.version),
         })
       ).data;
-      console.log(`Creating new release ${packageJson.version}`);
+      console.log(colors.yellow(`Creating new release ${packageJson.version}`));
     } else {
-      console.log(`Using existing release ${packageJson.version}`);
+      console.log(colors.yellow(`Using existing release ${packageJson.version}`));
     }
 
-    if (release.draft) {
-      console.warn(
-        `Release ${packageJson.version} is a draft release, YOU MUST MANUALLY PUBLISH THIS DRAFT IN GITHUB.`,
-      );
+    if (!release.draft) {
+      if (process.argv.includes("--overwrite")) {
+        console.log();
+        console.warn(colors.yellowBright(`⚠️ WARNING: Overwriting release ${packageJson.version}`));
+        console.log();
+      } else {
+        throw new Error(
+          `Release ${packageJson.version} was already published, aborting. Run with the argument "--overwrite" to overwrite existing assets.`,
+        );
+      }
     }
+
+    console.log();
+    console.warn(
+      colors.yellowBright(
+        `⚠️ WARNING: Release ${packageJson.version} is a draft release, YOU MUST MANUALLY PUBLISH THIS DRAFT IN GITHUB.`,
+      ),
+    );
+    console.log();
 
     for (const asset of (release && release.assets) || []) {
       assetsByName.set(asset.name, asset);
@@ -151,7 +177,7 @@ async function startPublishAssets() {
     const data = await fs.promises.readFile(filePath);
     const uploadFileHash = crypto.createHash("sha256").update(data).digest("hex");
 
-    console.log(`* file ${name} hash: ${uploadFileHash}`);
+    console.log(colors.cyanBright(`* file ${name} hash: ${uploadFileHash}`));
 
     const foundAsset = assetsByName.get(name);
     if (foundAsset) {
@@ -166,11 +192,11 @@ async function startPublishAssets() {
       const downloadedFileHash = crypto.createHash("sha256").update(Buffer.from(result.data)).digest("hex");
 
       if (downloadedFileHash === uploadFileHash) {
-        console.log(`Skipping upload of ${name} because it already exists and is the same`);
+        console.log(colors.yellow(`Skipping upload of ${name} because it already exists and is the same`));
         return;
       }
 
-      console.log(`Deleting asset ${foundAsset.name} id:${foundAsset.id} to replace it`);
+      console.log(colors.yellow(`Deleting asset ${foundAsset.name} id:${foundAsset.id} to replace it`));
       await octokit.rest.repos.deleteReleaseAsset({
         owner,
         repo,
@@ -178,7 +204,7 @@ async function startPublishAssets() {
       });
     }
 
-    console.log(`Uploading asset ${name} ${stat.size} bytes`);
+    console.log(colors.yellow(`Uploading asset ${name} ${stat.size} bytes`));
     await octokit.rest.repos.uploadReleaseAsset({
       owner,
       repo,

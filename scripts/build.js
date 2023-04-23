@@ -30,8 +30,10 @@ async function development() {
   }
 }
 
-async function build() {
-  const buildMode = process.argv.slice(2).includes("build") ? "build" : "rebuild";
+async function build(buildMode) {
+  if (buildMode !== "build" && buildMode !== "rebuild") {
+    buildMode = process.argv.slice(2).includes("rebuild") ? "rebuild" : "build";
+  }
 
   if (fs.existsSync(SRC_CPP_FOLDER)) {
     if (
@@ -101,6 +103,6 @@ async function build() {
 module.exports.build = build;
 
 if (require.main === module) {
-  const buildMode = process.argv.slice(2).includes("build") ? "build" : "rebuild";
+  const buildMode = process.argv.slice(2).includes("rebuild") ? "rebuild" : "build";
   runMain(build, buildMode);
 }

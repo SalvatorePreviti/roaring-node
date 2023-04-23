@@ -49,6 +49,13 @@ function printUsage() {
 async function main() {
   const command = process.argv[2];
 
+  if (process.argv.includes("--dev")) {
+    throw new Error("Invalida argument --dev");
+  }
+  if (process.argv.includes("--no-compile")) {
+    throw new Error("Invalida argument --no-compile");
+  }
+
   console.log(colors.magentaBright("command: ", colors.italic(command) || ""));
   console.log();
 
@@ -82,41 +89,41 @@ async function main() {
 
   printSystemInfo();
 
+  console.log(colors.blueBright("- installing tools"));
   console.time("installing tools");
   fs.mkdirSync(TOOLS_DIR, { recursive: true });
   fs.writeFileSync(
     path.resolve(TOOLS_DIR, "package.json"),
     JSON.stringify({ name: "tools", private: true, dependencies: { n: "latest", "node-gyp": "latest" } }),
   );
-  await spawnAsync(
-    "npm",
-    ["install", "--ignore-scripts", "--no-audit", "--no-save", "--install-strategy", "--shallow"],
-    {
-      cwd: TOOLS_DIR,
-    },
-  );
+  await spawnAsync("npm", ["install", "--ignore-scripts", "--no-audit", "--no-save"], {
+    cwd: TOOLS_DIR,
+  });
   process.env.npm_config_node_gyp = path.resolve(TOOLS_DIR, "node_modules/node-gyp/bin/node-gyp.js");
   if (!fs.existsSync(process.env.npm_config_node_gyp)) {
     process.env.npm_config_node_gyp = require.resolve("node-gyp/bin/node-gyp.js");
   }
   console.timeEnd("installing tools");
 
+  console.log(colors.blueBright("- installing node versions"));
   console.time("installing node versions");
   await Promise.all(
     supportedNodeVersions.map((nodeVersion) => spawnAsync(N_EXECUTABLE_PATH, ["i", nodeVersion, "--download"])),
   );
   console.timeEnd("installing node versions");
 
+  console.log(colors.blueBright("- building"));
   console.time("building");
   let nodeVersionIndex = 0;
   for (const nodeVersion of supportedNodeVersions) {
-    console.log(colors.blueBright(`\nbuilding for node ${nodeVersion}\n`));
+    console.log(colors.blueBright(`\n- building for node ${nodeVersion}\n`));
     const args = ["exec", nodeVersion, "npx", "node-pre-gyp", "--release", "rebuild"];
     if (isPackage) {
       args.push("package");
     }
     await spawnAsync(N_EXECUTABLE_PATH, args);
 
+    console.log(colors.blueBright("- testing"));
     const testArgs = ["run", nodeVersion, require.resolve("./test.js")];
     if (nodeVersionIndex > 0) {
       testArgs.push("--notypecheck");
@@ -124,6 +131,7 @@ async function main() {
     await spawnAsync(N_EXECUTABLE_PATH, testArgs);
 
     if (isDeploy) {
+      console.log(colors.blueBright("- uploading"));
       await publisher.upload();
     }
 
