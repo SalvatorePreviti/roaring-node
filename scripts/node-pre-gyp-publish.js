@@ -42,6 +42,8 @@ module.exports = {
   startPublishAssets,
 };
 
+const ALLOWED_BRANCHES_FOR_PUBLISH = ["master"];
+
 async function startPublishAssets() {
   const assetsByName = new Map();
   /** @type {Octokit} */
@@ -88,15 +90,15 @@ async function startPublishAssets() {
 
     console.log(colors.cyanBright(`branchName: ${branchName}`));
 
-    if (!branchName.includes("deploy")) {
-      throw new Error('Can deploy only from "deploy" branches.');
-    }
-
-    if (
-      branchName.includes("alpha") &&
-      (!packageJson.version.includes("alpha") || packageJson.version.includes("beta"))
-    ) {
-      throw new Error("This is not an alpha or beta version, aborting.");
+    if (!ALLOWED_BRANCHES_FOR_PUBLISH.includes(branchName)) {
+      console.warn(
+        colors.yellowBright(
+          `⚠️ ${colors.underline(
+            "WARNING",
+          )}: Skipping deploy. Deploy allowed only on branch ${ALLOWED_BRANCHES_FOR_PUBLISH.join(", ")}`,
+        ),
+      );
+      return false;
     }
 
     const ownerRepo = packageJson.repository.url.match(/https?:\/\/([^/]+)\/(.*)(?=\.git)/i);
@@ -132,36 +134,32 @@ async function startPublishAssets() {
       console.log(colors.yellow(`Using existing release ${packageJson.version}`));
     }
 
-    if (!release.draft) {
-      if (process.argv.includes("--overwrite")) {
-        console.log();
-        console.warn(colors.yellowBright(`⚠️ WARNING: Overwriting release ${packageJson.version}`));
-        console.log();
-      } else {
-        throw new Error(
-          `Release ${packageJson.version} was already published, aborting. Run with the argument "--overwrite" to overwrite existing assets.`,
-        );
-      }
+    if (release.draft) {
+      console.log();
+      console.warn(
+        colors.yellowBright(
+          `⚠️ ${colors.underline("WARNING")}: Release ${
+            packageJson.version
+          } is a draft release, YOU MUST MANUALLY PUBLISH THIS DRAFT IN GITHUB.`,
+        ),
+      );
+      console.log();
     }
-
-    console.log();
-    console.warn(
-      colors.yellowBright(
-        `⚠️ WARNING: Release ${packageJson.version} is a draft release, YOU MUST MANUALLY PUBLISH THIS DRAFT IN GITHUB.`,
-      ),
-    );
-    console.log();
 
     for (const asset of (release && release.assets) || []) {
       assetsByName.set(asset.name, asset);
     }
+
+    return true;
   }
 
   const upload = async (filePath = path.resolve(__dirname, "../build/stage")) => {
     if (!initializePromise) {
       initializePromise = initialize();
     }
-    await initializePromise;
+    if (!(await initializePromise)) {
+      return;
+    }
 
     filePath = path.resolve(filePath);
 
@@ -194,6 +192,20 @@ async function startPublishAssets() {
       if (downloadedFileHash === uploadFileHash) {
         console.log(colors.yellow(`Skipping upload of ${name} because it already exists and is the same`));
         return;
+      }
+
+      if (!release.draft) {
+        if (process.argv.includes("--overwrite")) {
+          console.log();
+          console.warn(
+            colors.yellowBright(`⚠️ WARNING: Overwriting uploaded asset ${name} in release ${packageJson.version}`),
+          );
+          console.log();
+        } else {
+          throw new Error(
+            `${packageJson.version} in release ${packageJson.version} was already published, aborting. Run with the argument "--overwrite" to overwrite existing assets.`,
+          );
+        }
       }
 
       console.log(colors.yellow(`Deleting asset ${foundAsset.name} id:${foundAsset.id} to replace it`));

@@ -10,16 +10,14 @@ const { print: printSystemInfo } = require("./system-info");
 const fs = require("fs");
 const path = require("path");
 
-const { spawnAsync, mergeDirs, runMain } = require("./lib/utils");
+const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, getPrebuildYaml } = require("./lib/utils");
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
 
-const supportedNodeVersions = ["12.13.0", "14.13.0", "16.1.0", "18.1.0", "20.0.0"];
-
-const NATIVE_DIR = path.resolve(__dirname, "../native");
-const STAGE_DIR = path.resolve(__dirname, "../build/stage");
-const STAGE_TMP_DIR = path.resolve(__dirname, "../.tmp/stage");
-const TOOLS_DIR = path.resolve(__dirname, "../.tmp/tools");
+const NATIVE_DIR = path.resolve(ROOT_FOLDER, "native");
+const STAGE_DIR = path.resolve(ROOT_FOLDER, "build/stage");
+const STAGE_TMP_DIR = path.resolve(ROOT_FOLDER, ".tmp/stage");
+const TOOLS_DIR = path.resolve(ROOT_FOLDER, ".tmp/tools");
 const N_EXECUTABLE_PATH = path.resolve(TOOLS_DIR, "node_modules/.bin/n");
 
 const rmdir = fs.promises.rm || fs.promises.rmdir;
@@ -89,6 +87,8 @@ async function main() {
 
   await clean();
 
+  const supportedNodeVersions = getPrebuildYaml().jobs.prebuild.strategy.matrix["node-version"];
+
   console.log(colors.cyanBright(`* Building for node ${supportedNodeVersions.join(" ")}\n`));
 
   printSystemInfo();
@@ -152,7 +152,7 @@ async function main() {
     // Move the directory back to build/stage
     await mergeDirs(STAGE_TMP_DIR, STAGE_DIR);
     if (fs.existsSync(STAGE_TMP_DIR)) {
-      fs.rmdirSync(STAGE_TMP_DIR, { recursive: true });
+      await rmdir(STAGE_TMP_DIR, { recursive: true });
     }
   }
 }

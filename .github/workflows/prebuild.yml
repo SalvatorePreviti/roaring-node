@@ -1,10 +1,10 @@
 name: Prebuild Binaries
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - deploy
-      - deploy-alpha
+      - master
 
 jobs:
   test:

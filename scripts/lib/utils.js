@@ -8,6 +8,17 @@ const ROOT_FOLDER = path.resolve(__dirname, "../../");
 const CPP_SRC_FOLDER_PATH = path.resolve(ROOT_FOLDER, "src/cpp");
 const CPP_UNITY_FILE_PATH = path.resolve(ROOT_FOLDER, "roaring-node.cpp");
 
+let _prebuildYaml;
+
+function getPrebuildYaml() {
+  return (
+    _prebuildYaml ||
+    (_prebuildYaml = require("yaml").parse(
+      fs.readFileSync(path.resolve(ROOT_FOLDER, ".github/workflows/prebuild.yml"), "utf-8"),
+    ))
+  );
+}
+
 let BINARY_OUTPUT_FILE_PATH;
 
 function getBinaryOutputFilePath() {
@@ -26,6 +37,7 @@ module.exports = {
   CPP_SRC_FOLDER_PATH,
   CPP_UNITY_FILE_PATH,
 
+  getPrebuildYaml,
   getBinaryOutputFilePath,
 
   runMain,
