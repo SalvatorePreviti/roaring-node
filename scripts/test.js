@@ -23,6 +23,9 @@ runMain(() => {
       if (typeof v === "object") {
         v = v.pathname;
       }
+      try {
+        v = url.fileURLToPath(v);
+      } catch {}
       return new Promise((resolve) => resolve(require(v)));
     };
   }
