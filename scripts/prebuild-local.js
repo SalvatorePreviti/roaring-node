@@ -22,17 +22,21 @@ const STAGE_TMP_DIR = path.resolve(__dirname, "../.tmp/stage");
 const TOOLS_DIR = path.resolve(__dirname, "../.tmp/tools");
 const N_EXECUTABLE_PATH = path.resolve(TOOLS_DIR, "node_modules/.bin/n");
 
-function clean() {
+const rmdir = fs.promises.rm || fs.promises.rmdir;
+
+async function clean() {
   console.log(colors.blueBright("cleaning..."));
+  const promises = [];
   if (fs.existsSync(NATIVE_DIR)) {
-    fs.rmSync(NATIVE_DIR, { recursive: true });
+    promises.push(rmdir(NATIVE_DIR, { recursive: true }));
   }
   if (fs.existsSync(STAGE_DIR)) {
-    fs.rmSync(STAGE_DIR, { recursive: true });
+    promises.push(rmdir(STAGE_DIR, { recursive: true }));
   }
   if (fs.existsSync(STAGE_TMP_DIR)) {
-    fs.rmSync(STAGE_TMP_DIR, { recursive: true });
+    promises.push(rmdir(STAGE_TMP_DIR, { recursive: true }));
   }
+  await Promise.all(promises);
   console.log();
 }
 
@@ -60,7 +64,7 @@ async function main() {
   console.log();
 
   if (command === "clean") {
-    clean();
+    await clean();
     return;
   }
 
@@ -83,7 +87,7 @@ async function main() {
     return;
   }
 
-  clean();
+  await clean();
 
   console.log(colors.cyanBright(`* Building for node ${supportedNodeVersions.join(" ")}\n`));
 
@@ -119,7 +123,7 @@ async function main() {
     console.log(colors.blueBright(`\n- building for node ${nodeVersion}\n`));
     const args = ["exec", nodeVersion, "npx", "node-pre-gyp", "rebuild"];
     if (isPackage) {
-      args.push("package");
+      args.push("package", "testpackage");
     }
     await spawnAsync(N_EXECUTABLE_PATH, args);
 
