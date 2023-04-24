@@ -223,7 +223,7 @@ async function startPublishAssets() {
 
 if (require.main === module) {
   runMain(async () => {
-    const upload = await startPublishAssets();
+    const { upload } = await startPublishAssets();
     await upload();
   }, "node-pre-gyp-publish");
 }
