@@ -20,7 +20,7 @@ jobs:
           python-version: "3.7"
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts --no-audit --no-save
-      - run: npx node-pre-gyp --release rebuild
+      - run: npx node-pre-gyp rebuild
       - run: npm test
       - run: node --expose-gc ./scripts/test-memory-leaks.js
 
@@ -40,7 +40,7 @@ jobs:
           python-version: "3.7"
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts --no-audit --no-save
-      - run: npx node-pre-gyp --release rebuild package
+      - run: npx node-pre-gyp rebuild package
       - run: npm test
       - name: Prebuild
         env:

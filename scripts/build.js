@@ -37,10 +37,10 @@ async function build(buildMode) {
 
   if (fs.existsSync(SRC_CPP_FOLDER)) {
     if (
-      process.argv.includes("--dev") ||
       process.argv.includes("dev") ||
-      process.argv.includes("--development") ||
-      process.argv.includes("development")
+      process.argv.includes("--dev") ||
+      process.argv.includes("development") ||
+      process.argv.includes("--development")
     ) {
       console.time("Development mode");
       await development();

@@ -117,7 +117,7 @@ async function main() {
   let nodeVersionIndex = 0;
   for (const nodeVersion of supportedNodeVersions) {
     console.log(colors.blueBright(`\n- building for node ${nodeVersion}\n`));
-    const args = ["exec", nodeVersion, "npx", "node-pre-gyp", "--release", "rebuild"];
+    const args = ["exec", nodeVersion, "npx", "node-pre-gyp", "rebuild"];
     if (isPackage) {
       args.push("package");
     }

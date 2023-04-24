@@ -21,11 +21,8 @@ runMain(() => {
 
     require("mocha/lib/nodejs/esm-utils.js").doImport = (v) => {
       if (typeof v === "object") {
-        v = v.pathname;
-      }
-      try {
         v = url.fileURLToPath(v);
-      } catch {}
+      }
       return new Promise((resolve) => resolve(require(v)));
     };
   }
@@ -36,5 +33,6 @@ runMain(() => {
   process.argv.push("test/*.test.ts");
 
   printSystemInfo();
+
   require("mocha/bin/mocha");
 }, "test");
