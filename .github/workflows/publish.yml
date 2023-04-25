@@ -16,7 +16,7 @@ jobs:
   #         node-version: "20.x"
   #     - uses: actions/checkout@v3
   #     - run: npm ci --ignore-scripts --no-audit --no-save
-  #     - run: node ./node-pre-gyp.js rebuild package testpackage
+  #     - run: node ./node-pre-gyp.js --custom-rebuild
   #     - run: node ./scripts/test.js
   #     - run: node --expose-gc ./scripts/test-memory-leaks.js
 
@@ -35,7 +35,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts --no-audit --no-save
-      - run: node ./node-pre-gyp.js rebuild package testpackage
+      - run: node ./node-pre-gyp.js --custom-rebuild
       - run: node ./scripts/test.js --notypecheck
       - name: Prebuild
         env:

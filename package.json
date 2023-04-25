@@ -49,12 +49,9 @@
   },
   "scripts": {
     "install": "node ./node-pre-gyp.js install --fallback-to-build",
-    "compile": "node ./node-pre-gyp.js build",
-    "recompile": "node ./node-pre-gyp.js rebuild",
+    "compile": "node ./node-pre-gyp.js rebuild",
     "build": "node ./scripts/build.js",
-    "rebuild": "node ./scripts/rebuild.js",
     "build-dev": "node ./scripts/build.js --dev",
-    "rebuild-dev": "node ./scripts/rebuild.js --dev",
     "test": "node ./scripts/test.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

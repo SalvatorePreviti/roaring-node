@@ -2,7 +2,7 @@ const colors = require("chalk");
 const util = require("util");
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
+const { spawn, fork } = require("child_process");
 
 const ROOT_FOLDER = path.resolve(__dirname, "../../");
 const CPP_SRC_FOLDER_PATH = path.resolve(ROOT_FOLDER, "src/cpp");
@@ -30,6 +30,7 @@ module.exports = {
 
   runMain,
   spawnAsync,
+  forkAsync,
   mergeDirs,
 };
 
@@ -88,15 +89,31 @@ function runMain(fn, title) {
 
 function spawnAsync(command, args, options) {
   return new Promise((resolve, reject) => {
-    const npx = spawn(command, args, { stdio: "inherit", ...options });
-    npx.on("error", (e) => {
+    const childProcess = spawn(command, args, { stdio: "inherit", ...options });
+    childProcess.on("error", (e) => {
       reject(e);
     });
-    npx.on("close", (code) => {
+    childProcess.on("close", (code) => {
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`npx exited with code ${code}`));
+        reject(new Error(`${command} exited with code ${code}`));
+      }
+    });
+  });
+}
+
+function forkAsync(modulePath, args, options) {
+  return new Promise((resolve, reject) => {
+    const childProcess = fork(modulePath, args, { stdio: "inherit", ...options });
+    childProcess.on("error", (e) => {
+      reject(e);
+    });
+    childProcess.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`${modulePath} exited with code ${code}`));
       }
     });
   });

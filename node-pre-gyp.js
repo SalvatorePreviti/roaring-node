@@ -1,5 +1,65 @@
+/* eslint-disable no-console */
+"use strict";
+
+const { fork } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+console.time("node-pre-gyp");
+process.on("exit", () => {
+  console.timeEnd("node-pre-gyp");
+});
+
 try {
   process.env.npm_config_node_gyp = require.resolve("node-gyp/bin/node-gyp.js");
 } catch (_e) {}
 
-require("@mapbox/node-pre-gyp/lib/main");
+process.chdir(__dirname);
+
+const argv = process.argv;
+const customRebuildIdx = argv.indexOf("--custom-rebuild", 2);
+if (customRebuildIdx <= 0) {
+  require("@mapbox/node-pre-gyp/lib/main");
+} else {
+  const forkAsync = (modulePath, args, options) => {
+    return new Promise((resolve, reject) => {
+      const childProcess = fork(modulePath, args, { stdio: "inherit", ...options });
+      childProcess.on("error", (e) => {
+        reject(e);
+      });
+      childProcess.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`${modulePath} exited with code ${code}`));
+        }
+      });
+    });
+  };
+
+  const main = async () => {
+    console.time("rebuild");
+    await forkAsync(__filename, ["rebuild"]);
+    console.timeEnd("rebuild");
+
+    // Clean windows files
+    for (const ext of [".ipdb", ".iobj", ".pdb", ".obj", ".lib", ".exp"]) {
+      const f = path.join("./build/Release/roaring", ext);
+      if (fs.existsSync(f)) {
+        fs.rmSync("./build/Release/roaring.ipdb");
+      }
+    }
+
+    console.log("packaging...");
+    console.time("packaging");
+    await forkAsync(__filename, ["package", "testpackage"]);
+    console.timeEnd("packaging");
+  };
+
+  main().catch((e) => {
+    console.error(e);
+    if (!process.exitCode) {
+      process.exitCode = 1;
+    }
+  });
+}

@@ -3,8 +3,7 @@
 const colors = require("chalk");
 const path = require("path");
 const fs = require("fs");
-const { execSync } = require("child_process");
-const { runMain } = require("./lib/utils");
+const { runMain, forkAsync } = require("./lib/utils");
 
 const { CPP_UNITY_FILE_PATH, ROOT_FOLDER, getBinaryOutputFilePath } = require("./lib/utils");
 const { unity } = require("./lib/unity");
@@ -31,11 +30,7 @@ async function development() {
   }
 }
 
-async function build(buildMode) {
-  if (buildMode !== "build" && buildMode !== "rebuild") {
-    buildMode = process.argv.slice(2).includes("rebuild") ? "rebuild" : "build";
-  }
-
+async function build() {
   if (
     process.argv.includes("dev") ||
     process.argv.includes("--dev") ||
@@ -95,17 +90,13 @@ async function build(buildMode) {
   });
 
   if (!process.argv.includes("--no-compile")) {
-    execSync(`node ${path.resolve(ROOT_FOLDER, "node-pre-gyp.js")} ${buildMode}`, {
-      stdio: "inherit",
-      env: process.env,
-    });
-    execSync(`node ${require.resolve("./test.js")}`, { stdio: "inherit", env: process.env });
+    await forkAsync(path.resolve(ROOT_FOLDER, "node-pre-gyp.js"), [`--custom-rebuild`]);
+    await forkAsync(require.resolve("./test.js"));
   }
 }
 
 module.exports.build = build;
 
 if (require.main === module) {
-  const buildMode = process.argv.slice(2).includes("rebuild") ? "rebuild" : "build";
-  runMain(build, buildMode);
+  runMain(build, "build");
 }

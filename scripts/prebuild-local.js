@@ -10,7 +10,7 @@ const { print: printSystemInfo } = require("./system-info");
 const fs = require("fs");
 const path = require("path");
 
-const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER } = require("./lib/utils");
+const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, forkAsync } = require("./lib/utils");
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
 
@@ -78,7 +78,7 @@ async function main() {
   }
 
   if (isPackage) {
-    await spawnAsync("node", [require.resolve("./rebuild.js"), "--no-compile"]);
+    await forkAsync(require.resolve("./build.js"), ["--no-compile"]);
   }
 
   if (command && !isDeploy && !isPackage) {
