@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -46,7 +46,7 @@
     "module_name": "roaring",
     "module_path": "./native/roaring-{node_abi}-{platform}-{arch}",
     "host": "https://github.com/SalvatorePreviti/roaring-node/releases/download/",
-    "remote_path": "v{version}"
+    "remote_path": "{version}"
   },
   "scripts": {
     "install": "node ./node-pre-gyp.js install --fallback-to-build",
