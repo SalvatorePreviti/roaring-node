@@ -9,9 +9,16 @@ Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
 
 For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10.0, use [roaring-aws](https://www.npmjs.com/package/roaring-aws).
 
+## Branches
+
+Branch `publish` contains the latest published stable version.
+
+Branch `master` is the development branch that may contain code not yet published or ready for production.
+If you want to contribute and submit a pull request, use the master branch.
+
 ## Supported node versions
 
-Node 12.13+, 14+, 16+, 18+, 20+ are currently supported.
+Node 12.13+, 14.13+, 16+, 18+, 20+ are currently supported.
 
 Node 8 and 10 support was dropped in release 2.0
 
