@@ -1,14 +1,14 @@
-name: Prebuild Binaries
+name: CI
 
 on:
   workflow_dispatch:
+  pull_request:
   push:
     branches:
       - master
 
 jobs:
-  test:
-    needs: test
+  ci:
     strategy:
       matrix:
         node-version: ["12.13.0", "14.13.0", "16.0.0", "18.0.0", "20.0.0"]
@@ -23,5 +23,7 @@ jobs:
           python-version: "3.7"
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts --no-audit --no-save
+      - run: npx eslint --no-error-on-unmatched-pattern --max-warnings=0
+      - run: npx prettier --loglevel=warn --check .
       - run: npx node-pre-gyp rebuild package testpackage
       - run: npm test
