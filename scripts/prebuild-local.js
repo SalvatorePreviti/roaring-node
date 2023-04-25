@@ -10,9 +10,11 @@ const { print: printSystemInfo } = require("./system-info");
 const fs = require("fs");
 const path = require("path");
 
-const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, getPrebuildYaml } = require("./lib/utils");
+const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER } = require("./lib/utils");
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
+
+const NODE_VERSIONS = ["12.13.0", "14.13.0", "16.0.0", "18.0.0", "20.0.0"];
 
 const NATIVE_DIR = path.resolve(ROOT_FOLDER, "native");
 const STAGE_DIR = path.resolve(ROOT_FOLDER, "build/stage");
@@ -87,9 +89,7 @@ async function main() {
 
   await clean();
 
-  const supportedNodeVersions = getPrebuildYaml().jobs.prebuild.strategy.matrix["node-version"];
-
-  console.log(colors.cyanBright(`* Building for node ${supportedNodeVersions.join(" ")}\n`));
+  console.log(colors.cyanBright(`* Building for node ${NODE_VERSIONS.join(" ")}\n`));
 
   printSystemInfo();
 
@@ -112,14 +112,14 @@ async function main() {
   console.log(colors.blueBright("- installing node versions"));
   console.time("installing node versions");
   await Promise.all(
-    supportedNodeVersions.map((nodeVersion) => spawnAsync(N_EXECUTABLE_PATH, ["i", nodeVersion, "--download"])),
+    NODE_VERSIONS.map((nodeVersion) => spawnAsync(N_EXECUTABLE_PATH, ["i", nodeVersion, "--download"])),
   );
   console.timeEnd("installing node versions");
 
   console.log(colors.blueBright("- building"));
   console.time("building");
   let nodeVersionIndex = 0;
-  for (const nodeVersion of supportedNodeVersions) {
+  for (const nodeVersion of NODE_VERSIONS) {
     console.log(colors.blueBright(`\n- building for node ${nodeVersion}\n`));
     const args = ["exec", nodeVersion, "npx", "node-pre-gyp", "rebuild"];
     if (isPackage) {
