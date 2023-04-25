@@ -54,7 +54,7 @@ if (customRebuildIdx <= 0) {
           for (const ext of [".ipdb", ".iobj", ".pdb", ".obj", ".lib", ".exp", ".tmp"]) {
             if (f.endsWith(ext)) {
               console.log(`- removing file ${f}`);
-              fs.rmSync(f);
+              fs.unlinkSync(f);
             }
           }
         }
