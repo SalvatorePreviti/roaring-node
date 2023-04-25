@@ -1,0 +1,27 @@
+name: Prebuild Binaries
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    needs: test
+    strategy:
+      matrix:
+        node-version: ["12.13.0", "14.13.0", "16.0.0", "18.0.0", "20.0.0"]
+        os: [ubuntu-latest, macos-latest, windows-2019]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.7"
+      - uses: actions/checkout@v3
+      - run: npm install --ignore-scripts --no-audit --no-save
+      - run: npx node-pre-gyp rebuild package testpackage
+      - run: npm test

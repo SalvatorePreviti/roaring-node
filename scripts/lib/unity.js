@@ -66,7 +66,7 @@ module.exports.unity = function unity() {
   console.log(colors.cyan(`- roaring version ${roaringVersion}`));
 
   const outputText = output.join("\n");
-  console.log(colors.cyanBright(`- ${includedFiles.size} files included. ${outputText.length} bytes total.`));
+  console.log(colors.cyanBright(`- Unity: ${includedFiles.size} files included. ${outputText.length} bytes total.`));
 
   return {
     roaringVersion,

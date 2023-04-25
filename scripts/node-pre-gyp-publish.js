@@ -35,14 +35,12 @@ const { Octokit } = require("@octokit/rest");
 
 const packageJson = require("../package.json");
 const { execSync } = require("child_process");
-const { runMain } = require("./lib/utils");
+const { runMain, getPrebuildYaml } = require("./lib/utils");
 const crypto = require("crypto");
 
 module.exports = {
   startPublishAssets,
 };
-
-const ALLOWED_BRANCHES_FOR_PUBLISH = ["master"];
 
 async function startPublishAssets() {
   const assetsByName = new Map();
@@ -90,12 +88,13 @@ async function startPublishAssets() {
 
     console.log(colors.cyanBright(`branchName: ${branchName}`));
 
-    if (!ALLOWED_BRANCHES_FOR_PUBLISH.includes(branchName)) {
+    const allowedBranches = getPrebuildYaml().on.push.branches;
+    if (!allowedBranches.includes(branchName)) {
       console.warn(
         colors.yellowBright(
-          `⚠️ ${colors.underline(
-            "WARNING",
-          )}: Skipping deploy. Deploy allowed only on branch ${ALLOWED_BRANCHES_FOR_PUBLISH.join(", ")}`,
+          `⚠️ ${colors.underline("WARNING")}: Skipping deploy. Deploy allowed only on branch ${allowedBranches.join(
+            ", ",
+          )}`,
         ),
       );
       return false;

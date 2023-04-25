@@ -9,11 +9,17 @@ Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
 
 For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10.0, use [roaring-aws](https://www.npmjs.com/package/roaring-aws).
 
+## Supported node versions
+
+Node 12.13+, 14+, 16+, 18+, 20+ are currently supported.
+
+Node 8 and 10 support was dropped in release 2.0
+
 ## Worker thread support
 
-IMPORTANT: You need Node >= 13 to for roaring-node to work with worker threads correctly. Previous version of node are not supported and will throw an error if this library is loaded inside a worker thread.
+IMPORTANT: You need Node >= 14 to for roaring-node to work with worker threads correctly. Previous version of node are not supported and will throw an error if this library is loaded inside a worker thread.
 
-Directly transferring a bitmap without copy between worker threads is not currently supported, but you can create a frozen view on a SharedArrayBuffer using bufferAlignedAllocShared and pass it to the worker thread.
+Directly transferring an instance without copy between worker threads is not currently supported, but you can create a frozen view on a SharedArrayBuffer using bufferAlignedAllocShared and pass it to the worker thread.
 
 ## Installation
 
@@ -105,20 +111,20 @@ npm install
 ```
 ./scripts/update-roaring.sh
 
-npm run recompile
+npm run rebuild
 
 ```
 
 ### To rebuild the C++ sources
 
 ```
-npm run recompile
+npm run rebuild
 ```
 
 After a full recomple, is possible to compile only changed files:
 
 ```
-npm run compile
+npm run build
 ```
 
 ### To run the unit test
