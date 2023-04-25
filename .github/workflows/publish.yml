@@ -18,9 +18,9 @@ jobs:
         with:
           python-version: "3.7"
       - uses: actions/checkout@v3
-      - run: npm install --ignore-scripts --no-audit --no-save
+      - run: npm ci --ignore-scripts --no-audit --no-save
       - run: npx node-pre-gyp rebuild package testpackage
-      - run: npm test
+      - run: node ./scripts/test.js
       - run: node --expose-gc ./scripts/test-memory-leaks.js
 
   prebuild:
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts --no-audit --no-save
       - run: npx node-pre-gyp rebuild package testpackage
-      - run: npm test
+      - run: node ./scripts/test.js --notypecheck
       - name: Prebuild
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
