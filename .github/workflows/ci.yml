@@ -19,7 +19,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-save
       - run: npx eslint --no-error-on-unmatched-pattern --max-warnings=0
       - run: npx prettier --loglevel=warn --check .
-      - run: npx node-pre-gyp rebuild package testpackage
+      - run: node ./node-pre-gyp.js rebuild package testpackage
       - run: node ./scripts/test.js
       - run: node --expose-gc ./scripts/test-memory-leaks.js
 
@@ -27,7 +27,7 @@ jobs:
     needs: test
     strategy:
       matrix:
-        node-version: ["12.13.0", "14.13.0", "16.0.0", "18.0.0", "20.0.0"]
+        node-version: ["12.13.0", "14.13.0", "16.14.0", "18.0.0", "20.0.0"]
         os: [ubuntu-latest, macos-latest, windows-2019]
     runs-on: ${{ matrix.os }}
     steps:
@@ -36,5 +36,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts --no-audit --no-save
-      - run: npx node-pre-gyp rebuild package testpackage
+      - run: node ./node-pre-gyp.js rebuild package testpackage
       - run: node ./scripts/test.js --notypecheck

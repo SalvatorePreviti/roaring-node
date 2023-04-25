@@ -95,7 +95,10 @@ async function build(buildMode) {
   });
 
   if (!process.argv.includes("--no-compile")) {
-    execSync(`npx node-pre-gyp ${buildMode}`, { stdio: "inherit", env: process.env });
+    execSync(`node ${path.resolve(ROOT_FOLDER, "node-pre-gyp.js")} ${buildMode}`, {
+      stdio: "inherit",
+      env: process.env,
+    });
     execSync(`node ${require.resolve("./test.js")}`, { stdio: "inherit", env: process.env });
   }
 }

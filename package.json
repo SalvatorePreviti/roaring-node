@@ -48,9 +48,9 @@
     "remote_path": "v{version}"
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
-    "compile": "node-pre-gyp build",
-    "recompile": "node-pre-gyp rebuild",
+    "install": "node ./node-pre-gyp.js install --fallback-to-build",
+    "compile": "node ./node-pre-gyp.js build",
+    "recompile": "node ./node-pre-gyp.js rebuild",
     "build": "node ./scripts/build.js",
     "rebuild": "node ./scripts/rebuild.js",
     "build-dev": "node ./scripts/build.js --dev",

@@ -14,7 +14,7 @@ const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER } = require("./lib/utils");
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
 
-const NODE_VERSIONS = ["12.13.0", "14.13.0", "16.0.0", "18.0.0", "20.0.0"];
+const NODE_VERSIONS = ["12.13.0", "14.13.0", "16.14.0", "18.0.0", "20.0.0"];
 
 const NATIVE_DIR = path.resolve(ROOT_FOLDER, "native");
 const STAGE_DIR = path.resolve(ROOT_FOLDER, "build/stage");
@@ -121,7 +121,7 @@ async function main() {
   let nodeVersionIndex = 0;
   for (const nodeVersion of NODE_VERSIONS) {
     console.log(colors.blueBright(`\n- building for node ${nodeVersion}\n`));
-    const args = ["exec", nodeVersion, "npx", "node-pre-gyp", "rebuild"];
+    const args = ["run", nodeVersion, path.resolve(ROOT_FOLDER, "node-pre-gyp.js"), "rebuild"];
     if (isPackage) {
       args.push("package", "testpackage");
     }
