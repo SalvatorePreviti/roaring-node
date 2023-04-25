@@ -38,9 +38,12 @@ if (customRebuildIdx <= 0) {
   };
 
   const main = async () => {
+    console.log("* rebuild...");
     console.time("rebuild");
     await forkAsync(__filename, ["rebuild"]);
+    console.log();
     console.timeEnd("rebuild");
+    console.log();
 
     // Clean debug info and temporary files
     for (let d of fs.readdirSync("native")) {
@@ -58,10 +61,12 @@ if (customRebuildIdx <= 0) {
       }
     }
 
-    console.log("packaging...");
+    console.log();
+    console.log("* packaging...");
     console.time("packaging");
     await forkAsync(__filename, ["package", "testpackage"]);
-    console.timeEnd("packaging");
+    console.timeEnd("packaging\n");
+    console.log();
   };
 
   main().catch((e) => {
