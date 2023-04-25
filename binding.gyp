@@ -16,7 +16,7 @@
             },
             "msvs_settings": {
                 "VCCLCompilerTool": {
-                    "AdditionalOptions": ["/std:c++latest"]
+                    "AdditionalOptions": ["/O3", "/pdbpath:none", "/std:c++latest"]
                 }
             },
             "sources": ["roaring-node.cpp"]
