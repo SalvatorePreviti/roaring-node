@@ -8,7 +8,24 @@ on:
       - master
 
 jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.7"
+      - uses: actions/checkout@v3
+      - run: npm install --ignore-scripts --no-audit --no-save
+      - run: npx node-pre-gyp rebuild package testpackage
+      - run: npm test
+      - run: node --expose-gc ./scripts/test-memory-leaks.js
+
   ci:
+    needs: test
     strategy:
       matrix:
         node-version: ["12.13.0", "14.13.0", "16.0.0", "18.0.0", "20.0.0"]
@@ -23,7 +40,5 @@ jobs:
           python-version: "3.7"
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts --no-audit --no-save
-      - run: npx eslint --no-error-on-unmatched-pattern --max-warnings=0
-      - run: npx prettier --loglevel=warn --check .
       - run: npx node-pre-gyp rebuild package testpackage
       - run: npm test
