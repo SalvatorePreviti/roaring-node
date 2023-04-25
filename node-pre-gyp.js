@@ -10,15 +10,15 @@ process.on("exit", () => {
   console.timeEnd("node-pre-gyp");
 });
 
-try {
-  process.env.npm_config_node_gyp = require.resolve("node-gyp/bin/node-gyp.js");
-} catch (_e) {}
-
 process.chdir(__dirname);
 
 const argv = process.argv;
 const customRebuildIdx = argv.indexOf("--custom-rebuild", 2);
 if (customRebuildIdx <= 0) {
+  try {
+    process.env.npm_config_node_gyp = require.resolve("node-gyp/bin/node-gyp.js");
+  } catch (_e) {}
+
   require("@mapbox/node-pre-gyp/lib/main");
 } else {
   const forkAsync = (modulePath, args, options) => {
@@ -46,7 +46,8 @@ if (customRebuildIdx <= 0) {
     for (const ext of [".ipdb", ".iobj", ".pdb", ".obj", ".lib", ".exp"]) {
       const f = path.join("./build/Release/roaring", ext);
       if (fs.existsSync(f)) {
-        fs.rmSync("./build/Release/roaring.ipdb");
+        console.log(`- removing file ${f}`);
+        fs.rmSync(f);
       }
     }
 

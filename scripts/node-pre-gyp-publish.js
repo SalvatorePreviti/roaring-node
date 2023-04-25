@@ -34,8 +34,9 @@ const colors = require("chalk");
 const { Octokit } = require("@octokit/rest");
 
 const packageJson = require("../package.json");
-const { runMain, spawnAsync } = require("./lib/utils");
+const { runMain } = require("./lib/utils");
 const crypto = require("crypto");
+const { execSync } = require("child_process");
 
 module.exports = {
   startPublishAssets,
@@ -82,7 +83,7 @@ async function startPublishAssets() {
   }
 
   async function initialize() {
-    const branchName = (await spawnAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"]))
+    const branchName = execSync("git rev-parse --abbrev-ref HEAD")
       .toString()
       .replace(/[\n\r]/g, "")
       .trim();
