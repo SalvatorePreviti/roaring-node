@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         node-version: ["12.13.0", "14.13.0", "16.14.0", "18.0.0", "20.0.0"]
-        os: [ubuntu-latest, windows-2019]
+        os: [ubuntu-latest, windows-2019, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-node@v3
@@ -40,30 +40,8 @@ jobs:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
         run: node ./scripts/node-pre-gyp-publish.js
 
-  prebuild-mac:
-    needs: test
-    strategy:
-      matrix:
-        node-version: ["12.13.0", "14.13.0", "16.14.0", "18.0.0", "20.0.0"]
-    runs-on: macos-latest
-    steps:
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - uses: actions/checkout@v3
-      - run: npm install --ignore-scripts --no-audit --no-save
-      - run: node ./node-pre-gyp.js rebuild package testpackage
-      - run: node ./scripts/test.js --notypecheck
-      - name: Prebuild
-        env:
-          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
-        run: node ./scripts/node-pre-gyp-publish.js
-
   docs:
-    needs: [prebuild, prebuild-mac]
+    needs: [test, prebuild]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
