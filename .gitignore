@@ -1,10 +1,12 @@
 # build output
 
 *.o
-prebuilds/
+native/
 build/
 package/
 docs/
+.tmp/
+.github-key
 
 temp
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const systemInfo = require("./systemInfo");
+const systemInfo = require("./system-info");
 const promiseMap = require("./benchmarks/promiseMap");
 const colors = require("chalk");
 const path = require("path");
@@ -8,6 +8,7 @@ const fs = require("fs");
 const { fork } = require("child_process");
 const benchReport = require("./benchmarks/benchReport");
 const spinner = require("./benchmarks/spinner");
+const { runMain } = require("./lib/utils");
 
 function listBenchFiles() {
   return new Promise((resolve, reject) => {
@@ -119,8 +120,5 @@ module.exports = benchmarks;
 benchmarks.run = run;
 
 if (require.main === module) {
-  run().catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error(err);
-  });
+  runMain(run, "benchmarks");
 }

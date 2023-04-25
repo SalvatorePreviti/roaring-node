@@ -4,21 +4,25 @@
 /* eslint-disable no-console */
 /* global gc */
 
+const { runMain } = require("./lib/utils");
+
+const _gc = typeof gc !== "undefined" ? gc : () => {};
+
 async function testMemoryLeaks() {
-  gc();
-  gc();
+  _gc();
+  _gc();
 
   const { RoaringBitmap32, getRoaringUsedMemory } = require("../");
 
-  gc();
-  gc();
+  _gc();
+  _gc();
 
   console.log();
   console.log("RoaringUsedMemory", getRoaringUsedMemory());
   console.log("RoaringBitmap32.getInstancesCount", RoaringBitmap32.getInstancesCount());
 
-  gc();
-  gc();
+  _gc();
+  _gc();
 
   let a = new RoaringBitmap32([1, 2, 3]);
   let b = new RoaringBitmap32([1, 2]);
@@ -58,23 +62,23 @@ async function testMemoryLeaks() {
   console.timeEnd("buildup");
   console.log();
 
-  gc();
-  gc();
+  _gc();
+  _gc();
 
   console.table(process.memoryUsage());
   process.stdout.write("\nallocating");
   console.time("allocation");
 
-  gc();
-  gc();
+  _gc();
+  _gc();
 
   promises = [];
   for (let i = 0; i < 10000000; i++) {
     const bmp = operation(i);
     if (i % 100000 === 0) {
       process.stdout.write(".");
-      gc();
-      gc();
+      _gc();
+      _gc();
       promises.push(bmp.serializeAsync("croaring").then(() => undefined));
     }
   }
@@ -93,15 +97,15 @@ async function testMemoryLeaks() {
 
   const promise = new Promise((resolve, reject) => {
     for (let i = 0; i < 10; ++i) {
-      gc();
+      _gc();
     }
     setTimeout(() => {
       for (let i = 0; i < 10; ++i) {
-        gc();
+        _gc();
       }
       setTimeout(() => {
         for (let i = 0; i < 10; ++i) {
-          gc();
+          _gc();
         }
         console.table(process.memoryUsage());
         console.log();
@@ -128,15 +132,4 @@ async function testMemoryLeaks() {
   await promise;
 }
 
-console.log("\n--- testMemoryLeaks ---");
-console.time("testMemoryLeaks");
-testMemoryLeaks()
-  .then(() => {
-    console.timeEnd("testMemoryLeaks");
-    console.log("\n✅ Ok. No memory leak detected.\n");
-  })
-  .catch((err) => {
-    console.log();
-    console.error(err);
-    process.exitCode = 1;
-  });
+runMain(testMemoryLeaks, "test-memory-leaks");

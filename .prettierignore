@@ -1,5 +1,7 @@
 src/cpp/**/*
 docs/**/*
+submodules/**/*
+.clang-tidy
 
 # Dependencies and vendor
 vendor

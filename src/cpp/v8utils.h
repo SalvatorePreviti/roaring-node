@@ -12,8 +12,6 @@ bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
     (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer() || value->IsSharedArrayBuffer());
 }
 
-#include <iostream>
-
 namespace v8utils {
 
   template <int N>
@@ -59,11 +57,7 @@ namespace v8utils {
     v8::HandleScope scope(isolate);
     auto a = v8::String::NewFromUtf8(isolate, context, v8::NewStringType::kInternalized);
     auto b = v8::String::NewFromUtf8(isolate, message, v8::NewStringType::kInternalized);
-#if NODE_MAJOR_VERSION > 10
     auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(isolate, a.ToLocalChecked(), b.ToLocalChecked());
-#else
-    auto msg = a.IsEmpty() ? b : b.IsEmpty() ? a : v8::String::Concat(a.ToLocalChecked(), b.ToLocalChecked());
-#endif
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 

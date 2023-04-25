@@ -8,7 +8,6 @@
     "allowUnusedLabels": false,
     "alwaysStrict": true,
     "baseUrl": ".",
-    "charset": "utf8",
     "declaration": true,
     "emitDecoratorMetadata": false,
     "esModuleInterop": false,
@@ -36,7 +35,8 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "target": "esnext"
+    "target": "ES2018",
+    "isolatedModules": true
   },
   "exclude": ["node_modules", "node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*"],
   "typeAcquisition": {

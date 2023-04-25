@@ -1,0 +1,62 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - publish
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+      - uses: actions/checkout@v3
+      - run: npm ci --ignore-scripts --no-audit --no-save
+      - run: node ./node-pre-gyp.js rebuild package testpackage
+      - run: node ./scripts/test.js
+      - run: node --expose-gc ./scripts/test-memory-leaks.js
+
+  prebuild:
+    needs: test
+    strategy:
+      matrix:
+        node-version: ["12.13.0", "14.13.0", "16.14.0", "18.0.0", "20.0.0"]
+        os: [ubuntu-latest, windows-2019, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: actions/checkout@v3
+      - run: npm install --ignore-scripts --no-audit --no-save
+      - run: node ./node-pre-gyp.js rebuild package testpackage
+      - run: node ./scripts/test.js --notypecheck
+      - name: Prebuild
+        env:
+          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+        run: node ./scripts/node-pre-gyp-publish.js
+
+  docs:
+    needs: [test, prebuild]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+
+      - name: npm ci
+        run: npm ci --ignore-scripts
+
+      - name: npm run doc
+        run: npm run doc
+
+      - name: Deploy documentation 🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.4
+        with:
+          branch: gh-pages
+          folder: docs

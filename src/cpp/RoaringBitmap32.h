@@ -2,7 +2,6 @@
 #define __ROARINGBITMAP32__H__
 
 #include "v8utils.h"
-#include "CRoaringUnityBuild/roaring.h"
 #include "serialization-format.h"
 
 using namespace roaring;
@@ -79,6 +78,10 @@ class RoaringBitmap32 final : public ObjectWrap {
     ++this->_version;
   }
 
+  inline bool roaring_bitmap_t_is_frozen(const roaring_bitmap_t * r) {
+    return r->high_low_container.flags & ROARING_FLAG_FROZEN;
+  }
+
   bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance) {
     roaring_bitmap_t * oldInstance = this->roaring;
     if (oldInstance == newInstance) {
@@ -87,7 +90,7 @@ class RoaringBitmap32 final : public ObjectWrap {
     if (oldInstance != nullptr) {
       roaring_bitmap_free(oldInstance);
     }
-    if (newInstance != nullptr && is_frozen(newInstance)) {
+    if (newInstance != nullptr && roaring_bitmap_t_is_frozen(newInstance)) {
       this->frozenCounter = RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN;
     }
     this->roaring = newInstance;

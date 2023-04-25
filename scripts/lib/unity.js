@@ -1,26 +1,12 @@
 const colors = require("chalk");
 const path = require("path");
 
-const ROOT_FOLDER = path.resolve(__dirname, "../..");
-
-module.exports.ROOT_FOLDER = ROOT_FOLDER;
-
 const fs = require("fs");
 
+const { CPP_SRC_FOLDER_PATH } = require("./utils");
+
 const INCLUDE_REGEX = /^#\s*include\s+["<](.+)[">]/;
-const ROARING_VERSION = /#\s*define\s+ROARING_VERSION\s+"(.+)"/;
-
-const SRC_CPP_FOLDER = path.resolve(ROOT_FOLDER, "src/cpp");
-
-module.exports.SRC_CPP_FOLDER = SRC_CPP_FOLDER;
-
-const OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "roaring-node.cpp");
-
-module.exports.OUTPUT_FILE_PATH = OUTPUT_FILE_PATH;
-
-const BINARY_OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "build/Release/roaring.node");
-
-module.exports.BINARY_OUTPUT_FILE_PATH = BINARY_OUTPUT_FILE_PATH;
+const ROARING_VERSION_REGEX = /#\s*define\s+ROARING_VERSION\s+"(.+)"/;
 
 module.exports.unity = function unity() {
   const existsCache = new Map();
@@ -45,7 +31,14 @@ module.exports.unity = function unity() {
     for (const line of content.split("\n")) {
       const includeMatch = line.match(INCLUDE_REGEX);
       if (includeMatch) {
-        const includePath = path.resolve(path.dirname(filePath), includeMatch[1]);
+        const includeName = includeMatch[1];
+
+        let includePath;
+        if (includeName.startsWith("roaring/") && line.includes("<")) {
+          includePath = path.resolve(__dirname, "../../submodules/CRoaring/include", includeName);
+        } else {
+          includePath = path.resolve(path.dirname(filePath), includeName);
+        }
         if (exists(includePath)) {
           if (!includedFiles.has(includePath)) {
             output.push(`\n// ${line}\n`);
@@ -55,7 +48,7 @@ module.exports.unity = function unity() {
           continue;
         }
       } else if (!roaringVersion) {
-        const match = line.match(ROARING_VERSION);
+        const match = line.match(ROARING_VERSION_REGEX);
         if (match) {
           roaringVersion = match[1];
           if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(roaringVersion)) {
@@ -67,13 +60,13 @@ module.exports.unity = function unity() {
     }
   }
 
-  processFile(path.resolve(SRC_CPP_FOLDER, "main.cpp"));
+  processFile(path.resolve(CPP_SRC_FOLDER_PATH, "main.cpp"));
 
   console.log();
   console.log(colors.cyan(`- roaring version ${roaringVersion}`));
 
   const outputText = output.join("\n");
-  console.log(colors.cyanBright(`- ${includedFiles.size} files included. ${outputText.length} bytes total.`));
+  console.log(colors.cyanBright(`- Unity: ${includedFiles.size} files included. ${outputText.length} bytes total.`));
 
   return {
     roaringVersion,
