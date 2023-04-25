@@ -36,6 +36,7 @@
     "index.js",
     "build.js",
     "index.d.ts",
+    "node-pre-gyp.js",
     "RoaringBitmap32.js",
     "RoaringBitmap32.d.ts",
     "RoaringBitmap32Iterator.js",
