@@ -201,11 +201,17 @@ async function startPublishAssets() {
             colors.yellowBright(`⚠️ WARNING: Overwriting uploaded asset ${name} in release ${packageJson.version}`),
           );
           console.log();
-        } else {
-          throw new Error(
-            `${packageJson.version} in release ${packageJson.version} was already published, aborting. Run with the argument "--overwrite" to overwrite existing assets.`,
+        } else if (process.argv.includes("--no-overwrite")) {
+          console.log();
+          console.warn(
+            colors.yellowBright(`⚠️ WARNING: Skipping uploaded asset ${name} in release ${packageJson.version}`),
           );
+          console.log();
+          return;
         }
+        throw new Error(
+          `${packageJson.version} in release ${packageJson.version} was already published, aborting. Run with the argument "--overwrite" or "--no-overwrite".`,
+        );
       }
 
       console.log(colors.yellow(`Deleting asset ${foundAsset.name} id:${foundAsset.id} to replace it`));
