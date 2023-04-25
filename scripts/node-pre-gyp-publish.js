@@ -34,9 +34,9 @@ const colors = require("chalk");
 const { Octokit } = require("@octokit/rest");
 
 const packageJson = require("../package.json");
-const { execSync } = require("child_process");
 const { runMain } = require("./lib/utils");
 const crypto = require("crypto");
+const { execSync } = require("child_process");
 
 module.exports = {
   startPublishAssets,

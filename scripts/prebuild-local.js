@@ -10,11 +10,11 @@ const { print: printSystemInfo } = require("./system-info");
 const fs = require("fs");
 const path = require("path");
 
-const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER } = require("./lib/utils");
+const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, forkAsync } = require("./lib/utils");
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
 
-const NODE_VERSIONS = ["12.13.0", "14.13.0", "16.14.0", "18.0.0", "20.0.0"];
+const NODE_VERSIONS = ["12.13.0", "14.13.0", "16.14.0", "18.1.0", "20.0.0"];
 
 const NATIVE_DIR = path.resolve(ROOT_FOLDER, "native");
 const STAGE_DIR = path.resolve(ROOT_FOLDER, "build/stage");
@@ -78,7 +78,7 @@ async function main() {
   }
 
   if (isPackage) {
-    await spawnAsync("node", [require.resolve("./rebuild.js"), "--no-compile"]);
+    await forkAsync(require.resolve("./build.js"), ["--no-compile"]);
   }
 
   if (command && !isDeploy && !isPackage) {

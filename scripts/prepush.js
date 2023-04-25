@@ -24,7 +24,7 @@ runMain(() => {
       chalk.redBright(
         `${chalk.underline.bold(
           "ERROR",
-        )}: ${CPP_UNITY_FILE_PATH} is outdated or not a production version. Run \`npm run rebuild\` before committing and pushing.`,
+        )}: ${CPP_UNITY_FILE_PATH} is outdated or not a production version. Run \`npm run build\` before committing and pushing.`,
       ),
     );
     process.exitCode = 1;
@@ -39,7 +39,7 @@ runMain(() => {
       chalk.redBright(
         `${chalk.underline.bold(
           "ERROR",
-        )}: library could not be loaded. Run \`npm run rebuild\` before committing and pushing.`,
+        )}: library could not be loaded. Run \`npm run build\` before committing and pushing.`,
       ),
     );
     process.exitCode = 1;

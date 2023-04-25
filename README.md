@@ -118,20 +118,8 @@ npm install
 ```
 ./scripts/update-roaring.sh
 
-npm run rebuild
-
-```
-
-### To rebuild the C++ sources
-
-```
-npm run rebuild
-```
-
-After a full recomple, is possible to compile only changed files:
-
-```
 npm run build
+
 ```
 
 ### To run the unit test
