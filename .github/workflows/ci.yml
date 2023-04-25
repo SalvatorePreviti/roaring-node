@@ -17,6 +17,8 @@ jobs:
           node-version: "20.x"
       - uses: actions/checkout@v3
       - run: npm ci --ignore-scripts --no-audit --no-save
+      - run: npx eslint --no-error-on-unmatched-pattern --max-warnings=0
+      - run: npx prettier --loglevel=warn --check .
       - run: npx node-pre-gyp rebuild package testpackage
       - run: node ./scripts/test.js
       - run: node --expose-gc ./scripts/test-memory-leaks.js
