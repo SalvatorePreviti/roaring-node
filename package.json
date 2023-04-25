@@ -70,7 +70,7 @@
     "@mapbox/node-pre-gyp": "^1.0.10"
   },
   "peerDependencies": {
-    "node-gyp": "9.x"
+    "node-gyp": "^9.3.1"
   },
   "peerDependenciesMeta": {
     "node-gyp": {
@@ -78,7 +78,7 @@
     }
   },
   "optionalDependencies": {
-    "node-gyp": "9.x"
+    "node-gyp": "^9.3.1"
   },
   "devDependencies": {
     "@balsamic/eslint-config": "^0.4.1",
