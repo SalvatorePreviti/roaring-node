@@ -42,12 +42,19 @@ if (customRebuildIdx <= 0) {
     await forkAsync(__filename, ["rebuild"]);
     console.timeEnd("rebuild");
 
-    // Clean windows files
-    for (const ext of [".ipdb", ".iobj", ".pdb", ".obj", ".lib", ".exp"]) {
-      const f = path.join("./build/Release/roaring", ext);
-      if (fs.existsSync(f)) {
-        console.log(`- removing file ${f}`);
-        fs.rmSync(f);
+    // Clean debug info and temporary files
+    for (let d of fs.readdirSync("native")) {
+      d = path.resolve(__dirname, "native", d);
+      if (fs.lstatSync(d).isDirectory()) {
+        for (let f of fs.readdirSync(d)) {
+          f = path.resolve(d, f);
+          for (const ext of [".ipdb", ".iobj", ".pdb", ".obj", ".lib", ".exp", ".tmp"]) {
+            if (f.endsWith(ext)) {
+              console.log(`- removing file ${f}`);
+              fs.rmSync(f);
+            }
+          }
+        }
       }
     }
 
