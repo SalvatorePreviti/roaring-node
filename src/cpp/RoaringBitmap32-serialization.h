@@ -103,6 +103,7 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
   if (!bitmap) {
     return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView failed to deserialize the input");
   }
+  roaring_bitmap_set_copy_on_write(bitmap, true);
 
   self->replaceBitmapInstance(isolate, bitmap);
 

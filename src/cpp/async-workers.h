@@ -744,6 +744,7 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
       this->setError("Failed to allocate roaring bitmap");
       return;
     }
+    roaring_bitmap_set_copy_on_write(bitmap, true);
     roaring_bitmap_add_many(bitmap, buffer.length, buffer.data);
     roaring_bitmap_run_optimize(bitmap);
     roaring_bitmap_shrink_to_fit(bitmap);
