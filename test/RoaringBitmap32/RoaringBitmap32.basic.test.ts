@@ -1052,6 +1052,31 @@ describe("RoaringBitmap32 basic", () => {
     });
   });
 
+  describe("reduceRight", () => {
+    it("reduces a bitmap", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      let counter = bitmap.size;
+      const reduced = bitmap.reduceRight((acc, x, index, set) => {
+        expect(index).eq(--counter);
+        expect(set).eq(bitmap);
+        return acc + x;
+      }, 0);
+      expect(counter).eq(0);
+      expect(reduced).eq(21);
+    });
+    it("reduces a bitmap with a undefined initial value", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      let counter = bitmap.size;
+      const reduced = bitmap.reduceRight((acc, x, index, set) => {
+        expect(index).eq(--counter);
+        expect(set).eq(bitmap);
+        return acc + x;
+      });
+      expect(counter).eq(0);
+      expect(reduced).eq(21);
+    });
+  });
+
   describe("findIndex", () => {
     it("finds the index of an item", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);

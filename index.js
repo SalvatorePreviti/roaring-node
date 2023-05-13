@@ -265,6 +265,18 @@ if (!roaring[initializedSym]) {
     return accumulator;
   };
 
+  roaringBitmap32_proto.reduceRight = function (fn, initialValue = 0) {
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    let index = this.size - 1;
+    let accumulator = initialValue;
+    for (const v of this.reverseIterator()) {
+      accumulator = fn(accumulator, v, index--, this);
+    }
+    return accumulator;
+  };
+
   roaringBitmap32_proto.find = function (fn, self) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);

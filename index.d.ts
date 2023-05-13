@@ -391,6 +391,28 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   ): U;
 
   /**
+   * Behaves like array.reduceRight.
+   * The reduceRight() method applies a function against an accumulator and each value of the set (from right-to-left) to reduce it to a single value.
+   * WARNING: this can potentially iterate a large set of to 4 billion elements.
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   * @param callbackfn A function that accepts up to four arguments. The reduce method calls the callbackfn function one time for each element in the set.
+   * @returns The value that results from the reduction.
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduceRight
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  reduceRight(
+    callbackfn: (previousValue: number, currentValue: number, currentIndex: number, set: this) => number,
+  ): number;
+  reduceRight(
+    callbackfn: (previousValue: number, currentValue: number, currentIndex: number, set: this) => number,
+    initialValue: number | undefined,
+  ): number;
+  reduceRight<U>(
+    callbackfn: (previousValue: U, currentValue: number, currentIndex: number, set: this) => U,
+    initialValue: U,
+  ): U;
+
+  /**
    * Behaves like array.find.
    * The find() method returns the value of the first element in the set that satisfies the provided testing function.
    * Otherwise undefined is returned.
