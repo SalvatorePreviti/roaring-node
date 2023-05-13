@@ -1903,6 +1903,15 @@ bool roaring_bitmap_select(const roaring_bitmap_t *r, uint32_t rank,
 uint64_t roaring_bitmap_rank(const roaring_bitmap_t *r, uint32_t x);
 
 /**
+ * Returns the index of x in the given roaring bitmap.
+ * If the roaring bitmap doesn't contain x , this function will return -1.
+ * The difference with rank function is that this function will return -1 when x
+ * is not the element of roaring bitmap, but the rank function will return a
+ * non-negative number.
+ */
+int64_t roaring_bitmap_get_index(const roaring_bitmap_t *r, uint32_t x);
+
+/**
  * Returns the smallest value in the set, or UINT32_MAX if the set is empty.
  */
 uint32_t roaring_bitmap_minimum(const roaring_bitmap_t *r);
@@ -2111,11 +2120,13 @@ class AddonDataStrings final {
   v8::Eternal<v8::Symbol> symbol_rnshared;
 
   v8::Eternal<v8::String> OperationFailed;
+  v8::Eternal<v8::String> Comma;
 
   inline void initialize(v8::Isolate * isolate) {
     literal(isolate, this->n, "n");
     literal(isolate, this->readonly, "readonly");
     literal(isolate, this->RoaringBitmap32, "RoaringBitmap32");
+    literal(isolate, this->Comma, ",");
 
     literal(isolate, this->OperationFailed, "Operation failed");
 
@@ -2981,6 +2992,9 @@ class RoaringBitmap32 final : public ObjectWrap {
     _version(0),
     frozenCounter(0),
     readonlyViewOf(nullptr) {
+    if (this->roaring) {
+      roaring_bitmap_set_copy_on_write(this->roaring, true);
+    }
     ++addonData->RoaringBitmap32_instances;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
   }
@@ -3100,7 +3114,6 @@ void RoaringBitmap32_xorCardinality(const v8::FunctionCallbackInfo<v8::Value> & 
 }
 
 void RoaringBitmap32_add(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  uint32_t v;
   auto isolate = info.GetIsolate();
 
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
@@ -3111,13 +3124,44 @@ void RoaringBitmap32_add(const v8::FunctionCallbackInfo<v8::Value> & info) {
     return v8utils::throwError(isolate, ERROR_FROZEN);
   }
 
-  if (info.Length() < 1 || !info[0]->IsUint32() || !info[0]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
-    return v8utils::throwTypeError(isolate, "RoaringBitmap32::add - 32 bit unsigned integer expected");
-  }
-
-  roaring_bitmap_add(self->roaring, v);
-  self->invalidate();
   info.GetReturnValue().Set(info.Holder());
+
+  bool changed = false;
+  auto roaring = self->roaring;
+  int len = info.Length();
+
+  uint32_t v = 0;
+  for (int i = 0; i < len; ++i) {
+    auto arg = info[i];
+    if (arg->IsInt32()) {
+      int32_t n = arg->Int32Value(isolate->GetCurrentContext()).FromJust();
+      if (n < 0) {
+        continue;
+      }
+      v = (uint32_t)n;
+    } else if (arg->IsUint32()) {
+      v = arg->Uint32Value(isolate->GetCurrentContext()).FromJust();
+    } else {
+      double d;
+      if (arg->IsNull() || arg->IsUndefined()) {
+        continue;
+      }
+      if (!arg->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
+        continue;
+      }
+      int64_t n = (int64_t)d;
+      if (n < 0 || n > UINT32_MAX) {
+        continue;
+      }
+      v = (uint32_t)n;
+    }
+    if (roaring_bitmap_add_checked(roaring, v)) {
+      changed = true;
+    }
+  }
+  if (changed) {
+    self->invalidate();
+  }
 }
 
 void RoaringBitmap32_tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -3130,16 +3174,89 @@ void RoaringBitmap32_tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info) {
     return v8utils::throwError(isolate, ERROR_FROZEN);
   }
 
-  uint32_t v;
-  if (info.Length() < 1 || !info[0]->IsUint32() || !info[0]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
-    return info.GetReturnValue().Set(false);
+  bool changed = false;
+  auto roaring = self->roaring;
+  uint32_t v = 0;
+  int len = info.Length();
+  for (int i = 0; i < len; ++i) {
+    auto arg = info[i];
+    if (arg->IsInt32()) {
+      int32_t n = arg->Int32Value(isolate->GetCurrentContext()).FromJust();
+      if (n < 0) {
+        continue;
+      }
+      v = (uint32_t)n;
+    } else if (arg->IsUint32()) {
+      v = arg->Uint32Value(isolate->GetCurrentContext()).FromJust();
+    } else {
+      double d;
+      if (arg->IsNull() || arg->IsUndefined()) {
+        continue;
+      }
+      if (!arg->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
+        continue;
+      }
+      int64_t n = (int64_t)d;
+      if (n < 0 || n > UINT32_MAX) {
+        continue;
+      }
+      v = (uint32_t)n;
+    }
+    if (roaring_bitmap_add_checked(roaring, v)) {
+      changed = true;
+    }
   }
-
-  bool result = roaring_bitmap_add_checked(self->roaring, v);
-  if (result) {
+  if (changed) {
     self->invalidate();
   }
-  info.GetReturnValue().Set(result);
+  info.GetReturnValue().Set(changed);
+}
+
+void RoaringBitmap32_remove(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  if (!self) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+  if (self->isFrozen()) {
+    return v8utils::throwError(isolate, ERROR_FROZEN);
+  }
+  bool changed = false;
+  auto roaring = self->roaring;
+  uint32_t v = 0;
+  int len = info.Length();
+  for (int i = 0; i < len; ++i) {
+    auto arg = info[i];
+    if (arg->IsInt32()) {
+      int32_t n = arg->Int32Value(isolate->GetCurrentContext()).FromJust();
+      if (n < 0) {
+        continue;
+      }
+      v = (uint32_t)n;
+    } else if (arg->IsUint32()) {
+      v = arg->Uint32Value(isolate->GetCurrentContext()).FromJust();
+    } else {
+      double d;
+      if (arg->IsNull() || arg->IsUndefined()) {
+        continue;
+      }
+      if (!arg->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
+        continue;
+      }
+      int64_t n = (int64_t)d;
+      if (n < 0 || n > UINT32_MAX) {
+        continue;
+      }
+      v = (uint32_t)n;
+    }
+    if (roaring_bitmap_remove_checked(roaring, v)) {
+      changed = true;
+    }
+  }
+  if (changed) {
+    self->invalidate();
+  }
+  info.GetReturnValue().Set(changed);
 }
 
 void RoaringBitmap32_addMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -3160,7 +3277,7 @@ void RoaringBitmap32_addMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8utils::throwTypeError(isolate, "Uint32Array, RoaringBitmap32 or Iterable<number> expected");
 }
 
-void RoaringBitmap32_remove(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_pop(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (!self) {
@@ -3169,31 +3286,29 @@ void RoaringBitmap32_remove(const v8::FunctionCallbackInfo<v8::Value> & info) {
   if (self->isFrozen()) {
     return v8utils::throwError(isolate, ERROR_FROZEN);
   }
-  uint32_t v;
-  if (info.Length() >= 1 && info[0]->IsUint32() && info[0]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
-    roaring_bitmap_remove(self->roaring, v);
-    self->invalidate();
-  }
-}
-
-void RoaringBitmap32_removeChecked(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
-  if (!self) {
-    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-  }
-  if (self->isFrozen()) {
-    return v8utils::throwError(isolate, ERROR_FROZEN);
-  }
-  uint32_t v;
-  if (info.Length() < 1 || !info[0]->IsUint32() || !info[0]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
-    return info.GetReturnValue().Set(false);
-  }
+  uint32_t v = roaring_bitmap_maximum(self->roaring);
   bool result = roaring_bitmap_remove_checked(self->roaring, v);
   if (result) {
     self->invalidate();
+    info.GetReturnValue().Set(v);
   }
-  info.GetReturnValue().Set(result);
+}
+
+void RoaringBitmap32_shift(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  auto isolate = info.GetIsolate();
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  if (!self) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+  if (self->isFrozen()) {
+    return v8utils::throwError(isolate, ERROR_FROZEN);
+  }
+  uint32_t v = roaring_bitmap_minimum(self->roaring);
+  bool result = roaring_bitmap_remove_checked(self->roaring, v);
+  if (result) {
+    self->invalidate();
+    info.GetReturnValue().Set(v);
+  }
 }
 
 void RoaringBitmap32_clear(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -3340,7 +3455,6 @@ void RoaringBitmap32_xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
 
 void RoaringBitmap32_addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset expects 2 arguments");
@@ -3384,7 +3498,6 @@ void RoaringBitmap32_addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> &
 
 void RoaringBitmap32_andStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::and expects 2 arguments");
 
@@ -3420,7 +3533,6 @@ void RoaringBitmap32_andStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
 
 void RoaringBitmap32_orStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::or expects 2 arguments");
 
@@ -3455,7 +3567,6 @@ void RoaringBitmap32_orStatic(const v8::FunctionCallbackInfo<v8::Value> & info) 
 
 void RoaringBitmap32_xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor expects 2 arguments");
@@ -3492,7 +3603,6 @@ void RoaringBitmap32_xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
 
 void RoaringBitmap32_andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::andnot expects 2 arguments");
 
@@ -3533,7 +3643,6 @@ void roaringOpMany(
   roaring_bitmap_t * op(TSize number, const roaring_bitmap_t ** x),
   const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   int length = info.Length();
 
@@ -3937,13 +4046,21 @@ class RoaringBitmapDeserializer final {
     if (bufLen == 0 || !bufaschar) {
       // Empty bitmap for an empty buffer.
       this->roaring = roaring_bitmap_create();
-      return this->roaring ? nullptr : "RoaringBitmap32 deserialization failed to create an empty bitmap";
+      if (!this->roaring) {
+        return "RoaringBitmap32 deserialization failed to create an empty bitmap";
+      }
+      roaring_bitmap_set_copy_on_write(this->roaring, true);
+      return nullptr;
     }
 
     switch (this->format) {
       case DeserializationFormat::portable: {
         this->roaring = roaring_bitmap_portable_deserialize_safe(bufaschar, bufLen);
-        return this->roaring ? nullptr : "RoaringBitmap32::deserialize - portable deserialization failed";
+        if (!this->roaring) {
+          return "RoaringBitmap32::deserialize - portable deserialization failed";
+        }
+        roaring_bitmap_set_copy_on_write(this->roaring, true);
+        return nullptr;
       }
 
       case DeserializationFormat::croaring: {
@@ -3958,12 +4075,20 @@ class RoaringBitmapDeserializer final {
 
             const uint32_t * elems = (const uint32_t *)(bufaschar + 1 + sizeof(uint32_t));
             this->roaring = roaring_bitmap_of_ptr(card, elems);
-            return this->roaring ? nullptr : "RoaringBitmap32 deserialization - uint32 array deserialization failed";
+            if (!this->roaring) {
+              return "RoaringBitmap32 deserialization - uint32 array deserialization failed";
+            }
+            roaring_bitmap_set_copy_on_write(this->roaring, true);
+            return nullptr;
           }
 
           case CROARING_SERIALIZATION_CONTAINER: {
             this->roaring = roaring_bitmap_portable_deserialize_safe(bufaschar + 1, bufLen - 1);
-            return this->roaring ? nullptr : "RoaringBitmap32 deserialization - container deserialization failed";
+            if (!this->roaring) {
+              return "RoaringBitmap32 deserialization - container deserialization failed";
+            }
+            roaring_bitmap_set_copy_on_write(this->roaring, true);
+            return nullptr;
           }
         }
 
@@ -3986,7 +4111,11 @@ class RoaringBitmapDeserializer final {
 
         this->roaring =
           const_cast<roaring_bitmap_t_ptr>(roaring_bitmap_portable_deserialize_frozen((const char *)this->frozenBuffer));
-        return this->roaring ? nullptr : "RoaringBitmap32 deserialization - failed to create a frozen view";
+        if (!this->roaring) {
+          return "RoaringBitmap32 deserialization - failed to create a frozen view";
+        }
+        roaring_bitmap_set_copy_on_write(this->roaring, true);
+        return nullptr;
       }
 
       default: return "RoaringBitmap32::deserialize - unknown deserialization format";
@@ -4755,6 +4884,7 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
       this->setError("Failed to allocate roaring bitmap");
       return;
     }
+    roaring_bitmap_set_copy_on_write(bitmap, true);
     roaring_bitmap_add_many(bitmap, buffer.length, buffer.data);
     roaring_bitmap_run_optimize(bitmap);
     roaring_bitmap_shrink_to_fit(bitmap);
@@ -4766,7 +4896,6 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
 
 void RoaringBitmap32_serialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmapSerializer serializer;
   serializer.parseArguments(info);
@@ -4790,7 +4919,6 @@ void RoaringBitmap32_serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & 
 
 void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -4864,6 +4992,7 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
   if (!bitmap) {
     return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView failed to deserialize the input");
   }
+  roaring_bitmap_set_copy_on_write(bitmap, true);
 
   self->replaceBitmapInstance(isolate, bitmap);
 
@@ -4872,7 +5001,6 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
 
 void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -4909,7 +5037,6 @@ void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value>
 
 void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmapDeserializer deserializer;
   const char * error = deserializer.parseArguments(info, true);
@@ -4929,7 +5056,6 @@ void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & inf
 
 void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -4951,7 +5077,6 @@ void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::V
 
 void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -5185,7 +5310,6 @@ void RoaringBitmap32_intersectsWithRange(const v8::FunctionCallbackInfo<v8::Valu
 
 void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
@@ -5253,7 +5377,6 @@ void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & i
 
 void RoaringBitmap32_toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
   ToUint32ArrayAsyncWorker * worker = new ToUint32ArrayAsyncWorker(info, nullptr);
   if (!worker) {
     return v8utils::throwError(isolate, "RoaringBitmap32::toUint32ArrayAsync - allocation failed");
@@ -5263,7 +5386,6 @@ void RoaringBitmap32_toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value
 
 void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
@@ -5380,7 +5502,6 @@ void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> 
 
 void RoaringBitmap32_toArray(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   size_t cardinality = self ? self->getSize() : 0;
@@ -5465,7 +5586,6 @@ void RoaringBitmap32_toArray(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -5564,7 +5684,6 @@ void RoaringBitmap32_hasRange(const v8::FunctionCallbackInfo<v8::Value> & info) 
 
 void RoaringBitmap32_fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -5595,6 +5714,7 @@ void RoaringBitmap32_fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> &
   if (getRangeOperationParameters(info, minInteger, maxInteger)) {
     roaring_bitmap_t * r = roaring_bitmap_from_range(minInteger, maxInteger, step);
     if (r != nullptr) {
+      roaring_bitmap_set_copy_on_write(r, true);
       self->replaceBitmapInstance(isolate, r);
     }
   }
@@ -5632,7 +5752,6 @@ void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & 
 
 void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -5674,15 +5793,36 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   }
 
   auto * instanceMemory = bare_aligned_malloc(32, sizeof(RoaringBitmap32));
-  RoaringBitmap32 * instance = readonlyViewOf ? new (instanceMemory) RoaringBitmap32(addonData, readonlyViewOf)
-                                              : new (instanceMemory) RoaringBitmap32(addonData, 0U);
+  RoaringBitmap32 * instance;
+  bool hasCapacity = false;
+
+  if (readonlyViewOf) {
+    instance = new (instanceMemory) RoaringBitmap32(addonData, readonlyViewOf);
+  } else {
+    if (info.Length() > 0 && info[0]->IsNumber()) {
+      hasCapacity = true;
+      double capacity;
+      if (!info[0]->NumberValue(isolate->GetCurrentContext()).To(&capacity)) {
+        capacity = 0;
+      }
+      if (capacity < 0) {
+        capacity = 0;
+      } else if (capacity > UINT32_MAX) {
+        capacity = UINT32_MAX;
+      }
+      instance = new (instanceMemory) RoaringBitmap32(addonData, (uint32_t)capacity);
+    } else {
+      instance = new (instanceMemory) RoaringBitmap32(addonData, 0U);
+    }
+  }
 
   if (instance == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32::ctor - failed to create RoaringBitmap32 instance");
   }
 
   if (instance->roaring == nullptr) {
-    delete instance;
+    instance->~RoaringBitmap32();
+    bare_aligned_free(instance);
     return v8utils::throwError(isolate, "RoaringBitmap32::ctor - failed to create native RoaringBitmap32 instance");
   }
 
@@ -5695,7 +5835,7 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
   if (readonlyViewOf) {
     instance->frozenStorage.bufferPersistent.Reset(isolate, holder);
-  } else {
+  } else if (!hasCapacity) {
     bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
     if (hasParameter) {
       if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
@@ -5709,15 +5849,74 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   info.GetReturnValue().Set(holder);
 }
 
+void RoaringBitmap32_ofStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  auto context = isolate->GetCurrentContext();
+
+  int len = info.Length();
+  if (len < 0) {
+    len = 0;
+  }
+
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  auto newRoaringBitmap32ObjectMaybe = addonData->RoaringBitmap32_constructor.Get(isolate)->NewInstance(context, 0, nullptr);
+
+  v8::Local<v8::Object> newRoaringBitmap32Object;
+  if (!newRoaringBitmap32ObjectMaybe.ToLocal(&newRoaringBitmap32Object)) {
+    return;
+  }
+
+  info.GetReturnValue().Set(newRoaringBitmap32Object);
+
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(newRoaringBitmap32Object, isolate);
+  if (self == nullptr || !self->roaring) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  auto roaring = self->roaring;
+  uint32_t v = 0;
+  for (int i = 0; i < len; ++i) {
+    auto arg = info[i];
+    if (arg->IsUint32()) {
+      if (!arg->Uint32Value(context).To(&v)) {
+        continue;
+      }
+    } else if (arg->IsInt32()) {
+      int32_t n;
+      if (!arg->Int32Value(context).To(&n) || n < 0) {
+        continue;
+      }
+      v = (uint32_t)n;
+    } else {
+      double d;
+      if (arg->IsNull() || arg->IsUndefined()) {
+        continue;
+      }
+      if (!arg->NumberValue(context).To(&d) || std::isnan(d)) {
+        continue;
+      }
+      int64_t n = (int64_t)d;
+      if (n < 0 || n > UINT32_MAX) {
+        continue;
+      }
+      v = (uint32_t)n;
+    }
+    roaring_bitmap_add(roaring, v);
+  }
+  self->invalidate();
+}
+
 void RoaringBitmap32_getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::HandleScope scope(info.GetIsolate());
   AddonData * addonData = AddonData::get(info);
   info.GetReturnValue().Set(addonData ? (double)(addonData->RoaringBitmap32_instances) : 0.0);
 }
 
 void RoaringBitmap32_asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
@@ -5783,6 +5982,58 @@ void RoaringBitmap32_has(const v8::FunctionCallbackInfo<v8::Value> & info) {
   } else {
     info.GetReturnValue().Set(roaring_bitmap_contains(self->roaring, v));
   }
+}
+
+void RoaringBitmap32_indexOf(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<const RoaringBitmap32>(info.Holder(), isolate);
+  uint32_t v;
+  if (
+    self == nullptr || info.Length() < 1 || !info[0]->IsUint32() ||
+    !info[0]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
+    return info.GetReturnValue().Set(-1);
+  }
+  int64_t r = roaring_bitmap_get_index(self->roaring, v);
+  if (r >= 0) {
+    int64_t fromIndex;
+    if (info.Length() > 1 && info[1]->IntegerValue(isolate->GetCurrentContext()).To(&fromIndex)) {
+      if (fromIndex < 0) {
+        fromIndex += self->getSize();
+      }
+      if (r < fromIndex) {
+        return info.GetReturnValue().Set(-1);
+      }
+    }
+  }
+  return (uint64_t)r <= 0xFFFFFFFFull
+    ? r < 0x7fffffff ? info.GetReturnValue().Set((int)r) : info.GetReturnValue().Set((uint32_t)r)
+    : info.GetReturnValue().Set((double)r);
+}
+
+void RoaringBitmap32_lastIndexOf(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<const RoaringBitmap32>(info.Holder(), isolate);
+  uint32_t v;
+  if (
+    self == nullptr || info.Length() < 1 || !info[0]->IsUint32() ||
+    !info[0]->Uint32Value(isolate->GetCurrentContext()).To(&v)) {
+    return info.GetReturnValue().Set(-1);
+  }
+  int64_t r = roaring_bitmap_get_index(self->roaring, v);
+  if (r >= 0) {
+    int64_t fromIndex;
+    if (info.Length() > 1 && info[1]->IntegerValue(isolate->GetCurrentContext()).To(&fromIndex)) {
+      if (fromIndex < 0) {
+        fromIndex += self->getSize();
+      }
+      if (r > fromIndex) {
+        return info.GetReturnValue().Set(-1);
+      }
+    }
+  }
+  return (uint64_t)r <= 0xFFFFFFFFull
+    ? r < 0x7fffffff ? info.GetReturnValue().Set((int)r) : info.GetReturnValue().Set((uint32_t)r)
+    : info.GetReturnValue().Set((double)r);
 }
 
 void RoaringBitmap32_minimum(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -5873,7 +6124,6 @@ void RoaringBitmap32_freeze(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_clone(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
@@ -5892,7 +6142,6 @@ void RoaringBitmap32_clone(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_statistics(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
@@ -6025,7 +6274,6 @@ void RoaringBitmap32_swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info
 
 void RoaringBitmap32_toString(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -6033,9 +6281,105 @@ void RoaringBitmap32_toString(const v8::FunctionCallbackInfo<v8::Value> & info) 
   info.GetReturnValue().Set(self->addonData->strings.RoaringBitmap32.Get(isolate));
 }
 
+void RoaringBitmap32_at(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  if (self == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+  if (info.Length() < 1) {
+    return;
+  }
+  uint32_t index;
+  if (info[0]->IsInt32()) {
+    int64_t n = info[0]->Int32Value(isolate->GetCurrentContext()).FromJust();
+    if (n < 0) {
+      n += (int64_t)self->getSize();
+      if (n < 0 || n > UINT32_MAX) {
+        return;
+      }
+    }
+    index = (uint32_t)n;
+  } else if (info[0]->IsUint32()) {
+    index = info[0]->Uint32Value(isolate->GetCurrentContext()).FromJust();
+  } else {
+    if (info[0]->IsNull() || info[0]->IsUndefined()) {
+      return;
+    }
+    double d;
+    if (!info[0]->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
+      return;
+    }
+    int64_t n = (int64_t)d;
+    if (n < 0) {
+      n += (int64_t)self->getSize();
+      if (n < 0) {
+        return;
+      }
+    }
+    if (n > UINT32_MAX) {
+      return;
+    }
+    index = (uint32_t)n;
+  }
+
+  uint32_t result;
+  if (roaring_bitmap_select(self->roaring, index, &result)) {
+    info.GetReturnValue().Set(result);
+  }
+}
+
+void RoaringBitmap32_join(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  if (self == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  struct iter_data {
+    uint32_t count;
+    std::string sep;
+    std::string result;
+  } iterData;
+
+  iterData.count = 0;
+
+  if (info.Length() >= 1 && info[0]->IsString()) {
+    v8::String::Utf8Value sep(isolate, info[0]);
+    iterData.sep = *sep;
+  } else {
+    iterData.sep = ",";
+  }
+
+  if (self != nullptr && !self->isEmpty()) {
+    roaring_iterate(
+      self->roaring,
+      [](uint32_t value, void * vp) -> bool {
+        auto * p = reinterpret_cast<iter_data *>(vp);
+        if (p->result.length() >= 536870880) {
+          return false;
+        }
+
+        if (p->count++ > 0 && !p->sep.empty()) {
+          p->result.append(p->sep);
+        }
+        p->result.append(std::to_string(value));
+        return true;
+      },
+      (void *)&iterData);
+  }
+
+  auto returnValue = v8::String::NewFromUtf8(isolate, iterData.result.c_str(), v8::NewStringType::kNormal);
+  v8::Local<v8::String> returnValueLocal;
+  if (returnValue.ToLocal(&returnValueLocal)) {
+    info.GetReturnValue().Set(returnValueLocal);
+  } else {
+    info.GetReturnValue().Set(v8::String::Empty(isolate));
+  }
+}
+
 void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
@@ -6050,6 +6394,10 @@ void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> &
   double nv;
   if (info.Length() >= 1 && info[0]->IsNumber() && info[0]->NumberValue(isolate->GetCurrentContext()).To(&nv) && nv >= 0) {
     iterData.maxLen = (uint64_t)nv;
+  }
+
+  if (iterData.maxLen > 536870880) {
+    iterData.maxLen = 536870880;
   }
 
   if (self != nullptr && !self->isEmpty()) {
@@ -6084,7 +6432,6 @@ void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> &
 
 void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
 
   v8::Local<v8::Value> arg;
 
@@ -6137,7 +6484,6 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   croaringMemoryInitialize();
 
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
   v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
   v8::Local<v8::String> className = addonData->strings.RoaringBitmap32.Get(isolate);
@@ -6188,29 +6534,35 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   NODE_SET_PROTOTYPE_METHOD(ctor, "andNotCardinality", RoaringBitmap32_andNotCardinality);
   NODE_SET_PROTOTYPE_METHOD(ctor, "andNotInPlace", RoaringBitmap32_removeMany);
   NODE_SET_PROTOTYPE_METHOD(ctor, "asReadonlyView", RoaringBitmap32_asReadonlyView);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "at", RoaringBitmap32_at);
   NODE_SET_PROTOTYPE_METHOD(ctor, "clear", RoaringBitmap32_clear);
   NODE_SET_PROTOTYPE_METHOD(ctor, "clone", RoaringBitmap32_clone);
   NODE_SET_PROTOTYPE_METHOD(ctor, "contains", RoaringBitmap32_has);
   NODE_SET_PROTOTYPE_METHOD(ctor, "containsRange", RoaringBitmap32_hasRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "contentToString", RoaringBitmap32_contentToString);
   NODE_SET_PROTOTYPE_METHOD(ctor, "copyFrom", RoaringBitmap32_copyFrom);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "delete", RoaringBitmap32_removeChecked);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "delete", RoaringBitmap32_remove);
   NODE_SET_PROTOTYPE_METHOD(ctor, "deserialize", RoaringBitmap32_deserialize);
   NODE_SET_PROTOTYPE_METHOD(ctor, "flipRange", RoaringBitmap32_flipRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "freeze", RoaringBitmap32_freeze);
   NODE_SET_PROTOTYPE_METHOD(ctor, "getSerializationSizeInBytes", RoaringBitmap32_getSerializationSizeInBytes);
   NODE_SET_PROTOTYPE_METHOD(ctor, "has", RoaringBitmap32_has);
   NODE_SET_PROTOTYPE_METHOD(ctor, "hasRange", RoaringBitmap32_hasRange);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "includes", RoaringBitmap32_has);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "indexOf", RoaringBitmap32_indexOf);
   NODE_SET_PROTOTYPE_METHOD(ctor, "intersects", RoaringBitmap32_intersects);
   NODE_SET_PROTOTYPE_METHOD(ctor, "intersectsWithRange", RoaringBitmap32_intersectsWithRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isEqual", RoaringBitmap32_isEqual);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSubset", RoaringBitmap32_isStrictSubset);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isSubset", RoaringBitmap32_isSubset);
   NODE_SET_PROTOTYPE_METHOD(ctor, "jaccardIndex", RoaringBitmap32_jaccardIndex);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "join", RoaringBitmap32_join);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "lastIndexOf", RoaringBitmap32_lastIndexOf);
   NODE_SET_PROTOTYPE_METHOD(ctor, "maximum", RoaringBitmap32_maximum);
   NODE_SET_PROTOTYPE_METHOD(ctor, "minimum", RoaringBitmap32_minimum);
   NODE_SET_PROTOTYPE_METHOD(ctor, "orCardinality", RoaringBitmap32_orCardinality);
   NODE_SET_PROTOTYPE_METHOD(ctor, "orInPlace", RoaringBitmap32_addMany);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "pop", RoaringBitmap32_pop);
   NODE_SET_PROTOTYPE_METHOD(ctor, "rangeCardinality", RoaringBitmap32_rangeCardinality);
   NODE_SET_PROTOTYPE_METHOD(ctor, "rangeUint32Array", RoaringBitmap32_rangeUint32Array);
   NODE_SET_PROTOTYPE_METHOD(ctor, "rank", RoaringBitmap32_rank);
@@ -6222,6 +6574,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   NODE_SET_PROTOTYPE_METHOD(ctor, "select", RoaringBitmap32_select);
   NODE_SET_PROTOTYPE_METHOD(ctor, "serialize", RoaringBitmap32_serialize);
   NODE_SET_PROTOTYPE_METHOD(ctor, "serializeAsync", RoaringBitmap32_serializeAsync);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "shift", RoaringBitmap32_shift);
   NODE_SET_PROTOTYPE_METHOD(ctor, "shrinkToFit", RoaringBitmap32_shrinkToFit);
   NODE_SET_PROTOTYPE_METHOD(ctor, "statistics", RoaringBitmap32_statistics);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toArray", RoaringBitmap32_toArray);
@@ -6255,6 +6608,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   AddonData_setMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync, addonData);
   AddonData_setMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic, addonData);
   AddonData_setMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic, addonData);
+  AddonData_setMethod(ctorObject, "of", RoaringBitmap32_ofStatic, addonData);
   AddonData_setMethod(ctorObject, "or", RoaringBitmap32_orStatic, addonData);
   AddonData_setMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic, addonData);
   AddonData_setMethod(ctorObject, "swap", RoaringBitmap32_swapStatic, addonData);
@@ -6286,14 +6640,16 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
   enum { allocatedMemoryDelta = 1024 };
 
   roaring_uint32_iterator_t it;
-  int64_t bitmapVersion;
+  bool reversed;
   RoaringBitmap32 * bitmapInstance;
+  int64_t bitmapVersion;
   v8utils::TypedArrayContent<uint32_t> bufferContent;
 
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
 
-  explicit RoaringBitmap32BufferedIterator(AddonData * addonData) : ObjectWrap(addonData) {
+  explicit RoaringBitmap32BufferedIterator(AddonData * addonData, bool reversed) :
+    ObjectWrap(addonData), reversed(reversed), bitmapInstance(nullptr) {
     this->it.parent = nullptr;
     this->it.has_value = false;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
@@ -6302,6 +6658,26 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
   ~RoaringBitmap32BufferedIterator() {
     this->destroy();
     gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
+  }
+
+  inline uint32_t _fill() {
+    uint32_t n;
+    if (this->reversed) {
+      size_t size = this->bufferContent.length;
+      auto * data = this->bufferContent.data;
+      for (n = 0; n < size && this->it.has_value; ++n) {
+        data[n] = this->it.current_value;
+        roaring_previous_uint32_iterator(&this->it);
+      }
+    } else {
+      n = roaring_read_uint32_iterator(&this->it, this->bufferContent.data, this->bufferContent.length);
+    }
+    if (n == 0) {
+      this->bitmapInstance = nullptr;
+      this->bufferContent.reset();
+      this->bitmap.Reset();
+    }
+    return n;
   }
 
  private:
@@ -6316,7 +6692,6 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
 
 void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32BufferedIterator * instance =
     ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.Holder(), isolate);
@@ -6331,14 +6706,7 @@ void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Val
     return v8utils::throwError(isolate, "RoaringBitmap32 iterator - bitmap changed while iterating");
   }
 
-  uint32_t n = roaring_read_uint32_iterator(&instance->it, instance->bufferContent.data, instance->bufferContent.length);
-  if (n == 0) {
-    instance->bitmapInstance = nullptr;
-    instance->bufferContent.reset();
-    instance->bitmap.Reset();
-  }
-
-  info.GetReturnValue().Set(n);
+  return info.GetReturnValue().Set(instance->_fill());
 }
 
 void RoaringBitmap32BufferedIterator_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info) {
@@ -6351,7 +6719,6 @@ void RoaringBitmap32BufferedIterator_WeakCallback(v8::WeakCallbackInfo<RoaringBi
 
 void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (!info.IsConstructCall()) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs to be called with new");
@@ -6359,8 +6726,8 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
 
   auto holder = info.Holder();
 
-  if (info.Length() != 2) {
-    return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs two arguments");
+  if (info.Length() < 2) {
+    return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs 2 or 3 arguments");
   }
 
   AddonData * addonData = AddonData::get(info);
@@ -6373,6 +6740,8 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
     return v8utils::throwTypeError(
       isolate, "RoaringBitmap32BufferedIterator::ctor - first argument must be of type RoaringBitmap32");
   }
+
+  bool reversed = info.Length() > 2 && info[2]->BooleanValue(isolate);
 
   auto bufferObject = info[1];
 
@@ -6387,7 +6756,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
   }
 
   auto * instanceMemory = bare_aligned_malloc(16, sizeof(RoaringBitmap32BufferedIterator));
-  auto * instance = instanceMemory ? new (instanceMemory) RoaringBitmap32BufferedIterator(addonData) : nullptr;
+  auto * instance = instanceMemory ? new (instanceMemory) RoaringBitmap32BufferedIterator(addonData, reversed) : nullptr;
   if (instance == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
   }
@@ -6396,46 +6765,46 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
   void * values[2] = {instance, (void *)(RoaringBitmap32BufferedIterator::OBJECT_TOKEN)};
   holder->SetAlignedPointerInInternalFields(2, indices, values);
 
+  info.GetReturnValue().Set(holder);
+
   instance->persistent.Reset(isolate, holder);
   instance->persistent.SetWeak(instance, RoaringBitmap32BufferedIterator_WeakCallback, v8::WeakCallbackType::kParameter);
 
   auto context = isolate->GetCurrentContext();
 
-  roaring_init_iterator(bitmapInstance->roaring, &instance->it);
+  instance->bitmapInstance = bitmapInstance;
+  instance->bitmapVersion = bitmapInstance->getVersion();
 
-  uint32_t n = roaring_read_uint32_iterator(&instance->it, bufferContent.data, bufferContent.length);
-  if (n != 0) {
-    instance->bitmapInstance = bitmapInstance;
-    instance->bitmapVersion = bitmapInstance->getVersion();
-
-    auto a0Maybe = info[0]->ToObject(context);
-    v8::Local<v8::Object> a0;
-    if (!a0Maybe.ToLocal(&a0)) {
-      return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
-    }
-    instance->bitmap.Reset(isolate, a0);
-
-    auto a1Maybe = bufferObject->ToObject(context);
-    v8::Local<v8::Object> a1;
-    if (!a1Maybe.ToLocal(&a1)) {
-      return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
-    }
-
-    instance->bufferContent.set(isolate, bufferObject);
-  } else {
-    instance->bitmapInstance = nullptr;
+  auto a0Maybe = info[0]->ToObject(context);
+  v8::Local<v8::Object> a0;
+  if (!a0Maybe.ToLocal(&a0)) {
+    return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
   }
+  instance->bitmap.Reset(isolate, a0);
+
+  auto a1Maybe = bufferObject->ToObject(context);
+  v8::Local<v8::Object> a1;
+  if (!a1Maybe.ToLocal(&a1)) {
+    return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
+  }
+
+  instance->bufferContent.set(isolate, bufferObject);
+
+  if (reversed) {
+    roaring_init_iterator_last(bitmapInstance->roaring, &instance->it);
+  } else {
+    roaring_init_iterator(bitmapInstance->roaring, &instance->it);
+  }
+
+  uint32_t n = instance->_fill();
 
   if (holder->Set(context, addonData->strings.n.Get(isolate), v8::Uint32::NewFromUnsigned(isolate, n)).IsNothing()) {
     return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - instantiation failed");
   }
-
-  info.GetReturnValue().Set(holder);
 }
 
 void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
 
   auto className = NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32BufferedIterator", v8::NewStringType::kInternalized);
 
@@ -6594,7 +6963,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdbool.h>
 #include <stdlib.h>
 
-
 // We need portability.h to be included first, see
 // https://github.com/RoaringBitmap/CRoaring/issues/394
 #if CROARING_REGULAR_VISUAL_STUDIO
@@ -6641,7 +7009,7 @@ static inline void cpuid(uint32_t *eax, uint32_t *ebx, uint32_t *ecx,
                          uint32_t *edx) {
 #if CROARING_REGULAR_VISUAL_STUDIO
   int cpu_info[4];
-  __cpuid(cpu_info, *eax);
+  __cpuidex(cpu_info, *eax, *ecx);
   *eax = cpu_info[0];
   *ebx = cpu_info[1];
   *ecx = cpu_info[2];
@@ -6656,6 +7024,17 @@ static inline void cpuid(uint32_t *eax, uint32_t *ebx, uint32_t *ecx,
   *ebx = b;
   *ecx = c;
   *edx = d;
+#endif
+}
+
+
+static inline uint64_t xgetbv() {
+#if defined(_MSC_VER)
+  return _xgetbv(0);
+#else
+  uint32_t xcr0_lo, xcr0_hi;
+  __asm__("xgetbv\n\t" : "=a" (xcr0_lo), "=d" (xcr0_hi) : "c" (0));
+  return xcr0_lo | ((uint64_t)xcr0_hi << 32);
 #endif
 }
 
@@ -6677,8 +7056,39 @@ static inline uint32_t dynamic_croaring_detect_supported_architectures() {
   static uint32_t cpuid_avx512vbmi2_bit = 1 << 6; ///< @private bit 6 of ECX for EAX=0x7
   static uint32_t cpuid_avx512bitalg_bit = 1 << 12; ///< @private bit 12 of ECX for EAX=0x7
   static uint32_t cpuid_avx512vpopcntdq_bit = 1 << 14; ///< @private bit 14 of ECX for EAX=0x7
+  static uint64_t cpuid_avx256_saved = 1 << 2; ///< @private bit 2 = AVX
+  static uint64_t cpuid_avx512_saved = 7 << 5; ///< @private bits 5,6,7 = opmask, ZMM_hi256, hi16_ZMM
   static uint32_t cpuid_sse42_bit = 1 << 20;    ///< @private bit 20 of ECX for EAX=0x1
+  static uint32_t cpuid_osxsave = (1 << 26) | (1 << 27); ///< @private bits 26+27 of ECX for EAX=0x1
   static uint32_t cpuid_pclmulqdq_bit = 1 << 1; ///< @private bit  1 of ECX for EAX=0x1
+
+
+  // EBX for EAX=0x1
+  eax = 0x1;
+  ecx = 0x0;
+  cpuid(&eax, &ebx, &ecx, &edx);
+
+  if (ecx & cpuid_sse42_bit) {
+    host_isa |= CROARING_SSE42;
+  } else {
+    return host_isa; // everything after is redundant
+  }
+
+  if (ecx & cpuid_pclmulqdq_bit) {
+    host_isa |= CROARING_PCLMULQDQ;
+  }
+
+  if ((ecx & cpuid_osxsave) != cpuid_osxsave) {
+    return host_isa;
+  }
+
+  // xgetbv for checking if the OS saves registers
+  uint64_t xcr0 = xgetbv();
+
+  if ((xcr0 & cpuid_avx256_saved) == 0) {
+    return host_isa;
+  }
+
   // ECX for EAX=0x7
   eax = 0x7;
   ecx = 0x0;
@@ -6693,7 +7103,11 @@ static inline uint32_t dynamic_croaring_detect_supported_architectures() {
   if (ebx & cpuid_bmi2_bit) {
     host_isa |= CROARING_BMI2;
   }
-  
+
+  if (!((xcr0 & cpuid_avx512_saved) == cpuid_avx512_saved)) {
+     return host_isa;
+  }
+
   if (ebx & cpuid_avx512f_bit) {
     host_isa |= CROARING_AVX512F;
   }
@@ -6716,18 +7130,6 @@ static inline uint32_t dynamic_croaring_detect_supported_architectures() {
   
   if (ecx & cpuid_avx512vpopcntdq_bit) {
     host_isa |= CROARING_AVX512VPOPCNTDQ;
-  }
-  
-  // EBX for EAX=0x1
-  eax = 0x1;
-  cpuid(&eax, &ebx, &ecx, &edx);
-
-  if (ecx & cpuid_sse42_bit) {
-    host_isa |= CROARING_SSE42;
-  }
-
-  if (ecx & cpuid_pclmulqdq_bit) {
-    host_isa |= CROARING_PCLMULQDQ;
   }
 
   return host_isa;
@@ -6920,7 +7322,7 @@ static inline int32_t advanceUntil(const uint16_t *array, int32_t pos,
 }
 
 /**
- * Returns number of elements which are less then $ikey.
+ * Returns number of elements which are less than ikey.
  * Array elements must be unique and sorted.
  */
 static inline int32_t count_less(const uint16_t *array, int32_t lenarray,
@@ -6931,7 +7333,7 @@ static inline int32_t count_less(const uint16_t *array, int32_t lenarray,
 }
 
 /**
- * Returns number of elements which are greater then $ikey.
+ * Returns number of elements which are greater than ikey.
  * Array elements must be unique and sorted.
  */
 static inline int32_t count_greater(const uint16_t *array, int32_t lenarray,
@@ -12197,7 +12599,18 @@ inline int array_container_rank(const array_container_t *arr, uint16_t x) {
     }
 }
 
-/* Returns the index of the first value equal or smaller than x, or -1 */
+/* Returns the index of x , if not exsist return -1 */
+inline int array_container_get_index(const array_container_t *arr, uint16_t x) {
+    const int32_t idx = binarySearch(arr->array, arr->cardinality, x);
+    const bool is_present = idx >= 0;
+    if (is_present) {
+        return idx;
+    } else {
+        return -1;
+    }
+}
+
+/* Returns the index of the first value equal or larger than x, or -1 */
 inline int array_container_index_equalorlarger(const array_container_t *arr, uint16_t x) {
     const int32_t idx = binarySearch(arr->array, arr->cardinality, x);
     const bool is_present = idx >= 0;
@@ -12280,6 +12693,8 @@ extern inline int array_container_index_equalorlarger(const array_container_t *a
 
 extern inline int array_container_rank(const array_container_t *arr,
                                        uint16_t x);
+extern inline int array_container_get_index(const array_container_t *arr,
+                                          uint16_t x);
 extern inline bool array_container_contains(const array_container_t *arr,
                                             uint16_t pos);
 extern inline int array_container_cardinality(const array_container_t *array);
@@ -13270,6 +13685,9 @@ uint16_t bitset_container_maximum(const bitset_container_t *container);
 
 /* Returns the number of values equal or smaller than x */
 int bitset_container_rank(const bitset_container_t *container, uint16_t x);
+
+/* Returns the index of x , if not exsist return -1 */
+int bitset_container_get_index(const bitset_container_t *container, uint16_t x);
 
 /* Returns the index of the first value equal or larger than x, or -1 */
 int bitset_container_index_equalorlarger(const bitset_container_t *container, uint16_t x);
@@ -14477,6 +14895,25 @@ int bitset_container_rank(const bitset_container_t *container, uint16_t x) {
   return sum;
 }
 
+/* Returns the index of x , if not exsist return -1 */
+int bitset_container_get_index(const bitset_container_t *container, uint16_t x) {
+  if (bitset_container_get(container, x)) {
+    // credit: aqrit
+    int sum = 0;
+    int i = 0;
+    for (int end = x / 64; i < end; i++){
+      sum += roaring_hamming(container->words[i]);
+    }
+    uint64_t lastword = container->words[i];
+    uint64_t lastpos = UINT64_C(1) << (x % 64);
+    uint64_t mask = lastpos + lastpos - 1; // smear right
+    sum += roaring_hamming(lastword & mask);
+    return sum - 1;
+  } else {
+    return -1;
+  }
+}
+
 /* Returns the index of the first value equal or larger than x, or -1 */
 int bitset_container_index_equalorlarger(const bitset_container_t *container, uint16_t x) {
   uint32_t x32 = x;
@@ -15080,6 +15517,9 @@ inline uint16_t run_container_maximum(const run_container_t *run) {
 
 /* Returns the number of values equal or smaller than x */
 int run_container_rank(const run_container_t *arr, uint16_t x);
+
+/* Returns the index of x, if not exsist return -1 */
+int run_container_get_index(const run_container_t *arr, uint16_t x);
 
 /* Returns the index of the first run containing a value at least as large as x, or -1 */
 inline int run_container_index_equalorlarger(const run_container_t *arr, uint16_t x) {
@@ -18382,6 +18822,26 @@ static inline int container_rank(
             return array_container_rank(const_CAST_array(c), x);
         case RUN_CONTAINER_TYPE:
             return run_container_rank(const_CAST_run(c), x);
+        default:
+            assert(false);
+            roaring_unreachable;
+    }
+    assert(false);
+    roaring_unreachable;
+    return false;
+}
+
+// return the index of x, if not exsist return -1
+static inline int container_get_index(const container_t *c, uint8_t type,
+                                    uint16_t x) {
+    c = container_unwrap_shared(c, &type);
+    switch (type) {
+        case BITSET_CONTAINER_TYPE:
+            return bitset_container_get_index(const_CAST_bitset(c), x);
+        case ARRAY_CONTAINER_TYPE:
+            return array_container_get_index(const_CAST_array(c), x);
+        case RUN_CONTAINER_TYPE:
+            return run_container_get_index(const_CAST_run(c), x);
         default:
             assert(false);
             roaring_unreachable;
@@ -22253,6 +22713,27 @@ int run_container_rank(const run_container_t *container, uint16_t x) {
     return sum;
 }
 
+int run_container_get_index(const run_container_t *container, uint16_t x) {
+    if (run_container_contains(container, x)) {
+        int sum = 0;
+        uint32_t x32 = x;
+        for (int i = 0; i < container->n_runs; i++) {
+            uint32_t startpoint = container->runs[i].value;
+            uint32_t length = container->runs[i].length;
+            uint32_t endpoint = length + startpoint;
+            if (x <= endpoint) {
+                if (x < startpoint) break;
+                return sum + (x32 - startpoint);
+            } else {
+                sum += length + 1;
+            }
+        }
+        return sum - 1;
+    } else {
+        return -1;
+    }
+}
+
 #if defined(CROARING_IS_X64) && CROARING_COMPILER_SUPPORTS_AVX512
 
 CROARING_TARGET_AVX512
@@ -25432,6 +25913,34 @@ uint64_t roaring_bitmap_rank(const roaring_bitmap_t *bm, uint32_t x) {
         }
     }
     return size;
+}
+
+/**
+ * roaring_bitmap_get_index returns the index of x, if not exsist return -1.
+ */
+int64_t roaring_bitmap_get_index(const roaring_bitmap_t *bm, uint32_t x) {
+    int64_t index = 0;
+    const uint16_t xhigh = x >> 16;
+    int32_t high_idx = ra_get_index(&bm->high_low_container, xhigh);
+    if (high_idx < 0) return -1;
+
+    for (int i = 0; i < bm->high_low_container.size; i++) {
+        uint32_t key = bm->high_low_container.keys[i];
+        if (xhigh > key) {
+            index +=
+                container_get_cardinality(bm->high_low_container.containers[i],
+                                          bm->high_low_container.typecodes[i]);
+        } else if (xhigh == key) {
+            int32_t low_idx = container_get_index(
+                bm->high_low_container.containers[high_idx],
+                bm->high_low_container.typecodes[high_idx], x & 0xFFFF);
+            if (low_idx < 0) return -1;
+            return index + low_idx;
+        } else {
+            return -1;
+        }
+    }
+    return index;
 }
 
 /**

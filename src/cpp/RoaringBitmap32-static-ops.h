@@ -5,7 +5,6 @@
 
 void RoaringBitmap32_addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset expects 2 arguments");
@@ -49,7 +48,6 @@ void RoaringBitmap32_addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> &
 
 void RoaringBitmap32_andStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::and expects 2 arguments");
 
@@ -85,7 +83,6 @@ void RoaringBitmap32_andStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
 
 void RoaringBitmap32_orStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::or expects 2 arguments");
 
@@ -120,7 +117,6 @@ void RoaringBitmap32_orStatic(const v8::FunctionCallbackInfo<v8::Value> & info) 
 
 void RoaringBitmap32_xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor expects 2 arguments");
@@ -157,7 +153,6 @@ void RoaringBitmap32_xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
 
 void RoaringBitmap32_andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::andnot expects 2 arguments");
 
@@ -198,7 +193,6 @@ void roaringOpMany(
   roaring_bitmap_t * op(TSize number, const roaring_bitmap_t ** x),
   const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   int length = info.Length();
 

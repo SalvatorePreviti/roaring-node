@@ -2,11 +2,25 @@
   "configurations": [
     {
       "name": "Mac",
-      "includePath": ["${workspaceFolder}", "/usr/local/include", "/usr/local/include/node", "${default}"],
+      "includePath": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/submodules/CRoaring/include",
+        "/Users/sp/n/include/node",
+        "/usr/local/include",
+        "/usr/local/include/node",
+        "${default}"
+      ],
       "defines": [],
       "intelliSenseMode": "clang-x64",
       "browse": {
-        "path": ["${workspaceFolder}", "/usr/local/include", "/usr/local/include/node", "${default}"],
+        "path": [
+          "${workspaceFolder}",
+          "${workspaceFolder}/submodules/CRoaring/include",
+          "/Users/sp/n/include/node",
+          "/usr/local/include",
+          "/usr/local/include/node",
+          "${default}"
+        ],
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
       },

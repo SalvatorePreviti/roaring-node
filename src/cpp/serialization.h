@@ -245,13 +245,21 @@ class RoaringBitmapDeserializer final {
     if (bufLen == 0 || !bufaschar) {
       // Empty bitmap for an empty buffer.
       this->roaring = roaring_bitmap_create();
-      return this->roaring ? nullptr : "RoaringBitmap32 deserialization failed to create an empty bitmap";
+      if (!this->roaring) {
+        return "RoaringBitmap32 deserialization failed to create an empty bitmap";
+      }
+      roaring_bitmap_set_copy_on_write(this->roaring, true);
+      return nullptr;
     }
 
     switch (this->format) {
       case DeserializationFormat::portable: {
         this->roaring = roaring_bitmap_portable_deserialize_safe(bufaschar, bufLen);
-        return this->roaring ? nullptr : "RoaringBitmap32::deserialize - portable deserialization failed";
+        if (!this->roaring) {
+          return "RoaringBitmap32::deserialize - portable deserialization failed";
+        }
+        roaring_bitmap_set_copy_on_write(this->roaring, true);
+        return nullptr;
       }
 
       case DeserializationFormat::croaring: {
@@ -266,12 +274,20 @@ class RoaringBitmapDeserializer final {
 
             const uint32_t * elems = (const uint32_t *)(bufaschar + 1 + sizeof(uint32_t));
             this->roaring = roaring_bitmap_of_ptr(card, elems);
-            return this->roaring ? nullptr : "RoaringBitmap32 deserialization - uint32 array deserialization failed";
+            if (!this->roaring) {
+              return "RoaringBitmap32 deserialization - uint32 array deserialization failed";
+            }
+            roaring_bitmap_set_copy_on_write(this->roaring, true);
+            return nullptr;
           }
 
           case CROARING_SERIALIZATION_CONTAINER: {
             this->roaring = roaring_bitmap_portable_deserialize_safe(bufaschar + 1, bufLen - 1);
-            return this->roaring ? nullptr : "RoaringBitmap32 deserialization - container deserialization failed";
+            if (!this->roaring) {
+              return "RoaringBitmap32 deserialization - container deserialization failed";
+            }
+            roaring_bitmap_set_copy_on_write(this->roaring, true);
+            return nullptr;
           }
         }
 
@@ -294,7 +310,11 @@ class RoaringBitmapDeserializer final {
 
         this->roaring =
           const_cast<roaring_bitmap_t_ptr>(roaring_bitmap_portable_deserialize_frozen((const char *)this->frozenBuffer));
-        return this->roaring ? nullptr : "RoaringBitmap32 deserialization - failed to create a frozen view";
+        if (!this->roaring) {
+          return "RoaringBitmap32 deserialization - failed to create a frozen view";
+        }
+        roaring_bitmap_set_copy_on_write(this->roaring, true);
+        return nullptr;
       }
 
       default: return "RoaringBitmap32::deserialize - unknown deserialization format";

@@ -50,6 +50,26 @@ describe("RoaringBitmap32 basic", () => {
     });
   });
 
+  describe("join", () => {
+    it('returns "" for an empty bitmap', () => {
+      expect(new RoaringBitmap32().join()).eq("");
+    });
+    it("generates a valid string for 1 value", () => {
+      const bitmap = new RoaringBitmap32([1]);
+      expect(bitmap.join()).eq("1");
+    });
+    it("generates a valid string for few values", () => {
+      const values = [100, 200, 201, 202, 203, 204, 300, 0x7fffffff, 0xffffffff];
+      const bitmap = new RoaringBitmap32(values);
+      expect(bitmap.join()).eq("100,200,201,202,203,204,300,2147483647,4294967295");
+    });
+    it("supports custom separator", () => {
+      const values = [100, 200, 201, 202, 203, 204, 300, 0x7fffffff, 0xffffffff];
+      const bitmap = new RoaringBitmap32(values);
+      expect(bitmap.join("xx")).eq("100xx200xx201xx202xx203xx204xx300xx2147483647xx4294967295");
+    });
+  });
+
   describe("clone", () => {
     it("returns a cloned empty bitmap", () => {
       const bitmap1 = new RoaringBitmap32();
@@ -731,8 +751,24 @@ describe("RoaringBitmap32 basic", () => {
 
       rb1.andInPlace(rb2);
 
+      expect(rb1.includes(1)).eq(false);
+      expect(rb1.includes(3)).eq(true);
       expect(rb1.has(1)).eq(false);
       expect(rb1.has(3)).eq(true);
+
+      expect(rb1.has(undefined)).eq(false);
+      expect(rb1.has(null)).eq(false);
+      expect(rb1.has("")).eq(false);
+      expect(rb1.has("1")).eq(false);
+      expect(rb1.has("3")).eq(false);
+      expect(rb1.has(1.1)).eq(false);
+
+      expect(rb1.includes(undefined)).eq(false);
+      expect(rb1.includes(null)).eq(false);
+      expect(rb1.includes("")).eq(false);
+      expect(rb1.includes("1")).eq(false);
+      expect(rb1.includes("3")).eq(false);
+      expect(rb1.includes(1.1)).eq(false);
 
       expect(rb1.size).eq(3);
       expect(rb1.contentToString()).eq("[3,4,1000]");
@@ -746,6 +782,66 @@ describe("RoaringBitmap32 basic", () => {
 
       const rb4 = RoaringBitmap32.orMany(rb1, rb2, rb3);
       expect(rb4.toArray()).deep.equal([3, 4, 5, 1000]);
+    });
+  });
+
+  describe("indexOf", () => {
+    it("returns -1 if the value is not present", () => {
+      const rb = new RoaringBitmap32([1, 2, 3, 4, 5, 0xffffffff]);
+      expect(rb.indexOf(6)).eq(-1);
+      expect(rb.indexOf(-1)).eq(-1);
+      expect(rb.indexOf(Number.MAX_SAFE_INTEGER)).eq(-1);
+      expect(new RoaringBitmap32().indexOf(0)).eq(-1);
+      expect(new RoaringBitmap32().indexOf(1)).eq(-1);
+    });
+    it("returns the index of the value", () => {
+      const rb = new RoaringBitmap32([0, 3, 4, 6, 10, 11, 12, 0x7fffffff, 0xffffffff]);
+      expect(rb.indexOf(0)).eq(0);
+      expect(rb.indexOf(4)).eq(2);
+      expect(rb.indexOf(11)).eq(5);
+      expect(rb.indexOf(12)).eq(6);
+      expect(rb.indexOf(0x7fffffff)).eq(7);
+      expect(rb.indexOf(0xffffffff)).eq(8);
+    });
+    it("handles fromIndex correctly as normal arrays", () => {
+      const array = [0, 3, 4, 6, 10, 11, 12, 0x7fffffff, 0xffffffff];
+      const rb = new RoaringBitmap32(array);
+      for (const j of [undefined, 0, 0.1, 0, 0.5, 1, 2, 1000, 0xffffffff, -0xffffffff, -1000, -2, -1]) {
+        for (let i = 0; i < array.length; ++i) {
+          const k = j !== undefined ? i + j : undefined;
+          expect(rb.indexOf(array[i], k), `i:${i},j:${j}`).eq(array.indexOf(array[i], k));
+        }
+      }
+    });
+  });
+
+  describe("lastIndexOf", () => {
+    it("returns -1 if the value is not present", () => {
+      const rb = new RoaringBitmap32([1, 2, 3, 4, 5, 0xffffffff]);
+      expect(rb.lastIndexOf(6)).eq(-1);
+      expect(rb.lastIndexOf(-1)).eq(-1);
+      expect(rb.lastIndexOf(Number.MAX_SAFE_INTEGER)).eq(-1);
+      expect(new RoaringBitmap32().lastIndexOf(0)).eq(-1);
+      expect(new RoaringBitmap32().lastIndexOf(1)).eq(-1);
+    });
+    it("returns the index of the value", () => {
+      const rb = new RoaringBitmap32([0, 3, 4, 6, 10, 11, 12, 0x7fffffff, 0xffffffff]);
+      expect(rb.lastIndexOf(0)).eq(0);
+      expect(rb.lastIndexOf(4)).eq(2);
+      expect(rb.lastIndexOf(11)).eq(5);
+      expect(rb.lastIndexOf(12)).eq(6);
+      expect(rb.lastIndexOf(0x7fffffff)).eq(7);
+      expect(rb.lastIndexOf(0xffffffff)).eq(8);
+    });
+    it("handles fromIndex correctly as normal arrays", () => {
+      const array = [0, 3, 4, 6, 10, 11, 12, 0x7fffffff, 0xffffffff];
+      const rb = new RoaringBitmap32(array);
+      for (const j of [undefined, 0, 0.1, 0, 0.5, 1, 2, 1000, 0xffffffff, -0xffffffff, -1000, -2, -1]) {
+        for (let i = 0; i < array.length; ++i) {
+          const k = j !== undefined ? i + j : undefined;
+          expect(rb.lastIndexOf(array[i], k), `i:${i},j:${j}`).eq(array.lastIndexOf(array[i], k));
+        }
+      }
     });
   });
 
@@ -807,7 +903,7 @@ describe("RoaringBitmap32 basic", () => {
   it("implements Set<> interface properly", () => {
     const x: Set<number> = new RoaringBitmap32([1, 3]);
     x.add(2);
-    expect(x.has(2));
+    expect(x.has(2)).eq(true);
     expect(Array.from(x.entries())).to.deep.equal([
       [1, 1],
       [2, 2],
@@ -829,7 +925,7 @@ describe("RoaringBitmap32 basic", () => {
       bitmap.forEach((...args) => {
         invoked.push(args);
       });
-      expect(invoked).to.deep.equal([[1, 1, bitmap]]);
+      expect(invoked).to.deep.equal([[1, 0, bitmap]]);
       expect(typeof invoked[0][0]).eq("number");
     });
 
@@ -839,11 +935,11 @@ describe("RoaringBitmap32 basic", () => {
 
       bitmap.forEach((...args) => invoked.push(args));
       expect(invoked).to.deep.equal([
-        [1, 1, bitmap],
-        [2, 2, bitmap],
-        [5, 5, bitmap],
-        [6, 6, bitmap],
-        [7, 7, bitmap],
+        [1, 0, bitmap],
+        [2, 1, bitmap],
+        [5, 2, bitmap],
+        [6, 3, bitmap],
+        [7, 4, bitmap],
       ]);
     });
 
@@ -859,10 +955,36 @@ describe("RoaringBitmap32 basic", () => {
         }),
       ).to.throw("expected");
       expect(invoked).to.deep.equal([
-        [1, 1, bitmap],
-        [2, 2, bitmap],
-        [5, 5, bitmap],
+        [1, 0, bitmap],
+        [2, 1, bitmap],
+        [5, 2, bitmap],
       ]);
+    });
+  });
+
+  describe("pop", () => {
+    it("returns the last element", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      expect(bitmap.pop()).eq(3);
+      expect(bitmap.size).eq(2);
+      expect(bitmap.pop()).eq(2);
+      expect(bitmap.size).eq(1);
+      expect(bitmap.pop()).eq(1);
+      expect(bitmap.size).eq(0);
+      expect(bitmap.pop()).eq(undefined);
+    });
+  });
+
+  describe("shift", () => {
+    it("returns the first element", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      expect(bitmap.shift()).eq(1);
+      expect(bitmap.size).eq(2);
+      expect(bitmap.shift()).eq(2);
+      expect(bitmap.size).eq(1);
+      expect(bitmap.shift()).eq(3);
+      expect(bitmap.size).eq(0);
+      expect(bitmap.shift()).eq(undefined);
     });
   });
 
@@ -884,6 +1006,147 @@ describe("RoaringBitmap32 basic", () => {
         return x + this;
       }, 10);
       expect(mapped).deep.equal([11, 12, 13]);
+    });
+  });
+
+  describe("filter", () => {
+    it("filters a bitmap", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      let counter = 0;
+      const filtered = bitmap.filter((x, index, set) => {
+        expect(index).eq(counter++);
+        expect(set).eq(bitmap);
+        return x % 2 === 0;
+      });
+      expect(filtered).deep.equal([2, 4, 6]);
+    });
+    it("filters a bitmap with a context", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      const filtered = bitmap.filter(function (this: number, x) {
+        return x % 2 === this;
+      }, 1);
+      expect(filtered).deep.equal([1, 3, 5]);
+    });
+  });
+
+  describe("reduce", () => {
+    it("reduces a bitmap", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      let counter = 0;
+      const reduced = bitmap.reduce((acc, x, index, set) => {
+        expect(index).eq(counter++);
+        expect(set).eq(bitmap);
+        return acc + x;
+      }, 0);
+      expect(reduced).eq(21);
+    });
+    it("reduces a bitmap with a undefined initial value", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      let counter = 0;
+      const reduced = bitmap.reduce((acc, x, index, set) => {
+        expect(index).eq(counter++);
+        expect(set).eq(bitmap);
+        return acc + x;
+      });
+      expect(reduced).eq(21);
+    });
+  });
+
+  describe("reduceRight", () => {
+    it("reduces a bitmap", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      let counter = bitmap.size;
+      const reduced = bitmap.reduceRight((acc, x, index, set) => {
+        expect(index).eq(--counter);
+        expect(set).eq(bitmap);
+        return acc + x;
+      }, 0);
+      expect(counter).eq(0);
+      expect(reduced).eq(21);
+    });
+    it("reduces a bitmap with a undefined initial value", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      let counter = bitmap.size;
+      const reduced = bitmap.reduceRight((acc, x, index, set) => {
+        expect(index).eq(--counter);
+        expect(set).eq(bitmap);
+        return acc + x;
+      });
+      expect(counter).eq(0);
+      expect(reduced).eq(21);
+    });
+  });
+
+  describe("findIndex", () => {
+    it("finds the index of an item", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.findIndex((x) => x === 4)).eq(3);
+    });
+    it("returns -1 if the item is not found", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.findIndex((x) => x === 7)).eq(-1);
+    });
+  });
+
+  describe("find", () => {
+    it("finds an item", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.find((x) => x === 4)).eq(4);
+    });
+    it("returns undefined if the item is not found", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.find((x) => x === 7)).eq(undefined);
+    });
+  });
+
+  describe("some", () => {
+    it("returns true if any item matches", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.some((x) => x === 4)).eq(true);
+    });
+    it("returns false if no item matches", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.some((x) => x === 7)).eq(false);
+    });
+  });
+
+  describe("every", () => {
+    it("returns true if all items match", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.every((x) => x < 7)).eq(true);
+    });
+    it("returns false if any item does not match", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.every((x) => x < 6)).eq(false);
+    });
+  });
+
+  describe("includes", () => {
+    it("returns true if the item is included", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.includes(4)).eq(true);
+    });
+    it("returns false if the item is not included", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.includes(7)).eq(false);
+    });
+  });
+
+  describe("toSorted", () => {
+    it("returns a sorted array", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.toSorted()).deep.equal([1, 2, 3, 4, 5, 6]);
+    });
+    it("applies the custom sorting", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.toSorted((a, b) => (b & 1 ? a - b : b - a))).deep.equal([1, 3, 5, 6, 4, 2]);
+    });
+  });
+
+  describe("toReversed", () => {
+    it("returns a reversed array", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.toReversed()).deep.equal([6, 5, 4, 3, 2, 1]);
     });
   });
 });

@@ -275,6 +275,17 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   iterator(): RoaringBitmap32Iterator;
 
   /**
+   * Gets a new iterator able to iterate all values in the set in descending order.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating.
+   * The iterator may throw exception if the bitmap is changed during the iteration.
+   *
+   * @returns {RoaringBitmap32Iterator} A new reverse iterator
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  reverseIterator(): RoaringBitmap32Iterator;
+
+  /**
    * Gets a new iterator able to iterate all values in the set in ascending order.
    * This is just for compatibility with the Set<number> interface.
    *
@@ -326,25 +337,172 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * This is required to match the Set<number> interface.
    */
   forEach<This = unknown>(
-    callbackfn: (this: This, value: number, value2: number, set: this) => void,
+    callbackfn: (this: This, value: number, index: number, set: this) => void,
     thisArg?: This,
   ): this;
 
   /**
-   * It behaves like array.map.
+   * Behaves like array.some.
+   * The some() method tests whether at least one element in the set passes the test implemented by the provided function.
+   * It returns true if, in the set, it finds an element for which the provided function returns true; otherwise it returns false.
    *
-   * WARNING: The returned array may be very big, up to 4 trillion elements.
+   * WARNING: this can potentially iterate a large set of to 4 billion elements.
    *
    * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
    *
-   * WARNING: The second parameter is the index in the resulting array.
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some
+   */
+  some(callbackfn: (value: number, index: number, set: this) => boolean, thisArg?: unknown): boolean;
+
+  /**
+   * Behaves like array.every.
+   * The every() method tests whether all elements in the set pass the test implemented by the provided function.
+   * It returns a Boolean value.
    *
+   * WARNING: this can potentially iterate a large set of to 4 billion elements.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every
+   */
+  every(callbackfn: (value: number, index: number, set: this) => boolean, thisArg?: unknown): boolean;
+
+  /**
+   * Behaves like array.reduce.
+   * The reduce() method applies a function against an accumulator and each value of the set (from left-to-right) to reduce it to a single value.
+   *
+   * WARNING: this can potentially iterate a large set of to 4 billion elements.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * @param callbackfn A function that accepts up to four arguments. The reduce method calls the callbackfn function one time for each element in the set.
+   * @returns The value that results from the reduction.
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  reduce(callbackfn: (previousValue: number, currentValue: number, currentIndex: number, set: this) => number): number;
+  reduce(
+    callbackfn: (previousValue: number, currentValue: number, currentIndex: number, set: this) => number,
+    initialValue: number | undefined,
+  ): number;
+  reduce<U>(
+    callbackfn: (previousValue: U, currentValue: number, currentIndex: number, set: this) => U,
+    initialValue: U,
+  ): U;
+
+  /**
+   * Behaves like array.reduceRight.
+   * The reduceRight() method applies a function against an accumulator and each value of the set (from right-to-left) to reduce it to a single value.
+   * WARNING: this can potentially iterate a large set of to 4 billion elements.
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   * @param callbackfn A function that accepts up to four arguments. The reduce method calls the callbackfn function one time for each element in the set.
+   * @returns The value that results from the reduction.
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduceRight
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  reduceRight(
+    callbackfn: (previousValue: number, currentValue: number, currentIndex: number, set: this) => number,
+  ): number;
+  reduceRight(
+    callbackfn: (previousValue: number, currentValue: number, currentIndex: number, set: this) => number,
+    initialValue: number | undefined,
+  ): number;
+  reduceRight<U>(
+    callbackfn: (previousValue: U, currentValue: number, currentIndex: number, set: this) => U,
+    initialValue: U,
+  ): U;
+
+  /**
+   * Behaves like array.find.
+   * The find() method returns the value of the first element in the set that satisfies the provided testing function.
+   * Otherwise undefined is returned.
+   * WARNING: this can potentially iterate a large set of to 4 billion elements.
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   * @param predicate find calls predicate once for each element of the set, in ascending order, until it finds one where predicate returns true.
+   * If such an element is found, find immediately returns that element value. Otherwise, find returns undefined.
+   * @param thisArg If provided, it will be used as the this value for each invocation of predicate.
+   * If it is not provided, undefined is used instead.
+   * @returns The value of the first element in the set that satisfies the provided testing function.
+   * Otherwise undefined is returned.
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  find(predicate: (value: number, index: number, set: this) => boolean, thisArg?: unknown): number | undefined;
+
+  /**
+   * Behaves like array.findIndex.
+   * The findIndex() method returns the index of the first element in the set that satisfies the provided testing function.
+   * Otherwise, it returns -1, indicating that no element passed the test.
+   * WARNING: this can potentially iterate a large set of to 4 billion elements.
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   * @param predicate find calls predicate once for each element of the set, in ascending order, until it finds one where predicate returns true.
+   * If such an element is found, findIndex immediately returns that element index. Otherwise, findIndex returns -1.
+   * @param thisArg If provided, it will be used as the this value for each invocation of predicate.
+   * If it is not provided, undefined is used instead.
+   * @returns The index of the first element in the set that satisfies the provided testing function.
+   * Otherwise, it returns -1, indicating that no element passed the test.
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  findIndex(predicate: (value: number, index: number, set: this) => boolean, thisArg?: unknown): number;
+
+  /**
+   * It behaves like array.map.
+   * WARNING: The returned array may be very big, up to 4 billion elements.
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * @param callbackfn A function that accepts up to three arguments. The map method calls the callbackfn function one time for each element in the array.
+   * @param thisArg An object to which the this keyword can refer in the callbackfn function. If thisArg is omitted, undefined is used as the this value.
+   * @returns An array containing the results of calling the callbackfn function on each element in the set.
+   * @memberof ReadonlyRoaringBitmap32
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
    */
   map<U, This = unknown>(
     callbackfn: (this: This, value: number, index: number, set: this) => U,
     thisArg?: This,
     output?: U[],
   ): U[];
+
+  /**
+   * It behaves like array.filter.
+   * WARNING: The returned array may be very big, up to 4 billion elements.
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * @param callbackfn A function that accepts up to three arguments. The filter method calls the callbackfn function one time for each element in the array.
+   * @param thisArg An object to which the this keyword can refer in the callbackfn function. If thisArg is omitted, undefined is used as the this value.
+   * @returns A new array containing all elements of the array that satisfy the given predicate.
+   * @memberof ReadonlyRoaringBitmap32
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
+   */
+  filter(
+    predicate: (value: number, index: number, set: this) => boolean,
+    thisArg?: unknown,
+    output?: number[],
+  ): number[];
+
+  /**
+   * It behaves like array.toSorted.
+   * Returns a new array that is this set sorted according to the compare function.
+   * If no sorting function is provided, the array is sorted according to the numeric order of the values (the same as calling this.toArray()).
+   *
+   * WARNING: The returned array may be very big, up to 4 billion elements.
+   * WARNING: Is not allowed to change the bitmap while iterating. Undefined behaviour.
+   *
+   * @param cmp A function that defines an alternative sort order. The sort method calls the compareFunction function
+   * once for each element in the array.
+   * @returns A new sorted array that contains all the elements of this set.
+   * @memberof ReadonlyRoaringBitmap32
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted
+   */
+  toSorted(cmp?: (a: number, b: number) => number): number[];
+
+  /**
+   * It behaves like array.toReversed.
+   * Returns a new array that is this set sorted in reverse order.
+   * WARNING: The returned array may be very big, up to 4 billion elements.
+   * @returns An array containing the elements of this set in reverse order (descending).
+   */
+  toReversed(): number[];
 
   /**
    * Gets the minimum value in the set.
@@ -364,12 +522,49 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
 
   /**
    * Checks wether the given value exists in the set.
+   * Is the same as this.includes(value).
    *
    * @param {number} value A 32 bit unsigned integer to search.
    * @returns {boolean} True if the set contains the given value, false if not.
    * @memberof ReadonlyRoaringBitmap32
    */
-  has(value: number): boolean;
+  has(value: unknown): boolean;
+
+  /**
+   * Checks wether the given value exists in the set.
+   * Is the same as this.has(value).
+   *
+   * @param {number} value A 32 bit unsigned integer to search.
+   * @returns {boolean} True if the set contains the given value, false if not.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  includes(value: unknown): boolean;
+
+  /**
+   * Returns the index of value in the set, index start from 0.
+   * If the set doesn't contain value, this function will return -1.
+   * The difference with rank function is that this function will return -1 when value isn't in the set, but the rank function will return a non-negative number.
+   *
+   * @param {number} value A 32 bit unsigned integer to search.
+   * @param {number} [fromIndex] The index to start the search at, defaults to 0. It does not have performance difference, is just for compatibility with array.indexOf.
+   * @returns {boolean} True if the set contains the given value, false if not.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  indexOf(value: unknown, fromIndex?: number): number;
+
+  /**
+   * Returns the index of value in the set, index start from 0.
+   * If the set doesn't contain value, this function will return -1.
+   * The difference with rank function is that this function will return -1 when value isn't in the set, but the rank function will return a non-negative number.
+   * If fromIndex is not specified, is the same as this.indexOf(value).
+   * It behaves like array.lastIndexOf, but it doesn't have performance difference, is just for compatibility with array.lastIndexOf.
+   *
+   * @param {number} value A 32 bit unsigned integer to search.
+   * @param {number} [fromIndex] The index to start the search at, defaults to 0. It does not have performance difference, is just for compatibility with array.indexOf.
+   * @returns {boolean} True if the set contains the given value, false if not.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  lastIndexOf(value: unknown, fromIndex?: number): number;
 
   /**
    * Check whether a range of values from rangeStart (included) to rangeEnd (excluded) is present
@@ -532,7 +727,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   /**
    * Creates a new Uint32Array and fills it with all the values in the bitmap.
    *
-   * The returned array may be very big, up to 4 trillion elements.
+   * The returned array may be very big, up to 4 billion elements.
    *
    * Use this function only when you know what you are doing.
    *
@@ -573,7 +768,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * Creates a new Uint32Array and fills it with all the values in the bitmap, asynchronously.
    * The bitmap will be temporarily frozen until the operation completes.
    *
-   * The returned array may be very big, up to 4 trillion elements.
+   * The returned array may be very big, up to 4 billion elements.
    *
    * Use this function only when you know what you are doing.
    *
@@ -851,6 +1046,17 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   contentToString(maxLength?: number): string;
 
   /**
+   * Returns a standard string representation of the content of this ReadonlyRoaringBitmap32 instance.
+   *
+   * WARNING: this can potentially iterate a large set of to 4 billion elements.
+   *
+   * @param {string} [separator] The separator to use between elements. Default is ",".
+   * @returns {string} A string in the format "1<separator>2<separator>3..."
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  join(separator?: string): string;
+
+  /**
    * Returns an object that contains statistic information about this ReadonlyRoaringBitmap32 instance.
    *
    * @returns {RoaringBitmap32Statistics} An object containing several statistics for the bitmap.
@@ -902,6 +1108,16 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * @memberof RoaringBitmap32
    */
   [Symbol.toStringTag]: "Set";
+
+  /**
+   * The at() method takes an integer value and returns the item at that index,
+   * allowing for positive and negative integers. Negative integers count back from the last item in the set.
+   *
+   * @param {number} index Zero-based index of the array element to be returned, converted to an integer. Negative index counts back from the end of the array — if index < 0, index + array.length is accessed.
+   * @returns {number | undefined} The element in the set matching the given index. Always returns undefined if index < -array.length or index >= array.length without attempting to access the corresponding property.
+   * @memberof RoaringBitmap32
+   */
+  at(index: number): number | undefined;
 
   /**
    * Removes all values from the set.
@@ -968,24 +1184,24 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
   copyFrom(values: Iterable<number> | null | undefined): this;
 
   /**
-   * Adds a single value to the set.
+   * Adds the given value (or values) to the set.
    *
-   * @param {number} value The value to add. Must be a valid 32 bit unsigned integer.
+   * @param {...number[]} values The values to add.
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  add(value: number): this;
+  add(...values: (number | string | null | undefined)[]): this;
 
   /**
-   * Tries to add a single value to the set.
+   * Tries to add the given value (or values) to the set.
    *
-   * Returns true if the value was added during this call, false if already existing or not a valid unsigned integer 32.
+   * Returns true if the value (or at least one value) was added during this call, false if already existing or not a valid value.
    *
-   * @param {number} value The value to add. Must be a valid 32 bit unsigned integer.
-   * @returns {boolean} True if operation was succesfull (value added), false if not (value does not exists or is not a valid 32 bit unsigned integer).
+   * @param {...number[]} values The values to add.
+   * @returns {boolean} True if operation was succesfull (values were added), false if not (values did not exists or are invalid values).
    * @memberof RoaringBitmap32
    */
-  tryAdd(value: number): boolean;
+  tryAdd(...values: (number | string | null | undefined)[]): boolean;
 
   /**
    * Adds multiple values to the set.
@@ -1005,23 +1221,42 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
   addMany(values: Iterable<number>): this;
 
   /**
-   * Removes a value from the set.
+   * Removes a value (or multiple values) from the set.
    *
-   * Returns true if the value was removed during this call, false if not.
+   * Returns true if the value (or at least one value) was removed during this call, false if not.
    *
-   * @param value The unsigned 32 bit integer to remove.
+   * @param values The unsigned 32 bit values to remove.
    * @returns True if the value was removed during this call, false if not.
    * @memberof RoaringBitmap32
    */
-  delete(value: number): boolean;
+  delete(...values: (number | string | null | undefined)[]): boolean;
 
   /**
-   * Removes a value from the set.
+   * Removes a value (or multiple values) from the set.
    *
-   * @param value The unsigned 32 bit integer to remove.
+   * Returns true if the value (or at least one value) was removed during this call, false if not.
+   *
+   * @param values The unsigned 32 bit values to remove.
+   * @returns True if the value was removed during this call, false if not.
    * @memberof RoaringBitmap32
    */
-  remove(value: number): void;
+  remove(...values: (number | string | null | undefined)[]): boolean;
+
+  /**
+   * The pop() method removes the last element from a roaring bitmap and returns that element.
+   * This method changes the size of the bitmap
+   * @returns {number | undefined} The last element in the bitmap, or undefined if the bitmap is empty.
+   * @memberof RoaringBitmap32
+   */
+  pop(): number | undefined;
+
+  /**
+   * The shift() method removes the first element from a roaring bitmap and returns that element.
+   * This method changes the size of the bitmap
+   * @returns {number | undefined} The first element in the bitmap, or undefined if the bitmap is empty.
+   * @memberof RoaringBitmap32
+   */
+  shift(): number | undefined;
 
   /**
    * Removes multiple values from the set.
@@ -1211,6 +1446,15 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
     serialized: Uint8Array | Int8Array | Uint8ClampedArray | ArrayBuffer | SharedArrayBuffer,
     format: DeserializationFormatType,
   ): this;
+
+  /**
+   * Checks wether the given value exists in the set.
+   *
+   * @param {number} value A 32 bit unsigned integer to search.
+   * @returns {boolean} True if the set contains the given value, false if not.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  has(value: unknown): boolean;
 }
 
 /**
@@ -1356,6 +1600,14 @@ export class RoaringBitmap32 {
   public static get PackageVersion(): string;
 
   /**
+   * Creates an instance of RoaringBitmap32 with a given initial capacity.
+   *
+   * @param {number} capacity The initial capacity of the bitmap.
+   * @memberof RoaringBitmap32
+   */
+  public constructor(capacity?: number | undefined);
+
+  /**
    * Creates an instance of RoaringBitmap32, or copies the given bitmap.
    *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
@@ -1365,7 +1617,7 @@ export class RoaringBitmap32 {
    * @param {Iterable<number>} [values]
    * @memberof RoaringBitmap32
    */
-  public constructor(values?: Iterable<number>);
+  public constructor(values: Iterable<number>);
 
   /**
    * Creates a new frozen readonly view of the given bitmap.
@@ -1392,6 +1644,16 @@ export class RoaringBitmap32 {
    * @memberof RoaringBitmap32
    */
   public static from(values: Iterable<number>): RoaringBitmap32;
+
+  /**
+   * The RoaringBitmap32.of() static method creates a new Array instance from a variable number of arguments, regardless of number or type of the arguments.
+   * Note that is faster to pass a Uint32Array instance instead of an array or an iterable.
+   *
+   * @static
+   * @param {...number[]} values A set of values to add to the new RoaringBitmap32 instance.
+   * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
+   */
+  public static of(...values: (number | string | null | undefined)[]): RoaringBitmap32;
 
   /**
    * Creates a new bitmap that contains all the values in the interval: [rangeStart, rangeEnd).
@@ -1728,6 +1990,8 @@ export class RoaringBitmap32 {
  * @implements {IterableIterator<number>}
  */
 export class RoaringBitmap32Iterator implements IterableIterator<number> {
+  get isReverseIterator(): boolean;
+
   // Allows: import RoaringBitmap32Iterator from 'roaring/RoaringBitmap32Iterator'
   private static readonly default: typeof RoaringBitmap32Iterator;
 
@@ -1737,7 +2001,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @param {RoaringBitmap32} [roaringBitmap32] The roaring bitmap to iterate. If null or undefined, an empty iterator is created.
    * @memberof RoaringBitmap32Iterator
    */
-  public constructor(roaringBitmap32?: ReadonlyRoaringBitmap32);
+  public constructor(roaringBitmap32?: ReadonlyRoaringBitmap32, reverse?: boolean);
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
@@ -1774,6 +2038,67 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    *
    * @returns {IteratorResult<number>} The next result.
    * @memberof RoaringBitmap32Iterator
+   */
+  public next(): IteratorResult<number>;
+}
+
+/**
+ * Reverse iterator for RoaringBitmap32.
+ *
+ * WARNING: Is not allowed to change the bitmap while iterating.
+ * The iterator may throw exception if the bitmap is changed during the iteration.
+ *
+ * @export
+ * @class RoaringBitmap32ReverseIterator
+ * @implements {IterableIterator<number>}
+ */
+export class RoaringBitmap32ReverseIterator implements IterableIterator<number> {
+  // Allows: import RoaringBitmap32ReverseIterator from 'roaring/RoaringBitmap32ReverseIterator'
+  private static readonly default: typeof RoaringBitmap32ReverseIterator;
+
+  /**
+   * Creates a new iterator able to iterate a RoaringBitmap32.
+   *
+   * @param {RoaringBitmap32} [roaringBitmap32] The roaring bitmap to iterate. If null or undefined, an empty iterator is created.
+   * @memberof RoaringBitmap32ReverseIterator
+   */
+  public constructor(roaringBitmap32?: ReadonlyRoaringBitmap32);
+
+  /**
+   * Creates a new iterator able to iterate a RoaringBitmap32.
+   *
+   * It allocates a small temporary buffer of the given size for speedup.
+   *
+   * @param {ReadonlyRoaringBitmap32} roaringBitmap32 The roaring bitmap to iterate
+   * @param {number} bufferSize Buffer size to allocate, must be an integer greater than 0
+   * @memberof RoaringBitmap32ReverseIterator
+   */
+  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, bufferSize: number);
+
+  /**
+   * Creates a new iterator able to iterate a RoaringBitmap32 using the given temporary buffer.
+   *
+   * @param {ReadonlyRoaringBitmap32} roaringBitmap32
+   * @param {Uint32Array} buffer The roaring bitmap to iterate
+   * @memberof RoaringBitmap32ReverseIterator The reusable temporary buffer. Length must be greater than 0.
+   */
+  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, buffer: Uint32Array);
+
+  /**
+   * Returns this.
+   *
+   * @returns {this} The same instance.
+   * @memberof RoaringBitmap32ReverseIterator
+   */
+  public [Symbol.iterator](): this;
+
+  /**
+   * Returns the next element in the iterator.
+   *
+   * For performance reasons, this function returns always the same instance.
+   *
+   * @returns {IteratorResult<number>} The next result.
+   * @memberof RoaringBitmap32ReverseIterator
    */
   public next(): IteratorResult<number>;
 }

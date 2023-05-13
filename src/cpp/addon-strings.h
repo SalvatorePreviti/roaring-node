@@ -14,11 +14,13 @@ class AddonDataStrings final {
   v8::Eternal<v8::Symbol> symbol_rnshared;
 
   v8::Eternal<v8::String> OperationFailed;
+  v8::Eternal<v8::String> Comma;
 
   inline void initialize(v8::Isolate * isolate) {
     literal(isolate, this->n, "n");
     literal(isolate, this->readonly, "readonly");
     literal(isolate, this->RoaringBitmap32, "RoaringBitmap32");
+    literal(isolate, this->Comma, ",");
 
     literal(isolate, this->OperationFailed, "Operation failed");
 

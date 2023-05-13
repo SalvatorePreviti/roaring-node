@@ -49,6 +49,46 @@ describe("RoaringBitmap32 operations", () => {
     });
   });
 
+  describe("add, remove with multiple arguments", () => {
+    it("can add multiple values at once", () => {
+      const bitmap = new RoaringBitmap32();
+      bitmap.add("1", 2, 3, 4, 5, 60, "199", 7, 8, 9, 10, 12.3, Number.NaN, Number.MAX_SAFE_INTEGER);
+      expect(Array.from(bitmap)).deep.equal([1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 60, 199]);
+    });
+
+    it("can add multiple values at once", () => {
+      const bitmap = new RoaringBitmap32();
+      expect(bitmap.tryAdd("1", 2, 3, 4, 5, 60, "199", 7, 8, 9, 10, 12.3, Number.NaN, Number.MAX_SAFE_INTEGER)).eq(
+        true,
+      );
+      expect(bitmap.tryAdd("1", 2, 3, 4, 5, 60)).eq(false);
+      expect(bitmap.tryAdd("1", 1000, 0xffffffff, 2)).eq(true);
+      expect(Array.from(bitmap)).deep.equal([1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 60, 199, 1000, 0xffffffff]);
+    });
+
+    it("can remove multiple values at once", () => {
+      const bitmap = new RoaringBitmap32();
+      bitmap.add("1", 2, 3, 4, 5, 60, "199", 7, 8, 9, 10, 12.3, Number.NaN, Number.MAX_SAFE_INTEGER);
+      expect(Array.from(bitmap)).deep.equal([1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 60, 199]);
+      expect(bitmap.remove("1", 3, 4, 5, 60, "199", 7, 8, 9, 10, 12.3, Number.NaN, Number.MAX_SAFE_INTEGER)).eq(true);
+      expect(Array.from(bitmap)).deep.equal([2]);
+      expect(bitmap.remove("1", 2, 3, 4)).eq(true);
+      expect(Array.from(bitmap)).deep.equal([]);
+      expect(bitmap.remove("1", 2, 3, 4)).eq(false);
+    });
+
+    it("can delete multiple values at once", () => {
+      const bitmap = new RoaringBitmap32();
+      bitmap.add("1", 2, 3, 4, 5, 60, "199", 7, 8, 9, 10, 12.3, Number.NaN, Number.MAX_SAFE_INTEGER);
+      expect(Array.from(bitmap)).deep.equal([1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 60, 199]);
+      expect(bitmap.delete("1", 3, 4, 5, 60, "199", 7, 8, 9, 10, 12.3, Number.NaN, Number.MAX_SAFE_INTEGER)).eq(true);
+      expect(Array.from(bitmap)).deep.equal([2]);
+      expect(bitmap.delete("1", 2, 3, 4)).eq(true);
+      expect(Array.from(bitmap)).deep.equal([]);
+      expect(bitmap.delete("1", 2, 3, 4)).eq(false);
+    });
+  });
+
   describe("addMany", () => {
     it("works with an array", () => {
       const values = [100, 120, 130, 140, 150, 99, 1, 13, 64];
@@ -105,15 +145,15 @@ describe("RoaringBitmap32 operations", () => {
   describe("remove", () => {
     it("remove does nothing on an empty bitmap", () => {
       const bitmap = new RoaringBitmap32();
-      expect(bitmap.remove(19)).to.be.undefined;
+      expect(bitmap.remove(19)).to.be.false;
       expect(bitmap.size).eq(0);
     });
 
     it("remove one item", () => {
       const bitmap = new RoaringBitmap32([1, 5, 6]);
-      expect(bitmap.remove(5)).to.be.undefined;
+      expect(bitmap.remove(5)).to.be.true;
       expect(bitmap.toArray()).deep.equal([1, 6]);
-      expect(bitmap.remove(5)).to.be.undefined;
+      expect(bitmap.remove(5)).to.be.false;
       expect(bitmap.toArray()).deep.equal([1, 6]);
     });
   });
@@ -488,6 +528,33 @@ describe("RoaringBitmap32 operations", () => {
         bitmap.copyFrom(new RoaringBitmap32([4, 6, 8, 10]));
         expect(bitmap.toArray()).deep.equal([4, 6, 8, 10]);
       });
+    });
+  });
+
+  describe("at", () => {
+    it("returns the value at the given index", () => {
+      const bitmap = new RoaringBitmap32([1, 12, 30, 0xffff]);
+      expect(bitmap.at(0)).eq(1);
+      expect(bitmap.at(1)).eq(12);
+      expect(bitmap.at(2)).eq(30);
+      expect(bitmap.at(3)).eq(0xffff);
+      expect(bitmap.at(4)).eq(undefined);
+      expect(bitmap.at(5)).eq(undefined);
+      expect(bitmap.at(-5)).eq(undefined);
+
+      expect(bitmap.at(1.5)).eq(12);
+      expect(bitmap.at("1.5" as any)).eq(12);
+    });
+
+    it("works with negative indices", () => {
+      const bitmap = new RoaringBitmap32([1, 12, 3]);
+      expect(bitmap.at(-1)).eq(12);
+      expect(bitmap.at(-1.4)).eq(12);
+      expect(bitmap.at(-2)).eq(3);
+      expect(bitmap.at(-2.9)).eq(3);
+      expect(bitmap.at(-3)).eq(1);
+      expect(bitmap.at("-3" as any)).eq(1);
+      expect(bitmap.at(-4)).eq(undefined);
     });
   });
 });
