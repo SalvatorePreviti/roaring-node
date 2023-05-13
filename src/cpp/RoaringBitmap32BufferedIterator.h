@@ -40,7 +40,6 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
 
 void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmap32BufferedIterator * instance =
     ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.Holder(), isolate);
@@ -75,7 +74,6 @@ void RoaringBitmap32BufferedIterator_WeakCallback(v8::WeakCallbackInfo<RoaringBi
 
 void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   if (!info.IsConstructCall()) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs to be called with new");
@@ -159,7 +157,6 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
 
 void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
 
   auto className = NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32BufferedIterator", v8::NewStringType::kInternalized);
 

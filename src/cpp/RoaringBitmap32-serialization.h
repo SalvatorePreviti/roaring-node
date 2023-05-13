@@ -7,7 +7,6 @@
 
 void RoaringBitmap32_serialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmapSerializer serializer;
   serializer.parseArguments(info);
@@ -31,7 +30,6 @@ void RoaringBitmap32_serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & 
 
 void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -113,7 +111,6 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
 
 void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -150,7 +147,6 @@ void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value>
 
 void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::HandleScope scope(isolate);
 
   RoaringBitmapDeserializer deserializer;
   const char * error = deserializer.parseArguments(info, true);
@@ -170,7 +166,6 @@ void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & inf
 
 void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -192,7 +187,6 @@ void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::V
 
 void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope scope(isolate);
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {

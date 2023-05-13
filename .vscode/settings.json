@@ -152,6 +152,9 @@
     "array_util.c": "cpp",
     "bitset.c": "cpp",
     "bitset_util.c": "cpp",
-    "containers.c": "cpp"
+    "containers.c": "cpp",
+    "__verbose_abort": "cpp",
+    "bit": "cpp",
+    "filesystem": "cpp"
   }
 }

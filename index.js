@@ -193,30 +193,136 @@ if (!roaring[initializedSym]) {
   };
 
   roaringBitmap32_proto.forEach = function (fn, self) {
-    if (self === undefined) {
-      for (const v of this) {
-        fn(v, v, this);
-      }
-    } else {
-      for (const v of this) {
-        fn.call(self, v, v, this);
-      }
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    if (self !== undefined) {
+      fn = fn.bind(self);
+    }
+    let index = 0;
+    for (const v of this) {
+      fn(v, index++, this);
     }
     return this;
   };
 
   roaringBitmap32_proto.map = function (fn, self, output = []) {
-    let index = output.length;
-    if (self === undefined) {
-      for (const v of this) {
-        output.push(fn(v, index++, this));
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    if (self !== undefined) {
+      fn = fn.bind(self);
+    }
+    let index = 0;
+    for (const v of this) {
+      output.push(fn(v, index++, this));
+    }
+    return output;
+  };
+
+  roaringBitmap32_proto.every = function (fn, self) {
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    if (self !== undefined) {
+      fn = fn.bind(self);
+    }
+    let index = 0;
+    for (const v of this) {
+      if (!fn(v, index++, this)) {
+        return false;
       }
-    } else {
-      for (const v of this) {
-        output.push(fn.call(self, v, index++, this));
+    }
+    return true;
+  };
+
+  roaringBitmap32_proto.some = function (fn, self) {
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    if (self !== undefined) {
+      fn = fn.bind(self);
+    }
+    let index = 0;
+    for (const v of this) {
+      if (fn(v, index++, this)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  roaringBitmap32_proto.reduce = function (fn, initialValue = 0) {
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    let index = 0;
+    let accumulator = initialValue;
+    for (const v of this) {
+      accumulator = fn(accumulator, v, index++, this);
+    }
+    return accumulator;
+  };
+
+  roaringBitmap32_proto.find = function (fn, self) {
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    if (self !== undefined) {
+      fn = fn.bind(self);
+    }
+    let index = 0;
+    for (const v of this) {
+      if (fn(v, index++, this)) {
+        return v;
+      }
+    }
+    return undefined;
+  };
+
+  roaringBitmap32_proto.findIndex = function (fn, self) {
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    if (self !== undefined) {
+      fn = fn.bind(self);
+    }
+    let index = 0;
+    for (const v of this) {
+      if (fn(v, index, this)) {
+        return index;
+      }
+      ++index;
+    }
+    return -1;
+  };
+
+  roaringBitmap32_proto.filter = function (fn, self, output = []) {
+    if (typeof fn !== "function") {
+      throw new TypeError(`${fn} is not a function`);
+    }
+    if (self !== undefined) {
+      fn = fn.bind(self);
+    }
+    let index = 0;
+    for (const v of this) {
+      if (fn(v, index++, this)) {
+        output.push(v);
       }
     }
     return output;
+  };
+
+  roaringBitmap32_proto.toSorted = function (cmp) {
+    if (cmp && typeof cmp !== "function") {
+      throw new TypeError(`${cmp} is not a function`);
+    }
+    const result = this.toArray();
+    return cmp ? result.sort(cmp) : result;
+  };
+
+  roaringBitmap32_proto.toReversed = function () {
+    return this.toArray().reverse();
   };
 
   roaringBitmap32_proto.toJSON = function () {

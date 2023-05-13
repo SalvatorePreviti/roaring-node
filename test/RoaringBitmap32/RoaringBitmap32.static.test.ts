@@ -412,4 +412,59 @@ describe("RoaringBitmap32 static", () => {
       expect(RoaringBitmap32.addOffset(input, 35).toArray()).deep.equal([36, 37, 65, 75]);
     });
   });
+
+  describe("of", () => {
+    it("creates an empty bitmap", () => {
+      const bitmap = RoaringBitmap32.of();
+      expect(bitmap).to.be.instanceOf(RoaringBitmap32);
+      expect(bitmap.size).eq(0);
+      expect(bitmap.isEmpty).eq(true);
+      expect(bitmap.isFrozen).eq(false);
+    });
+
+    it("creates a bitmap with one value", () => {
+      const bitmap = RoaringBitmap32.of(1);
+      expect(bitmap).to.be.instanceOf(RoaringBitmap32);
+      expect(bitmap.size).eq(1);
+      expect(bitmap.isEmpty).eq(false);
+      expect(bitmap.isFrozen).eq(false);
+      expect(bitmap.toArray()).deep.equal([1]);
+    });
+
+    it("creates a bitmap with multiple values", () => {
+      const bitmap = RoaringBitmap32.of(1, 2, 2, 2, 0xffff, 3);
+      expect(bitmap).to.be.instanceOf(RoaringBitmap32);
+      expect(bitmap.size).eq(4);
+      expect(bitmap.isEmpty).eq(false);
+      expect(bitmap.isFrozen).eq(false);
+      expect(bitmap.toArray()).deep.equal([1, 2, 3, 0xffff]);
+    });
+
+    it("handles non-number values", () => {
+      const bitmap = RoaringBitmap32.of(
+        -100,
+        -1,
+        1,
+        3,
+        2,
+        2,
+        "123",
+        "foo" as any,
+        null as any,
+        undefined as any,
+        NaN,
+        0xffff,
+        0xffffffff,
+        2,
+        3,
+        3.1,
+        3.8,
+        4.2,
+      );
+      expect(bitmap).to.be.instanceOf(RoaringBitmap32);
+      expect(bitmap.isEmpty).eq(false);
+      expect(bitmap.isFrozen).eq(false);
+      expect(bitmap.toArray()).deep.equal([1, 2, 3, 4, 123, 0xffff, 0xffffffff]);
+    });
+  });
 });
