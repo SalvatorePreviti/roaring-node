@@ -47,19 +47,21 @@ defineProperty(roaring, "__esModule", { value: true, configurable: true });
 
 const { RoaringBitmap32, RoaringBitmap32BufferedIterator } = roaring;
 
-class RoaringBitmap32IteratorResult {
-  constructor() {
-    this.value = undefined;
-    this.done = true;
-  }
+function RoaringBitmap32IteratorResult() {
+  this.value = undefined;
+  this.done = true;
 }
 
 const _iteratorBufferPoolMax = 32;
 const _iteratorBufferPoolDefaultLen = 512;
 const _iteratorBufferPool = [];
 
-class RoaringBitmap32Iterator {
-  constructor(bitmap, buffer = _iteratorBufferPoolDefaultLen) {
+function defineRoaringBitmap32Iterator(reverse, name) {
+  function Iterator(bitmap, buffer = _iteratorBufferPoolDefaultLen) {
+    if (!new.target) {
+      return new Iterator(bitmap, buffer);
+    }
+
     const r = new RoaringBitmap32IteratorResult();
     let t;
     let i = 0;
@@ -73,23 +75,20 @@ class RoaringBitmap32Iterator {
       }
     }
 
-    const init = () => {
-      if (typeof buffer === "number") {
-        buffer = (buffer === _iteratorBufferPoolDefaultLen && _iteratorBufferPool.pop()) || new Uint32Array(buffer);
-      }
-      t = new RoaringBitmap32BufferedIterator(bitmap, buffer);
-      n = t.n;
-      r.done = false;
-    };
-
-    const m = () => {
-      if (t !== null) {
+    this.next = () => {
+      if (i < n) {
+        r.value = buffer[i++];
+      } else if (t !== null) {
         if (t === undefined) {
-          init();
+          if (typeof buffer === "number") {
+            buffer = (buffer === _iteratorBufferPoolDefaultLen && _iteratorBufferPool.pop()) || new Uint32Array(buffer);
+          }
+          t = new RoaringBitmap32BufferedIterator(bitmap, buffer, reverse);
+          n = t.n;
+          r.done = false;
         } else {
           n = t.fill();
         }
-
         if (n === 0) {
           t = null;
           if (
@@ -108,35 +107,36 @@ class RoaringBitmap32Iterator {
           r.value = buffer[0];
         }
       }
-    };
-
-    this.next = () => {
-      if (i < n) {
-        r.value = buffer[i++];
-      } else {
-        m();
-      }
       return r;
     };
   }
 
-  [Symbol.iterator]() {
+  defineProperty(Iterator, "name", { value: name, configurable: true, enumerable: false, writable: false });
+
+  Iterator.prototype[Symbol.iterator] = function () {
     return this;
-  }
+  };
+
+  defineProperty(Iterator, "default", {
+    value: Iterator,
+    writable: false,
+    configurable: false,
+    enumerable: false,
+  });
+
+  return Iterator;
 }
 
-const roaringBitmap32IteratorProp = {
-  value: RoaringBitmap32Iterator,
-  writable: false,
-  configurable: false,
-  enumerable: false,
-};
+const RoaringBitmap32Iterator = defineRoaringBitmap32Iterator(false, "RoaringBitmap32Iterator");
 
-defineProperty(RoaringBitmap32Iterator, "default", roaringBitmap32IteratorProp);
-defineProperty(RoaringBitmap32Iterator, "RoaringBitmap32Iterator", roaringBitmap32IteratorProp);
+const RoaringBitmap32ReverseIterator = defineRoaringBitmap32Iterator(true, "RoaringBitmap32ReverseIterator");
 
 function iterator() {
   return new RoaringBitmap32Iterator(this);
+}
+
+function reverseIterator() {
+  return new RoaringBitmap32ReverseIterator(this);
 }
 
 let isArrayBuffer;
@@ -186,6 +186,7 @@ if (!roaring[initializedSym]) {
   roaringBitmap32_proto.iterator = iterator;
   roaringBitmap32_proto.keys = iterator;
   roaringBitmap32_proto.values = iterator;
+  roaringBitmap32_proto.reverseIterator = reverseIterator;
   roaringBitmap32_proto.entries = function* entries() {
     for (const v of this) {
       yield [v, v];
@@ -347,6 +348,7 @@ if (!roaring[initializedSym]) {
   });
 
   defineValue("RoaringBitmap32Iterator", RoaringBitmap32Iterator, false);
+  defineValue("RoaringBitmap32ReverseIterator", RoaringBitmap32ReverseIterator, false);
 
   defineValue(
     "SerializationFormat",

@@ -40,7 +40,9 @@
     "RoaringBitmap32.js",
     "RoaringBitmap32.d.ts",
     "RoaringBitmap32Iterator.js",
-    "RoaringBitmap32Iterator.d.ts"
+    "RoaringBitmap32Iterator.d.ts",
+    "RoaringBitmap32ReverseIterator.js",
+    "RoaringBitmap32ReverseIterator.d.ts"
   ],
   "binary": {
     "module_name": "roaring",

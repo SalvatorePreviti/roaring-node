@@ -275,6 +275,17 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   iterator(): RoaringBitmap32Iterator;
 
   /**
+   * Gets a new iterator able to iterate all values in the set in descending order.
+   *
+   * WARNING: Is not allowed to change the bitmap while iterating.
+   * The iterator may throw exception if the bitmap is changed during the iteration.
+   *
+   * @returns {RoaringBitmap32Iterator} A new reverse iterator
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  reverseIterator(): RoaringBitmap32Iterator;
+
+  /**
    * Gets a new iterator able to iterate all values in the set in ascending order.
    * This is just for compatibility with the Set<number> interface.
    *
@@ -1957,6 +1968,8 @@ export class RoaringBitmap32 {
  * @implements {IterableIterator<number>}
  */
 export class RoaringBitmap32Iterator implements IterableIterator<number> {
+  get isReverseIterator(): boolean;
+
   // Allows: import RoaringBitmap32Iterator from 'roaring/RoaringBitmap32Iterator'
   private static readonly default: typeof RoaringBitmap32Iterator;
 
@@ -1966,7 +1979,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @param {RoaringBitmap32} [roaringBitmap32] The roaring bitmap to iterate. If null or undefined, an empty iterator is created.
    * @memberof RoaringBitmap32Iterator
    */
-  public constructor(roaringBitmap32?: ReadonlyRoaringBitmap32);
+  public constructor(roaringBitmap32?: ReadonlyRoaringBitmap32, reverse?: boolean);
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
@@ -2003,6 +2016,67 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    *
    * @returns {IteratorResult<number>} The next result.
    * @memberof RoaringBitmap32Iterator
+   */
+  public next(): IteratorResult<number>;
+}
+
+/**
+ * Reverse iterator for RoaringBitmap32.
+ *
+ * WARNING: Is not allowed to change the bitmap while iterating.
+ * The iterator may throw exception if the bitmap is changed during the iteration.
+ *
+ * @export
+ * @class RoaringBitmap32ReverseIterator
+ * @implements {IterableIterator<number>}
+ */
+export class RoaringBitmap32ReverseIterator implements IterableIterator<number> {
+  // Allows: import RoaringBitmap32ReverseIterator from 'roaring/RoaringBitmap32ReverseIterator'
+  private static readonly default: typeof RoaringBitmap32ReverseIterator;
+
+  /**
+   * Creates a new iterator able to iterate a RoaringBitmap32.
+   *
+   * @param {RoaringBitmap32} [roaringBitmap32] The roaring bitmap to iterate. If null or undefined, an empty iterator is created.
+   * @memberof RoaringBitmap32ReverseIterator
+   */
+  public constructor(roaringBitmap32?: ReadonlyRoaringBitmap32);
+
+  /**
+   * Creates a new iterator able to iterate a RoaringBitmap32.
+   *
+   * It allocates a small temporary buffer of the given size for speedup.
+   *
+   * @param {ReadonlyRoaringBitmap32} roaringBitmap32 The roaring bitmap to iterate
+   * @param {number} bufferSize Buffer size to allocate, must be an integer greater than 0
+   * @memberof RoaringBitmap32ReverseIterator
+   */
+  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, bufferSize: number);
+
+  /**
+   * Creates a new iterator able to iterate a RoaringBitmap32 using the given temporary buffer.
+   *
+   * @param {ReadonlyRoaringBitmap32} roaringBitmap32
+   * @param {Uint32Array} buffer The roaring bitmap to iterate
+   * @memberof RoaringBitmap32ReverseIterator The reusable temporary buffer. Length must be greater than 0.
+   */
+  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, buffer: Uint32Array);
+
+  /**
+   * Returns this.
+   *
+   * @returns {this} The same instance.
+   * @memberof RoaringBitmap32ReverseIterator
+   */
+  public [Symbol.iterator](): this;
+
+  /**
+   * Returns the next element in the iterator.
+   *
+   * For performance reasons, this function returns always the same instance.
+   *
+   * @returns {IteratorResult<number>} The next result.
+   * @memberof RoaringBitmap32ReverseIterator
    */
   public next(): IteratorResult<number>;
 }
