@@ -3,8 +3,7 @@
 
 #include "RoaringBitmap32.h"
 #include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
+#include "mmap.h"
 
 #ifndef CROARING_SERIALIZATION_ARRAY_UINT32
 constexpr const unsigned char CROARING_SERIALIZATION_ARRAY_UINT32 = 1;
