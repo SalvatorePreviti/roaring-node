@@ -3800,7 +3800,6 @@ void RoaringBitmap32_xorManyStatic(const v8::FunctionCallbackInfo<v8::Value> & i
 #ifndef ROARING_NODE_SERIALIZATION_
 #define ROARING_NODE_SERIALIZATION_
 
-#include <filesystem>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -4134,7 +4133,7 @@ class RoaringBitmapDeserializer final : public RoaringBitmapDeserializerBase {
 
 class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase {
  public:
-  std::filesystem::path filePath;
+  std::string filePath;
 
   const char * parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Isolate * isolate = info.GetIsolate();
@@ -4150,7 +4149,7 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
     }
 
     v8::String::Utf8Value filePathUtf8(isolate, info[0]);
-    this->filePath = std::filesystem::path(*filePathUtf8);
+    this->filePath = std::string(*filePathUtf8, filePathUtf8.length());
 
     DeserializationFormat fmt = tryParseDeserializationFormat(info[1], isolate);
     if (fmt == DeserializationFormat::INVALID) {
