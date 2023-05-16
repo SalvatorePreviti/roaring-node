@@ -12,6 +12,18 @@ enum class SerializationFormat {
   unsafe_frozen_croaring = 2,
 };
 
+enum class FileSerializationFormat {
+  INVALID = -1,
+  croaring = 0,
+  portable = 1,
+  unsafe_frozen_croaring = 2,
+
+  comma_separated_values = 10,
+  tab_separated_values = 11,
+  newline_separated_values = 12,
+  json_array = 20
+};
+
 enum class DeserializationFormat {
   INVALID = -1,
   croaring = 0,
@@ -50,6 +62,32 @@ SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & val
     }
   }
   return SerializationFormat::INVALID;
+}
+
+FileSerializationFormat tryParseFileSerializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+  SerializationFormat sf = tryParseSerializationFormat(value, isolate);
+  if (sf != SerializationFormat::INVALID) {
+    return static_cast<FileSerializationFormat>(sf);
+  }
+  if (!isolate || value.IsEmpty()) {
+    return FileSerializationFormat::INVALID;
+  }
+  if (value->IsString()) {
+    v8::String::Utf8Value formatString(isolate, value);
+    if (strcmp(*formatString, "comma_separated_values") == 0) {
+      return FileSerializationFormat::comma_separated_values;
+    }
+    if (strcmp(*formatString, "tab_separated_values") == 0) {
+      return FileSerializationFormat::tab_separated_values;
+    }
+    if (strcmp(*formatString, "newline_separated_values") == 0) {
+      return FileSerializationFormat::newline_separated_values;
+    }
+    if (strcmp(*formatString, "json_array") == 0) {
+      return FileSerializationFormat::json_array;
+    }
+  }
+  return FileSerializationFormat::INVALID;
 }
 
 DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {

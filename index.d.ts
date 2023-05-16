@@ -159,12 +159,65 @@ export enum SerializationFormat {
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
 }
 
+export enum FileSerializationFormat {
+  /**
+   * Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format.
+   */
+  croaring = "croaring",
+
+  /**
+   * Stable Portable Java and Go format.
+   */
+  portable = "unsafe_portable",
+
+  /**
+   * Non portable C/C++ frozen format.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when deserialized or when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   *
+   * When this option is used in the serialize function, the new returned buffer (if no buffer was provided) will be aligned to a 32 bytes boundary.
+   * This is required to create a frozen view with the method unsafeFrozenView.
+   *
+   */
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
+
+  /**
+   * Comma separated values, all values are in decimal and in one line without spaces or other characters.
+   */
+  comma_separated_values = "comma_separated_values",
+
+  /**
+   * Tab "\t" separated values, all values are in decimal and in one line without other characters.
+   */
+  tab_separated_values = "tab_separated_values",
+
+  /**
+   * Newline (\n) separated values, all values are in decimal and one per line with a terminating newline.
+   */
+  newline_separated_values = "newline_separated_values",
+
+  /**
+   * A JSON file in the format "[1,2,3,4...]"
+   */
+  json_array = "json_array",
+}
+
 export type SerializationFormatType =
   | SerializationFormat
   | "croaring"
   | "portable"
   | "unsafe_frozen_croaring"
   | boolean;
+
+export type FileSerializationFormatType =
+  | SerializationFormatType
+  | FileSerializationFormat
+  | "comma_separated_values"
+  | "tab_separated_values"
+  | "newline_separated_values"
+  | "json_array";
 
 export enum DeserializationFormat {
   /** Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
@@ -1013,10 +1066,10 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * This is faster, everything runs in its own thread and it consumes less memory than serializing to a Buffer and then to write to a file,
    * internally it uses memory mapped files and skip all the JS overhead.
    *
-   * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @param {FileSerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @memberof ReadonlyRoaringBitmap32
    */
-  serializeFileAsync(filePath: string, format: SerializationFormatType): Promise<void>;
+  serializeFileAsync(filePath: string, format: FileSerializationFormatType): Promise<void>;
 
   /**
    * Returns a new ReadonlyRoaringBitmap32 that is a copy of this bitmap, same as new ReadonlyRoaringBitmap32(copy)
@@ -1487,9 +1540,13 @@ export class RoaringBitmap32 {
 
   public readonly SerializationFormat: typeof SerializationFormat;
 
-  public static readonly DeserializationFormat: typeof SerializationFormat;
+  public static readonly FileSerializationFormat: typeof FileSerializationFormat;
 
-  public readonly DeserializationFormat: typeof SerializationFormat;
+  public readonly FileSerializationFormat: typeof FileSerializationFormat;
+
+  public static readonly DeserializationFormat: typeof DeserializationFormat;
+
+  public readonly DeserializationFormat: typeof DeserializationFormat;
 
   public static readonly FrozenViewFormat: typeof FrozenViewFormat;
 

@@ -2,7 +2,7 @@
 #define ROARING_NODE_SERIALIZATION_
 
 #include "RoaringBitmap32.h"
-#include <fcntl.h>
+#include "serialization-csv.h"
 #include "mmap.h"
 
 #if defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
@@ -24,14 +24,14 @@ class RoaringBitmapSerializerBase {
 
  public:
   RoaringBitmap32 * self = nullptr;
-  SerializationFormat format = SerializationFormat::INVALID;
+  FileSerializationFormat format = FileSerializationFormat::INVALID;
 
   size_t volatile serializedSize = 0;
 
   WorkerError computeSerializedSize() {
     size_t buffersize;
     switch (this->format) {
-      case SerializationFormat::croaring: {
+      case FileSerializationFormat::croaring: {
         this->cardinality = this->self->getSize();
         auto sizeasarray = cardinality * sizeof(uint32_t) + sizeof(uint32_t);
         auto portablesize = roaring_bitmap_portable_size_in_bytes(this->self->roaring);
@@ -44,12 +44,12 @@ class RoaringBitmapSerializerBase {
         break;
       }
 
-      case SerializationFormat::portable: {
+      case FileSerializationFormat::portable: {
         buffersize = roaring_bitmap_portable_size_in_bytes(this->self->roaring);
         break;
       }
 
-      case SerializationFormat::unsafe_frozen_croaring: {
+      case FileSerializationFormat::unsafe_frozen_croaring: {
         buffersize = roaring_bitmap_frozen_size_in_bytes(this->self->roaring);
         break;
       }
@@ -67,7 +67,7 @@ class RoaringBitmapSerializerBase {
     }
 
     switch (format) {
-      case SerializationFormat::croaring: {
+      case FileSerializationFormat::croaring: {
         if (serializeArray) {
           ((uint8_t *)data)[0] = CROARING_SERIALIZATION_ARRAY_UINT32;
           memcpy(data + 1, &this->cardinality, sizeof(uint32_t));
@@ -79,12 +79,12 @@ class RoaringBitmapSerializerBase {
         break;
       }
 
-      case SerializationFormat::portable: {
+      case FileSerializationFormat::portable: {
         roaring_bitmap_portable_serialize(self->roaring, (char *)data);
         break;
       }
 
-      case SerializationFormat::unsafe_frozen_croaring: {
+      case FileSerializationFormat::unsafe_frozen_croaring: {
         roaring_bitmap_frozen_serialize(self->roaring, (char *)data);
         break;
       }
@@ -127,8 +127,8 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
         return v8utils::throwError(isolate, "RoaringBitmap32 serialization buffer argument was invalid");
       }
     }
-    this->format = tryParseSerializationFormat(info[formatArgIndex], isolate);
-    if (this->format == SerializationFormat::INVALID) {
+    this->format = static_cast<FileSerializationFormat>(tryParseSerializationFormat(info[formatArgIndex], isolate));
+    if (this->format == FileSerializationFormat::INVALID) {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization format argument was invalid");
     }
     if (bufferArgIndex >= 0) {
@@ -149,7 +149,7 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
 
     if (data == nullptr) {
       data = (uint8_t *)bare_aligned_malloc(
-        this->format == SerializationFormat::unsafe_frozen_croaring ? 32 : 8, this->serializedSize);
+        this->format == FileSerializationFormat::unsafe_frozen_croaring ? 32 : 8, this->serializedSize);
       this->allocatedBuffer = data;
     } else if (this->inputBuffer.length < this->serializedSize) {
       return WorkerError("RoaringBitmap32 serialization buffer is too small");
@@ -203,8 +203,8 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization file path argument was invalid");
     }
 
-    this->format = tryParseSerializationFormat(info[1], isolate);
-    if (this->format == SerializationFormat::INVALID) {
+    this->format = tryParseFileSerializationFormat(info[1], isolate);
+    if (this->format == FileSerializationFormat::INVALID) {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization format argument was invalid");
     }
 
@@ -214,6 +214,23 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
   }
 
   WorkerError serialize() {
+    switch (this->format) {
+      case FileSerializationFormat::comma_separated_values:
+      case FileSerializationFormat::tab_separated_values:
+      case FileSerializationFormat::newline_separated_values:
+      case FileSerializationFormat::json_array: {
+        int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
+        if (fd < 0) {
+          return WorkerError(errno, "open", this->filePath);
+        }
+        int errorno = CsvFileDescriptorSerializer::iterate(this->self->roaring, fd, this->format);
+        close(fd);
+        return errorno != 0 ? WorkerError(errorno, "write", this->filePath) : WorkerError();
+      }
+
+      default: break;
+    }
+
     WorkerError err = this->computeSerializedSize();
     if (err.hasError()) {
       return err;
@@ -255,6 +272,40 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
     return err;
   }
 };
+
+// bool _writeCsvNum(uint32_t value, void * param) {
+//   _writeCsvNumState * p = (_writeCsvNumState *)param;
+
+//   char * buf = p->buf;
+//   char * str = buf + 1;
+
+//   int32_t i, j;
+//   char c;
+
+//   /* uint to decimal  */
+//   i = 0;
+//   do {
+//     uint32_t remainder = value % 10;
+//     str[i++] = (char)(remainder + 48);
+//     value = value / 10;
+//   } while (value != 0);
+//   str[i] = '\0';
+//   size_t len = (size_t)i;
+
+//   /* reverse string */
+//   for (j = 0, i--; j < i; j++, i--) {
+//     c = str[j];
+//     str[j] = str[i];
+//     str[i] = c;
+//   }
+
+//   if (!p->first) {
+//     return write(p->fd, buf, len + 1) != -1;
+//   }
+
+//   p->first = false;
+//   return write(p->fd, str, len) != -1;
+// }
 
 class RoaringBitmapDeserializerBase {
  public:

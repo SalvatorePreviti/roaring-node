@@ -373,6 +373,20 @@ if (!roaring[initializedSym]) {
   );
 
   defineValue(
+    "FileSerializationFormat",
+    {
+      croaring: "croaring",
+      portable: "portable",
+      unsafe_frozen_croaring: "unsafe_frozen_croaring",
+      comma_separated_values: "comma_separated_values",
+      tab_separated_values: "tab_separated_values",
+      newline_separated_values: "newline_separated_values",
+      json_array: "json_array",
+    },
+    false,
+  );
+
+  defineValue(
     "DeserializationFormat",
     {
       croaring: "croaring",
