@@ -857,6 +857,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   NODE_SET_PROTOTYPE_METHOD(ctor, "select", RoaringBitmap32_select);
   NODE_SET_PROTOTYPE_METHOD(ctor, "serialize", RoaringBitmap32_serialize);
   NODE_SET_PROTOTYPE_METHOD(ctor, "serializeAsync", RoaringBitmap32_serializeAsync);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "serializeFileAsync", RoaringBitmap32_serializeFileAsync);
   NODE_SET_PROTOTYPE_METHOD(ctor, "shift", RoaringBitmap32_shift);
   NODE_SET_PROTOTYPE_METHOD(ctor, "shrinkToFit", RoaringBitmap32_shrinkToFit);
   NODE_SET_PROTOTYPE_METHOD(ctor, "statistics", RoaringBitmap32_statistics);

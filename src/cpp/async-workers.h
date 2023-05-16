@@ -619,6 +619,51 @@ class SerializeWorker final : public AsyncWorker {
   void done(v8::Local<v8::Value> & result) final { this->serializer.done(this->isolate, result); }
 };
 
+class SerializeFileWorker final : public AsyncWorker {
+ public:
+  const v8::FunctionCallbackInfo<v8::Value> & info;
+  v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bitmapPersistent;
+  RoaringBitmapFileSerializer serializer;
+
+  explicit SerializeFileWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
+    AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
+    gcaware_addAllocatedMemory(sizeof(SerializeFileWorker));
+  }
+
+  virtual ~SerializeFileWorker() { gcaware_removeAllocatedMemory(sizeof(SerializeFileWorker)); }
+
+ protected:
+  // Called before the thread starts, in the main thread.
+  void before() final {
+    this->serializer.parseArguments(this->info);
+    if (this->serializer.self) {
+      if (this->maybeAddonData == nullptr) {
+        this->maybeAddonData = this->serializer.self->addonData;
+      }
+      this->bitmapPersistent.Reset(isolate, this->info.Holder());
+      this->serializer.self->beginFreeze();
+    }
+  }
+
+  void work() final {
+    if (this->serializer.self) {
+      this->setError(this->serializer.serialize());
+    }
+  }
+
+  void finally() final {
+    if (this->serializer.self) {
+      this->serializer.self->endFreeze();
+    }
+  }
+
+  void done(v8::Local<v8::Value> & result) final {
+    if (!this->bitmapPersistent.IsEmpty()) {
+      result = this->bitmapPersistent.Get(this->isolate);
+    }
+  }
+};
+
 class DeserializeWorker final : public AsyncWorker {
  public:
   RoaringBitmapDeserializer deserializer;
@@ -676,7 +721,7 @@ class DeserializeFileWorker final : public AsyncWorker {
 
   explicit DeserializeFileWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * addonData) :
     AsyncWorker(info.GetIsolate(), addonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(DeserializeWorker));
+    gcaware_addAllocatedMemory(sizeof(DeserializeFileWorker));
   }
 
   virtual ~DeserializeFileWorker() { gcaware_removeAllocatedMemory(sizeof(DeserializeFileWorker)); }

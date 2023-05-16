@@ -1007,6 +1007,15 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   ): Promise<Buffer>;
 
   /**
+   * Serializes the bitmap into a file, asynchronously.
+   * The bitmap will be temporarily frozen until the operation completes.
+   *
+   * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  serializeFileAsync(filePath: string, format: SerializationFormatType): Promise<void>;
+
+  /**
    * Returns a new ReadonlyRoaringBitmap32 that is a copy of this bitmap, same as new ReadonlyRoaringBitmap32(copy)
    *
    * @returns {RoaringBitmap32} A cloned RoaringBitmap32 instance

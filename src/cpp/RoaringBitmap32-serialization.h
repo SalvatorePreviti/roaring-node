@@ -28,6 +28,11 @@ void RoaringBitmap32_serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & 
   info.GetReturnValue().Set(AsyncWorker::run(worker));
 }
 
+void RoaringBitmap32_serializeFileAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  SerializeFileWorker * worker = new SerializeFileWorker(info, nullptr);
+  info.GetReturnValue().Set(AsyncWorker::run(worker));
+}
+
 void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 

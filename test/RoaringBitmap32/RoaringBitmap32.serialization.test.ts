@@ -323,4 +323,12 @@ describe("RoaringBitmap32 serialization", () => {
       expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
     });
   });
+
+  it.skip("serialize and deserialize in various formats", async () => {
+    for (const format of ["portable", "croaring", "unsafe_frozen_croaring"] as const) {
+      const smallArray = [1, 2, 3, 100, 0xfffff, 0xffffffff];
+      const serialized = await new RoaringBitmap32(smallArray).serializeAsync(format);
+      expect((await RoaringBitmap32.deserializeAsync(serialized, format)).toArray()).to.deep.equal(smallArray);
+    }
+  });
 });
