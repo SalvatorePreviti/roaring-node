@@ -324,7 +324,7 @@ describe("RoaringBitmap32 serialization", () => {
     });
   });
 
-  it.skip("serialize and deserialize in various formats", async () => {
+  it("serialize and deserialize in various formats", async () => {
     for (const format of ["portable", "croaring", "unsafe_frozen_croaring"] as const) {
       const smallArray = [1, 2, 3, 100, 0xfffff, 0xffffffff];
       const serialized = await new RoaringBitmap32(smallArray).serializeAsync(format);

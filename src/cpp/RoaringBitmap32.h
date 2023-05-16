@@ -3,6 +3,7 @@
 
 #include "v8utils.h"
 #include "serialization-format.h"
+#include "WorkerError.h"
 
 using namespace roaring;
 using namespace roaring::api;

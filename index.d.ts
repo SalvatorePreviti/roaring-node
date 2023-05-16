@@ -1010,6 +1010,9 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * Serializes the bitmap into a file, asynchronously.
    * The bitmap will be temporarily frozen until the operation completes.
    *
+   * This is faster, everything runs in its own thread and it consumes less memory than serializing to a Buffer and then to write to a file,
+   * internally it uses memory mapped files and skip all the JS overhead.
+   *
    * @param {SerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
    * @memberof ReadonlyRoaringBitmap32
    */
@@ -1788,6 +1791,9 @@ export class RoaringBitmap32 {
    * The portable version is meant to be compatible with Java and Go versions.
    * The croaring version is compatible with the C version, it can be smaller than the portable version.
    * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
+   *
+   * This is faster, everything runs in its own thread and it consumes less memory than serializing to a Buffer and then to write to a file,
+   * internally it uses memory mapped files and skip all the JS overhead.
    *
    * @static
    * @param {string} filePath The path of the file to read.

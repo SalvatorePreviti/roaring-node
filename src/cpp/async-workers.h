@@ -3,6 +3,7 @@
 
 #include "RoaringBitmap32.h"
 #include "RoaringBitmap32-serialization.h"
+#include "WorkerError.h"
 
 uint32_t getCpusCount() {
   static uint32_t _cpusCountCache = 0;
@@ -43,15 +44,15 @@ class AsyncWorker {
 
   inline bool hasStarted() const { return this->_started; }
 
-  inline bool hasError() const { return this->_error != nullptr; }
+  inline bool hasError() const { return this->_error.hasError(); }
 
-  inline void setError(const_char_ptr_t error) {
-    if (error != nullptr && this->_error == nullptr) {
+  inline void setError(const WorkerError & error) {
+    if (error.hasError() && !this->_error.hasError()) {
       this->_error = error;
     }
   }
 
-  inline void clearError() { this->_error = nullptr; }
+  inline void clearError() { this->_error = WorkerError(); }
 
   static v8::Local<v8::Value> run(AsyncWorker * worker) {
     v8::EscapableHandleScope scope(worker->isolate);
@@ -70,7 +71,7 @@ class AsyncWorker {
 
       auto promise = resolver->GetPromise();
       if (promise.IsEmpty()) {
-        worker->setError("Failed to create Promise");
+        worker->setError(WorkerError("Failed to create Promise"));
       } else {
         returnValue = promise;
         worker->_resolver.Reset(isolate, resolver);
@@ -131,7 +132,7 @@ class AsyncWorker {
 
  private:
   uv_work_t _task{};
-  volatile const_char_ptr_t _error;
+  WorkerError _error;
   bool _started;
   volatile bool _completed;
   v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> _callback;
@@ -142,7 +143,7 @@ class AsyncWorker {
     if (
       uv_queue_work(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &_task, AsyncWorker::_work, AsyncWorker::_done) !=
       0) {
-      setError("Error starting async thread");
+      setError(WorkerError("Error starting async thread"));
       return false;
     }
     return true;
@@ -162,7 +163,7 @@ class AsyncWorker {
 
     v8::Local<v8::Value> result;
 
-    if (worker->_error == nullptr && error.IsEmpty()) {
+    if (!worker->_error.hasError() && error.IsEmpty()) {
       worker->done(result);
     }
 
@@ -179,13 +180,11 @@ class AsyncWorker {
     }
 
     if (result.IsEmpty() && error.IsEmpty()) {
-      worker->setError("Async operation failed");
+      worker->setError(WorkerError("Async operation failed"));
     }
 
     if (worker->hasError() && error.IsEmpty()) {
-      v8::MaybeLocal<v8::String> message =
-        v8::String::NewFromUtf8(isolate, worker->_error, v8::NewStringType::kInternalized);
-      error = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
+      error = worker->_error.newV8Error(isolate);
     }
 
     auto context = isolate->GetCurrentContext();
@@ -249,7 +248,7 @@ class AsyncWorker {
     thread_local_isolate = worker->isolate;
 
     if (status != 0) {
-      worker->setError("Error executing async thread");
+      worker->setError(WorkerError("Error executing async thread"));
     }
     _complete(worker);
 
@@ -258,7 +257,7 @@ class AsyncWorker {
 
   v8::Local<v8::Value> _makeError(v8::Local<v8::Value> error) {
     if (error.IsEmpty() || error->IsNull() || error->IsUndefined()) {
-      this->setError("Exception in async operation");
+      this->setError(WorkerError("Exception in async operation"));
       return {};
     }
     if (!error->IsObject()) {
@@ -321,7 +320,7 @@ class ParallelAsyncWorker : public AsyncWorker {
 
     uv_work_t * tasks = (uv_work_t *)gcaware_malloc(tasksCount * sizeof(uv_work_t));
     if (tasks == nullptr) {
-      this->setError("Failed to allocate memory");
+      this->setError(WorkerError("Failed to allocate memory"));
       return false;
     }
     memset(tasks, 0, tasksCount * sizeof(uv_work_t));
@@ -339,7 +338,7 @@ class ParallelAsyncWorker : public AsyncWorker {
           &tasks[taskIndex],
           ParallelAsyncWorker::_parallelWork,
           ParallelAsyncWorker::_parallelDone) != 0) {
-        setError("Error starting async parallel task");
+        setError(WorkerError("Error starting async parallel task"));
         break;
       }
       ++_pendingTasks;
@@ -411,7 +410,7 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
  protected:
   void done(v8::Local<v8::Value> & result) override {
     if (this->bitmap == nullptr) {
-      return this->setError("Error deserializing roaring bitmap");
+      return this->setError(WorkerError("Error deserializing roaring bitmap"));
     }
 
     v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(this->isolate);
@@ -419,12 +418,12 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
     v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
 
     if (!resultMaybe.ToLocal(&result)) {
-      return this->setError("Error instantiating roaring bitmap");
+      return this->setError(WorkerError("Error instantiating roaring bitmap"));
     }
 
     RoaringBitmap32 * unwrapped = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
     if (unwrapped == nullptr) {
-      return this->setError(ERROR_INVALID_OBJECT);
+      return this->setError(WorkerError(ERROR_INVALID_OBJECT));
     }
 
     unwrapped->replaceBitmapInstance(this->isolate, this->bitmap);
@@ -462,7 +461,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
 
     RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
     if (self == nullptr) {
-      return this->setError(ERROR_INVALID_OBJECT);
+      return this->setError(WorkerError(ERROR_INVALID_OBJECT));
     }
     if (this->maybeAddonData == nullptr) {
       this->maybeAddonData = self->addonData;
@@ -514,7 +513,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     // Allocate a new buffer
     this->allocatedBuffer = (uint32_t *)bare_aligned_malloc(32, size * sizeof(uint32_t));
     if (!this->allocatedBuffer) {
-      return this->setError("RoaringBitmap32::toUint32ArrayAsync - failed to allocate memory");
+      return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to allocate memory"));
     }
 
     if (maxSize < size) {
@@ -538,7 +537,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     if (this->hasInput) {
       if (!v8utils::v8ValueToUint32ArrayWithLimit(
             isolate, this->inputContent.bufferPersistent.Get(isolate), this->outputSize, result)) {
-        return this->setError("RoaringBitmap32::toUint32ArrayAsync - failed to create a UInt32Array range");
+        return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create a UInt32Array range"));
       }
       return;
     }
@@ -553,27 +552,27 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
 
       v8::Local<v8::Object> nodeBufferObject;
       if (!nodeBufferMaybeLocal.ToLocal(&nodeBufferObject)) {
-        return this->setError("RoaringBitmap32::toUint32ArrayAsync - failed to create a new buffer");
+        return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create a new buffer"));
       }
 
       v8::Local<v8::Uint8Array> nodeBuffer = nodeBufferObject.As<v8::Uint8Array>();
       if (nodeBuffer.IsEmpty()) {
-        return this->setError("RoaringBitmap32::toUint32ArrayAsync - failed to create a new buffer");
+        return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create a new buffer"));
       }
       result = v8::Uint32Array::New(nodeBuffer->Buffer(), 0, this->outputSize);
       if (result.IsEmpty()) {
-        return this->setError("RoaringBitmap32::toUint32ArrayAsync - failed to create a new buffer");
+        return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create a new buffer"));
       }
       return;
     }
 
     auto arrayBuffer = v8::ArrayBuffer::New(isolate, 0);
     if (arrayBuffer.IsEmpty()) {
-      return this->setError("RoaringBitmap32::toUint32ArrayAsync - failed to create an empty ArrayBuffer");
+      return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create an empty ArrayBuffer"));
     }
     result = v8::Uint32Array::New(arrayBuffer, 0, 0);
     if (result.IsEmpty()) {
-      return this->setError("RoaringBitmap32::toUint32ArrayAsync - failed to create an empty ArrayBuffer");
+      return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create an empty ArrayBuffer"));
     }
   }
 };
@@ -684,7 +683,7 @@ class DeserializeWorker final : public AsyncWorker {
         this->maybeAddonData = this->deserializer.targetBitmap->addonData;
       }
       if (this->maybeAddonData == nullptr && !this->hasError()) {
-        this->setError("RoaringBitmap32 deserialization failed to get the addon data");
+        this->setError(WorkerError("RoaringBitmap32 deserialization failed to get the addon data"));
       }
     }
   }
@@ -697,12 +696,12 @@ class DeserializeWorker final : public AsyncWorker {
     v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
 
     if (!cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr).ToLocal(&result)) {
-      return this->setError("RoaringBitmap32 deserialization failed to create a new instance");
+      return this->setError(WorkerError("RoaringBitmap32 deserialization failed to create a new instance"));
     }
 
     RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
     if (self == nullptr) {
-      return this->setError(ERROR_INVALID_OBJECT);
+      return this->setError(WorkerError(ERROR_INVALID_OBJECT));
     }
 
     self->replaceBitmapInstance(isolate, nullptr);
@@ -737,12 +736,12 @@ class DeserializeFileWorker final : public AsyncWorker {
     v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
 
     if (!cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr).ToLocal(&result)) {
-      return this->setError("RoaringBitmap32 deserialization failed to create a new instance");
+      return this->setError(WorkerError("RoaringBitmap32 deserialization failed to create a new instance"));
     }
 
     RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
     if (self == nullptr) {
-      return this->setError(ERROR_INVALID_OBJECT);
+      return this->setError(WorkerError(ERROR_INVALID_OBJECT));
     }
 
     self->replaceBitmapInstance(isolate, nullptr);
@@ -769,8 +768,8 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
  protected:
   virtual void parallelWork(uint32_t index) {
     RoaringBitmapDeserializer & item = items[index];
-    const char * error = item.deserialize();
-    if (error != nullptr) {
+    const WorkerError error = item.deserialize();
+    if (error.hasError()) {
       this->setError(error);
     }
   }
@@ -784,7 +783,7 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
     v8::MaybeLocal<v8::Array> resultArrayMaybe = v8::Array::New(isolate, itemsCount);
     v8::Local<v8::Array> resultArray;
     if (!resultArrayMaybe.ToLocal(&resultArray)) {
-      return this->setError("RoaringBitmap32 deserialization failed to create a new array");
+      return this->setError(WorkerError("RoaringBitmap32 deserialization failed to create a new array"));
     }
 
     v8::Local<v8::Context> currentContext = isolate->GetCurrentContext();
@@ -793,12 +792,12 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
       v8::MaybeLocal<v8::Object> instanceMaybe = cons->NewInstance(currentContext, 0, nullptr);
       v8::Local<v8::Object> instance;
       if (!instanceMaybe.ToLocal(&instance)) {
-        return this->setError("RoaringBitmap32 deserialization failed to create a new instance");
+        return this->setError(WorkerError("RoaringBitmap32 deserialization failed to create a new instance"));
       }
 
       RoaringBitmap32 * unwrapped = ObjectWrap::TryUnwrap<RoaringBitmap32>(instance, isolate);
       if (unwrapped == nullptr) {
-        return this->setError(ERROR_INVALID_OBJECT);
+        return this->setError(WorkerError(ERROR_INVALID_OBJECT));
       }
 
       RoaringBitmapDeserializer & item = items[i];
@@ -826,7 +825,7 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
   void work() final {
     bitmap = roaring_bitmap_create_with_capacity(buffer.length);
     if (bitmap == nullptr) {
-      this->setError("Failed to allocate roaring bitmap");
+      this->setError(WorkerError("Failed to allocate roaring bitmap"));
       return;
     }
     roaring_bitmap_add_many(bitmap, buffer.length, buffer.data);

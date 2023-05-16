@@ -24,18 +24,17 @@ class RoaringBitmapSerializerBase {
 
   size_t volatile serializedSize = 0;
 
-  const char * computeSerializedSize() {
+  WorkerError computeSerializedSize() {
     size_t buffersize;
-    size_t cardinality;
     switch (this->format) {
       case SerializationFormat::croaring: {
-        cardinality = this->self->getSize();
+        this->cardinality = this->self->getSize();
         auto sizeasarray = cardinality * sizeof(uint32_t) + sizeof(uint32_t);
         auto portablesize = roaring_bitmap_portable_size_in_bytes(this->self->roaring);
         if (portablesize < sizeasarray || sizeasarray >= MAX_SERIALIZATION_ARRAY_SIZE_IN_BYTES - 1) {
           buffersize = portablesize + 1;
         } else {
-          serializeArray = true;
+          this->serializeArray = true;
           buffersize = (size_t)sizeasarray + 1;
         }
         break;
@@ -51,16 +50,16 @@ class RoaringBitmapSerializerBase {
         break;
       }
 
-      default: return "RoaringBitmap32 serialization format is invalid";
+      default: return WorkerError("RoaringBitmap32 serialization format is invalid");
     }
 
     this->serializedSize = buffersize;
-    return nullptr;
+    return WorkerError();
   }
 
-  const char * serializeToBuffer(uint8_t * data) {
+  WorkerError serializeToBuffer(uint8_t * data) {
     if (!data) {
-      return "RoaringBitmap32 serialization allocation failed";
+      return WorkerError("RoaringBitmap32 serialization allocation failed");
     }
 
     switch (format) {
@@ -86,9 +85,9 @@ class RoaringBitmapSerializerBase {
         break;
       }
 
-      default: return "RoaringBitmap32 serialization format is invalid";
+      default: return WorkerError("RoaringBitmap32 serialization format is invalid");
     }
-    return nullptr;
+    return WorkerError();
   }
 };
 
@@ -136,9 +135,9 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
     this->self = bitmap;
   }
 
-  const char * serialize() {
-    const char * err = this->computeSerializedSize();
-    if (err) {
+  WorkerError serialize() {
+    WorkerError err = this->computeSerializedSize();
+    if (err.hasError()) {
       return err;
     }
 
@@ -149,7 +148,7 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
         this->format == SerializationFormat::unsafe_frozen_croaring ? 32 : 8, this->serializedSize);
       this->allocatedBuffer = data;
     } else if (this->inputBuffer.length < this->serializedSize) {
-      return "RoaringBitmap32 serialization buffer is too small";
+      return WorkerError("RoaringBitmap32 serialization buffer is too small");
     }
 
     return this->serializeToBuffer(data);
@@ -210,26 +209,29 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
     this->self = bitmap;
   }
 
-  const char * serialize() {
-    const char * err = this->computeSerializedSize();
-    if (err != nullptr) {
+  WorkerError serialize() {
+    WorkerError err = this->computeSerializedSize();
+    if (err.hasError()) {
       return err;
     }
 
     int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd < 0) {
-      return "RoaringBitmap32 serialization failed to open the file";
+      return WorkerError(errno, "open", this->filePath);
     }
 
     if (ftruncate(fd, this->serializedSize) < 0) {
+      err = WorkerError(errno, "ftruncate", this->filePath);
       close(fd);
-      return "RoaringBitmap32 serialization failed to truncate the file";
+      return err;
     }
 
     uint8_t * data = (uint8_t *)mmap(nullptr, this->serializedSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (data == MAP_FAILED) {
+      int errorno = errno;
+      err = WorkerError(errorno, "mmap", this->filePath);
       close(fd);
-      return "RoaringBitmap32 serialization failed to mmap the file";
+      return err;
     }
 
     err = this->serializeToBuffer(data);
@@ -257,27 +259,27 @@ class RoaringBitmapDeserializerBase {
     }
   }
 
-  const char * deserializeBuf(const char * bufaschar, size_t bufLen) {
+  WorkerError deserializeBuf(const char * bufaschar, size_t bufLen) {
     if (this->format == DeserializationFormat::INVALID) {
-      return "RoaringBitmap32 deserialization format argument was invalid";
+      return WorkerError("RoaringBitmap32 deserialization format argument was invalid");
     }
 
     if (bufLen == 0 || !bufaschar) {
       // Empty bitmap for an empty buffer.
       this->roaring = roaring_bitmap_create();
       if (!this->roaring) {
-        return "RoaringBitmap32 deserialization failed to create an empty bitmap";
+        return WorkerError("RoaringBitmap32 deserialization failed to create an empty bitmap");
       }
-      return nullptr;
+      return WorkerError();
     }
 
     switch (this->format) {
       case DeserializationFormat::portable: {
         this->roaring = roaring_bitmap_portable_deserialize_safe(bufaschar, bufLen);
         if (!this->roaring) {
-          return "RoaringBitmap32 deserialization - portable deserialization failed";
+          return WorkerError("RoaringBitmap32 deserialization - portable deserialization failed");
         }
-        return nullptr;
+        return WorkerError();
       }
 
       case DeserializationFormat::croaring: {
@@ -287,52 +289,53 @@ class RoaringBitmapDeserializerBase {
             memcpy(&card, bufaschar + 1, sizeof(uint32_t));
 
             if (card * sizeof(uint32_t) + sizeof(uint32_t) + 1 != bufLen) {
-              return "RoaringBitmap32 deserialization corrupted data, wrong cardinality header";
+              return WorkerError("RoaringBitmap32 deserialization corrupted data, wrong cardinality header");
             }
 
             const uint32_t * elems = (const uint32_t *)(bufaschar + 1 + sizeof(uint32_t));
             this->roaring = roaring_bitmap_of_ptr(card, elems);
             if (!this->roaring) {
-              return "RoaringBitmap32 deserialization - uint32 array deserialization failed";
+              return WorkerError("RoaringBitmap32 deserialization - uint32 array deserialization failed");
             }
-            return nullptr;
+            return WorkerError();
           }
 
           case CROARING_SERIALIZATION_CONTAINER: {
             this->roaring = roaring_bitmap_portable_deserialize_safe(bufaschar + 1, bufLen - 1);
             if (!this->roaring) {
-              return "RoaringBitmap32 deserialization - container deserialization failed";
+              return WorkerError("RoaringBitmap32 deserialization - container deserialization failed");
             }
-            return nullptr;
+            return WorkerError();
           }
         }
 
-        return "RoaringBitmap32 deserialization - invalid portable header byte";
+        return WorkerError("RoaringBitmap32 deserialization - invalid portable header byte");
       }
 
       case DeserializationFormat::unsafe_frozen_portable:
       case DeserializationFormat::unsafe_frozen_croaring: {
         this->frozenBuffer = (uint8_t *)bare_aligned_malloc(32, bufLen);
         if (!this->frozenBuffer) {
-          return "RoaringBitmap32 deserialization - failed to allocate memory for frozen bitmap";
+          return WorkerError("RoaringBitmap32 deserialization - failed to allocate memory for frozen bitmap");
         }
         memcpy(this->frozenBuffer, bufaschar, bufLen);
 
         if (format == DeserializationFormat::unsafe_frozen_croaring) {
           this->roaring =
             const_cast<roaring_bitmap_t_ptr>(roaring_bitmap_frozen_view((const char *)this->frozenBuffer, bufLen));
-          return this->roaring ? nullptr : "RoaringBitmap32 deserialization - failed to create a frozen view";
+          return this->roaring ? WorkerError()
+                               : WorkerError("RoaringBitmap32 deserialization - failed to create a frozen view");
         }
 
         this->roaring =
           const_cast<roaring_bitmap_t_ptr>(roaring_bitmap_portable_deserialize_frozen((const char *)this->frozenBuffer));
         if (!this->roaring) {
-          return "RoaringBitmap32 deserialization - failed to create a frozen view";
+          return WorkerError("RoaringBitmap32 deserialization - failed to create a frozen view");
         }
-        return nullptr;
+        return WorkerError();
       }
 
-      default: return "RoaringBitmap32 deserialization - unknown deserialization format";
+      default: return WorkerError("RoaringBitmap32 deserialization - unknown deserialization format");
     }
   }
 
@@ -354,27 +357,27 @@ class RoaringBitmapDeserializer final : public RoaringBitmapDeserializerBase {
   RoaringBitmap32 * targetBitmap = nullptr;
   v8utils::TypedArrayContent<uint8_t> inputBuffer;
 
-  const char * setOutput(v8::Isolate * isolate, const v8::MaybeLocal<v8::Value> & valueMaybe, DeserializationFormat format) {
+  WorkerError setOutput(v8::Isolate * isolate, const v8::MaybeLocal<v8::Value> & valueMaybe, DeserializationFormat format) {
     this->isolate = isolate;
     this->format = format;
 
     if (valueMaybe.IsEmpty()) {
-      return nullptr;
+      return WorkerError();
     }
 
     v8::Local<v8::Value> v;
     if (!valueMaybe.ToLocal(&v) || v->IsNullOrUndefined()) {
-      return nullptr;
+      return WorkerError();
     }
 
     if (!this->inputBuffer.set(isolate, v)) {
-      return "RoaringBitmap32 deserialization output argument was not a valid typed array";
+      return WorkerError("RoaringBitmap32 deserialization output argument was not a valid typed array");
     }
 
-    return nullptr;
+    return WorkerError();
   }
 
-  const char * parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info, bool isInstanceMethod) {
+  WorkerError parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info, bool isInstanceMethod) {
     v8::Isolate * isolate = info.GetIsolate();
     this->isolate = isolate;
     v8::HandleScope scope(isolate);
@@ -382,15 +385,15 @@ class RoaringBitmapDeserializer final : public RoaringBitmapDeserializerBase {
     if (isInstanceMethod) {
       this->targetBitmap = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
       if (this->targetBitmap == nullptr) {
-        return "RoaringBitmap32 deserialization on invalid object";
+        return WorkerError("RoaringBitmap32 deserialization on invalid object");
       }
       if (this->targetBitmap->isFrozen()) {
-        return ERROR_FROZEN;
+        return WorkerError(ERROR_FROZEN);
       }
     }
 
     if (info.Length() < 2) {
-      return "RoaringBitmap32 deserialization expects a format and a buffer arguments";
+      return WorkerError("RoaringBitmap32 deserialization expects a format and a buffer arguments");
     }
 
     int bufferArgIndex = 1;
@@ -404,30 +407,30 @@ class RoaringBitmapDeserializer final : public RoaringBitmapDeserializerBase {
     if (
       !info[bufferArgIndex]->IsNullOrUndefined() &&
       !this->inputBuffer.set(isolate, info[bufferArgIndex]->ToObject(isolate->GetCurrentContext()))) {
-      return "RoaringBitmap32 deserialization buffer argument was invalid";
+      return WorkerError("RoaringBitmap32 deserialization buffer argument was invalid");
     }
 
-    return nullptr;
+    return WorkerError();
   }
 
-  const char * deserialize() { return this->deserializeBuf((const char *)this->inputBuffer.data, this->inputBuffer.length); }
+  WorkerError deserialize() { return this->deserializeBuf((const char *)this->inputBuffer.data, this->inputBuffer.length); }
 };
 
 class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase {
  public:
   std::string filePath;
 
-  const char * parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  WorkerError parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Isolate * isolate = info.GetIsolate();
     this->isolate = isolate;
     v8::HandleScope scope(isolate);
 
     if (info.Length() < 2) {
-      return "RoaringBitmap32::deserializeFileAsync expects a file path and format";
+      return WorkerError("RoaringBitmap32::deserializeFileAsync expects a file path and format");
     }
 
     if (!info[0]->IsString()) {
-      return "RoaringBitmap32::deserializeFileAsync expects a file path as the first argument";
+      return WorkerError("RoaringBitmap32::deserializeFileAsync expects a file path as the first argument");
     }
 
     v8::String::Utf8Value filePathUtf8(isolate, info[0]);
@@ -435,37 +438,37 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
 
     DeserializationFormat fmt = tryParseDeserializationFormat(info[1], isolate);
     if (fmt == DeserializationFormat::INVALID) {
-      return "RoaringBitmap32::deserializeFileAsync invalid format";
+      return WorkerError("RoaringBitmap32::deserializeFileAsync invalid format");
     }
     this->format = fmt;
-
-    return nullptr;
+    return WorkerError();
   }
 
-  const char * deserialize() {
+  WorkerError deserialize() {
     int fd = open(this->filePath.c_str(), O_RDONLY);
     if (fd == -1) {
-      return "RoaringBitmap32::deserializeFileAsync failed to open file";
+      return WorkerError(errno, "open", this->filePath);
     }
 
     struct stat st;
     if (fstat(fd, &st) == -1) {
+      WorkerError err = WorkerError(errno, "fstat", this->filePath);
       close(fd);
-      return "RoaringBitmap32::deserializeFileAsync failed to stat file";
+      return err;
     }
 
     size_t fileSize = st.st_size;
 
     void * buf = mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
     if (buf == MAP_FAILED) {
+      WorkerError err = WorkerError(errno, "mmap", this->filePath);
       close(fd);
-      return "RoaringBitmap32::deserializeFileAsync failed to mmap file";
+      return err;
     }
 
-    const char * err = this->deserializeBuf((const char *)buf, fileSize);
+    WorkerError err = this->deserializeBuf((const char *)buf, fileSize);
 
     munmap(buf, fileSize);
-
     close(fd);
 
     return err;
