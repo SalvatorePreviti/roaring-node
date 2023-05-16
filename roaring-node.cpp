@@ -4079,6 +4079,10 @@ static void munmap(void * addr, size_t length) {
 #endif
 
 
+#if defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
+#  include <io.h>
+#endif
+
 #ifndef CROARING_SERIALIZATION_ARRAY_UINT32
 constexpr const unsigned char CROARING_SERIALIZATION_ARRAY_UINT32 = 1;
 #endif
@@ -4294,11 +4298,20 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
       return WorkerError(errno, "open", this->filePath);
     }
 
+#if defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
+    int truncateErr = _chsize_s(fd, this->serializedSize);
+    if (truncateErr != 0) {
+      err = WorkerError(truncateErr, "ftruncate", this->filePath);
+      close(fd);
+      return err;
+    }
+#else
     if (ftruncate(fd, this->serializedSize) < 0) {
       err = WorkerError(errno, "ftruncate", this->filePath);
       close(fd);
       return err;
     }
+#endif
 
     uint8_t * data = (uint8_t *)mmap(nullptr, this->serializedSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (data == MAP_FAILED) {
