@@ -103,7 +103,6 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
   if (!bitmap) {
     return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView failed to deserialize the input");
   }
-  roaring_bitmap_set_copy_on_write(bitmap, true);
 
   self->replaceBitmapInstance(isolate, bitmap);
 
@@ -165,15 +164,34 @@ void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & inf
   info.GetReturnValue().Set(info.Holder());
 }
 
-void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_deserializeAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
 
   auto * worker = new DeserializeWorker(info, addonData);
+  if (worker == nullptr) {
+    return v8utils::throwError(isolate, "RoaringBitmap32 deserialization failed to allocate async worker");
+  }
+
+  if (info.Length() >= 3 && info[2]->IsFunction()) {
+    worker->setCallback(info[2]);
+  }
+
+  v8::Local<v8::Value> returnValue = AsyncWorker::run(worker);
+  info.GetReturnValue().Set(returnValue);
+}
+
+void RoaringBitmap32_deserializeFileAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  auto * worker = new DeserializeFileWorker(info, addonData);
   if (worker == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32 deserialization failed to allocate async worker");
   }

@@ -155,6 +155,7 @@
     "containers.c": "cpp",
     "__verbose_abort": "cpp",
     "bit": "cpp",
-    "filesystem": "cpp"
+    "filesystem": "cpp",
+    "unordered_set": "cpp"
   }
 }

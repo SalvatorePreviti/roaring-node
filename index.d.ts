@@ -1174,7 +1174,6 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * Overwrite the content of this bitmap copying it from an Iterable or another RoaringBitmap32.
    *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
-   *
    * Is even faster if a RoaringBitmap32 instance is used (it performs a simple copy).
    *
    * @param {Iterable<number>} values The new values or a RoaringBitmap32 instance.
@@ -1735,11 +1734,9 @@ export class RoaringBitmap32 {
    *
    * Returns a Promise that resolves to a new RoaringBitmap32 instance.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * The croaring version is compatible with the C version, it can be smaller than the portable version.
    * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
-   *
-   * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
    * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer| SharedArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the serialized data.
@@ -1758,11 +1755,9 @@ export class RoaringBitmap32 {
    *
    * When deserialization is completed or failed, the given callback will be executed.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * The croaring version is compatible with the C version, it can be smaller than the portable version.
    * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
-   *
-   * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
    * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer| SharedArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the.
@@ -1776,6 +1771,22 @@ export class RoaringBitmap32 {
     format: DeserializationFormatType,
     callback: RoaringBitmap32Callback,
   ): void;
+
+  /**
+   * Deserializes the bitmap from a file asynchronously.
+   * Returns a new RoaringBitmap32 instance.
+   *
+   * The portable version is meant to be compatible with Java and Go versions.
+   * The croaring version is compatible with the C version, it can be smaller than the portable version.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
+   *
+   * @static
+   * @param {string} filePath The path of the file to read.
+   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
+   * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
+   * @memberof RoaringBitmap32
+   */
+  public static deserializeFileAsync(filePath: string, format: DeserializationFormatType): Promise<RoaringBitmap32>;
 
   /**
    *

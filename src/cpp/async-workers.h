@@ -666,6 +666,46 @@ class DeserializeWorker final : public AsyncWorker {
   }
 };
 
+/**
+ * Same as DeserializeWorker but it uses memory mapped files to deserialize the bitmaps.
+ */
+class DeserializeFileWorker final : public AsyncWorker {
+ public:
+  RoaringBitmapFileDeserializer deserializer;
+  const v8::FunctionCallbackInfo<v8::Value> & info;
+
+  explicit DeserializeFileWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * addonData) :
+    AsyncWorker(info.GetIsolate(), addonData), info(info) {
+    gcaware_addAllocatedMemory(sizeof(DeserializeWorker));
+  }
+
+  virtual ~DeserializeFileWorker() { gcaware_removeAllocatedMemory(sizeof(DeserializeFileWorker)); }
+
+ protected:
+  void before() final { this->setError(this->deserializer.parseArguments(this->info)); }
+
+  void work() final { this->setError(this->deserializer.deserialize()); }
+
+  void done(v8::Local<v8::Value> & result) {
+    v8::Isolate * isolate = this->isolate;
+
+    v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
+
+    if (!cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr).ToLocal(&result)) {
+      return this->setError("RoaringBitmap32 deserialization failed to create a new instance");
+    }
+
+    RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+    if (self == nullptr) {
+      return this->setError(ERROR_INVALID_OBJECT);
+    }
+
+    self->replaceBitmapInstance(isolate, nullptr);
+
+    this->deserializer.finalizeTargetBitmap(self);
+  }
+};
+
 class DeserializeParallelWorker : public ParallelAsyncWorker {
  public:
   v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
@@ -744,7 +784,6 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
       this->setError("Failed to allocate roaring bitmap");
       return;
     }
-    roaring_bitmap_set_copy_on_write(bitmap, true);
     roaring_bitmap_add_many(bitmap, buffer.length, buffer.data);
     roaring_bitmap_run_optimize(bitmap);
     roaring_bitmap_shrink_to_fit(bitmap);

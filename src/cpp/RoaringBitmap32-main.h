@@ -882,7 +882,8 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   v8utils::defineHiddenField(isolate, ctorObject, "default", ctorFunction);
 
   AddonData_setMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic, addonData);
-  AddonData_setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeStaticAsync, addonData);
+  AddonData_setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic, addonData);
+  AddonData_setMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic, addonData);
   AddonData_setMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync, addonData);
 
   ignoreMaybeResult(

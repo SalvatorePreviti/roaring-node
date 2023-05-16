@@ -531,7 +531,6 @@ void RoaringBitmap32_fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> &
   if (getRangeOperationParameters(info, minInteger, maxInteger)) {
     roaring_bitmap_t * r = roaring_bitmap_from_range(minInteger, maxInteger, step);
     if (r != nullptr) {
-      roaring_bitmap_set_copy_on_write(r, true);
       self->replaceBitmapInstance(isolate, r);
     }
   }
