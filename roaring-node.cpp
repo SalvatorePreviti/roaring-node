@@ -4339,9 +4339,7 @@ WorkerError deserializeRoaringCsvFile(
 
     for (ssize_t i = 0; i < readBytes; i++) {
       char c = buf[i];
-      if (c == '-') {
-        isNegative = true;
-      } else if (c >= '0' && c <= '9') {
+      if (c >= '0' && c <= '9') {
         if (value <= 0xffffffff) {
           hasValue = true;
           value = value * 10 + (c - '0');
@@ -4353,8 +4351,8 @@ WorkerError deserializeRoaringCsvFile(
             roaring_bitmap_add_bulk(r, &context, value);
           }
         }
-        isNegative = false;
         value = 0;
+        isNegative = c == '-';
       }
     }
 
