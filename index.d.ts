@@ -157,6 +157,61 @@ export enum SerializationFormat {
    *
    */
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
+
+  /**
+   * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
+   */
+  uint32_array = "uint32_array",
+}
+
+export enum FileSerializationFormat {
+  /**
+   * Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format.
+   */
+  croaring = "croaring",
+
+  /**
+   * Stable Portable Java and Go format.
+   */
+  portable = "unsafe_portable",
+
+  /**
+   * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
+   */
+  uint32_array = "uint32_array",
+
+  /**
+   * Non portable C/C++ frozen format.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when deserialized or when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   *
+   * When this option is used in the serialize function, the new returned buffer (if no buffer was provided) will be aligned to a 32 bytes boundary.
+   * This is required to create a frozen view with the method unsafeFrozenView.
+   *
+   */
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
+
+  /**
+   * Comma separated values, all values are in decimal and in one line without spaces or other characters.
+   */
+  comma_separated_values = "comma_separated_values",
+
+  /**
+   * Tab "\t" separated values, all values are in decimal and in one line without other characters.
+   */
+  tab_separated_values = "tab_separated_values",
+
+  /**
+   * Newline (\n) separated values, all values are in decimal and one per line with a terminating newline.
+   */
+  newline_separated_values = "newline_separated_values",
+
+  /**
+   * A JSON file in the format "[1,2,3,4...]"
+   */
+  json_array = "json_array",
 }
 
 export type SerializationFormatType =
@@ -164,7 +219,20 @@ export type SerializationFormatType =
   | "croaring"
   | "portable"
   | "unsafe_frozen_croaring"
+  | "uint32_array"
   | boolean;
+
+export type FileSerializationFormatType =
+  | SerializationFormatType
+  | FileSerializationFormat
+  | "comma_separated_values"
+  | "tab_separated_values"
+  | "newline_separated_values"
+  | "json_array";
+
+export type SerializationDeserializationFormatType = SerializationFormatType & DeserializationFormatType;
+
+export type FileSerializationDeserializationFormatType = FileSerializationFormatType & FileDeserializationFormatType;
 
 export enum DeserializationFormat {
   /** Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
@@ -190,15 +258,68 @@ export enum DeserializationFormat {
    * The application may crash, buffer overrun, could be a vector of attack!
    */
   unsafe_frozen_portable = "unsafe_frozen_portable",
+
+  /**
+   * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
+   */
+  uint32_array = "uint32_array",
+
+  comma_separated_values = "comma_separated_values",
+  tab_separated_values = "tab_separated_values",
+  newline_separated_values = "newline_separated_values",
+  json_array = "json_array",
 }
 
 export type DeserializationFormatType =
-  | SerializationFormat
+  | DeserializationFormat
   | "croaring"
   | "portable"
   | "unsafe_frozen_croaring"
   | "unsafe_frozen_portable"
+  | "uint32_array"
+  | "comma_separated_values"
+  | "tab_separated_values"
+  | "newline_separated_values"
+  | "json_array"
   | boolean;
+
+export enum FileDeserializationFormat {
+  /** Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
+  croaring = "croaring",
+
+  /** Stable Portable Java and Go format. */
+  portable = "portable",
+
+  /**
+   * Non portable C/C++ frozen format.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
+
+  /**
+   * Portable version of the frozen view, compatible with Go and Java.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
+  unsafe_frozen_portable = "unsafe_frozen_portable",
+
+  /**
+   * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
+   */
+  uint32_array = "uint32_array",
+
+  comma_separated_values = "comma_separated_values",
+  tab_separated_values = "tab_separated_values",
+  newline_separated_values = "newline_separated_values",
+  json_array = "json_array",
+}
+
+export type FileDeserializationFormatType = DeserializationFormatType | FileDeserializationFormat;
 
 export enum FrozenViewFormat {
   /**
@@ -1007,6 +1128,18 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   ): Promise<Buffer>;
 
   /**
+   * Serializes the bitmap into a file, asynchronously.
+   * The bitmap will be temporarily frozen until the operation completes.
+   *
+   * This is faster, everything runs in its own thread and it consumes less memory than serializing to a Buffer and then to write to a file,
+   * internally it uses memory mapped files and skip all the JS overhead.
+   *
+   * @param {FileSerializationFormat | boolean} format One of the SerializationFormat enum values, or a boolean value: if false, optimized C/C++ format is used. If true, Java and Go portable format is used.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  serializeFileAsync(filePath: string, format: FileSerializationFormatType): Promise<void>;
+
+  /**
    * Returns a new ReadonlyRoaringBitmap32 that is a copy of this bitmap, same as new ReadonlyRoaringBitmap32(copy)
    *
    * @returns {RoaringBitmap32} A cloned RoaringBitmap32 instance
@@ -1174,7 +1307,6 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * Overwrite the content of this bitmap copying it from an Iterable or another RoaringBitmap32.
    *
    * Is faster to pass a Uint32Array instance instead of an array or an iterable.
-   *
    * Is even faster if a RoaringBitmap32 instance is used (it performs a simple copy).
    *
    * @param {Iterable<number>} values The new values or a RoaringBitmap32 instance.
@@ -1476,9 +1608,17 @@ export class RoaringBitmap32 {
 
   public readonly SerializationFormat: typeof SerializationFormat;
 
-  public static readonly DeserializationFormat: typeof SerializationFormat;
+  public static readonly FileSerializationFormat: typeof FileSerializationFormat;
 
-  public readonly DeserializationFormat: typeof SerializationFormat;
+  public readonly FileSerializationFormat: typeof FileSerializationFormat;
+
+  public static readonly FileDeserializationFormat: typeof FileDeserializationFormat;
+
+  public readonly FileDeserializationFormat: typeof FileDeserializationFormat;
+
+  public static readonly DeserializationFormat: typeof DeserializationFormat;
+
+  public readonly DeserializationFormat: typeof DeserializationFormat;
 
   public static readonly FrozenViewFormat: typeof FrozenViewFormat;
 
@@ -1735,11 +1875,9 @@ export class RoaringBitmap32 {
    *
    * Returns a Promise that resolves to a new RoaringBitmap32 instance.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * The croaring version is compatible with the C version, it can be smaller than the portable version.
    * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
-   *
-   * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
    * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer| SharedArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the serialized data.
@@ -1758,11 +1896,9 @@ export class RoaringBitmap32 {
    *
    * When deserialization is completed or failed, the given callback will be executed.
    *
-   * Setting the portable flag to false enable a custom format that can save space compared to the portable format (e.g., for very sparse bitmaps).
    * The portable version is meant to be compatible with Java and Go versions.
+   * The croaring version is compatible with the C version, it can be smaller than the portable version.
    * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
-   *
-   * NOTE: portable argument was optional before, now is required and an Error is thrown if the portable flag is not passed.
    *
    * @static
    * @param {Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer| SharedArrayBuffer | null | undefined} serialized An Uint8Array or a node Buffer that contains the.
@@ -1776,6 +1912,25 @@ export class RoaringBitmap32 {
     format: DeserializationFormatType,
     callback: RoaringBitmap32Callback,
   ): void;
+
+  /**
+   * Deserializes the bitmap from a file asynchronously.
+   * Returns a new RoaringBitmap32 instance.
+   *
+   * The portable version is meant to be compatible with Java and Go versions.
+   * The croaring version is compatible with the C version, it can be smaller than the portable version.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
+   *
+   * This is faster, everything runs in its own thread and it consumes less memory than serializing to a Buffer and then to write to a file,
+   * internally it uses memory mapped files and skip all the JS overhead.
+   *
+   * @static
+   * @param {string} filePath The path of the file to read.
+   * @param {FileDeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
+   * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
+   * @memberof RoaringBitmap32
+   */
+  public static deserializeFileAsync(filePath: string, format: FileDeserializationFormatType): Promise<RoaringBitmap32>;
 
   /**
    *

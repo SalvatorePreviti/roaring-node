@@ -105,8 +105,8 @@ void * gcaware_calloc(size_t count, size_t size) {
 void gcaware_free(void * memory) {
   if (memory != nullptr) {
     gcaware_removeAllocatedMemory(bare_malloc_size(memory));
+    free(memory);
   }
-  free(memory);
 }
 
 void * gcaware_aligned_malloc(size_t alignment, size_t size) {
@@ -120,8 +120,8 @@ void * gcaware_aligned_malloc(size_t alignment, size_t size) {
 void gcaware_aligned_free(void * memory) {
   if (memory != nullptr) {
     gcaware_removeAllocatedMemory(bare_aligned_malloc_size(memory));
+    bare_aligned_free(memory);
   }
-  bare_aligned_free(memory);
 }
 
 void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }

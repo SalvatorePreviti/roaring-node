@@ -1,8 +1,58 @@
 import RoaringBitmap32 from "../../RoaringBitmap32";
+import { DeserializationFormat, SerializationFormat } from "../..";
 import { expect } from "chai";
 
 describe("RoaringBitmap32 serialization", () => {
   const data = [1, 2, 3, 4, 5, 6, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff];
+
+  describe("SerializationFormat", () => {
+    it("should have the right values", () => {
+      expect(SerializationFormat.croaring).eq("croaring");
+      expect(SerializationFormat.portable).eq("portable");
+      expect(SerializationFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
+      expect(SerializationFormat.uint32_array).eq("uint32_array");
+
+      expect(Object.values(SerializationFormat)).to.deep.eq([
+        "croaring",
+        "portable",
+        "unsafe_frozen_croaring",
+        "uint32_array",
+      ]);
+
+      expect(RoaringBitmap32.SerializationFormat).to.eq(SerializationFormat);
+
+      expect(new RoaringBitmap32().SerializationFormat).to.eq(SerializationFormat);
+    });
+  });
+
+  describe("DeserializationFormat", () => {
+    it("should have the right values", () => {
+      expect(DeserializationFormat.croaring).eq("croaring");
+      expect(DeserializationFormat.portable).eq("portable");
+      expect(DeserializationFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
+      expect(DeserializationFormat.unsafe_frozen_portable).eq("unsafe_frozen_portable");
+      expect(DeserializationFormat.comma_separated_values).eq("comma_separated_values");
+      expect(DeserializationFormat.tab_separated_values).eq("tab_separated_values");
+      expect(DeserializationFormat.newline_separated_values).eq("newline_separated_values");
+      expect(DeserializationFormat.json_array).eq("json_array");
+
+      expect(Object.values(DeserializationFormat)).to.deep.eq([
+        "croaring",
+        "portable",
+        "unsafe_frozen_croaring",
+        "unsafe_frozen_portable",
+        "uint32_array",
+        "comma_separated_values",
+        "tab_separated_values",
+        "newline_separated_values",
+        "json_array",
+      ]);
+
+      expect(RoaringBitmap32.DeserializationFormat).to.eq(DeserializationFormat);
+
+      expect(new RoaringBitmap32().DeserializationFormat).to.eq(DeserializationFormat);
+    });
+  });
 
   describe("getSerializationSizeInBytes", () => {
     it("throws if the argument is not a valid format", () => {
@@ -322,5 +372,32 @@ describe("RoaringBitmap32 serialization", () => {
       expect(offsetted.buffer).to.eq(buffer.buffer);
       expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
     });
+  });
+
+  it("serialize and deserialize empty bitmaps in various formats", async () => {
+    for (const format of ["portable", "croaring", "unsafe_frozen_croaring", "uint32_array"] as const) {
+      const serialized = await new RoaringBitmap32().serializeAsync(format);
+      expect((await RoaringBitmap32.deserializeAsync(serialized, format)).toArray()).to.deep.equal([]);
+    }
+  });
+
+  it("serialize and deserialize in various formats", async () => {
+    for (const format of ["portable", "croaring", "unsafe_frozen_croaring"] as const) {
+      const smallArray = [1, 2, 3, 100, 0xfffff, 0xffffffff];
+      const serialized = await new RoaringBitmap32(smallArray).serializeAsync(format);
+      expect((await RoaringBitmap32.deserializeAsync(serialized, format)).toArray()).to.deep.equal(smallArray);
+    }
+  });
+
+  it("deserializes text", () => {
+    for (const fmt of [
+      "comma_separated_values",
+      "tab_separated_values",
+      "newline_separated_values",
+      "json_array",
+    ] as const) {
+      const bitmap = RoaringBitmap32.deserialize(Buffer.from("1, 2,\n3\t4\n5, 6  ,8 9   10 - 100 -101 102"), fmt);
+      expect(bitmap.toArray()).to.deep.eq([1, 2, 3, 4, 5, 6, 8, 9, 10, 100, 102]);
+    }
   });
 });

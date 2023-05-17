@@ -11,9 +11,10 @@ void RoaringBitmap32_serialize(const v8::FunctionCallbackInfo<v8::Value> & info)
   RoaringBitmapSerializer serializer;
   serializer.parseArguments(info);
   if (serializer.self) {
-    const char * error = serializer.serialize();
-    if (error) {
-      return v8utils::throwError(isolate, error);
+    WorkerError error = serializer.serialize();
+    if (error.hasError()) {
+      isolate->ThrowException(error.newV8Error(isolate));
+      return;
     }
     v8::Local<v8::Value> result;
     serializer.done(isolate, result);
@@ -25,6 +26,11 @@ void RoaringBitmap32_serialize(const v8::FunctionCallbackInfo<v8::Value> & info)
 
 void RoaringBitmap32_serializeAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
   SerializeWorker * worker = new SerializeWorker(info, nullptr);
+  info.GetReturnValue().Set(AsyncWorker::run(worker));
+}
+
+void RoaringBitmap32_serializeFileAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  SerializeFileWorker * worker = new SerializeFileWorker(info, nullptr);
   info.GetReturnValue().Set(AsyncWorker::run(worker));
 }
 
@@ -103,7 +109,6 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
   if (!bitmap) {
     return v8utils::throwError(isolate, "RoaringBitmap32::unsafeFrozenView failed to deserialize the input");
   }
-  roaring_bitmap_set_copy_on_write(bitmap, true);
 
   self->replaceBitmapInstance(isolate, bitmap);
 
@@ -133,12 +138,13 @@ void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value>
   self->replaceBitmapInstance(isolate, nullptr);
 
   RoaringBitmapDeserializer deserializer;
-  const char * error = deserializer.parseArguments(info, false);
-  if (!error) {
+  WorkerError error = deserializer.parseArguments(info, false);
+  if (!error.hasError()) {
     error = deserializer.deserialize();
   }
-  if (error) {
-    return v8utils::throwError(isolate, error);
+  if (error.hasError()) {
+    isolate->ThrowException(error.newV8Error(isolate));
+    return;
   }
 
   deserializer.finalizeTargetBitmap(self);
@@ -150,12 +156,13 @@ void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & inf
   v8::Isolate * isolate = info.GetIsolate();
 
   RoaringBitmapDeserializer deserializer;
-  const char * error = deserializer.parseArguments(info, true);
-  if (!error) {
+  WorkerError error = deserializer.parseArguments(info, true);
+  if (!error.hasError()) {
     error = deserializer.deserialize();
   }
-  if (error) {
-    return v8utils::throwError(isolate, error);
+  if (error.hasError()) {
+    isolate->ThrowException(error.newV8Error(isolate));
+    return;
   }
 
   deserializer.targetBitmap->replaceBitmapInstance(isolate, nullptr);
@@ -165,15 +172,34 @@ void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & inf
   info.GetReturnValue().Set(info.Holder());
 }
 
-void RoaringBitmap32_deserializeStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_deserializeAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
 
   auto * worker = new DeserializeWorker(info, addonData);
+  if (worker == nullptr) {
+    return v8utils::throwError(isolate, "RoaringBitmap32 deserialization failed to allocate async worker");
+  }
+
+  if (info.Length() >= 3 && info[2]->IsFunction()) {
+    worker->setCallback(info[2]);
+  }
+
+  v8::Local<v8::Value> returnValue = AsyncWorker::run(worker);
+  info.GetReturnValue().Set(returnValue);
+}
+
+void RoaringBitmap32_deserializeFileAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  auto * worker = new DeserializeFileWorker(info, addonData);
   if (worker == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32 deserialization failed to allocate async worker");
   }
@@ -204,12 +230,12 @@ void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackIn
   }
 
   if (info.Length() < 2) {
-    worker->setError("RoaringBitmap32::deserializeAsync - requires at least two arguments");
+    worker->setError(WorkerError("RoaringBitmap32::deserializeAsync - requires at least two arguments"));
     return info.GetReturnValue().Set(AsyncWorker::run(worker));
   }
 
   if (!info[0]->IsArray()) {
-    worker->setError("RoaringBitmap32::deserializeParallelAsync requires an array as first argument");
+    worker->setError(WorkerError("RoaringBitmap32::deserializeParallelAsync requires an array as first argument"));
     return info.GetReturnValue().Set(AsyncWorker::run(worker));
   }
 
@@ -217,19 +243,20 @@ void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackIn
   uint32_t length = array->Length();
 
   if (length > 0x01FFFFFF) {
-    worker->setError("RoaringBitmap32::deserializeParallelAsync - array too big");
+    worker->setError(WorkerError("RoaringBitmap32::deserializeParallelAsync - array too big"));
     return info.GetReturnValue().Set(AsyncWorker::run(worker));
   }
 
   DeserializationFormat format = tryParseDeserializationFormat(info[1], isolate);
   if (format == DeserializationFormat::INVALID) {
-    worker->setError("RoaringBitmap32::deserializeAsync - second argument must be a valid deserialization format");
+    worker->setError(
+      WorkerError("RoaringBitmap32::deserializeAsync - second argument must be a valid deserialization format"));
     return info.GetReturnValue().Set(AsyncWorker::run(worker));
   }
 
   RoaringBitmapDeserializer * items = length ? new RoaringBitmapDeserializer[length]() : nullptr;
   if (items == nullptr && length != 0) {
-    worker->setError("RoaringBitmap32::deserializeParallelAsync - failed to allocate array of deserializers");
+    worker->setError(WorkerError("RoaringBitmap32::deserializeParallelAsync - failed to allocate array of deserializers"));
     return info.GetReturnValue().Set(AsyncWorker::run(worker));
   }
 
@@ -238,8 +265,8 @@ void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackIn
 
   auto context = isolate->GetCurrentContext();
   for (uint32_t i = 0; i != length; ++i) {
-    const char * err = items[i].setOutput(isolate, array->Get(context, i), format);
-    if (err != nullptr) {
+    WorkerError err = items[i].setOutput(isolate, array->Get(context, i), (FileDeserializationFormat)format);
+    if (err.hasError()) {
       worker->setError(err);
       return info.GetReturnValue().Set(AsyncWorker::run(worker));
     }

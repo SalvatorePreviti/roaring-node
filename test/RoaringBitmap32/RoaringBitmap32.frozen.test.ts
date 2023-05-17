@@ -1,9 +1,23 @@
+import { FrozenViewFormat } from "../..";
 import RoaringBitmap32 from "../../RoaringBitmap32";
 import { expect } from "chai";
 
 const ERROR_FROZEN = "This bitmap is frozen and cannot be modified";
 
 describe("RoaringBitmap32 frozen", () => {
+  describe("FrozenViewFormat", () => {
+    it("should have the right values", () => {
+      expect(FrozenViewFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
+      expect(FrozenViewFormat.unsafe_frozen_portable).eq("unsafe_frozen_portable");
+
+      expect(Object.values(FrozenViewFormat)).to.deep.eq(["unsafe_frozen_croaring", "unsafe_frozen_portable"]);
+
+      expect(RoaringBitmap32.FrozenViewFormat).to.eq(FrozenViewFormat);
+
+      expect(new RoaringBitmap32().FrozenViewFormat).to.eq(FrozenViewFormat);
+    });
+  });
+
   describe("freeze", () => {
     it("set isFrozen to true, return this, can be called multiple times", () => {
       const bitmap = new RoaringBitmap32();

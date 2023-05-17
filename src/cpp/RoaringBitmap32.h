@@ -3,6 +3,7 @@
 
 #include "v8utils.h"
 #include "serialization-format.h"
+#include "WorkerError.h"
 
 using namespace roaring;
 using namespace roaring::api;
@@ -114,9 +115,6 @@ class RoaringBitmap32 final : public ObjectWrap {
     _version(0),
     frozenCounter(0),
     readonlyViewOf(nullptr) {
-    if (this->roaring) {
-      roaring_bitmap_set_copy_on_write(this->roaring, true);
-    }
     ++addonData->RoaringBitmap32_instances;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
   }
