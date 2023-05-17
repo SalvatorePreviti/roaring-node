@@ -29,6 +29,7 @@ describe("RoaringBitmap32 file serialization", () => {
         "croaring",
         "portable",
         "unsafe_frozen_croaring",
+        "uint32_array",
         "comma_separated_values",
         "tab_separated_values",
         "newline_separated_values",
@@ -41,8 +42,16 @@ describe("RoaringBitmap32 file serialization", () => {
     });
   });
 
+  it("serialize and deserialize empty bitmaps in various formats", async () => {
+    for (const format of ["portable", "croaring", "unsafe_frozen_croaring", "uint32_array"] as const) {
+      const tmpFilePath = path.resolve(tmpDir, `test-ϴϮ-${format}.bin`);
+      await new RoaringBitmap32().serializeFileAsync(tmpFilePath, format);
+      expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).to.deep.equal([]);
+    }
+  });
+
   it("serialize and deserialize in various formats", async () => {
-    for (const format of ["portable", "croaring", "unsafe_frozen_croaring"] as const) {
+    for (const format of ["portable", "croaring", "unsafe_frozen_croaring", "uint32_array"] as const) {
       const tmpFilePath = path.resolve(tmpDir, `test-ϴϮ-${format}.bin`);
       const data = [1, 2, 3, 100, 0xfffff, 0xffffffff];
       await new RoaringBitmap32(data).serializeFileAsync(tmpFilePath, format);
@@ -109,6 +118,12 @@ describe("RoaringBitmap32 file serialization", () => {
         "\t",
       ),
     );
+  });
+
+  it("serializes to an empty json array", async () => {
+    const tmpFilePath = path.resolve(tmpDir, `test-json-array-empty.csv`);
+    await new RoaringBitmap32().serializeFileAsync(tmpFilePath, "json_array");
+    expect(await fs.promises.readFile(tmpFilePath, "utf8")).to.equal("[]");
   });
 
   it("serializes to a json array", async () => {

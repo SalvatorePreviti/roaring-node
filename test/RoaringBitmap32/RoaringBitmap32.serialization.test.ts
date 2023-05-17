@@ -11,7 +11,12 @@ describe("RoaringBitmap32 serialization", () => {
       expect(SerializationFormat.portable).eq("portable");
       expect(SerializationFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
 
-      expect(Object.values(SerializationFormat)).to.deep.eq(["croaring", "portable", "unsafe_frozen_croaring"]);
+      expect(Object.values(SerializationFormat)).to.deep.eq([
+        "croaring",
+        "portable",
+        "unsafe_frozen_croaring",
+        "uint32_array",
+      ]);
 
       expect(RoaringBitmap32.SerializationFormat).to.eq(SerializationFormat);
 
@@ -31,6 +36,7 @@ describe("RoaringBitmap32 serialization", () => {
         "portable",
         "unsafe_frozen_croaring",
         "unsafe_frozen_portable",
+        "uint32_array",
       ]);
 
       expect(RoaringBitmap32.DeserializationFormat).to.eq(DeserializationFormat);
@@ -357,6 +363,13 @@ describe("RoaringBitmap32 serialization", () => {
       expect(offsetted.buffer).to.eq(buffer.buffer);
       expect(RoaringBitmap32.deserialize(Buffer.from(buffer.buffer, 10), true).toArray()).to.deep.eq(data);
     });
+  });
+
+  it("serialize and deserialize empty bitmaps in various formats", async () => {
+    for (const format of ["portable", "croaring", "unsafe_frozen_croaring", "uint32_array"] as const) {
+      const serialized = await new RoaringBitmap32().serializeAsync(format);
+      expect((await RoaringBitmap32.deserializeAsync(serialized, format)).toArray()).to.deep.equal([]);
+    }
   });
 
   it("serialize and deserialize in various formats", async () => {

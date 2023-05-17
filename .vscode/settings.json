@@ -157,6 +157,7 @@
     "bit": "cpp",
     "filesystem": "cpp",
     "unordered_set": "cpp",
-    "__memory": "cpp"
+    "__memory": "cpp",
+    "thread": "cpp"
   }
 }

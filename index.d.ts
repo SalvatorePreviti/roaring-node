@@ -157,6 +157,11 @@ export enum SerializationFormat {
    *
    */
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
+
+  /**
+   * A plain array of 32 bits integers in little endian format.
+   */
+  uint32_array = "uint32_array",
 }
 
 export enum FileSerializationFormat {
@@ -209,6 +214,7 @@ export type SerializationFormatType =
   | "croaring"
   | "portable"
   | "unsafe_frozen_croaring"
+  | "uint32_array"
   | boolean;
 
 export type FileSerializationFormatType =
@@ -243,14 +249,20 @@ export enum DeserializationFormat {
    * The application may crash, buffer overrun, could be a vector of attack!
    */
   unsafe_frozen_portable = "unsafe_frozen_portable",
+
+  /**
+   * A plain array of 32 bits integers in little endian format.
+   */
+  uint32_array = "uint32_array",
 }
 
 export type DeserializationFormatType =
-  | SerializationFormat
+  | DeserializationFormat
   | "croaring"
   | "portable"
   | "unsafe_frozen_croaring"
   | "unsafe_frozen_portable"
+  | "uint32_array"
   | boolean;
 
 export enum FrozenViewFormat {

@@ -17,6 +17,8 @@ constexpr const unsigned char CROARING_SERIALIZATION_ARRAY_UINT32 = 1;
 constexpr const unsigned char CROARING_SERIALIZATION_CONTAINER = 2;
 #endif
 
+#include <iostream>
+
 class RoaringBitmapSerializerBase {
  private:
   bool serializeArray = false;
@@ -54,6 +56,11 @@ class RoaringBitmapSerializerBase {
         break;
       }
 
+      case FileSerializationFormat::uint32_array: {
+        buffersize = this->self->getSize() * sizeof(uint32_t);
+        break;
+      }
+
       default: return WorkerError("RoaringBitmap32 serialization format is invalid");
     }
 
@@ -65,6 +72,8 @@ class RoaringBitmapSerializerBase {
     if (!data) {
       return WorkerError("RoaringBitmap32 serialization allocation failed");
     }
+
+    std::cout << "serializeToBuffer" << std::endl;
 
     switch (format) {
       case FileSerializationFormat::croaring: {
@@ -86,6 +95,13 @@ class RoaringBitmapSerializerBase {
 
       case FileSerializationFormat::unsafe_frozen_croaring: {
         roaring_bitmap_frozen_serialize(self->roaring, (char *)data);
+        break;
+      }
+
+      case FileSerializationFormat::uint32_array: {
+        std::cout << "uint32_array" << std::endl;
+        roaring_bitmap_to_uint32_array(self->roaring, (uint32_t *)data);
+        std::cout << "uint32_array1" << std::endl;
         break;
       }
 
@@ -214,6 +230,8 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
   }
 
   WorkerError serialize() {
+    std::cout << "serialize" << std::endl;
+
     switch (this->format) {
       case FileSerializationFormat::comma_separated_values:
       case FileSerializationFormat::tab_separated_values:
@@ -221,7 +239,7 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
       case FileSerializationFormat::json_array: {
         int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
         if (fd < 0) {
-          return WorkerError(errno, "open", this->filePath);
+          return WorkerError::from_errno("open", this->filePath);
         }
         int errorno = CsvFileDescriptorSerializer::iterate(this->self->roaring, fd, this->format);
         close(fd);
@@ -231,6 +249,8 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
       default: break;
     }
 
+    std::cout << "serialize1" << std::endl;
+
     WorkerError err = this->computeSerializedSize();
     if (err.hasError()) {
       return err;
@@ -238,74 +258,66 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
 
     int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd < 0) {
-      return WorkerError(errno, "open", this->filePath);
+      return WorkerError::from_errno("open", this->filePath);
     }
 
 #if defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
     int truncateErr = _chsize_s(fd, this->serializedSize);
     if (truncateErr != 0) {
-      err = WorkerError(truncateErr, "ftruncate", this->filePath);
+      err = WorkerError(truncateErr, "_chsize_s", this->filePath);
       close(fd);
       return err;
     }
 #else
     if (ftruncate(fd, this->serializedSize) < 0) {
-      err = WorkerError(errno, "ftruncate", this->filePath);
+      err = WorkerError::from_errno("ftruncate", this->filePath);
       close(fd);
       return err;
     }
 #endif
 
-    uint8_t * data = (uint8_t *)mmap(nullptr, this->serializedSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (data == MAP_FAILED) {
-      int errorno = errno;
-      err = WorkerError(errorno, "mmap", this->filePath);
-      close(fd);
-      return err;
+    if (this->serializedSize != 0) {
+      uint8_t * data = (uint8_t *)mmap(nullptr, this->serializedSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+      std::cout << "after mmap " << this->serializedSize << std::endl;
+      std::cout << "data" << (void *)data << std::endl;
+      if (data == MAP_FAILED) {
+        std::cout << "mmap failed" << this->serializedSize << std::endl;
+
+        // mmap failed, allocate and write to buffer instead
+        data = (uint8_t *)gcaware_aligned_malloc(this->serializedSize, 32);
+        if (data) {
+          err = this->serializeToBuffer(data);
+          if (!err.hasError()) {
+            auto wresult = write(fd, data, this->serializedSize);
+            std::cout << "wresult" << wresult << std::endl;
+            if (wresult < 0) {
+              err = WorkerError::from_errno("write", this->filePath);
+              close(fd);
+            }
+          }
+          gcaware_aligned_free(data);
+          return err;
+        }
+
+        err = WorkerError::from_errno("mmap", this->filePath);
+        close(fd);
+        return err;
+      }
+
+      err = this->serializeToBuffer(data);
+
+      if (err.hasError()) {
+        close(fd);
+        return err;
+      }
+
+      munmap(data, this->serializedSize);
     }
 
-    err = this->serializeToBuffer(data);
-
-    munmap(data, this->serializedSize);
     close(fd);
-
     return err;
   }
 };
-
-// bool _writeCsvNum(uint32_t value, void * param) {
-//   _writeCsvNumState * p = (_writeCsvNumState *)param;
-
-//   char * buf = p->buf;
-//   char * str = buf + 1;
-
-//   int32_t i, j;
-//   char c;
-
-//   /* uint to decimal  */
-//   i = 0;
-//   do {
-//     uint32_t remainder = value % 10;
-//     str[i++] = (char)(remainder + 48);
-//     value = value / 10;
-//   } while (value != 0);
-//   str[i] = '\0';
-//   size_t len = (size_t)i;
-
-//   /* reverse string */
-//   for (j = 0, i--; j < i; j++, i--) {
-//     c = str[j];
-//     str[j] = str[i];
-//     str[i] = c;
-//   }
-
-//   if (!p->first) {
-//     return write(p->fd, buf, len + 1) != -1;
-//   }
-
-//   p->first = false;
-//   return write(p->fd, str, len) != -1;
-// }
 
 class RoaringBitmapDeserializerBase {
  public:
@@ -395,6 +407,27 @@ class RoaringBitmapDeserializerBase {
           const_cast<roaring_bitmap_t_ptr>(roaring_bitmap_portable_deserialize_frozen((const char *)this->frozenBuffer));
         if (!this->roaring) {
           return WorkerError("RoaringBitmap32 deserialization - failed to create a frozen view");
+        }
+        return WorkerError();
+      }
+
+      case DeserializationFormat::uint32_array: {
+        if (bufLen % 4 != 0) {
+          return WorkerError(
+            "RoaringBitmap32 deserialization - uint32 array deserialization failed, input length is not a multiple of 4");
+        }
+
+        if (bufLen == 0) {
+          this->roaring = roaring_bitmap_create();
+          if (!this->roaring) {
+            return WorkerError("RoaringBitmap32 deserialization failed to create an empty bitmap");
+          }
+          return WorkerError();
+        }
+
+        this->roaring = roaring_bitmap_of_ptr(bufLen >> 2, (const uint32_t *)bufaschar);
+        if (!this->roaring) {
+          return WorkerError("RoaringBitmap32 deserialization - uint32 array deserialization failed");
         }
         return WorkerError();
       }
@@ -511,21 +544,51 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
   WorkerError deserialize() {
     int fd = open(this->filePath.c_str(), O_RDONLY);
     if (fd == -1) {
-      return WorkerError(errno, "open", this->filePath);
+      return WorkerError::from_errno("open", this->filePath);
     }
 
     struct stat st;
     if (fstat(fd, &st) == -1) {
-      WorkerError err = WorkerError(errno, "fstat", this->filePath);
+      WorkerError err = WorkerError::from_errno("fstat", this->filePath);
       close(fd);
       return err;
     }
 
     size_t fileSize = st.st_size;
 
+    if (fileSize == 0) {
+      WorkerError err = this->deserializeBuf(nullptr, 0);
+      close(fd);
+      return err;
+    }
+
     void * buf = mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
     if (buf == MAP_FAILED) {
-      WorkerError err = WorkerError(errno, "mmap", this->filePath);
+      std::cout << "mmap deserialize failed" << std::endl;
+
+      // mmap failed, try to read the file into a buffer
+      buf = gcaware_aligned_malloc(fileSize, 32);
+      if (buf != nullptr) {
+        ssize_t bytesRead = read(fd, buf, fileSize);
+        if (bytesRead == -1) {
+          WorkerError err = WorkerError::from_errno("read", this->filePath);
+          close(fd);
+          gcaware_aligned_free(buf);
+          return err;
+        }
+        if ((size_t)bytesRead != fileSize) {
+          WorkerError err = WorkerError("RoaringBitmap32::deserializeFileAsync read less bytes than expected");
+          close(fd);
+          gcaware_aligned_free(buf);
+          return err;
+        }
+        WorkerError err = this->deserializeBuf((const char *)buf, fileSize);
+        gcaware_aligned_free(buf);
+        close(fd);
+        return err;
+      }
+
+      WorkerError err = WorkerError::from_errno("mmap", this->filePath);
       close(fd);
       return err;
     }
@@ -534,7 +597,6 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
 
     munmap(buf, fileSize);
     close(fd);
-
     return err;
   }
 };

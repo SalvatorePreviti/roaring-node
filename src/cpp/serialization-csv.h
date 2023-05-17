@@ -36,6 +36,7 @@ struct CsvFileDescriptorSerializer final {
 
     if (!writer.flush()) {
       int errorno = errno;
+      errno = 0;
       return errorno ? errorno : EIO;
     }
 

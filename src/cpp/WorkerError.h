@@ -19,6 +19,12 @@ struct WorkerError {
 
   inline bool hasError() const { return (msg != nullptr && msg[0] != '\0') || errorno != 0; }
 
+  static WorkerError from_errno(const char * syscall, const std::string & path) {
+    int errorno = errno;
+    errno = 0;
+    return WorkerError(errorno, syscall, path);
+  }
+
   v8::Local<v8::Value> newV8Error(v8::Isolate * isolate) const {
     v8::EscapableHandleScope handle_scope(isolate);
     v8::Local<v8::Value> output;

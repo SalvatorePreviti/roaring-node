@@ -10,6 +10,7 @@ enum class SerializationFormat {
   croaring = 0,
   portable = 1,
   unsafe_frozen_croaring = 2,
+  uint32_array = 4,
 };
 
 enum class FileSerializationFormat {
@@ -17,6 +18,7 @@ enum class FileSerializationFormat {
   croaring = 0,
   portable = 1,
   unsafe_frozen_croaring = 2,
+  uint32_array = 4,
 
   comma_separated_values = 10,
   tab_separated_values = 11,
@@ -30,6 +32,7 @@ enum class DeserializationFormat {
   portable = 1,
   unsafe_frozen_croaring = 2,
   unsafe_frozen_portable = 3,
+  uint32_array = 4,
 };
 
 enum class FrozenViewFormat {
@@ -59,6 +62,9 @@ SerializationFormat tryParseSerializationFormat(const v8::Local<v8::Value> & val
     }
     if (strcmp(*formatString, "unsafe_frozen_croaring") == 0) {
       return SerializationFormat::unsafe_frozen_croaring;
+    }
+    if (strcmp(*formatString, "uint32_array") == 0) {
+      return SerializationFormat::uint32_array;
     }
   }
   return SerializationFormat::INVALID;
@@ -114,6 +120,9 @@ DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> &
     }
     if (strcmp(*formatString, "unsafe_frozen_portable") == 0) {
       return DeserializationFormat::unsafe_frozen_portable;
+    }
+    if (strcmp(*formatString, "uint32_array") == 0) {
+      return DeserializationFormat::uint32_array;
     }
   }
   return DeserializationFormat::INVALID;
