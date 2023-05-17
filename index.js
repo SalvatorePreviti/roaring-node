@@ -396,6 +396,26 @@ if (!roaring[initializedSym]) {
       unsafe_frozen_croaring: "unsafe_frozen_croaring",
       unsafe_frozen_portable: "unsafe_frozen_portable",
       uint32_array: "uint32_array",
+      comma_separated_values: "comma_separated_values",
+      tab_separated_values: "tab_separated_values",
+      newline_separated_values: "newline_separated_values",
+      json_array: "json_array",
+    },
+    false,
+  );
+
+  defineValue(
+    "FileDeserializationFormat",
+    {
+      croaring: "croaring",
+      portable: "portable",
+      unsafe_frozen_croaring: "unsafe_frozen_croaring",
+      unsafe_frozen_portable: "unsafe_frozen_portable",
+      uint32_array: "uint32_array",
+      comma_separated_values: "comma_separated_values",
+      tab_separated_values: "tab_separated_values",
+      newline_separated_values: "newline_separated_values",
+      json_array: "json_array",
     },
     false,
   );

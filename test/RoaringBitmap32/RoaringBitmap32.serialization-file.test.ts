@@ -2,7 +2,8 @@ import RoaringBitmap32 from "../../RoaringBitmap32";
 import { expect, use as chaiUse } from "chai";
 import path from "path";
 import fs from "fs";
-import { FileSerializationFormat } from "../..";
+import type { FileSerializationDeserializationFormatType } from "../..";
+import { FileDeserializationFormat, FileSerializationFormat } from "../..";
 
 const tmpDir = path.resolve(__dirname, "..", "..", ".tmp", "tests");
 
@@ -19,6 +20,7 @@ describe("RoaringBitmap32 file serialization", () => {
     it("should have the right values", () => {
       expect(FileSerializationFormat.croaring).eq("croaring");
       expect(FileSerializationFormat.portable).eq("portable");
+      expect(FileSerializationFormat.uint32_array).eq("uint32_array");
       expect(FileSerializationFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
       expect(FileSerializationFormat.comma_separated_values).eq("comma_separated_values");
       expect(FileSerializationFormat.tab_separated_values).eq("tab_separated_values");
@@ -42,8 +44,47 @@ describe("RoaringBitmap32 file serialization", () => {
     });
   });
 
+  describe("FileDeserializationFormat", () => {
+    it("should have the right values", () => {
+      expect(FileDeserializationFormat.croaring).eq("croaring");
+      expect(FileDeserializationFormat.portable).eq("portable");
+      expect(FileDeserializationFormat.unsafe_frozen_croaring).eq("unsafe_frozen_croaring");
+      expect(FileDeserializationFormat.unsafe_frozen_portable).eq("unsafe_frozen_portable");
+      expect(FileDeserializationFormat.comma_separated_values).eq("comma_separated_values");
+      expect(FileDeserializationFormat.tab_separated_values).eq("tab_separated_values");
+      expect(FileDeserializationFormat.newline_separated_values).eq("newline_separated_values");
+      expect(FileDeserializationFormat.json_array).eq("json_array");
+
+      expect(Object.values(FileDeserializationFormat)).to.deep.eq([
+        "croaring",
+        "portable",
+        "unsafe_frozen_croaring",
+        "unsafe_frozen_portable",
+        "uint32_array",
+        "comma_separated_values",
+        "tab_separated_values",
+        "newline_separated_values",
+        "json_array",
+      ]);
+
+      expect(RoaringBitmap32.FileDeserializationFormat).to.eq(FileDeserializationFormat);
+
+      expect(new RoaringBitmap32().FileDeserializationFormat).to.eq(FileDeserializationFormat);
+    });
+  });
+
   it("serialize and deserialize empty bitmaps in various formats", async () => {
-    for (const format of ["portable", "croaring", "unsafe_frozen_croaring", "uint32_array"] as const) {
+    const formats: FileSerializationDeserializationFormatType[] = [
+      "portable",
+      "croaring",
+      "unsafe_frozen_croaring",
+      "uint32_array",
+      "comma_separated_values",
+      "tab_separated_values",
+      "newline_separated_values",
+      "json_array",
+    ];
+    for (const format of formats) {
       const tmpFilePath = path.resolve(tmpDir, `test-ϴϮ-${format}.bin`);
       await new RoaringBitmap32().serializeFileAsync(tmpFilePath, format);
       expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).to.deep.equal([]);

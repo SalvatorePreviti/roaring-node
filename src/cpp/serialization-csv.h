@@ -130,4 +130,81 @@ struct CsvFileDescriptorSerializer final {
   }
 };
 
+WorkerError deserializeRoaringCsvFile(
+  roaring::api::roaring_bitmap_t * r, int fd, const char * input, size_t input_size, const std::string & filePath) {
+  const constexpr static size_t BUFFER_SIZE = 131072;
+
+  char * buf;
+  ssize_t readBytes;
+  if (input == nullptr) {
+    buf = (char *)gcaware_aligned_malloc(32, BUFFER_SIZE);
+    if (!buf) {
+      return WorkerError("Failed to allocate memory for text deserialization");
+    }
+  } else {
+    buf = (char *)input;
+    readBytes = (ssize_t)input_size;
+    if (readBytes < 0) {
+      return WorkerError("Input too big");
+    }
+    if (readBytes == 0) {
+      return WorkerError();
+    }
+  }
+
+  roaring_bulk_context_t context;
+  memset(&context, 0, sizeof(context));
+  uint64_t value = 0;
+
+  bool hasValue = false;
+  bool isNegative = false;
+  for (;;) {
+    if (input == nullptr) {
+      readBytes = read(fd, buf, BUFFER_SIZE);
+      if (readBytes <= 0) {
+        if (readBytes < 0) {
+          WorkerError err = WorkerError::from_errno("read", filePath);
+          gcaware_aligned_free(buf);
+          return err;
+        }
+        break;
+      }
+    }
+
+    for (ssize_t i = 0; i < readBytes; i++) {
+      char c = buf[i];
+      if (c == '-') {
+        isNegative = true;
+      } else if (c >= '0' && c <= '9') {
+        if (value <= 0xffffffff) {
+          hasValue = true;
+          value = value * 10 + (c - '0');
+        }
+      } else {
+        if (hasValue) {
+          hasValue = false;
+          if (!isNegative && value <= 0xffffffff) {
+            roaring_bitmap_add_bulk(r, &context, value);
+          }
+        }
+        isNegative = false;
+        value = 0;
+      }
+    }
+
+    if (input != nullptr) {
+      break;
+    }
+  }
+
+  if (!isNegative && hasValue && value <= 0xffffffff) {
+    roaring_bitmap_add_bulk(r, &context, value);
+  }
+  if (input == nullptr) {
+    gcaware_aligned_free(buf);
+  }
+
+  return WorkerError();
+}
+
 #endif

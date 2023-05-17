@@ -33,6 +33,25 @@ enum class DeserializationFormat {
   unsafe_frozen_croaring = 2,
   unsafe_frozen_portable = 3,
   uint32_array = 4,
+
+  comma_separated_values = 10,
+  tab_separated_values = 11,
+  newline_separated_values = 12,
+  json_array = 20
+};
+
+enum class FileDeserializationFormat {
+  INVALID = -1,
+  croaring = 0,
+  portable = 1,
+  unsafe_frozen_croaring = 2,
+  unsafe_frozen_portable = 3,
+  uint32_array = 4,
+
+  comma_separated_values = 10,
+  tab_separated_values = 11,
+  newline_separated_values = 12,
+  json_array = 20
 };
 
 enum class FrozenViewFormat {
@@ -124,8 +143,24 @@ DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> &
     if (strcmp(*formatString, "uint32_array") == 0) {
       return DeserializationFormat::uint32_array;
     }
+    if (strcmp(*formatString, "comma_separated_values") == 0) {
+      return DeserializationFormat::comma_separated_values;
+    }
+    if (strcmp(*formatString, "tab_separated_values") == 0) {
+      return DeserializationFormat::tab_separated_values;
+    }
+    if (strcmp(*formatString, "newline_separated_values") == 0) {
+      return DeserializationFormat::newline_separated_values;
+    }
+    if (strcmp(*formatString, "json_array") == 0) {
+      return DeserializationFormat::json_array;
+    }
   }
   return DeserializationFormat::INVALID;
+}
+
+FileDeserializationFormat tryParseFileDeserializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+  return (FileDeserializationFormat)tryParseDeserializationFormat(value, isolate);
 }
 
 FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {

@@ -265,7 +265,7 @@ void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackIn
 
   auto context = isolate->GetCurrentContext();
   for (uint32_t i = 0; i != length; ++i) {
-    WorkerError err = items[i].setOutput(isolate, array->Get(context, i), format);
+    WorkerError err = items[i].setOutput(isolate, array->Get(context, i), (FileDeserializationFormat)format);
     if (err.hasError()) {
       worker->setError(err);
       return info.GetReturnValue().Set(AsyncWorker::run(worker));

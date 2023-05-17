@@ -2943,6 +2943,25 @@ enum class DeserializationFormat {
   unsafe_frozen_croaring = 2,
   unsafe_frozen_portable = 3,
   uint32_array = 4,
+
+  comma_separated_values = 10,
+  tab_separated_values = 11,
+  newline_separated_values = 12,
+  json_array = 20
+};
+
+enum class FileDeserializationFormat {
+  INVALID = -1,
+  croaring = 0,
+  portable = 1,
+  unsafe_frozen_croaring = 2,
+  unsafe_frozen_portable = 3,
+  uint32_array = 4,
+
+  comma_separated_values = 10,
+  tab_separated_values = 11,
+  newline_separated_values = 12,
+  json_array = 20
 };
 
 enum class FrozenViewFormat {
@@ -3034,8 +3053,24 @@ DeserializationFormat tryParseDeserializationFormat(const v8::Local<v8::Value> &
     if (strcmp(*formatString, "uint32_array") == 0) {
       return DeserializationFormat::uint32_array;
     }
+    if (strcmp(*formatString, "comma_separated_values") == 0) {
+      return DeserializationFormat::comma_separated_values;
+    }
+    if (strcmp(*formatString, "tab_separated_values") == 0) {
+      return DeserializationFormat::tab_separated_values;
+    }
+    if (strcmp(*formatString, "newline_separated_values") == 0) {
+      return DeserializationFormat::newline_separated_values;
+    }
+    if (strcmp(*formatString, "json_array") == 0) {
+      return DeserializationFormat::json_array;
+    }
   }
   return DeserializationFormat::INVALID;
+}
+
+FileDeserializationFormat tryParseFileDeserializationFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+  return (FileDeserializationFormat)tryParseDeserializationFormat(value, isolate);
 }
 
 FrozenViewFormat tryParseFrozenViewFormat(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
@@ -4261,6 +4296,83 @@ struct CsvFileDescriptorSerializer final {
   }
 };
 
+WorkerError deserializeRoaringCsvFile(
+  roaring::api::roaring_bitmap_t * r, int fd, const char * input, size_t input_size, const std::string & filePath) {
+  const constexpr static size_t BUFFER_SIZE = 131072;
+
+  char * buf;
+  ssize_t readBytes;
+  if (input == nullptr) {
+    buf = (char *)gcaware_aligned_malloc(32, BUFFER_SIZE);
+    if (!buf) {
+      return WorkerError("Failed to allocate memory for text deserialization");
+    }
+  } else {
+    buf = (char *)input;
+    readBytes = (ssize_t)input_size;
+    if (readBytes < 0) {
+      return WorkerError("Input too big");
+    }
+    if (readBytes == 0) {
+      return WorkerError();
+    }
+  }
+
+  roaring_bulk_context_t context;
+  memset(&context, 0, sizeof(context));
+  uint64_t value = 0;
+
+  bool hasValue = false;
+  bool isNegative = false;
+  for (;;) {
+    if (input == nullptr) {
+      readBytes = read(fd, buf, BUFFER_SIZE);
+      if (readBytes <= 0) {
+        if (readBytes < 0) {
+          WorkerError err = WorkerError::from_errno("read", filePath);
+          gcaware_aligned_free(buf);
+          return err;
+        }
+        break;
+      }
+    }
+
+    for (ssize_t i = 0; i < readBytes; i++) {
+      char c = buf[i];
+      if (c == '-') {
+        isNegative = true;
+      } else if (c >= '0' && c <= '9') {
+        if (value <= 0xffffffff) {
+          hasValue = true;
+          value = value * 10 + (c - '0');
+        }
+      } else {
+        if (hasValue) {
+          hasValue = false;
+          if (!isNegative && value <= 0xffffffff) {
+            roaring_bitmap_add_bulk(r, &context, value);
+          }
+        }
+        isNegative = false;
+        value = 0;
+      }
+    }
+
+    if (input != nullptr) {
+      break;
+    }
+  }
+
+  if (!isNegative && hasValue && value <= 0xffffffff) {
+    roaring_bitmap_add_bulk(r, &context, value);
+  }
+  if (input == nullptr) {
+    gcaware_aligned_free(buf);
+  }
+
+  return WorkerError();
+}
+
 #endif
 
 
@@ -4275,8 +4387,6 @@ constexpr const unsigned char CROARING_SERIALIZATION_ARRAY_UINT32 = 1;
 #ifndef CROARING_SERIALIZATION_CONTAINER
 constexpr const unsigned char CROARING_SERIALIZATION_CONTAINER = 2;
 #endif
-
-#include <iostream>
 
 class RoaringBitmapSerializerBase {
  private:
@@ -4332,8 +4442,6 @@ class RoaringBitmapSerializerBase {
       return WorkerError("RoaringBitmap32 serialization allocation failed");
     }
 
-    std::cout << "serializeToBuffer" << std::endl;
-
     switch (format) {
       case FileSerializationFormat::croaring: {
         if (serializeArray) {
@@ -4358,9 +4466,7 @@ class RoaringBitmapSerializerBase {
       }
 
       case FileSerializationFormat::uint32_array: {
-        std::cout << "uint32_array" << std::endl;
         roaring_bitmap_to_uint32_array(self->roaring, (uint32_t *)data);
-        std::cout << "uint32_array1" << std::endl;
         break;
       }
 
@@ -4489,8 +4595,6 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
   }
 
   WorkerError serialize() {
-    std::cout << "serialize" << std::endl;
-
     switch (this->format) {
       case FileSerializationFormat::comma_separated_values:
       case FileSerializationFormat::tab_separated_values:
@@ -4507,8 +4611,6 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
 
       default: break;
     }
-
-    std::cout << "serialize1" << std::endl;
 
     WorkerError err = this->computeSerializedSize();
     if (err.hasError()) {
@@ -4537,18 +4639,13 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
 
     if (this->serializedSize != 0) {
       uint8_t * data = (uint8_t *)mmap(nullptr, this->serializedSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-      std::cout << "after mmap " << this->serializedSize << std::endl;
-      std::cout << "data" << (void *)data << std::endl;
       if (data == MAP_FAILED) {
-        std::cout << "mmap failed" << this->serializedSize << std::endl;
-
         // mmap failed, allocate and write to buffer instead
-        data = (uint8_t *)gcaware_aligned_malloc(this->serializedSize, 32);
+        data = (uint8_t *)gcaware_aligned_malloc(32, this->serializedSize);
         if (data) {
           err = this->serializeToBuffer(data);
           if (!err.hasError()) {
             auto wresult = write(fd, data, this->serializedSize);
-            std::cout << "wresult" << wresult << std::endl;
             if (wresult < 0) {
               err = WorkerError::from_errno("write", this->filePath);
               close(fd);
@@ -4580,7 +4677,7 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
 
 class RoaringBitmapDeserializerBase {
  public:
-  DeserializationFormat format = DeserializationFormat::INVALID;
+  FileDeserializationFormat format = FileDeserializationFormat::INVALID;
   v8::Isolate * isolate = nullptr;
   roaring_bitmap_t_ptr volatile roaring = nullptr;
   uint8_t * volatile frozenBuffer = nullptr;
@@ -4595,7 +4692,7 @@ class RoaringBitmapDeserializerBase {
   }
 
   WorkerError deserializeBuf(const char * bufaschar, size_t bufLen) {
-    if (this->format == DeserializationFormat::INVALID) {
+    if (this->format == FileDeserializationFormat::INVALID) {
       return WorkerError("RoaringBitmap32 deserialization format argument was invalid");
     }
 
@@ -4609,7 +4706,7 @@ class RoaringBitmapDeserializerBase {
     }
 
     switch (this->format) {
-      case DeserializationFormat::portable: {
+      case FileDeserializationFormat::portable: {
         this->roaring = roaring_bitmap_portable_deserialize_safe(bufaschar, bufLen);
         if (!this->roaring) {
           return WorkerError("RoaringBitmap32 deserialization - portable deserialization failed");
@@ -4617,7 +4714,7 @@ class RoaringBitmapDeserializerBase {
         return WorkerError();
       }
 
-      case DeserializationFormat::croaring: {
+      case FileDeserializationFormat::croaring: {
         switch ((unsigned char)bufaschar[0]) {
           case CROARING_SERIALIZATION_ARRAY_UINT32: {
             uint32_t card;
@@ -4647,15 +4744,15 @@ class RoaringBitmapDeserializerBase {
         return WorkerError("RoaringBitmap32 deserialization - invalid portable header byte");
       }
 
-      case DeserializationFormat::unsafe_frozen_portable:
-      case DeserializationFormat::unsafe_frozen_croaring: {
+      case FileDeserializationFormat::unsafe_frozen_portable:
+      case FileDeserializationFormat::unsafe_frozen_croaring: {
         this->frozenBuffer = (uint8_t *)bare_aligned_malloc(32, bufLen);
         if (!this->frozenBuffer) {
           return WorkerError("RoaringBitmap32 deserialization - failed to allocate memory for frozen bitmap");
         }
         memcpy(this->frozenBuffer, bufaschar, bufLen);
 
-        if (format == DeserializationFormat::unsafe_frozen_croaring) {
+        if (format == FileDeserializationFormat::unsafe_frozen_croaring) {
           this->roaring =
             const_cast<roaring_bitmap_t_ptr>(roaring_bitmap_frozen_view((const char *)this->frozenBuffer, bufLen));
           return this->roaring ? WorkerError()
@@ -4670,7 +4767,7 @@ class RoaringBitmapDeserializerBase {
         return WorkerError();
       }
 
-      case DeserializationFormat::uint32_array: {
+      case FileDeserializationFormat::uint32_array: {
         if (bufLen % 4 != 0) {
           return WorkerError(
             "RoaringBitmap32 deserialization - uint32 array deserialization failed, input length is not a multiple of 4");
@@ -4687,6 +4784,20 @@ class RoaringBitmapDeserializerBase {
         this->roaring = roaring_bitmap_of_ptr(bufLen >> 2, (const uint32_t *)bufaschar);
         if (!this->roaring) {
           return WorkerError("RoaringBitmap32 deserialization - uint32 array deserialization failed");
+        }
+        return WorkerError();
+      }
+
+      case FileDeserializationFormat::comma_separated_values:
+      case FileDeserializationFormat::tab_separated_values:
+      case FileDeserializationFormat::newline_separated_values:
+      case FileDeserializationFormat::json_array: {
+        this->roaring = roaring_bitmap_create();
+        if (!this->roaring) {
+          return WorkerError("RoaringBitmap32 deserialization failed to create an empty bitmap");
+        }
+        if (bufaschar != nullptr) {
+          return deserializeRoaringCsvFile(this->roaring, -1, bufaschar, bufLen, "");
         }
         return WorkerError();
       }
@@ -4713,7 +4824,8 @@ class RoaringBitmapDeserializer final : public RoaringBitmapDeserializerBase {
   RoaringBitmap32 * targetBitmap = nullptr;
   v8utils::TypedArrayContent<uint8_t> inputBuffer;
 
-  WorkerError setOutput(v8::Isolate * isolate, const v8::MaybeLocal<v8::Value> & valueMaybe, DeserializationFormat format) {
+  WorkerError setOutput(
+    v8::Isolate * isolate, const v8::MaybeLocal<v8::Value> & valueMaybe, FileDeserializationFormat format) {
     this->isolate = isolate;
     this->format = format;
 
@@ -4758,7 +4870,7 @@ class RoaringBitmapDeserializer final : public RoaringBitmapDeserializerBase {
       bufferArgIndex = 0;
       fmt = tryParseDeserializationFormat(info[1], isolate);
     }
-    this->format = fmt;
+    this->format = static_cast<FileDeserializationFormat>(fmt);
 
     if (
       !info[bufferArgIndex]->IsNullOrUndefined() &&
@@ -4792,8 +4904,8 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
     v8::String::Utf8Value filePathUtf8(isolate, info[0]);
     this->filePath = std::string(*filePathUtf8, filePathUtf8.length());
 
-    DeserializationFormat fmt = tryParseDeserializationFormat(info[1], isolate);
-    if (fmt == DeserializationFormat::INVALID) {
+    FileDeserializationFormat fmt = tryParseFileDeserializationFormat(info[1], isolate);
+    if (fmt == FileDeserializationFormat::INVALID) {
       return WorkerError("RoaringBitmap32::deserializeFileAsync invalid format");
     }
     this->format = fmt;
@@ -4804,6 +4916,23 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
     int fd = open(this->filePath.c_str(), O_RDONLY);
     if (fd == -1) {
       return WorkerError::from_errno("open", this->filePath);
+    }
+
+    switch (this->format) {
+      case FileDeserializationFormat::comma_separated_values:
+      case FileDeserializationFormat::tab_separated_values:
+      case FileDeserializationFormat::newline_separated_values:
+      case FileDeserializationFormat::json_array: {
+        this->roaring = roaring_bitmap_create();
+        if (!this->roaring) {
+          return WorkerError("RoaringBitmap32 deserialization failed to create an empty bitmap");
+        }
+        WorkerError err = deserializeRoaringCsvFile(this->roaring, fd, nullptr, 0, this->filePath);
+        close(fd);
+        return err;
+      }
+
+      default: break;
     }
 
     struct stat st;
@@ -4823,10 +4952,8 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
 
     void * buf = mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
     if (buf == MAP_FAILED) {
-      std::cout << "mmap deserialize failed" << std::endl;
-
       // mmap failed, try to read the file into a buffer
-      buf = gcaware_aligned_malloc(fileSize, 32);
+      buf = gcaware_aligned_malloc(32, fileSize);
       if (buf != nullptr) {
         ssize_t bytesRead = read(fd, buf, fileSize);
         if (bytesRead == -1) {
@@ -5961,7 +6088,7 @@ void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackIn
 
   auto context = isolate->GetCurrentContext();
   for (uint32_t i = 0; i != length; ++i) {
-    WorkerError err = items[i].setOutput(isolate, array->Get(context, i), format);
+    WorkerError err = items[i].setOutput(isolate, array->Get(context, i), (FileDeserializationFormat)format);
     if (err.hasError()) {
       worker->setError(err);
       return info.GetReturnValue().Set(AsyncWorker::run(worker));

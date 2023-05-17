@@ -159,7 +159,7 @@ export enum SerializationFormat {
   unsafe_frozen_croaring = "unsafe_frozen_croaring",
 
   /**
-   * A plain array of 32 bits integers in little endian format.
+   * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
    */
   uint32_array = "uint32_array",
 }
@@ -174,6 +174,11 @@ export enum FileSerializationFormat {
    * Stable Portable Java and Go format.
    */
   portable = "unsafe_portable",
+
+  /**
+   * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
+   */
+  uint32_array = "uint32_array",
 
   /**
    * Non portable C/C++ frozen format.
@@ -225,6 +230,10 @@ export type FileSerializationFormatType =
   | "newline_separated_values"
   | "json_array";
 
+export type SerializationDeserializationFormatType = SerializationFormatType & DeserializationFormatType;
+
+export type FileSerializationDeserializationFormatType = FileSerializationFormatType & FileDeserializationFormatType;
+
 export enum DeserializationFormat {
   /** Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
   croaring = "croaring",
@@ -251,9 +260,14 @@ export enum DeserializationFormat {
   unsafe_frozen_portable = "unsafe_frozen_portable",
 
   /**
-   * A plain array of 32 bits integers in little endian format.
+   * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
    */
   uint32_array = "uint32_array",
+
+  comma_separated_values = "comma_separated_values",
+  tab_separated_values = "tab_separated_values",
+  newline_separated_values = "newline_separated_values",
+  json_array = "json_array",
 }
 
 export type DeserializationFormatType =
@@ -263,7 +277,49 @@ export type DeserializationFormatType =
   | "unsafe_frozen_croaring"
   | "unsafe_frozen_portable"
   | "uint32_array"
+  | "comma_separated_values"
+  | "tab_separated_values"
+  | "newline_separated_values"
+  | "json_array"
   | boolean;
+
+export enum FileDeserializationFormat {
+  /** Stable Optimized non portable C/C++ format. Used by croaring. Can be smaller than the portable format. */
+  croaring = "croaring",
+
+  /** Stable Portable Java and Go format. */
+  portable = "portable",
+
+  /**
+   * Non portable C/C++ frozen format.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
+  unsafe_frozen_croaring = "unsafe_frozen_croaring",
+
+  /**
+   * Portable version of the frozen view, compatible with Go and Java.
+   * Is considered unsafe and unstable because the format might change at any new version.
+   * Can be useful for temporary storage or for sending data over the network between similar machines.
+   * If the content is corrupted when loaded or the buffer is modified when a frozen view is create, the behavior is undefined!
+   * The application may crash, buffer overrun, could be a vector of attack!
+   */
+  unsafe_frozen_portable = "unsafe_frozen_portable",
+
+  /**
+   * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
+   */
+  uint32_array = "uint32_array",
+
+  comma_separated_values = "comma_separated_values",
+  tab_separated_values = "tab_separated_values",
+  newline_separated_values = "newline_separated_values",
+  json_array = "json_array",
+}
+
+export type FileDeserializationFormatType = DeserializationFormatType | FileDeserializationFormat;
 
 export enum FrozenViewFormat {
   /**
@@ -1556,6 +1612,10 @@ export class RoaringBitmap32 {
 
   public readonly FileSerializationFormat: typeof FileSerializationFormat;
 
+  public static readonly FileDeserializationFormat: typeof FileDeserializationFormat;
+
+  public readonly FileDeserializationFormat: typeof FileDeserializationFormat;
+
   public static readonly DeserializationFormat: typeof DeserializationFormat;
 
   public readonly DeserializationFormat: typeof DeserializationFormat;
@@ -1866,11 +1926,11 @@ export class RoaringBitmap32 {
    *
    * @static
    * @param {string} filePath The path of the file to read.
-   * @param {DeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
+   * @param {FileDeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
    * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserializeFileAsync(filePath: string, format: DeserializationFormatType): Promise<RoaringBitmap32>;
+  public static deserializeFileAsync(filePath: string, format: FileDeserializationFormatType): Promise<RoaringBitmap32>;
 
   /**
    *
