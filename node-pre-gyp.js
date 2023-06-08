@@ -39,6 +39,21 @@ if (customRebuildIdx <= 0) {
 
   const main = async () => {
     console.log("* rebuild...");
+
+    try {
+      // eslint-disable-next-line node/no-unsupported-features/node-builtins
+      const header = process.report.getReport().header;
+      const glibc = header.glibcVersionRuntime;
+      console.log("versions:", {
+        node: process.version,
+        v8: process.versions.v8,
+        glibc,
+      });
+
+      console.log(`* v8 version: ${header.v8Version}`);
+      console.log(`* node version: ${header.nodeVersion}`);
+    } catch {}
+
     console.time("rebuild");
     await forkAsync(__filename, ["rebuild"]);
     console.log();

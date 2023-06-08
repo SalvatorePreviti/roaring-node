@@ -27,7 +27,7 @@ inline bool getRangeOperationParameters(
     }
   }
 
-  if (std::isnan(minimum) || std::isnan(maximum)) {
+  if (std::isnan(minimum) || std::isnan(maximum) || minimum > 4294967295 || maximum <= 0) {
     return false;
   }
 
@@ -35,9 +35,10 @@ inline bool getRangeOperationParameters(
     minimum = 0;
   }
 
-  if (maximum < 0) {
-    maximum = 0;
-  } else if (maximum > 4294967296) {
+  minimum = ceil(minimum);
+  maximum = ceil(maximum);
+
+  if (maximum > 4294967296) {
     maximum = 4294967296;
   }
 

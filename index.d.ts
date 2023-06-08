@@ -933,7 +933,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns A new Uint32Array instance containing paginated items in the set in order.
    * @memberof ReadonlyRoaringBitmap32
    */
-  rangeUint32Array(offset: number, limit: number): Uint32Array;
+  rangeUint32Array(minimumValue: number, maximumValue: number): Uint32Array;
 
   /**
    * toUint32Array array with pagination
@@ -942,8 +942,8 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @memberof ReadonlyRoaringBitmap32
    */
   rangeUint32Array(
-    offset: number,
-    limit: number,
+    minimumValue: number,
+    maximumValue: number,
     output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer,
   ): Uint32Array;
 
@@ -953,7 +953,10 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {Uint32Array} The output array. Limited to the resulting size.
    * @memberof ReadonlyRoaringBitmap32
    */
-  rangeUint32Array(offset: number, output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer): Uint32Array;
+  rangeUint32Array(
+    minimumValue: number,
+    output: Uint32Array | Int32Array | ArrayBuffer | SharedArrayBuffer,
+  ): Uint32Array;
 
   /**
    * Same as toUint32Array
@@ -1140,7 +1143,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   serializeFileAsync(filePath: string, format: FileSerializationFormatType): Promise<void>;
 
   /**
-   * Returns a new ReadonlyRoaringBitmap32 that is a copy of this bitmap, same as new ReadonlyRoaringBitmap32(copy)
+   * Returns a new bitmap that is a copy of this bitmap, same as new RoaringBitmap32(copy)
    *
    * @returns {RoaringBitmap32} A cloned RoaringBitmap32 instance
    * @memberof ReadonlyRoaringBitmap32
@@ -1414,7 +1417,7 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * Areas outside the range are passed through unchanged.
    *
    * @param {number|undefined} rangeStart The start index. Trimmed to 0.
-   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967297.
+   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967296.
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
@@ -1429,7 +1432,7 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * Areas outside the range are passed through unchanged.
    *
    * @param {number|undefined} rangeStart The start index. Trimmed to 0.
-   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967297.
+   * @param {number|undefined} [rangeEnd] The end index. Trimmed to 4294967296.
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
@@ -1443,7 +1446,7 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    *
    * Areas outside the range are passed through unchanged.
    * @param {number} rangeStart The start index. Trimmed to 0.
-   * @param {number} rangeEnd The end index. Trimmed to 4294967297.
+   * @param {number} rangeEnd The end index. Trimmed to 4294967296.
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
@@ -2091,11 +2094,11 @@ export class RoaringBitmap32 {
    * This function is faster than calling or multiple times.
    *
    * @static
-   * @param {ReadonlyRoaringBitmap32[]} values An array of RoaringBitmap32 instances to or together.
+   * @param {ReadonlyRoaringBitmap32[]} bitmaps An array of RoaringBitmap32 instances to or together.
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the union of all the given bitmaps.
    * @memberof RoaringBitmap32
    */
-  public static orMany(values: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+  public static orMany(bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
 
   /**
    * Performs a union between all the given RoaringBitmap32 instances.
@@ -2103,11 +2106,11 @@ export class RoaringBitmap32 {
    * This function is faster than calling or multiple times.
    *
    * @static
-   * @param {...ReadonlyRoaringBitmap32[]} values The RoaringBitmap32 instances to or together.
+   * @param {...ReadonlyRoaringBitmap32[]} bitmaps The RoaringBitmap32 instances to or together.
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the union of all the given bitmaps.
    * @memberof RoaringBitmap32
    */
-  public static orMany(...values: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+  public static orMany(...bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
 
   /**
    * Performs a xor between all the given array of RoaringBitmap32 instances.
@@ -2115,11 +2118,11 @@ export class RoaringBitmap32 {
    * This function is faster than calling xor multiple times.
    *
    * @static
-   * @param {ReadonlyRoaringBitmap32[]} values An array of RoaringBitmap32 instances to or together.
+   * @param {ReadonlyRoaringBitmap32[]} bitmaps An array of RoaringBitmap32 instances to or together.
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the xor of all the given bitmaps.
    * @memberof RoaringBitmap32
    */
-  public static xorMany(values: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+  public static xorMany(bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
 
   /**
    * Performs a xor between all the given RoaringBitmap32 instances.
@@ -2127,11 +2130,11 @@ export class RoaringBitmap32 {
    * This function is faster than calling xor multiple times.
    *
    * @static
-   * @param {...ReadonlyRoaringBitmap32[]} values The RoaringBitmap32 instances to or together.
+   * @param {...ReadonlyRoaringBitmap32[]} bitmaps The RoaringBitmap32 instances to or together.
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the xor of all the given bitmaps.
    * @memberof RoaringBitmap32
    */
-  public static xorMany(...values: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+  public static xorMany(...bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
 }
 
 /**

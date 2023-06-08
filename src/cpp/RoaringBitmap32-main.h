@@ -593,17 +593,17 @@ void RoaringBitmap32_at(const v8::FunctionCallbackInfo<v8::Value> & info) {
     if (!info[0]->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
       return;
     }
-    int64_t n = (int64_t)d;
-    if (n < 0) {
-      n += (int64_t)self->getSize();
-      if (n < 0) {
+    d = std::trunc(d);
+    if (d < 0) {
+      d += (double)self->getSize();
+      if (d < 0) {
         return;
       }
     }
-    if (n > UINT32_MAX) {
+    if (d >= 0x100000000) {
       return;
     }
-    index = (uint32_t)n;
+    index = (uint32_t)d;
   }
 
   uint32_t result;

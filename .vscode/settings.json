@@ -64,9 +64,7 @@
   "eslint.format.enable": true,
   "eslint.lintTask.enable": true,
   "eslint.validate": [],
-  "javascript.format.enable": true,
   "javascript.format.semicolons": "insert",
-  "typescript.format.enable": true,
   "typescript.format.semicolons": "insert",
   "files.eol": "\n",
   "search.exclude": {
@@ -75,26 +73,5 @@
     "**/bower_components": true,
     "**/*.code-search": true
   },
-  "files.associations": {
-    "__bit_reference": "cpp",
-    "__node_handle": "cpp",
-    "bitset": "cpp",
-    "deque": "cpp",
-    "__memory": "cpp",
-    "limits": "cpp",
-    "optional": "cpp",
-    "ratio": "cpp",
-    "system_error": "cpp",
-    "tuple": "cpp",
-    "type_traits": "cpp",
-    "vector": "cpp",
-    "chrono": "cpp",
-    "filesystem": "cpp",
-    "random": "cpp",
-    "__config": "cpp",
-    "__nullptr": "cpp",
-    "atomic": "cpp",
-    "locale": "cpp",
-    "cstddef": "cpp"
-  }
+  "cmake.configureOnOpen": false
 }

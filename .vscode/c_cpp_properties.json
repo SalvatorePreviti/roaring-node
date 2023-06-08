@@ -27,7 +27,8 @@
       "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"],
       "compilerPath": "/usr/bin/clang",
       "cStandard": "c11",
-      "cppStandard": "c++17"
+      "cppStandard": "c++17",
+      "configurationProvider": "ms-vscode.cmake-tools"
     }
   ],
   "version": 4

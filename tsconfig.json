@@ -3,12 +3,12 @@
     "allowJs": false,
     "checkJs": false,
     "noEmit": true,
+    "stripInternal": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "alwaysStrict": true,
-    "baseUrl": ".",
     "declaration": true,
     "emitDecoratorMetadata": false,
     "experimentalDecorators": false,
@@ -28,14 +28,13 @@
     "outDir": ".",
     "pretty": true,
     "removeComments": false,
-    "rootDir": ".",
     "strict": true,
     "skipLibCheck": false,
     "skipDefaultLibCheck": false,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "target": "ES2018",
+    "target": "ES2022",
     "isolatedModules": true
   },
   "exclude": ["node_modules", "node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*"],
@@ -44,7 +43,7 @@
   },
   "typedocOptions": {
     "out": "docs",
-    "entryPoints": "src/index.tsx",
+    "entryPoints": "src/index.ts",
     "exclude": ["test/**/*", "node_modules/**/*", "temp/**/*", "build/**/*", "docs/**/*"]
   }
 }
