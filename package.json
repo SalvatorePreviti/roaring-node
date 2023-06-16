@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -23,7 +23,7 @@
     "url": "git+https://github.com/SalvatorePreviti/roaring-node.git"
   },
   "engines": {
-    "node": ">=12.20.0"
+    "node": ">=14.17.0"
   },
   "main": "index.js",
   "types": "index.d.ts",
