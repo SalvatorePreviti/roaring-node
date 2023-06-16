@@ -27,8 +27,6 @@ Please, update your node version if you are using something older than 14.17.
 
 ## Worker thread support
 
-IMPORTANT: You need Node >= 14 to for roaring-node to work with worker threads correctly. Previous version of node are not supported and will throw an error if this library is loaded inside a worker thread.
-
 Directly transferring an instance without copy between worker threads is not currently supported, but you can create a frozen view on a SharedArrayBuffer using bufferAlignedAllocShared and pass it to the worker thread.
 
 ## Installation

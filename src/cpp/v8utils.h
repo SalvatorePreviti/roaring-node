@@ -103,7 +103,6 @@ namespace v8utils {
     if (buffer.IsEmpty()) {
       return false;
     }
-#if NODE_MAJOR_VERSION > 12 || (NODE_MAJOR_VERSION >= 12 && NODE_MINOR_VERSION >= 16)
 
     if (buffer->IsSharedArrayBuffer()) {
       auto buf = buffer.As<v8::SharedArrayBuffer>();
@@ -122,13 +121,6 @@ namespace v8utils {
       }
       return node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
     }
-#else
-    v8::Local<v8::Value> argv[] = {
-      buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
-    return addonData->Buffer_from.Get(isolate)
-      ->Call(isolate->GetCurrentContext(), addonData->Buffer.Get(isolate), 3, argv)
-      .ToLocal(&result);
-#endif
   }
 
   bool v8ValueToBufferWithLimit(
@@ -246,9 +238,7 @@ namespace v8utils {
     size_t length;
     T * data;
     v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
-#if NODE_MAJOR_VERSION > 13
     std::shared_ptr<v8::BackingStore> backingStore;
-#endif
 
     inline TypedArrayContent() : length(0), data(nullptr) {}
 
@@ -265,9 +255,7 @@ namespace v8utils {
     inline void reset() {
       this->length = 0;
       this->data = nullptr;
-#if NODE_MAJOR_VERSION > 13
       this->backingStore = nullptr;
-#endif
       this->bufferPersistent.Reset();
     }
 
@@ -289,12 +277,8 @@ namespace v8utils {
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
           this->length = array->ByteLength() / sizeof(T);
           auto arrayBuffer = array->Buffer();
-#if NODE_MAJOR_VERSION > 13
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
-#else
-          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()) + array->ByteOffset());
-#endif
           return true;
         }
 
@@ -302,12 +286,8 @@ namespace v8utils {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
-#if NODE_MAJOR_VERSION > 13
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()));
-#else
-          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
-#endif
           return true;
         }
 
@@ -315,12 +295,8 @@ namespace v8utils {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
-#if NODE_MAJOR_VERSION > 13
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()));
-#else
-          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
-#endif
           return true;
         }
       }

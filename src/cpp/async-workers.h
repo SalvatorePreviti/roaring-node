@@ -219,11 +219,7 @@ class AsyncWorker {
     v8::Isolate * isolate = worker->isolate;
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
-#if NODE_MAJOR_VERSION > 13
     isolate->PerformMicrotaskCheckpoint();
-#else
-    isolate->RunMicrotasks();
-#endif
   }
 
   static void _work(uv_work_t * request) {
@@ -370,11 +366,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker->_completed) {
-#if NODE_MAJOR_VERSION > 13
       worker->isolate->PerformMicrotaskCheckpoint();
-#else
-      worker->isolate->RunMicrotasks();
-#endif
       return;
     }
 
@@ -383,11 +375,7 @@ class ParallelAsyncWorker : public AsyncWorker {
       return;
     }
 
-#if NODE_MAJOR_VERSION > 13
     worker->isolate->PerformMicrotaskCheckpoint();
-#else
-    worker->isolate->RunMicrotasks();
-#endif
   }
 };
 

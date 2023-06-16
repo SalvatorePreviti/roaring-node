@@ -7,15 +7,11 @@ using namespace v8;
 #define PREPROCESSOR_CONCAT(a, b) PREPROCESSOR_CONCAT_HELPER(a, b)
 #define PREPROCESSOR_CONCAT_HELPER(a, b) a##b
 
-#if NODE_MAJOR_VERSION > 12
-#  define MODULE_WORKER_ENABLED(module_name, registration)                                               \
-    extern "C" NODE_MODULE_EXPORT void PREPROCESSOR_CONCAT(node_register_module_v, NODE_MODULE_VERSION)( \
-      v8::Local<v8::Object> exports, v8::Local<v8::Value> module, v8::Local<v8::Context> context) {      \
-      registration(exports);                                                                             \
-    }
-#else
-#  define MODULE_WORKER_ENABLED(module_name, registration) NODE_MODULE(module_name, registration)
-#endif
+#define MODULE_WORKER_ENABLED(module_name, registration)                                               \
+  extern "C" NODE_MODULE_EXPORT void PREPROCESSOR_CONCAT(node_register_module_v, NODE_MODULE_VERSION)( \
+    v8::Local<v8::Object> exports, v8::Local<v8::Value> module, v8::Local<v8::Context> context) {      \
+    registration(exports);                                                                             \
+  }
 
 void AddonData_DeleteInstance(void * addonData) {
   if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
@@ -34,9 +30,7 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
-#if NODE_MAJOR_VERSION > 12
   node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
-#endif
 
   addonData->initialize(isolate);
 

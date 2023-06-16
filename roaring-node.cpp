@@ -2517,7 +2517,6 @@ namespace v8utils {
     if (buffer.IsEmpty()) {
       return false;
     }
-#if NODE_MAJOR_VERSION > 12 || (NODE_MAJOR_VERSION >= 12 && NODE_MINOR_VERSION >= 16)
 
     if (buffer->IsSharedArrayBuffer()) {
       auto buf = buffer.As<v8::SharedArrayBuffer>();
@@ -2536,13 +2535,6 @@ namespace v8utils {
       }
       return node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
     }
-#else
-    v8::Local<v8::Value> argv[] = {
-      buffer, v8::Integer::NewFromUnsigned(isolate, offset), v8::Integer::NewFromUnsigned(isolate, length)};
-    return addonData->Buffer_from.Get(isolate)
-      ->Call(isolate->GetCurrentContext(), addonData->Buffer.Get(isolate), 3, argv)
-      .ToLocal(&result);
-#endif
   }
 
   bool v8ValueToBufferWithLimit(
@@ -2660,9 +2652,7 @@ namespace v8utils {
     size_t length;
     T * data;
     v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
-#if NODE_MAJOR_VERSION > 13
     std::shared_ptr<v8::BackingStore> backingStore;
-#endif
 
     inline TypedArrayContent() : length(0), data(nullptr) {}
 
@@ -2679,9 +2669,7 @@ namespace v8utils {
     inline void reset() {
       this->length = 0;
       this->data = nullptr;
-#if NODE_MAJOR_VERSION > 13
       this->backingStore = nullptr;
-#endif
       this->bufferPersistent.Reset();
     }
 
@@ -2703,12 +2691,8 @@ namespace v8utils {
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
           this->length = array->ByteLength() / sizeof(T);
           auto arrayBuffer = array->Buffer();
-#if NODE_MAJOR_VERSION > 13
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
-#else
-          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()) + array->ByteOffset());
-#endif
           return true;
         }
 
@@ -2716,12 +2700,8 @@ namespace v8utils {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
-#if NODE_MAJOR_VERSION > 13
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()));
-#else
-          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
-#endif
           return true;
         }
 
@@ -2729,12 +2709,8 @@ namespace v8utils {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
-#if NODE_MAJOR_VERSION > 13
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()));
-#else
-          this->data = (T *)((uint8_t *)(arrayBuffer->GetContents().Data()));
-#endif
           return true;
         }
       }
@@ -2788,7 +2764,6 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     memset(ptr, 0, size);
   }
 
-#if NODE_MAJOR_VERSION >= 13
   if (shared) {
     AddonData * addonData = AddonData::get(info);
     if (addonData == nullptr) {
@@ -2810,7 +2785,6 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     info.GetReturnValue().Set(bufferObj);
     return;
   }
-#endif
 
   v8::MaybeLocal<v8::Object> bufferMaybe;
   bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
@@ -2819,44 +2793,6 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     bare_aligned_free(ptr);
     return v8utils::throwError(isolate, "Buffer creation failed");
   }
-
-#if NODE_MAJOR_VERSION < 14
-
-  if (shared) {
-    AddonData * addonData = AddonData::get(info);
-    if (addonData == nullptr) {
-      return v8utils::throwError(isolate, "Invalid call");
-    }
-
-    auto sharedBuf = v8::SharedArrayBuffer::New(isolate, ptr, size);
-    if (sharedBuf.IsEmpty()) {
-      return v8utils::throwError(isolate, "Buffer creation failed1");
-    }
-
-    // Add a property to hold the buffer that contains the memory, so it gets properly collected when the shared array buffer
-    // is collected
-    bool propDefineResult = false;
-    if (!sharedBuf
-           ->DefineOwnProperty(
-             isolate->GetCurrentContext(),
-             addonData->strings.symbol_rnshared.Get(isolate),
-             bufferValue,
-             (v8::PropertyAttribute)(
-               v8::PropertyAttribute::ReadOnly | v8::PropertyAttribute::DontEnum | v8::PropertyAttribute::DontDelete))
-           .To(&propDefineResult)) {
-      propDefineResult = false;
-    }
-    if (!propDefineResult) {
-      return v8utils::throwError(isolate, "Buffer creation failed2");
-    }
-
-    // Create a buffer from the shared array buffer
-    if (!v8utils::bufferFromArrayBuffer(isolate, addonData, sharedBuf, 0, size, bufferValue)) {
-      return v8utils::throwError(isolate, "Buffer creation failed3");
-    }
-  }
-
-#endif
 
   info.GetReturnValue().Set(bufferValue);
 }
@@ -5219,11 +5155,7 @@ class AsyncWorker {
     v8::Isolate * isolate = worker->isolate;
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
-#if NODE_MAJOR_VERSION > 13
     isolate->PerformMicrotaskCheckpoint();
-#else
-    isolate->RunMicrotasks();
-#endif
   }
 
   static void _work(uv_work_t * request) {
@@ -5370,11 +5302,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker->_completed) {
-#if NODE_MAJOR_VERSION > 13
       worker->isolate->PerformMicrotaskCheckpoint();
-#else
-      worker->isolate->RunMicrotasks();
-#endif
       return;
     }
 
@@ -5383,11 +5311,7 @@ class ParallelAsyncWorker : public AsyncWorker {
       return;
     }
 
-#if NODE_MAJOR_VERSION > 13
     worker->isolate->PerformMicrotaskCheckpoint();
-#else
-    worker->isolate->RunMicrotasks();
-#endif
   }
 };
 
@@ -7809,15 +7733,11 @@ using namespace v8;
 #define PREPROCESSOR_CONCAT(a, b) PREPROCESSOR_CONCAT_HELPER(a, b)
 #define PREPROCESSOR_CONCAT_HELPER(a, b) a##b
 
-#if NODE_MAJOR_VERSION > 12
-#  define MODULE_WORKER_ENABLED(module_name, registration)                                               \
-    extern "C" NODE_MODULE_EXPORT void PREPROCESSOR_CONCAT(node_register_module_v, NODE_MODULE_VERSION)( \
-      v8::Local<v8::Object> exports, v8::Local<v8::Value> module, v8::Local<v8::Context> context) {      \
-      registration(exports);                                                                             \
-    }
-#else
-#  define MODULE_WORKER_ENABLED(module_name, registration) NODE_MODULE(module_name, registration)
-#endif
+#define MODULE_WORKER_ENABLED(module_name, registration)                                               \
+  extern "C" NODE_MODULE_EXPORT void PREPROCESSOR_CONCAT(node_register_module_v, NODE_MODULE_VERSION)( \
+    v8::Local<v8::Object> exports, v8::Local<v8::Value> module, v8::Local<v8::Context> context) {      \
+    registration(exports);                                                                             \
+  }
 
 void AddonData_DeleteInstance(void * addonData) {
   if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
@@ -7836,9 +7756,7 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
-#if NODE_MAJOR_VERSION > 12
   node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
-#endif
 
   addonData->initialize(isolate);
 
