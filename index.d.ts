@@ -143,7 +143,7 @@ export enum SerializationFormat {
   /**
    * Stable Portable Java and Go format.
    */
-  portable = "unsafe_portable",
+  portable = "portable",
 
   /**
    * Non portable C/C++ frozen format.
@@ -173,7 +173,7 @@ export enum FileSerializationFormat {
   /**
    * Stable Portable Java and Go format.
    */
-  portable = "unsafe_portable",
+  portable = "portable",
 
   /**
    * A plain binary array of 32 bits integers in little endian format. 4 bytes per value.
@@ -1353,7 +1353,7 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * @returns {this} This RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  addMany(values: Iterable<number>): this;
+  addMany(values: Iterable<number> | ArrayLike<number>): this;
 
   /**
    * Removes a value (or multiple values) from the set.
