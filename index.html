@@ -20,10 +20,11 @@ It takes advantage of AVX2 or SSE4.2 instructions on 64 bit platforms that suppo
 <a id="md:branches" class="tsd-anchor"></a><h2><a href="#md:branches">Branches</a></h2><p>Branch <code>publish</code> contains the latest published stable version.</p>
 <p>Branch <code>master</code> is the development branch that may contain code not yet published or ready for production.
 If you want to contribute and submit a pull request, use the master branch.</p>
-<a id="md:supported-node-versions" class="tsd-anchor"></a><h2><a href="#md:supported-node-versions">Supported node versions</a></h2><p>Node 12.20+, 14.13+, 16.14+, 18+, 20+ are currently supported.</p>
-<p>Node 8 and 10 support was dropped in release 2.0</p>
-<a id="md:worker-thread-support" class="tsd-anchor"></a><h2><a href="#md:worker-thread-support">Worker thread support</a></h2><p>IMPORTANT: You need Node &gt;= 14 to for roaring-node to work with worker threads correctly. Previous version of node are not supported and will throw an error if this library is loaded inside a worker thread.</p>
-<p>Directly transferring an instance without copy between worker threads is not currently supported, but you can create a frozen view on a SharedArrayBuffer using bufferAlignedAllocShared and pass it to the worker thread.</p>
+<a id="md:supported-node-versions" class="tsd-anchor"></a><h2><a href="#md:supported-node-versions">Supported node versions</a></h2><p>Node 14.17+, 16.14+, 18+, 20+ are currently supported.</p>
+<p>Node 8 and 10 support was dropped in release 2.0
+Node 12 support was dropped in release 2.3</p>
+<p>Please, update your node version if you are using something older than 14.17.</p>
+<a id="md:worker-thread-support" class="tsd-anchor"></a><h2><a href="#md:worker-thread-support">Worker thread support</a></h2><p>Directly transferring an instance without copy between worker threads is not currently supported, but you can create a frozen view on a SharedArrayBuffer using bufferAlignedAllocShared and pass it to the worker thread.</p>
 <a id="md:installation" class="tsd-anchor"></a><h2><a href="#md:installation">Installation</a></h2><pre><code class="language-sh"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-3">--save</span><span class="hl-1"> </span><span class="hl-2">roaring</span>
 </code><button>Copy</button></pre>
 <a id="md:references" class="tsd-anchor"></a><h2><a href="#md:references">References</a></h2><ul>
