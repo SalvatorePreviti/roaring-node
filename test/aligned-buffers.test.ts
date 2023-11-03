@@ -7,7 +7,7 @@ import {
   ensureBufferAligned,
   bufferAlignedAllocShared,
   bufferAlignedAllocSharedUnsafe,
-} from "../";
+} from "..";
 import { expect } from "chai";
 
 describe("asBuffer", () => {

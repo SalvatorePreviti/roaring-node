@@ -1,15 +1,6 @@
 {
   "extends": ["@balsamic"],
   "plugins": ["node", "import"],
-  "parserOptions": {
-    "ecmaVersion": 8,
-    "ecmaFeatures": {
-      "globalReturn": false,
-      "generators": true,
-      "objectLiteralDuplicateProperties": false
-    },
-    "sourceType": "module"
-  },
   "rules": {
     "global-require": 0
   },

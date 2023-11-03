@@ -57,9 +57,9 @@ async function build() {
 
     const packageJsonPath = path.resolve(ROOT_FOLDER, "package.json");
     const oldPackageJson = fs.readFileSync(packageJsonPath, "utf8");
-    const package = JSON.parse(oldPackageJson);
-    package.roaring_version = unityResult.roaringVersion;
-    const newPackageJson = `${JSON.stringify(package, null, 2)}\n`;
+    const pkg = JSON.parse(oldPackageJson);
+    pkg.roaring_version = unityResult.roaringVersion;
+    const newPackageJson = `${JSON.stringify(pkg, null, 2)}\n`;
 
     if (newPackageJson !== oldPackageJson) {
       fs.writeFileSync(packageJsonPath, newPackageJson);
