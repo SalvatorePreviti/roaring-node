@@ -9,5 +9,5 @@ runMain(() => {
     execSync("npx lint-staged", { stdio: "inherit" });
   }
 
-  execSync("npx pretty-quick --staged", { stdio: "inherit" });
+  execSync("npx prettier --write .", { stdio: "inherit" });
 }, "precommit");

@@ -27,7 +27,7 @@ jobs:
     needs: test
     strategy:
       matrix:
-        node-version: ["14.17.0", "16.14.0", "18.1.0", "20.3.0"]
+        node-version: ["14.17.0", "16.14.0", "18.1.0", "20.9.0", "21.1.0"]
         os: [ubuntu-latest, macos-latest, windows-2019]
     runs-on: ${{ matrix.os }}
     steps:
