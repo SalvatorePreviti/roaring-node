@@ -28,9 +28,9 @@ const util = require("util");
 
 const roaring = (() => {
   try {
-    return require(require("@mapbox/node-pre-gyp/lib/pre-binding").find(
-      path.resolve(path.join(__dirname, "package.json")),
-    ));
+    return require(
+      require("@mapbox/node-pre-gyp/lib/pre-binding").find(path.resolve(path.join(__dirname, "package.json"))),
+    );
   } catch (e) {
     if (e && e.code === "MODULE_NOT_FOUND") {
       return require("./build/Release/roaring.node");
