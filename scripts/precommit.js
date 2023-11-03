@@ -8,6 +8,4 @@ runMain(() => {
   if (nodeVersion >= 14) {
     execSync("npx lint-staged", { stdio: "inherit" });
   }
-
-  execSync("npx prettier --write .", { stdio: "inherit" });
 }, "precommit");
