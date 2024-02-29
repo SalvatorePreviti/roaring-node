@@ -109,6 +109,9 @@ async function startPublishAssets() {
       baseUrl: `https://${host}`,
       auth: getGithubKey(),
       headers: { "user-agent": packageJson.name },
+      request: {
+        fetch: fetch || require("node-fetch"),
+      },
     });
 
     const { data: existingReleases } = await octokit.rest.repos.listReleases({ owner, repo });
