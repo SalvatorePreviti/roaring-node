@@ -20749,7 +20749,7 @@ roaring_container_iterator_t container_init_iterator(const container_t *c,
         default:
             assert(false);
             roaring_unreachable;
-            return (roaring_container_iterator_t){0};
+            return roaring_container_iterator_t{0};
     }
 }
 
