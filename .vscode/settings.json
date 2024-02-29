@@ -38,8 +38,8 @@
     "editor.formatOnSave": true
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll": true,
-    "source.fixAll.eslint": true
+    "source.fixAll": "explicit",
+    "source.fixAll.eslint": "explicit"
   },
   "[c]": {
     "editor.defaultFormatter": "xaver.clang-format"
@@ -92,6 +92,10 @@
     "chrono": "cpp",
     "cstddef": "cpp",
     "filesystem": "cpp",
-    "random": "cpp"
+    "random": "cpp",
+    "__locale": "cpp",
+    "regex": "cpp",
+    "string": "cpp",
+    "string_view": "cpp"
   }
 }

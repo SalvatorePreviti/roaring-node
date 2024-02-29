@@ -37,10 +37,10 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
       auto * data = this->bufferContent.data;
       for (n = 0; n < size && this->it.has_value; ++n) {
         data[n] = this->it.current_value;
-        roaring_previous_uint32_iterator(&this->it);
+        roaring_uint32_iterator_previous(&this->it);
       }
     } else {
-      n = roaring_read_uint32_iterator(&this->it, this->bufferContent.data, this->bufferContent.length);
+      n = roaring_uint32_iterator_read(&this->it, this->bufferContent.data, this->bufferContent.length);
     }
     if (n == 0) {
       this->bitmapInstance = nullptr;
@@ -161,9 +161,9 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
   instance->bufferContent.set(isolate, bufferObject);
 
   if (reversed) {
-    roaring_init_iterator_last(bitmapInstance->roaring, &instance->it);
+    roaring_iterator_init_last(bitmapInstance->roaring, &instance->it);
   } else {
-    roaring_init_iterator(bitmapInstance->roaring, &instance->it);
+    roaring_iterator_init(bitmapInstance->roaring, &instance->it);
   }
 
   uint32_t n = instance->_fill();
