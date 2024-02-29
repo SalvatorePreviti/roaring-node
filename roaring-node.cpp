@@ -20728,21 +20728,21 @@ roaring_container_iterator_t container_init_iterator(const container_t *c,
             // word is non-zero
             int32_t index = wordindex * 64 + roaring_trailing_zeroes(word);
             *value = index;
-            return (roaring_container_iterator_t){
+            return roaring_container_iterator_t{
                 .index = index,
             };
         }
         case ARRAY_CONTAINER_TYPE: {
             const array_container_t *ac = const_CAST_array(c);
             *value = ac->array[0];
-            return (roaring_container_iterator_t){
+            return roaring_container_iterator_t{
                 .index = 0,
             };
         }
         case RUN_CONTAINER_TYPE: {
             const run_container_t *rc = const_CAST_run(c);
             *value = rc->runs[0].value;
-            return (roaring_container_iterator_t){
+            return roaring_container_iterator_t{
                 .index = 0,
             };
         }
@@ -20768,7 +20768,7 @@ roaring_container_iterator_t container_init_iterator_last(const container_t *c,
             int32_t index =
                 wordindex * 64 + (63 - roaring_leading_zeroes(word));
             *value = index;
-            return (roaring_container_iterator_t){
+            return roaring_container_iterator_t{
                 .index = index,
             };
         }
@@ -20776,7 +20776,7 @@ roaring_container_iterator_t container_init_iterator_last(const container_t *c,
             const array_container_t *ac = const_CAST_array(c);
             int32_t index = ac->cardinality - 1;
             *value = ac->array[index];
-            return (roaring_container_iterator_t){
+            return roaring_container_iterator_t{
                 .index = index,
             };
         }
@@ -20785,14 +20785,14 @@ roaring_container_iterator_t container_init_iterator_last(const container_t *c,
             int32_t run_index = rc->n_runs - 1;
             const rle16_t *last_run = &rc->runs[run_index];
             *value = last_run->value + last_run->length;
-            return (roaring_container_iterator_t){
+            return roaring_container_iterator_t{
                 .index = run_index,
             };
         }
         default:
             assert(false);
             roaring_unreachable;
-            return (roaring_container_iterator_t){0};
+            return roaring_container_iterator_t{0};
     }
 }
 
