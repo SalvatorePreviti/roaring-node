@@ -7641,7 +7641,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     RoaringBitmap32_isEmpty_getter,
     nullptr,
     v8::Local<v8::Value>(),
-    (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING),
+    (v8::AccessControl)(v8::ALL_CAN_READ),
     (v8::PropertyAttribute)(v8::ReadOnly));
 
   ctorInstanceTemplate->SetAccessor(
@@ -7649,7 +7649,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     RoaringBitmap32_size_getter,
     nullptr,
     v8::Local<v8::Value>(),
-    (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING),
+    (v8::AccessControl)(v8::ALL_CAN_READ),
     (v8::PropertyAttribute)(v8::ReadOnly));
 
   ctorInstanceTemplate->SetAccessor(
@@ -7657,7 +7657,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     RoaringBitmap32_isFrozen_getter,
     nullptr,
     v8::Local<v8::Value>(),
-    (v8::AccessControl)(v8::ALL_CAN_READ | v8::PROHIBITS_OVERWRITING),
+    (v8::AccessControl)(v8::ALL_CAN_READ),
     (v8::PropertyAttribute)(v8::ReadOnly));
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "add", RoaringBitmap32_add);
