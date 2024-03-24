@@ -121,7 +121,7 @@ function defineRoaringBitmap32Iterator(reverse, name) {
     value: Iterator,
     writable: false,
     configurable: false,
-    enumerable: false,
+    enumerable: true,
   });
 
   return Iterator;
@@ -349,7 +349,7 @@ if (!roaring[initializedSym]) {
   };
 
   const defineValue = (name, value, writable) =>
-    defineProp(name, { value, writable: !!writable, configurable: false, enumerable: false });
+    defineProp(name, { value, writable: !!writable, configurable: false, enumerable: true });
 
   let packageVersion = null;
 
