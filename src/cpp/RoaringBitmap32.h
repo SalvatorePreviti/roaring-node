@@ -122,7 +122,6 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   ~RoaringBitmap32() {
-    --RoaringBitmap32_instances;
     this->readonlyViewPersistent.Reset();
     if (!this->persistent.IsEmpty()) {
       this->persistent.ClearWeak();
@@ -130,6 +129,7 @@ class RoaringBitmap32 final : public ObjectWrap {
     }
     gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32));
     if (!this->readonlyViewOf) {
+      --RoaringBitmap32_instances;
       if (this->roaring != nullptr) {
         roaring_bitmap_free(this->roaring);
       }
