@@ -23,7 +23,7 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 
 import roaring = require("./");
 
-/** Gets the approximate memory allocated by the roaring bitmap library. */
+/** Gets the approximate memory allocated by the roaring bitmap library, in all isolates, in all worker threads. */
 export function getRoaringUsedMemory(): number;
 
 /**
