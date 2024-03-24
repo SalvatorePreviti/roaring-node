@@ -34,7 +34,7 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
-  // node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
+  node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
 
   addonData->initialize(isolate);
 

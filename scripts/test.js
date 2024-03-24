@@ -2,6 +2,7 @@
 
 async function test() {
   process.argv.push("--run");
+  process.argv.push("--no-file-parallelism");
   return import("vitest/vitest.mjs");
 }
 
