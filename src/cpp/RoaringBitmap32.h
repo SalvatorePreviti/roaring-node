@@ -12,6 +12,8 @@ class RoaringBitmap32;
 
 typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
 
+std::atomic<uint64_t> RoaringBitmap32_instances;
+
 class RoaringBitmap32 final : public ObjectWrap {
  public:
   static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152330000;
@@ -115,10 +117,12 @@ class RoaringBitmap32 final : public ObjectWrap {
     _version(0),
     frozenCounter(0),
     readonlyViewOf(nullptr) {
+    ++RoaringBitmap32_instances;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
   }
 
   ~RoaringBitmap32() {
+    --RoaringBitmap32_instances;
     this->readonlyViewPersistent.Reset();
     if (!this->persistent.IsEmpty()) {
       this->persistent.ClearWeak();

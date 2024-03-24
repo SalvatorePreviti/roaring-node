@@ -200,6 +200,10 @@ void RoaringBitmap32_ofStatic(const v8::FunctionCallbackInfo<v8::Value> & info) 
   self->invalidate();
 }
 
+void RoaringBitmap32_getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetReturnValue().Set((double)(RoaringBitmap32_instances));
+}
+
 void RoaringBitmap32_asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
@@ -886,6 +890,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   addonData->setMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync);
   addonData->setMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic);
+  addonData->setMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic);
   addonData->setMethod(ctorObject, "of", RoaringBitmap32_ofStatic);
   addonData->setMethod(ctorObject, "or", RoaringBitmap32_orStatic);
   addonData->setMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic);

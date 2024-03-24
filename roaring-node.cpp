@@ -3309,6 +3309,8 @@ class RoaringBitmap32;
 
 typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
 
+std::atomic<uint64_t> RoaringBitmap32_instances;
+
 class RoaringBitmap32 final : public ObjectWrap {
  public:
   static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152330000;
@@ -3412,10 +3414,12 @@ class RoaringBitmap32 final : public ObjectWrap {
     _version(0),
     frozenCounter(0),
     readonlyViewOf(nullptr) {
+    ++RoaringBitmap32_instances;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
   }
 
   ~RoaringBitmap32() {
+    --RoaringBitmap32_instances;
     this->readonlyViewPersistent.Reset();
     if (!this->persistent.IsEmpty()) {
       this->persistent.ClearWeak();
@@ -7029,6 +7033,10 @@ void RoaringBitmap32_ofStatic(const v8::FunctionCallbackInfo<v8::Value> & info) 
   self->invalidate();
 }
 
+void RoaringBitmap32_getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetReturnValue().Set((double)(RoaringBitmap32_instances));
+}
+
 void RoaringBitmap32_asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
@@ -7715,6 +7723,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   addonData->setMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync);
   addonData->setMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic);
+  addonData->setMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic);
   addonData->setMethod(ctorObject, "of", RoaringBitmap32_ofStatic);
   addonData->setMethod(ctorObject, "or", RoaringBitmap32_orStatic);
   addonData->setMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic);
