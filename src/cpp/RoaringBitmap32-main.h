@@ -8,6 +8,15 @@
 #include "RoaringBitmap32-serialization.h"
 #include "RoaringBitmap32-ranges.h"
 
+static roaring_memory_t roaringMemory = {
+  .malloc = malloc,
+  .realloc = realloc,
+  .calloc = calloc,
+  .free = free,
+  .aligned_malloc = bare_aligned_malloc,
+  .aligned_free = bare_aligned_free};
+static bool roaringMemoryInitialized = false;
+
 void RoaringBitmap32_copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
@@ -754,7 +763,10 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
 }
 
 void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
-  croaringMemoryInitialize();
+  if (!roaringMemoryInitialized) {
+    roaring_init_memory_hook(roaringMemory);
+    roaringMemoryInitialized = true;
+  }
 
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::Local<v8::Context> context = isolate->GetCurrentContext();

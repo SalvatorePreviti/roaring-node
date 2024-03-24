@@ -10,11 +10,7 @@ class ObjectWrap {
   template <class T>
   static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
     v8::Local<v8::Object> obj;
-    if (!value->IsObject()) {
-      return nullptr;
-    }
-
-    if (!value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
+    if (!value->IsObject() || !value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
       return nullptr;
     }
 

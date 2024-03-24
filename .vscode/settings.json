@@ -97,6 +97,7 @@
     "regex": "cpp",
     "string": "cpp",
     "string_view": "cpp",
-    "typeinfo": "cpp"
+    "typeinfo": "cpp",
+    "__config": "cpp"
   }
 }

@@ -13,7 +13,6 @@
 #include <cmath>
 #include <limits>
 #include <string>
-#include <mutex>
 
 #if defined(__APPLE__)
 #  include <malloc/malloc.h>

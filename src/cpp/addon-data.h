@@ -16,7 +16,6 @@ class AddonData final {
 
   AddonDataStrings strings;
 
-  v8::Eternal<v8::Object> Buffer;
   v8::Eternal<v8::Object> Uint32Array;
   v8::Eternal<v8::Function> Uint32Array_from;
   v8::Eternal<v8::Function> Buffer_from;
@@ -47,6 +46,7 @@ class AddonData final {
 
   inline void initialize(v8::Isolate * isolate) {
     this->isolate = isolate;
+    v8::HandleScope handle_scope(isolate);
 
     external.Set(isolate, v8::External::New(isolate, this));
 
@@ -56,20 +56,16 @@ class AddonData final {
 
     auto global = context->Global();
 
-    auto uint32Array =
-      global->Get(context, this->strings.Uint32Array.Get(isolate)).ToLocalChecked()->ToObject(context).ToLocalChecked();
+    auto from = this->strings.from.Get(isolate);
 
     auto buffer = global->Get(context, this->strings.Buffer.Get(isolate)).ToLocalChecked().As<v8::Object>();
+    this->Buffer_from.Set(isolate, buffer->Get(context, from).ToLocalChecked().As<v8::Function>());
 
-    this->Buffer.Set(isolate, buffer);
-
-    this->Buffer_from.Set(
-      isolate, buffer->Get(context, this->strings.from.Get(isolate)).ToLocalChecked().As<v8::Function>());
-
+    auto uint32Array =
+      global->Get(context, this->strings.Uint32Array.Get(isolate)).ToLocalChecked()->ToObject(context).ToLocalChecked();
+    auto uint32arrayFrom = v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked());
     this->Uint32Array.Set(isolate, uint32Array);
-
-    this->Uint32Array_from.Set(
-      isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(context, this->strings.from.Get(isolate)).ToLocalChecked()));
+    this->Uint32Array_from.Set(isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked()));
   }
 };
 

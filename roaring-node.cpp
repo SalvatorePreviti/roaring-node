@@ -30,7 +30,6 @@
 #include <cmath>
 #include <limits>
 #include <string>
-#include <mutex>
 
 #if defined(__APPLE__)
 #  include <malloc/malloc.h>
@@ -2442,26 +2441,6 @@ using namespace ::roaring::api;
 #endif
 
 
-void croaringMemoryInitialize() {
-  static std::atomic<bool> _roaringBitMemoryInitialized{false};
-  static std::mutex _roaringBitMemoryInitializedMutex;
-
-  if (!_roaringBitMemoryInitialized) {
-    roaring_memory_t roaringMemory;
-    roaringMemory.malloc = gcaware_malloc;
-    roaringMemory.realloc = gcaware_realloc;
-    roaringMemory.calloc = gcaware_calloc;
-    roaringMemory.free = gcaware_free;
-    roaringMemory.aligned_malloc = gcaware_aligned_malloc;
-    roaringMemory.aligned_free = gcaware_aligned_free;
-    std::lock_guard<std::mutex> guard(_roaringBitMemoryInitializedMutex);
-    if (_roaringBitMemoryInitialized) {
-      roaring_init_memory_hook(roaringMemory);
-      _roaringBitMemoryInitialized = true;
-    }
-  }
-}
-
 #endif  // ROARING_NODE_CROARING_
 
 
@@ -2583,7 +2562,6 @@ class AddonData final {
 
   AddonDataStrings strings;
 
-  v8::Eternal<v8::Object> Buffer;
   v8::Eternal<v8::Object> Uint32Array;
   v8::Eternal<v8::Function> Uint32Array_from;
   v8::Eternal<v8::Function> Buffer_from;
@@ -2614,6 +2592,7 @@ class AddonData final {
 
   inline void initialize(v8::Isolate * isolate) {
     this->isolate = isolate;
+    v8::HandleScope handle_scope(isolate);
 
     external.Set(isolate, v8::External::New(isolate, this));
 
@@ -2623,20 +2602,16 @@ class AddonData final {
 
     auto global = context->Global();
 
-    auto uint32Array =
-      global->Get(context, this->strings.Uint32Array.Get(isolate)).ToLocalChecked()->ToObject(context).ToLocalChecked();
+    auto from = this->strings.from.Get(isolate);
 
     auto buffer = global->Get(context, this->strings.Buffer.Get(isolate)).ToLocalChecked().As<v8::Object>();
+    this->Buffer_from.Set(isolate, buffer->Get(context, from).ToLocalChecked().As<v8::Function>());
 
-    this->Buffer.Set(isolate, buffer);
-
-    this->Buffer_from.Set(
-      isolate, buffer->Get(context, this->strings.from.Get(isolate)).ToLocalChecked().As<v8::Function>());
-
+    auto uint32Array =
+      global->Get(context, this->strings.Uint32Array.Get(isolate)).ToLocalChecked()->ToObject(context).ToLocalChecked();
+    auto uint32arrayFrom = v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked());
     this->Uint32Array.Set(isolate, uint32Array);
-
-    this->Uint32Array_from.Set(
-      isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(context, this->strings.from.Get(isolate)).ToLocalChecked()));
+    this->Uint32Array_from.Set(isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked()));
   }
 };
 
@@ -2668,11 +2643,7 @@ class ObjectWrap {
   template <class T>
   static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
     v8::Local<v8::Object> obj;
-    if (!value->IsObject()) {
-      return nullptr;
-    }
-
-    if (!value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
+    if (!value->IsObject() || !value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
       return nullptr;
     }
 
@@ -6866,6 +6837,15 @@ void RoaringBitmap32_fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> &
 #endif  // ROARING_NODE_ROARING_BITMAP32_RANGES_
 
 
+static roaring_memory_t roaringMemory = {
+  .malloc = malloc,
+  .realloc = realloc,
+  .calloc = calloc,
+  .free = free,
+  .aligned_malloc = bare_aligned_malloc,
+  .aligned_free = bare_aligned_free};
+static bool roaringMemoryInitialized = false;
+
 void RoaringBitmap32_copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
@@ -7612,7 +7592,10 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
 }
 
 void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
-  croaringMemoryInitialize();
+  if (!roaringMemoryInitialized) {
+    roaring_init_memory_hook(roaringMemory);
+    roaringMemoryInitialized = true;
+  }
 
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
   v8::Local<v8::Context> context = isolate->GetCurrentContext();
