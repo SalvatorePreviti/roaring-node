@@ -118,7 +118,7 @@ inline void _gcaware_adjustAllocatedMemory(int64_t size) {
   if (size != 0) {
     v8::Isolate * isolate = v8::Isolate::GetCurrent();
     if (isolate == nullptr) {
-      // isolate = thread_local_isolate;
+      isolate = thread_local_isolate;
     }
     if (isolate != nullptr) {
       isolate->AdjustAmountOfExternalAllocatedMemory(size);
@@ -7970,8 +7970,6 @@ void AddonData_DeleteInstance(void * p) {
 
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
-
-  thread_local_isolate = isolate;
 
   v8::HandleScope scope(isolate);
 

@@ -28,8 +28,6 @@ void AddonData_DeleteInstance(void * p) {
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  thread_local_isolate = isolate;
-
   v8::HandleScope scope(isolate);
 
   AddonData * addonData = new AddonData();
