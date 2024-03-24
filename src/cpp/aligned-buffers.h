@@ -58,7 +58,6 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     auto sharedBuf = v8::SharedArrayBuffer::New(isolate, std::move(backingStore));
     v8::Local<v8::Value> bufferObj;
     if (sharedBuf.IsEmpty() || !v8utils::bufferFromArrayBuffer(isolate, addonData, sharedBuf, 0, size, bufferObj)) {
-      bare_aligned_free(ptr);
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
     info.GetReturnValue().Set(bufferObj);
