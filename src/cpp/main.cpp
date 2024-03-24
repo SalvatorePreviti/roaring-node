@@ -1,6 +1,9 @@
 #include "aligned-buffers.h"
 #include "RoaringBitmap32-main.h"
 #include "RoaringBitmap32BufferedIterator.h"
+#include <mutex>
+
+std::mutex init_mutex;
 
 using namespace v8;
 
@@ -14,6 +17,8 @@ using namespace v8;
   }
 
 void AddonData_DeleteInstance(void * addonData) {
+  std::lock_guard<std::mutex> lock(init_mutex);
+
   if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
     thread_local_isolate = nullptr;
   }
@@ -22,6 +27,8 @@ void AddonData_DeleteInstance(void * addonData) {
 }
 
 void InitRoaringNode(Local<Object> exports) {
+  std::lock_guard<std::mutex> lock(init_mutex);
+
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
   thread_local_isolate = isolate;

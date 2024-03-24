@@ -63,9 +63,11 @@ class AddonData final {
 
     auto uint32Array =
       global->Get(context, this->strings.Uint32Array.Get(isolate)).ToLocalChecked()->ToObject(context).ToLocalChecked();
+
     auto uint32arrayFrom = v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked());
+
     this->Uint32Array.Set(isolate, uint32Array);
-    this->Uint32Array_from.Set(isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked()));
+    this->Uint32Array_from.Set(isolate, uint32arrayFrom);
   }
 };
 

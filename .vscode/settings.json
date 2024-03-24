@@ -98,6 +98,9 @@
     "string": "cpp",
     "string_view": "cpp",
     "typeinfo": "cpp",
-    "__config": "cpp"
+    "__config": "cpp",
+    "__mutex_base": "cpp",
+    "mutex": "cpp",
+    "shared_mutex": "cpp"
   }
 }

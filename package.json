@@ -23,7 +23,7 @@
     "url": "git+https://github.com/SalvatorePreviti/roaring-node.git"
   },
   "engines": {
-    "node": ">=16.14.0"
+    "node": ">=16.20.2"
   },
   "main": "index.js",
   "types": "index.d.ts",

@@ -2609,9 +2609,11 @@ class AddonData final {
 
     auto uint32Array =
       global->Get(context, this->strings.Uint32Array.Get(isolate)).ToLocalChecked()->ToObject(context).ToLocalChecked();
+
     auto uint32arrayFrom = v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked());
+
     this->Uint32Array.Set(isolate, uint32Array);
-    this->Uint32Array_from.Set(isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked()));
+    this->Uint32Array_from.Set(isolate, uint32arrayFrom);
   }
 };
 
@@ -7947,6 +7949,9 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
 
 #endif  // ROARING_NODE_ROARING_BITMAP_32_BUFFERED_ITERATOR_
 
+#include <mutex>
+
+std::mutex init_mutex;
 
 using namespace v8;
 
@@ -7960,6 +7965,8 @@ using namespace v8;
   }
 
 void AddonData_DeleteInstance(void * addonData) {
+  std::lock_guard<std::mutex> lock(init_mutex);
+
   if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
     thread_local_isolate = nullptr;
   }
@@ -7968,6 +7975,8 @@ void AddonData_DeleteInstance(void * addonData) {
 }
 
 void InitRoaringNode(Local<Object> exports) {
+  std::lock_guard<std::mutex> lock(init_mutex);
+
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
   thread_local_isolate = isolate;
