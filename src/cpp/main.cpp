@@ -34,9 +34,12 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
-  node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
+  isolate
+    ->add
 
-  addonData->initialize(isolate);
+      // node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
+
+      addonData->initialize(isolate);
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);
