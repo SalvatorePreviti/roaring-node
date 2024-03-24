@@ -47,5 +47,5 @@ runMain(() => {
   }
 
   execSync("npm run lint", { stdio: "inherit" });
-  execSync("npm run test", { stdio: "inherit" });
+  execSync("npx vitest --run", { stdio: "inherit" });
 }, "prepush");
