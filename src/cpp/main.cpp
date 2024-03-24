@@ -40,7 +40,7 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData_setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory, addonData);
 
-  v8utils::defineHiddenField(isolate, exports, "default", exports);
+  ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
 }
 
 MODULE_WORKER_ENABLED(roaring, InitRoaringNode);

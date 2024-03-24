@@ -56,30 +56,20 @@ class AddonData final {
 
     auto global = context->Global();
 
-    auto uint32Array = global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Uint32Array", v8::NewStringType::kInternalized))
-                         .ToLocalChecked()
-                         ->ToObject(context)
-                         .ToLocalChecked();
+    auto uint32Array =
+      global->Get(context, this->strings.Uint32Array.Get(isolate)).ToLocalChecked()->ToObject(context).ToLocalChecked();
 
-    auto buffer = global->Get(context, NEW_LITERAL_V8_STRING(isolate, "Buffer", v8::NewStringType::kInternalized))
-                    .ToLocalChecked()
-                    .As<v8::Object>();
+    auto buffer = global->Get(context, this->strings.Buffer.Get(isolate)).ToLocalChecked().As<v8::Object>();
 
     this->Buffer.Set(isolate, buffer);
 
     this->Buffer_from.Set(
-      isolate,
-      buffer->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized))
-        .ToLocalChecked()
-        .As<v8::Function>());
+      isolate, buffer->Get(context, this->strings.from.Get(isolate)).ToLocalChecked().As<v8::Function>());
 
     this->Uint32Array.Set(isolate, uint32Array);
 
     this->Uint32Array_from.Set(
-      isolate,
-      v8::Local<v8::Function>::Cast(
-        uint32Array->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized))
-          .ToLocalChecked()));
+      isolate, v8::Local<v8::Function>::Cast(uint32Array->Get(context, this->strings.from.Get(isolate)).ToLocalChecked()));
   }
 };
 

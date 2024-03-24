@@ -119,7 +119,7 @@ function defineRoaringBitmap32Iterator(reverse, name) {
     value: Iterator,
     writable: false,
     configurable: false,
-    enumerable: false,
+    enumerable: true,
   });
 
   return Iterator;

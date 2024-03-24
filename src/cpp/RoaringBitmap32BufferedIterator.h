@@ -176,12 +176,10 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
 void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  auto className = NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32BufferedIterator", v8::NewStringType::kInternalized);
-
   v8::Local<v8::FunctionTemplate> ctor =
     v8::FunctionTemplate::New(isolate, RoaringBitmap32BufferedIterator_New, addonData->external.Get(isolate));
 
-  ctor->SetClassName(className);
+  ctor->SetClassName(addonData->strings.RoaringBitmap32BufferedIterator.Get(isolate));
   ctor->InstanceTemplate()->SetInternalFieldCount(2);
 
   addonData->RoaringBitmap32BufferedIterator_constructorTemplate.Set(isolate, ctor);
@@ -196,7 +194,9 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
   }
 
   addonData->RoaringBitmap32BufferedIterator_constructor.Set(isolate, ctorFunction);
-  v8utils::defineHiddenField(isolate, exports, "RoaringBitmap32BufferedIterator", ctorFunction);
+
+  ignoreMaybeResult(exports->Set(
+    isolate->GetCurrentContext(), addonData->strings.RoaringBitmap32BufferedIterator.Get(isolate), ctorFunction));
 }
 
 #endif  // ROARING_NODE_ROARING_BITMAP_32_BUFFERED_ITERATOR_
