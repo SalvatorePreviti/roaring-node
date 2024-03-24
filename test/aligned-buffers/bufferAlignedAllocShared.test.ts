@@ -1,5 +1,5 @@
-import { RoaringBitmap32, isBufferAligned, bufferAlignedAllocShared } from "../..";
 import { describe, it, expect } from "vitest";
+import { RoaringBitmap32, isBufferAligned, bufferAlignedAllocShared } from "../..";
 
 describe("bufferAlignedAllocShared", () => {
   it("exposes the bufferAlignedAllocShared function", () => {

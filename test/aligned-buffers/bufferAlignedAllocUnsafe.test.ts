@@ -1,5 +1,5 @@
-import { RoaringBitmap32, bufferAlignedAllocUnsafe, isBufferAligned } from "../..";
 import { describe, it, expect } from "vitest";
+import { RoaringBitmap32, bufferAlignedAllocUnsafe, isBufferAligned } from "../..";
 
 describe("bufferAlignedAllocUnsafe", () => {
   it("exposes the bufferAlignedAllocUnsafe function", () => {
