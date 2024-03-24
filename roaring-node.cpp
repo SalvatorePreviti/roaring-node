@@ -6937,8 +6937,7 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   }
 
   if (instance->roaring == nullptr) {
-    instance->~RoaringBitmap32();
-    bare_aligned_free(instance);
+    delete instance;
     return v8utils::throwError(isolate, "RoaringBitmap32::ctor - failed to create native RoaringBitmap32 instance");
   }
 
