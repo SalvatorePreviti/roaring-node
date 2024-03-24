@@ -7963,7 +7963,7 @@ void AddonData_DeleteInstance(void * p) {
     thread_local_isolate = nullptr;
   }
 
-  delete addonData;
+  // delete addonData;
 }
 
 void InitRoaringNode(Local<Object> exports) {
