@@ -754,12 +754,12 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
 void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
   if (!roaringMemoryInitialized) {
     roaring_init_memory_hook(
-      {.malloc = malloc,
-       .realloc = realloc,
-       .calloc = calloc,
-       .free = free,
-       .aligned_malloc = bare_aligned_malloc,
-       .aligned_free = bare_aligned_free});
+      {.malloc = gcaware_malloc,
+       .realloc = gcaware_realloc,
+       .calloc = gcaware_calloc,
+       .free = gcaware_free,
+       .aligned_malloc = gcaware_aligned_malloc,
+       .aligned_free = gcaware_aligned_free});
     roaringMemoryInitialized = true;
   }
 

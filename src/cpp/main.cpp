@@ -16,11 +16,13 @@ using namespace v8;
 
 void AddonData_DeleteInstance(void * p) {
   auto addonData = reinterpret_cast<AddonData *>(p);
-  if (thread_local_isolate == addonData->isolate) {
-    thread_local_isolate = nullptr;
-  }
+  if (addonData != nullptr) {
+    if (thread_local_isolate == addonData->isolate) {
+      thread_local_isolate = nullptr;
+    }
 
-  // delete addonData;
+    delete addonData;
+  }
 }
 
 void InitRoaringNode(Local<Object> exports) {
