@@ -9,10 +9,7 @@ const { unity } = require("./lib/unity");
 runMain(() => {
   const roaringNodeCpp = fs.readFileSync(CPP_UNITY_FILE_PATH, "utf8");
 
-  const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
-  if (nodeVersion >= 14) {
-    execSync("npx lint-staged");
-  }
+  execSync("npx lint-staged");
 
   const unityResult = unity();
 

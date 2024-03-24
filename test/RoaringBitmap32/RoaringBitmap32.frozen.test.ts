@@ -115,28 +115,25 @@ describe("RoaringBitmap32 frozen", () => {
       expect(copy.tryAdd(4)).toBe(true);
     });
 
-    const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
-    if (nodeVersion >= 12) {
-      it("can create a view from a serialized bitmap in a SharedArrayBuffer, and the view is frozen", () => {
-        const values = [1, 2, 3, 100, 8772837, 0x7ffffff1, 0x7fffffff];
-        const bitmap = new RoaringBitmap32(values);
-        const sharedBuffer = RoaringBitmap32.bufferAlignedAllocShared(
-          bitmap.getSerializationSizeInBytes("unsafe_frozen_croaring"),
-        );
-        expect(sharedBuffer.buffer).toBeInstanceOf(SharedArrayBuffer);
-        const serialized = bitmap.serialize("unsafe_frozen_croaring", sharedBuffer);
-        expect(serialized).eq(sharedBuffer);
+    it("can create a view from a serialized bitmap in a SharedArrayBuffer, and the view is frozen", () => {
+      const values = [1, 2, 3, 100, 8772837, 0x7ffffff1, 0x7fffffff];
+      const bitmap = new RoaringBitmap32(values);
+      const sharedBuffer = RoaringBitmap32.bufferAlignedAllocShared(
+        bitmap.getSerializationSizeInBytes("unsafe_frozen_croaring"),
+      );
+      expect(sharedBuffer.buffer).toBeInstanceOf(SharedArrayBuffer);
+      const serialized = bitmap.serialize("unsafe_frozen_croaring", sharedBuffer);
+      expect(serialized).eq(sharedBuffer);
 
-        const view = RoaringBitmap32.unsafeFrozenView(sharedBuffer, "unsafe_frozen_croaring");
-        expect(view.isFrozen).toBe(true);
-        expect(view.toArray()).toEqual(values);
+      const view = RoaringBitmap32.unsafeFrozenView(sharedBuffer, "unsafe_frozen_croaring");
+      expect(view.isFrozen).toBe(true);
+      expect(view.toArray()).toEqual(values);
 
-        const copy = view.clone();
-        expect(copy.isFrozen).toBe(false);
-        expect(copy.toArray()).toEqual(values);
-        expect(copy.tryAdd(4)).toBe(true);
-      });
-    }
+      const copy = view.clone();
+      expect(copy.isFrozen).toBe(false);
+      expect(copy.toArray()).toEqual(values);
+      expect(copy.tryAdd(4)).toBe(true);
+    });
   });
 
   describe("asReadonlyView", () => {
