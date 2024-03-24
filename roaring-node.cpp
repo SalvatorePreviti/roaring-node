@@ -3419,7 +3419,6 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   ~RoaringBitmap32() {
-    --RoaringBitmap32_instances;
     this->readonlyViewPersistent.Reset();
     if (!this->persistent.IsEmpty()) {
       this->persistent.ClearWeak();
@@ -3427,6 +3426,7 @@ class RoaringBitmap32 final : public ObjectWrap {
     }
     gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32));
     if (!this->readonlyViewOf) {
+      --RoaringBitmap32_instances;
       if (this->roaring != nullptr) {
         roaring_bitmap_free(this->roaring);
       }
@@ -6841,13 +6841,6 @@ void RoaringBitmap32_fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> &
 #endif  // ROARING_NODE_ROARING_BITMAP32_RANGES_
 
 
-static roaring_memory_t roaringMemory = {
-  .malloc = malloc,
-  .realloc = realloc,
-  .calloc = calloc,
-  .free = free,
-  .aligned_malloc = bare_aligned_malloc,
-  .aligned_free = bare_aligned_free};
 static bool roaringMemoryInitialized = false;
 
 void RoaringBitmap32_copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -7594,7 +7587,13 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
 
 void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
   if (!roaringMemoryInitialized) {
-    roaring_init_memory_hook(roaringMemory);
+    roaring_init_memory_hook(
+      {.malloc = malloc,
+       .realloc = realloc,
+       .calloc = calloc,
+       .free = free,
+       .aligned_malloc = bare_aligned_malloc,
+       .aligned_free = bare_aligned_free});
     roaringMemoryInitialized = true;
   }
 
