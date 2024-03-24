@@ -65,11 +65,7 @@ module.exports.unity = function unity() {
   console.log();
   console.log(colors.cyan(`- roaring version ${roaringVersion}`));
 
-  let outputText = output.join("\n");
-
-  // This is to fix compiling C code with C++ compiler on Windows 2019, to avoid the error
-  // C4576: a parenthesized type followed by an initializer list is a non-standard explicit type conversion syntax
-  outputText = outputText.replaceAll("(roaring_container_iterator_t){", "roaring_container_iterator_t{");
+  const outputText = output.join("\n");
 
   console.log(colors.cyanBright(`- Unity: ${includedFiles.size} files included. ${outputText.length} bytes total.`));
 
