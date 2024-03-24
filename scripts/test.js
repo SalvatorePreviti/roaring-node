@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
-const { spawnAsync } = require("./lib/utils");
-
 async function test() {
-  await spawnAsync("npx", ["vitest", "--run"]);
+  process.argv.push("--run");
+  return import("vitest/vitest.mjs");
 }
 
 test()
