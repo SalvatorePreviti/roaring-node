@@ -110,5 +110,5 @@
     "typescript": "5.3.3"
   },
   "gypfile": true,
-  "roaring_version": "2.1.2"
+  "roaring_version": "3.0.0"
 }
