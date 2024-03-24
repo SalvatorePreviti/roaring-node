@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -55,7 +55,7 @@
     "compile": "node ./node-pre-gyp.js rebuild",
     "build": "node ./scripts/build.js",
     "build-dev": "node ./scripts/build.js --dev",
-    "test": "node ./scripts/test.js",
+    "test": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix && prettier --write .",
     "doc": "typedoc ./index.d.ts",
@@ -81,34 +81,29 @@
     "node-gyp": "^10.0.1"
   },
   "devDependencies": {
-    "@balsamic/eslint-config": "^0.6.11",
+    "@balsamic/eslint-config": "^0.7.0",
     "@octokit/rest": "^20.0.2",
-    "@types/chai": "^4.3.12",
-    "@types/chai-as-promised": "^7.1.8",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.24",
-    "@typescript-eslint/eslint-plugin": "^7.1.0",
-    "@typescript-eslint/parser": "^7.1.0",
+    "@types/node": "^20.11.30",
+    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/parser": "^7.3.1",
     "benchmark": "^2.1.4",
-    "chai": "^4.4.1",
-    "chai-as-promised": "^7.1.1",
     "eslint": "^8.57.0",
-    "eslint-plugin-chai-expect": "^3.0.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-json": "^3.1.0",
     "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-vitest": "^0.3.26",
     "fastbitset": "^0.4.1",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
-    "mocha": "^10.3.0",
-    "node-fetch": "^2.7.0",
+    "node-fetch": "^3.3.2",
     "physical-cpu-count": "^2.0.0",
     "prettier": "^3.2.5",
-    "ts-node": "^10.9.2",
     "tslib": "^2.6.2",
-    "typedoc": "^0.25.9",
-    "typescript": "5.3.3"
+    "tsx": "^4.7.1",
+    "typedoc": "^0.25.12",
+    "typescript": "5.4.3",
+    "vitest": "^1.4.0"
   },
   "gypfile": true,
-  "roaring_version": "2.1.2"
+  "roaring_version": "3.0.0"
 }

@@ -39,8 +39,6 @@ const roaring = (() => {
   }
 })();
 
-module.exports = roaring;
-
 const { defineProperty } = Reflect;
 
 defineProperty(roaring, "__esModule", { value: true, configurable: true });
@@ -349,7 +347,7 @@ if (!roaring[initializedSym]) {
   };
 
   const defineValue = (name, value, writable) =>
-    defineProp(name, { value, writable: !!writable, configurable: false, enumerable: false });
+    defineProp(name, { value, writable: !!writable, configurable: false, enumerable: true });
 
   let packageVersion = null;
 
@@ -457,3 +455,5 @@ if (!roaring[initializedSym]) {
 
   roaring.asBuffer = asBuffer;
 }
+
+module.exports = roaring;

@@ -1,16 +1,14 @@
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect, use as chaiUse } from "chai";
 import path from "path";
 import fs from "fs";
 import type { FileSerializationDeserializationFormatType } from "../..";
 import { FileDeserializationFormat, FileSerializationFormat } from "../..";
+import { expect, describe, it, beforeAll } from "vitest";
 
 const tmpDir = path.resolve(__dirname, "..", "..", ".tmp", "tests");
 
-chaiUse(require("chai-as-promised"));
-
 describe("RoaringBitmap32 file serialization", () => {
-  before(() => {
+  beforeAll(() => {
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir, { recursive: true });
     }
@@ -27,7 +25,7 @@ describe("RoaringBitmap32 file serialization", () => {
       expect(FileSerializationFormat.newline_separated_values).eq("newline_separated_values");
       expect(FileSerializationFormat.json_array).eq("json_array");
 
-      expect(Object.values(FileSerializationFormat)).to.deep.eq([
+      expect(Object.values(FileSerializationFormat)).toEqual([
         "croaring",
         "portable",
         "unsafe_frozen_croaring",
@@ -38,9 +36,9 @@ describe("RoaringBitmap32 file serialization", () => {
         "json_array",
       ]);
 
-      expect(RoaringBitmap32.FileSerializationFormat).to.eq(FileSerializationFormat);
+      expect(RoaringBitmap32.FileSerializationFormat).eq(FileSerializationFormat);
 
-      expect(new RoaringBitmap32().FileSerializationFormat).to.eq(FileSerializationFormat);
+      expect(new RoaringBitmap32().FileSerializationFormat).eq(FileSerializationFormat);
     });
   });
 
@@ -55,7 +53,7 @@ describe("RoaringBitmap32 file serialization", () => {
       expect(FileDeserializationFormat.newline_separated_values).eq("newline_separated_values");
       expect(FileDeserializationFormat.json_array).eq("json_array");
 
-      expect(Object.values(FileDeserializationFormat)).to.deep.eq([
+      expect(Object.values(FileDeserializationFormat)).toEqual([
         "croaring",
         "portable",
         "unsafe_frozen_croaring",
@@ -67,9 +65,9 @@ describe("RoaringBitmap32 file serialization", () => {
         "json_array",
       ]);
 
-      expect(RoaringBitmap32.FileDeserializationFormat).to.eq(FileDeserializationFormat);
+      expect(RoaringBitmap32.FileDeserializationFormat).eq(FileDeserializationFormat);
 
-      expect(new RoaringBitmap32().FileDeserializationFormat).to.eq(FileDeserializationFormat);
+      expect(new RoaringBitmap32().FileDeserializationFormat).eq(FileDeserializationFormat);
     });
   });
 
@@ -87,7 +85,7 @@ describe("RoaringBitmap32 file serialization", () => {
     for (const format of formats) {
       const tmpFilePath = path.resolve(tmpDir, `test-ϴϮ-${format}.bin`);
       await new RoaringBitmap32().serializeFileAsync(tmpFilePath, format);
-      expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).to.deep.equal([]);
+      expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).toEqual([]);
     }
   });
 
@@ -96,7 +94,7 @@ describe("RoaringBitmap32 file serialization", () => {
       const tmpFilePath = path.resolve(tmpDir, `test-ϴϮ-${format}.bin`);
       const data = [1, 2, 3, 100, 0xfffff, 0xffffffff];
       await new RoaringBitmap32(data).serializeFileAsync(tmpFilePath, format);
-      expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).to.deep.equal(data);
+      expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).toEqual(data);
     }
   });
 
@@ -104,7 +102,7 @@ describe("RoaringBitmap32 file serialization", () => {
     const tmpFilePath = path.resolve(tmpDir, `test-truncate.bin`);
     await fs.promises.writeFile(tmpFilePath, Buffer.alloc(10000));
     await new RoaringBitmap32([1, 2, 3]).serializeFileAsync(tmpFilePath, "portable");
-    expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, "portable")).toArray()).to.deep.equal([1, 2, 3]);
+    expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, "portable")).toArray()).toEqual([1, 2, 3]);
   });
 
   it("throws ENOENT if file does not exist", async () => {
@@ -115,11 +113,11 @@ describe("RoaringBitmap32 file serialization", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.be.an.instanceOf(Error);
-    expect(error.message).to.match(/^ENOENT, No such file or directory/);
-    expect(error.code).to.equal("ENOENT");
-    expect(error.syscall).to.equal("open");
-    expect(error.path).to.equal(tmpFilePath);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toMatch(/^ENOENT, No such file or directory/);
+    expect(error.code).equal("ENOENT");
+    expect(error.syscall).equal("open");
+    expect(error.path).equal(tmpFilePath);
   });
 
   it("serializes to comma_separated_values", async () => {
@@ -128,7 +126,7 @@ describe("RoaringBitmap32 file serialization", () => {
     bmp.addRange(0x100, 0x120);
     await bmp.serializeFileAsync(tmpFilePath, "comma_separated_values");
     const text = await fs.promises.readFile(tmpFilePath, "utf8");
-    expect(text).to.equal(
+    expect(text).equal(
       "1,2,3,100,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,14120,3481983",
     );
   });
@@ -139,7 +137,7 @@ describe("RoaringBitmap32 file serialization", () => {
     bmp.addRange(0x100, 0x120);
     await bmp.serializeFileAsync(tmpFilePath, "newline_separated_values");
     const text = await fs.promises.readFile(tmpFilePath, "utf8");
-    expect(text).to.equal(
+    expect(text).equal(
       "1,2,3,100,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,14120,3481983,".replace(
         /,/g,
         "\n",
@@ -153,7 +151,7 @@ describe("RoaringBitmap32 file serialization", () => {
     bmp.addRange(0x100, 0x120);
     await bmp.serializeFileAsync(tmpFilePath, "tab_separated_values");
     const text = await fs.promises.readFile(tmpFilePath, "utf8");
-    expect(text).to.equal(
+    expect(text).equal(
       "1,2,3,100,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,14120,3481983".replace(
         /,/g,
         "\t",
@@ -164,7 +162,7 @@ describe("RoaringBitmap32 file serialization", () => {
   it("serializes to an empty json array", async () => {
     const tmpFilePath = path.resolve(tmpDir, `test-json-array-empty.csv`);
     await new RoaringBitmap32().serializeFileAsync(tmpFilePath, "json_array");
-    expect(await fs.promises.readFile(tmpFilePath, "utf8")).to.equal("[]");
+    expect(await fs.promises.readFile(tmpFilePath, "utf8")).equal("[]");
   });
 
   it("serializes to a json array", async () => {
@@ -173,7 +171,7 @@ describe("RoaringBitmap32 file serialization", () => {
     bmp.addRange(0x100, 0x120);
     await bmp.serializeFileAsync(tmpFilePath, "json_array");
     const text = await fs.promises.readFile(tmpFilePath, "utf8");
-    expect(text).to.equal(
+    expect(text).equal(
       "[1,2,3,100,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,14120,3481983]",
     );
   });

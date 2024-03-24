@@ -1,6 +1,5 @@
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 const { parentPort } = require("worker_threads");
-const { expect } = require("chai");
 
 process.on("uncaughtException", (err) => {
   // eslint-disable-next-line no-console
@@ -9,6 +8,17 @@ process.on("uncaughtException", (err) => {
     parentPort.postMessage(err);
   }
 });
+
+function expectArrayEqual(a, b) {
+  if (a.length !== b.length) {
+    throw new Error("array length not equal");
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      throw new Error(`array not equal at index ${i}`);
+    }
+  }
+}
 
 async function main() {
   const { RoaringBitmap32 } = require("../..");
@@ -22,18 +32,18 @@ async function main() {
   bitmap.addRange(105, 109);
   bitmap.addMany([0x7fffffff, 0xfffffffe, 0xffffffff]);
 
-  expect(bitmap.toArray()).deep.equal([1, 2, 100, 101, 105, 106, 107, 108, 0x7fffffff, 0xfffffffe, 0xffffffff]);
+  expectArrayEqual(bitmap.toArray(), [1, 2, 100, 101, 105, 106, 107, 108, 0x7fffffff, 0xfffffffe, 0xffffffff]);
 
   const serialized = await bitmap.serializeAsync("portable");
 
   const bitmap2 = await RoaringBitmap32.deserializeAsync(serialized, "portable");
-  expect(bitmap2.toArray()).deep.equal([1, 2, 100, 101, 105, 106, 107, 108, 0x7fffffff, 0xfffffffe, 0xffffffff]);
+  expectArrayEqual(bitmap2.toArray(), [1, 2, 100, 101, 105, 106, 107, 108, 0x7fffffff, 0xfffffffe, 0xffffffff]);
 
   bitmap2.add(121);
 
   const bitmap3 = RoaringBitmap32.orMany([bitmap, bitmap2]);
 
-  expect(Array.from(bitmap3)).deep.equal([1, 2, 100, 101, 105, 106, 107, 108, 121, 0x7fffffff, 0xfffffffe, 0xffffffff]);
+  expectArrayEqual(Array.from(bitmap3), [1, 2, 100, 101, 105, 106, 107, 108, 121, 0x7fffffff, 0xfffffffe, 0xffffffff]);
 }
 
 main()

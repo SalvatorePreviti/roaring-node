@@ -8,26 +8,21 @@ import {
   bufferAlignedAllocShared,
   bufferAlignedAllocSharedUnsafe,
 } from "..";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
 
 describe("asBuffer", () => {
-  it("returns a buffer", () => {
-    const input = Buffer.alloc(3);
-    expect(input).to.eq(input);
-  });
-
   it("wraps an ArrayBuffer", () => {
     const input = new ArrayBuffer(3);
     const output = asBuffer(input);
-    expect(output).to.be.instanceOf(Buffer);
-    expect(output.buffer).to.eq(input);
+    expect(output).toBeInstanceOf(Buffer);
+    expect(output.buffer).eq(input);
   });
 
   it("wraps a SharedArrayBuffer", () => {
     const input = new SharedArrayBuffer(3);
     const output = asBuffer(input);
-    expect(output).to.be.instanceOf(Buffer);
-    expect(output.buffer).to.eq(input);
+    expect(output).toBeInstanceOf(Buffer);
+    expect(output.buffer).eq(input);
   });
 
   it("wraps an arraybuffer view", () => {
@@ -44,10 +39,10 @@ describe("asBuffer", () => {
     ]) {
       const input = new ctor(3);
       const output = asBuffer(input);
-      expect(output).to.be.instanceOf(Buffer);
-      expect(output.buffer).to.eq(input.buffer);
-      expect(output.byteOffset).to.eq(0);
-      expect(output.byteLength).to.eq(input.byteLength);
+      expect(output).toBeInstanceOf(Buffer);
+      expect(output.buffer).eq(input.buffer);
+      expect(output.byteOffset).eq(0);
+      expect(output.byteLength).eq(input.byteLength);
     }
   });
 
@@ -66,125 +61,125 @@ describe("asBuffer", () => {
       const sourceArrayBuffer = new ArrayBuffer(20 * ctor.BYTES_PER_ELEMENT);
       const input = new ctor(sourceArrayBuffer, 8, 8);
       const output = asBuffer(input);
-      expect(output).to.be.instanceOf(Buffer);
-      expect(output.buffer).to.eq(input.buffer);
-      expect(output.byteOffset).to.eq(input.byteOffset);
-      expect(output.byteLength).to.eq(input.byteLength);
+      expect(output).toBeInstanceOf(Buffer);
+      expect(output.buffer).eq(input.buffer);
+      expect(output.byteOffset).eq(input.byteOffset);
+      expect(output.byteLength).eq(input.byteLength);
     }
   });
 });
 
 describe("bufferAlignedAlloc", () => {
   it("exposes the bufferAlignedAlloc function", () => {
-    expect(bufferAlignedAlloc).to.be.a("function");
-    expect(RoaringBitmap32.bufferAlignedAlloc).to.eq(bufferAlignedAlloc);
+    expect(bufferAlignedAlloc).toBeInstanceOf(Function);
+    expect(RoaringBitmap32.bufferAlignedAlloc).eq(bufferAlignedAlloc);
   });
 
   it("throws if first argument (size) is invalid", () => {
-    expect(() => bufferAlignedAlloc(-1)).to.throw();
-    expect(() => bufferAlignedAlloc("x" as any)).to.throw();
-    expect(() => bufferAlignedAlloc({} as any)).to.throw();
-    expect(() => bufferAlignedAlloc(null as any)).to.throw();
+    expect(() => bufferAlignedAlloc(-1)).toThrow();
+    expect(() => bufferAlignedAlloc("x" as any)).toThrow();
+    expect(() => bufferAlignedAlloc({} as any)).toThrow();
+    expect(() => bufferAlignedAlloc(null as any)).toThrow();
   });
 
   it("can allocate an empty buffer", () => {
     const buffer = bufferAlignedAlloc(0);
-    expect(buffer).to.be.instanceOf(Buffer);
-    expect(buffer.buffer).to.be.instanceOf(ArrayBuffer);
-    expect(buffer.length).to.eq(0);
-    expect(isBufferAligned(buffer)).to.eq(true);
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.buffer).toBeInstanceOf(ArrayBuffer);
+    expect(buffer.length).eq(0);
+    expect(isBufferAligned(buffer)).eq(true);
   });
 
   it("can allocate a buffer of a given size", () => {
     const buffer = bufferAlignedAlloc(10, 128);
-    expect(buffer).to.be.instanceOf(Buffer);
-    expect(buffer.buffer).to.be.instanceOf(ArrayBuffer);
-    expect(buffer.length).to.eq(10);
-    expect(isBufferAligned(buffer, 128)).to.eq(true);
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.buffer).toBeInstanceOf(ArrayBuffer);
+    expect(buffer.length).eq(10);
+    expect(isBufferAligned(buffer, 128)).eq(true);
   });
 
   it("is initialized with zeroes", () => {
     const buffer = bufferAlignedAlloc(2340);
-    expect(buffer).to.be.instanceOf(Buffer);
-    expect(buffer.buffer).to.be.instanceOf(ArrayBuffer);
-    expect(buffer.length).to.eq(2340);
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.buffer).toBeInstanceOf(ArrayBuffer);
+    expect(buffer.length).eq(2340);
     for (let i = 0; i < 2340; ++i) {
-      expect(buffer[i]).to.eq(0);
+      expect(buffer[i]).eq(0);
     }
-    expect(isBufferAligned(buffer)).to.eq(true);
-    expect(RoaringBitmap32.isBufferAligned(buffer, 32)).to.eq(true);
+    expect(isBufferAligned(buffer)).eq(true);
+    expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
   });
 });
 
 describe("bufferAlignedAllocUnsafe", () => {
   it("exposes the bufferAlignedAllocUnsafe function", () => {
-    expect(bufferAlignedAllocUnsafe).to.be.a("function");
-    expect(RoaringBitmap32.bufferAlignedAllocUnsafe).to.eq(bufferAlignedAllocUnsafe);
+    expect(bufferAlignedAllocUnsafe).toBeInstanceOf(Function);
+    expect(RoaringBitmap32.bufferAlignedAllocUnsafe).eq(bufferAlignedAllocUnsafe);
   });
 
   it("throws if first argument (size) is invalid", () => {
-    expect(() => bufferAlignedAllocUnsafe(-1)).to.throw();
-    expect(() => bufferAlignedAllocUnsafe(null as any)).to.throw();
-    expect(() => bufferAlignedAllocUnsafe("x" as any)).to.throw();
-    expect(() => bufferAlignedAllocUnsafe({} as any)).to.throw();
+    expect(() => bufferAlignedAllocUnsafe(-1)).toThrow();
+    expect(() => bufferAlignedAllocUnsafe(null as any)).toThrow();
+    expect(() => bufferAlignedAllocUnsafe("x" as any)).toThrow();
+    expect(() => bufferAlignedAllocUnsafe({} as any)).toThrow();
   });
 
   it("can allocate an empty buffer", () => {
     const buffer = bufferAlignedAllocUnsafe(0, 512);
-    expect(buffer).to.be.instanceOf(Buffer);
-    expect(buffer.length).to.eq(0);
-    expect(isBufferAligned(buffer, 512)).to.eq(true);
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).eq(0);
+    expect(isBufferAligned(buffer, 512)).eq(true);
   });
 
   it("can allocate a buffer of a given size", () => {
     const buffer = bufferAlignedAllocUnsafe(10);
-    expect(buffer).to.be.instanceOf(Buffer);
-    expect(buffer.length).to.eq(10);
-    expect(isBufferAligned(buffer)).to.eq(true);
-    expect(RoaringBitmap32.isBufferAligned(buffer, 32)).to.eq(true);
-    expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).to.eq(true);
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).eq(10);
+    expect(isBufferAligned(buffer)).eq(true);
+    expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
+    expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).eq(true);
   });
 });
 
 describe("ensureBufferAligned", () => {
   it("exposes the ensureBufferAligned function", () => {
-    expect(ensureBufferAligned).to.be.a("function");
-    expect(RoaringBitmap32.ensureBufferAligned).to.eq(ensureBufferAligned);
+    expect(ensureBufferAligned).toBeInstanceOf(Function);
+    expect(RoaringBitmap32.ensureBufferAligned).eq(ensureBufferAligned);
   });
 
   it("returns the same buffer if it is already aligned", () => {
     const buffer = bufferAlignedAlloc(30);
-    expect(ensureBufferAligned(buffer, 32)).to.eq(buffer);
+    expect(ensureBufferAligned(buffer, 32)).eq(buffer);
   });
 
   it("returns a new buffer if the buffer is not aligned", () => {
     const unalignedBuffer = Buffer.from(bufferAlignedAlloc(31).buffer, 1, 27);
     const result = ensureBufferAligned(unalignedBuffer);
-    expect(result).to.not.eq(unalignedBuffer);
-    expect(result).to.be.instanceOf(Buffer);
-    expect(result.length).to.eq(27);
-    expect(isBufferAligned(result)).to.eq(true);
+    expect(result).not.eq(unalignedBuffer);
+    expect(result).toBeInstanceOf(Buffer);
+    expect(result.length).eq(27);
+    expect(isBufferAligned(result)).eq(true);
   });
 
   it("returns a new buffer if the buffer is not aligned, with a custom alignment", () => {
     const unalignedBuffer = Buffer.from(bufferAlignedAlloc(31).buffer, 1, 30);
     const result = ensureBufferAligned(unalignedBuffer, 256);
-    expect(result).to.not.eq(unalignedBuffer);
-    expect(result).to.be.instanceOf(Buffer);
-    expect(result.length).to.eq(30);
-    expect(isBufferAligned(result, 256)).to.eq(true);
+    expect(result).not.eq(unalignedBuffer);
+    expect(result).toBeInstanceOf(Buffer);
+    expect(result.length).eq(30);
+    expect(isBufferAligned(result, 256)).eq(true);
   });
 
   it("works with SharedArrayBuffer", () => {
     const sab = new SharedArrayBuffer(32);
     const unalignedBuffer = Buffer.from(sab, 1, 30);
-    expect(unalignedBuffer.buffer).to.eq(sab);
+    expect(unalignedBuffer.buffer).eq(sab);
     const result = ensureBufferAligned(unalignedBuffer);
-    expect(result).to.not.eq(unalignedBuffer);
-    expect(result).to.be.instanceOf(Buffer);
-    expect(result.buffer).to.be.instanceOf(SharedArrayBuffer);
-    expect(result.length).to.eq(30);
-    expect(isBufferAligned(result)).to.eq(true);
+    expect(result).not.eq(unalignedBuffer);
+    expect(result).toBeInstanceOf(Buffer);
+    expect(result.buffer).toBeInstanceOf(SharedArrayBuffer);
+    expect(result.length).eq(30);
+    expect(isBufferAligned(result)).eq(true);
   });
 });
 
@@ -192,65 +187,65 @@ const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
 if (nodeVersion >= 12) {
   describe("bufferAlignedAllocShared", () => {
     it("exposes the bufferAlignedAllocShared function", () => {
-      expect(bufferAlignedAllocShared).to.be.a("function");
-      expect(RoaringBitmap32.bufferAlignedAllocShared).to.eq(bufferAlignedAllocShared);
+      expect(bufferAlignedAllocShared).toBeInstanceOf(Function);
+      expect(RoaringBitmap32.bufferAlignedAllocShared).eq(bufferAlignedAllocShared);
     });
 
     it("throws if first argument (size) is invalid", () => {
-      expect(() => bufferAlignedAllocShared(-1)).to.throw();
-      expect(() => bufferAlignedAllocShared(null as any)).to.throw();
-      expect(() => bufferAlignedAllocShared("x" as any)).to.throw();
-      expect(() => bufferAlignedAllocShared({} as any)).to.throw();
+      expect(() => bufferAlignedAllocShared(-1)).toThrow();
+      expect(() => bufferAlignedAllocShared(null as any)).toThrow();
+      expect(() => bufferAlignedAllocShared("x" as any)).toThrow();
+      expect(() => bufferAlignedAllocShared({} as any)).toThrow();
     });
 
     it("can allocate an empty buffer", () => {
       const buffer = bufferAlignedAllocShared(0, 512);
-      expect(buffer).to.be.instanceOf(Buffer);
-      expect(buffer.buffer).to.be.instanceOf(SharedArrayBuffer);
-      expect(buffer.length).to.eq(0);
-      expect(isBufferAligned(buffer, 512)).to.eq(true);
+      expect(buffer).toBeInstanceOf(Buffer);
+      expect(buffer.buffer).toBeInstanceOf(SharedArrayBuffer);
+      expect(buffer.length).eq(0);
+      expect(isBufferAligned(buffer, 512)).eq(true);
     });
 
     it("can allocate a buffer of a given size", () => {
       const buffer = bufferAlignedAllocShared(10);
-      expect(buffer).to.be.instanceOf(Buffer);
-      expect(buffer.buffer).to.be.instanceOf(SharedArrayBuffer);
-      expect(buffer.length).to.eq(10);
-      expect(isBufferAligned(buffer)).to.eq(true);
-      expect(RoaringBitmap32.isBufferAligned(buffer, 32)).to.eq(true);
-      expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).to.eq(true);
+      expect(buffer).toBeInstanceOf(Buffer);
+      expect(buffer.buffer).toBeInstanceOf(SharedArrayBuffer);
+      expect(buffer.length).eq(10);
+      expect(isBufferAligned(buffer)).eq(true);
+      expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
+      expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).eq(true);
     });
   });
 
   describe("bufferAlignedAllocSharedUnsafe", () => {
     it("exposes the bufferAlignedAllocSharedUnsafe function", () => {
-      expect(bufferAlignedAllocSharedUnsafe).to.be.a("function");
-      expect(RoaringBitmap32.bufferAlignedAllocSharedUnsafe).to.eq(bufferAlignedAllocSharedUnsafe);
+      expect(bufferAlignedAllocSharedUnsafe).toBeInstanceOf(Function);
+      expect(RoaringBitmap32.bufferAlignedAllocSharedUnsafe).eq(bufferAlignedAllocSharedUnsafe);
     });
 
     it("throws if first argument (size) is invalid", () => {
-      expect(() => bufferAlignedAllocSharedUnsafe(-1)).to.throw();
-      expect(() => bufferAlignedAllocSharedUnsafe(null as any)).to.throw();
-      expect(() => bufferAlignedAllocSharedUnsafe("x" as any)).to.throw();
-      expect(() => bufferAlignedAllocSharedUnsafe({} as any)).to.throw();
+      expect(() => bufferAlignedAllocSharedUnsafe(-1)).toThrow();
+      expect(() => bufferAlignedAllocSharedUnsafe(null as any)).toThrow();
+      expect(() => bufferAlignedAllocSharedUnsafe("x" as any)).toThrow();
+      expect(() => bufferAlignedAllocSharedUnsafe({} as any)).toThrow();
     });
 
     it("can allocate an empty buffer", () => {
       const buffer = bufferAlignedAllocSharedUnsafe(0, 512);
-      expect(buffer).to.be.instanceOf(Buffer);
-      expect(buffer.buffer).to.be.instanceOf(SharedArrayBuffer);
-      expect(buffer.length).to.eq(0);
-      expect(isBufferAligned(buffer, 512)).to.eq(true);
+      expect(buffer).toBeInstanceOf(Buffer);
+      expect(buffer.buffer).toBeInstanceOf(SharedArrayBuffer);
+      expect(buffer.length).eq(0);
+      expect(isBufferAligned(buffer, 512)).eq(true);
     });
 
     it("can allocate a buffer of a given size", () => {
       const buffer = bufferAlignedAllocSharedUnsafe(10);
-      expect(buffer).to.be.instanceOf(Buffer);
-      expect(buffer.buffer).to.be.instanceOf(SharedArrayBuffer);
-      expect(buffer.length).to.eq(10);
-      expect(isBufferAligned(buffer)).to.eq(true);
-      expect(RoaringBitmap32.isBufferAligned(buffer, 32)).to.eq(true);
-      expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).to.eq(true);
+      expect(buffer).toBeInstanceOf(Buffer);
+      expect(buffer.buffer).toBeInstanceOf(SharedArrayBuffer);
+      expect(buffer.length).eq(10);
+      expect(isBufferAligned(buffer)).eq(true);
+      expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
+      expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).eq(true);
     });
   });
 }
