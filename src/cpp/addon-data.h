@@ -14,13 +14,9 @@ class AddonData final {
  public:
   v8::Isolate * isolate;
 
-  AddonDataStrings strings;
-
   v8::Eternal<v8::Object> Uint32Array;
   v8::Eternal<v8::Function> Uint32Array_from;
   v8::Eternal<v8::Function> Buffer_from;
-
-  std::atomic<uint64_t> RoaringBitmap32_instances;
 
   v8::Eternal<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
   v8::Eternal<v8::Function> RoaringBitmap32_constructor;
@@ -30,7 +26,9 @@ class AddonData final {
 
   v8::Eternal<v8::External> external;
 
-  inline AddonData() : isolate(nullptr), RoaringBitmap32_instances(0) {}
+  AddonDataStrings strings;
+
+  inline AddonData() : isolate(nullptr) {}
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Local<v8::Value> data = info.Data();
@@ -69,18 +67,18 @@ class AddonData final {
     this->Uint32Array.Set(isolate, uint32Array);
     this->Uint32Array_from.Set(isolate, uint32arrayFrom);
   }
-};
 
-inline void AddonData_setMethod(
-  v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback, AddonData * addonData) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope handle_scope(isolate);
-  v8::Local<v8::Context> context = isolate->GetCurrentContext();
-  v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonData->external.Get(isolate));
-  v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
-  v8::Local<v8::String> fn_name = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
-  fn->SetName(fn_name);
-  ignoreMaybeResult(recv->Set(context, fn_name, fn));
-}
+  void setMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
+    v8::Isolate * isolate = this->isolate;
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, this->external.Get(isolate));
+    v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
+    v8::Local<v8::String> fn_name =
+      v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
+    fn->SetName(fn_name);
+    ignoreMaybeResult(recv->Set(context, fn_name, fn));
+  }
+};
 
 #endif

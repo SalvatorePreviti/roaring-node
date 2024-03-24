@@ -115,23 +115,23 @@ class RoaringBitmap32 final : public ObjectWrap {
     _version(0),
     frozenCounter(0),
     readonlyViewOf(nullptr) {
-    ++addonData->RoaringBitmap32_instances;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
   }
 
   ~RoaringBitmap32() {
+    this->readonlyViewPersistent.Reset();
+    if (!this->persistent.IsEmpty()) {
+      this->persistent.ClearWeak();
+      this->persistent.Reset();
+    }
     gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32));
     if (!this->readonlyViewOf) {
-      --this->addonData->RoaringBitmap32_instances;
       if (this->roaring != nullptr) {
         roaring_bitmap_free(this->roaring);
       }
       if (this->frozenStorage.data != nullptr && this->frozenStorage.length == std::numeric_limits<size_t>::max()) {
         gcaware_aligned_free(this->frozenStorage.data);
       }
-    }
-    if (!this->persistent.IsEmpty()) {
-      this->persistent.ClearWeak();
     }
   }
 };

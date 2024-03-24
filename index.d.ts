@@ -1626,7 +1626,10 @@ export class RoaringBitmap32 {
   /** Gets the approximate memory allocated by the roaring bitmap library. Useful for debugging memory issues and GC. */
   public static getRoaringUsedMemory(): number;
 
-  /** Gets the total number of allocated RoaringBitmap32 globally. Useful for debugging memory issues and GC. */
+  /**
+   * Gets the total number of allocated RoaringBitmap32 globally, in all isolates and worker threads.
+   * Useful for debugging memory issues and GC.
+   */
   public static getInstancesCount(): number;
 
   /**

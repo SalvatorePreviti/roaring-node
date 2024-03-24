@@ -3,8 +3,6 @@
 #include "RoaringBitmap32BufferedIterator.h"
 #include <mutex>
 
-std::mutex init_mutex;
-
 using namespace v8;
 
 #define PREPROCESSOR_CONCAT(a, b) PREPROCESSOR_CONCAT_HELPER(a, b)
@@ -16,19 +14,16 @@ using namespace v8;
     registration(exports);                                                                             \
   }
 
-void AddonData_DeleteInstance(void * addonData) {
-  std::lock_guard<std::mutex> lock(init_mutex);
-
-  if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
+void AddonData_DeleteInstance(void * p) {
+  auto addonData = reinterpret_cast<AddonData *>(p);
+  if (thread_local_isolate == addonData->isolate) {
     thread_local_isolate = nullptr;
   }
 
-  delete (AddonData *)addonData;
+  delete addonData;
 }
 
 void InitRoaringNode(Local<Object> exports) {
-  std::lock_guard<std::mutex> lock(init_mutex);
-
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
   thread_local_isolate = isolate;
@@ -45,7 +40,7 @@ void InitRoaringNode(Local<Object> exports) {
   RoaringBitmap32_Init(exports, addonData);
   RoaringBitmap32BufferedIterator_Init(exports, addonData);
 
-  AddonData_setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory, addonData);
+  addonData->setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
   ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
 }

@@ -111,11 +111,11 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void AlignedBuffers_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
-  AddonData_setMethod(exports, "bufferAlignedAlloc", bufferAlignedAlloc, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe, addonData);
-  AddonData_setMethod(exports, "isBufferAligned", isBufferAligned, addonData);
+  addonData->setMethod(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
+  addonData->setMethod(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
+  addonData->setMethod(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared);
+  addonData->setMethod(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe);
+  addonData->setMethod(exports, "isBufferAligned", isBufferAligned);
 }
 
 #endif  // ROARING_NODE_ALIGNED_BUFFERS_

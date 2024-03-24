@@ -82,8 +82,7 @@ void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Val
 void RoaringBitmap32BufferedIterator_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info) {
   RoaringBitmap32BufferedIterator * p = info.GetParameter();
   if (p != nullptr) {
-    p->~RoaringBitmap32BufferedIterator();
-    bare_aligned_free(p);
+    delete p;
   }
 }
 
@@ -125,8 +124,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - invalid Uint32Array buffer");
   }
 
-  auto * instanceMemory = bare_aligned_malloc(16, sizeof(RoaringBitmap32BufferedIterator));
-  auto * instance = instanceMemory ? new (instanceMemory) RoaringBitmap32BufferedIterator(addonData, reversed) : nullptr;
+  auto * instance = new RoaringBitmap32BufferedIterator(addonData, reversed);
   if (instance == nullptr) {
     return v8utils::throwError(isolate, "RoaringBitmap32BufferedIterator::ctor - allocation failed");
   }
