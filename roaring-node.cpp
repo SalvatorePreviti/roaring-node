@@ -2920,7 +2920,6 @@ namespace v8utils {
 
 void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::EscapableHandleScope scope(isolate);
 
   int64_t size;
   int32_t alignment = 32;
@@ -2959,8 +2958,10 @@ void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool uns
 
   v8::Local<v8::Value> bufferValue;
   if (shared) {
-    auto sharedBuf = v8::SharedArrayBuffer::New(
-      isolate, v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
+    std::shared_ptr<v8::BackingStore> backing_store =
+      v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
+
+    auto sharedBuf = v8::SharedArrayBuffer::New(isolate, backing_store);
     if (sharedBuf.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
@@ -2972,14 +2973,14 @@ void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool uns
     if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    info.GetReturnValue().Set(scope.Escape(bufferValue));
+    info.GetReturnValue().Set(bufferValue);
   } else {
     auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
     if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
       bare_aligned_free(ptr);
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    info.GetReturnValue().Set(scope.Escape(bufferValue));
+    info.GetReturnValue().Set(bufferValue);
   }
 }
 
