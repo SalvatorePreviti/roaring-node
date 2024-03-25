@@ -20,8 +20,8 @@ void AddonData_DeleteInstance(void * p) {
     if (thread_local_isolate == addonData->isolate) {
       thread_local_isolate = nullptr;
     }
-
-    delete addonData;
+    std::cout << "AddonData_DeleteInstance" << std::endl;
+    addonData->persistent.Reset();
   }
 }
 

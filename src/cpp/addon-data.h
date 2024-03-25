@@ -3,6 +3,7 @@
 
 #include "includes.h"
 #include "addon-strings.h"
+#include <iostream>
 
 template <typename T>
 inline void ignoreMaybeResult(v8::Maybe<T>) {}
@@ -10,9 +11,14 @@ inline void ignoreMaybeResult(v8::Maybe<T>) {}
 template <typename T>
 inline void ignoreMaybeResult(v8::MaybeLocal<T>) {}
 
+class AddonData;
+
+void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info);
+
 class AddonData final {
  public:
   v8::Isolate * isolate;
+  v8::Persistent<v8::Object> persistent;
 
   v8::Eternal<v8::Object> Uint32Array;
   v8::Eternal<v8::Function> Uint32Array_from;
@@ -30,6 +36,14 @@ class AddonData final {
 
   inline AddonData() : isolate(nullptr) {}
 
+  ~AddonData() {
+    std::cout << "AddonData::~AddonData" << std::endl;
+    if (!this->persistent.IsEmpty()) {
+      this->persistent.ClearWeak();
+      this->persistent.Reset();
+    }
+  }
+
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Local<v8::Value> data = info.Data();
     if (data.IsEmpty() || !data->IsExternal()) {
@@ -40,16 +54,25 @@ class AddonData final {
   }
 
   inline void initialize(v8::Isolate * isolate) {
+    if (this->isolate) {
+      return;
+    }
+
     this->isolate = isolate;
-    v8::HandleScope handle_scope(isolate);
 
     external.Set(isolate, v8::External::New(isolate, this));
-
-    this->strings.initialize(isolate);
 
     auto context = isolate->GetCurrentContext();
 
     auto global = context->Global();
+
+    v8::Local<v8::Object> obj;
+    if (v8::ObjectTemplate::New(isolate)->NewInstance(context).ToLocal(&obj)) {
+      this->persistent.Reset(isolate, obj);
+      this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
+    }
+
+    this->strings.initialize(isolate);
 
     auto from = this->strings.from.Get(isolate);
 
@@ -76,5 +99,12 @@ class AddonData final {
     ignoreMaybeResult(recv->Set(context, fn_name, fn));
   }
 };
+
+void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info) {
+  AddonData * addonData = info.GetParameter();
+  if (addonData) {
+    delete addonData;
+  }
+}
 
 #endif
