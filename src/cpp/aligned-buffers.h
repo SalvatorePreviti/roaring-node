@@ -6,7 +6,7 @@
 
 void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
   v8::Isolate * isolate = info.GetIsolate();
-  v8::EscapeableHandleScope scope(isolate);
+  v8::EscapableHandleScope scope(isolate);
 
   int64_t size;
   int32_t alignment = 32;
