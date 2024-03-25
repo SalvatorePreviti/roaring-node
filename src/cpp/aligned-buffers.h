@@ -26,12 +26,12 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     size = 0;
   }
 
-  if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
-    return v8utils::throwTypeError(isolate, "Buffer size is too large");
-  }
-
   if (alignment > 1024) {
     return v8utils::throwTypeError(isolate, "Buffer alignment is too large");
+  }
+
+  if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
+    return v8utils::throwTypeError(isolate, "Buffer size is too large");
   }
 
   void * ptr = bare_aligned_malloc(alignment, size);

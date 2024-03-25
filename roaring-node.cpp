@@ -61,6 +61,9 @@
 /** portable version of posix_memalign */
 void * bare_aligned_malloc(size_t alignment, size_t size) {
   void * p;
+  if (size == 0) {
+    size = 1;
+  }
 #ifdef _MSC_VER
   p = _aligned_malloc(size, alignment);
 #elif defined(__MINGW32__) || defined(__MINGW64__)
@@ -165,6 +168,9 @@ void gcaware_free(void * memory) {
 }
 
 void * gcaware_aligned_malloc(size_t alignment, size_t size) {
+  if (size == 0) {
+    size = 1;
+  }
   void * memory = bare_aligned_malloc(alignment, size);
   if (memory != nullptr) {
     gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));
@@ -2953,12 +2959,12 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     size = 0;
   }
 
-  if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
-    return v8utils::throwTypeError(isolate, "Buffer size is too large");
-  }
-
   if (alignment > 1024) {
     return v8utils::throwTypeError(isolate, "Buffer alignment is too large");
+  }
+
+  if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
+    return v8utils::throwTypeError(isolate, "Buffer size is too large");
   }
 
   void * ptr = bare_aligned_malloc(alignment, size);

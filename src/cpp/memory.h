@@ -6,6 +6,9 @@
 /** portable version of posix_memalign */
 void * bare_aligned_malloc(size_t alignment, size_t size) {
   void * p;
+  if (size == 0) {
+    size = 1;
+  }
 #ifdef _MSC_VER
   p = _aligned_malloc(size, alignment);
 #elif defined(__MINGW32__) || defined(__MINGW64__)
@@ -110,6 +113,9 @@ void gcaware_free(void * memory) {
 }
 
 void * gcaware_aligned_malloc(size_t alignment, size_t size) {
+  if (size == 0) {
+    size = 1;
+  }
   void * memory = bare_aligned_malloc(alignment, size);
   if (memory != nullptr) {
     gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));
