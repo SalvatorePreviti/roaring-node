@@ -3007,10 +3007,10 @@ void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _buf
 
 void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, true, false); }
 
-void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, true); }
+void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, false); }
 
 void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  _bufferAlignedAlloc(info, true, true);
+  _bufferAlignedAlloc(info, true, false);
 }
 
 void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
