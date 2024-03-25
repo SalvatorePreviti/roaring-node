@@ -186,7 +186,7 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
     }
 
     if (!v8utils::v8ValueToBufferWithLimit(
-          isolate, self->addonData, this->inputBuffer.bufferPersistent.Get(isolate), this->serializedSize, result)) {
+          isolate, this->inputBuffer.bufferPersistent.Get(isolate), this->serializedSize, result)) {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
     }
   }

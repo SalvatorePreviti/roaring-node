@@ -21,4 +21,14 @@ describe("bufferAlignedAllocShared", () => {
     expect(buffer.length).eq(0);
     expect(isBufferAligned(buffer, 512)).eq(true);
   });
+
+  it("can allocate a buffer of a given size", () => {
+    const buffer = bufferAlignedAllocShared(10);
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.buffer).toBeInstanceOf(SharedArrayBuffer);
+    expect(buffer.length).eq(10);
+    expect(isBufferAligned(buffer)).eq(true);
+    expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
+    expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).eq(true);
+  });
 });

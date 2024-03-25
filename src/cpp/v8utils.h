@@ -63,12 +63,7 @@ namespace v8utils {
   }
 
   bool bufferFromArrayBuffer(
-    v8::Isolate * isolate,
-    AddonData * addonData,
-    v8::Local<v8::Value> buffer,
-    size_t offset,
-    size_t length,
-    v8::Local<v8::Value> & result) {
+    v8::Isolate * isolate, v8::Local<v8::Value> buffer, size_t offset, size_t length, v8::Local<v8::Value> & result) {
     if (buffer.IsEmpty()) {
       return false;
     }
@@ -93,11 +88,7 @@ namespace v8utils {
   }
 
   bool v8ValueToBufferWithLimit(
-    v8::Isolate * isolate,
-    AddonData * addonData,
-    v8::MaybeLocal<v8::Value> value,
-    size_t length,
-    v8::Local<v8::Value> & result) {
+    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
     v8::Local<v8::Value> localValue;
     if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
       if (localValue->IsUint8Array()) {
@@ -108,7 +99,7 @@ namespace v8utils {
             return true;
           }
           if (array->ByteLength() >= length) {
-            return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+            return bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
           }
         }
         return false;
@@ -116,28 +107,28 @@ namespace v8utils {
       if (localValue->IsTypedArray()) {
         auto array = localValue.As<v8::TypedArray>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+          return bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
         }
         return false;
       }
       if (localValue->IsArrayBufferView()) {
         auto array = localValue.As<v8::ArrayBufferView>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
+          return bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
         }
         return false;
       }
       if (localValue->IsArrayBuffer()) {
         auto array = localValue.As<v8::ArrayBuffer>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
+          return bufferFromArrayBuffer(isolate, array, 0, length, result);
         }
         return false;
       }
       if (localValue->IsSharedArrayBuffer()) {
         auto array = localValue.As<v8::SharedArrayBuffer>();
         if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
+          return bufferFromArrayBuffer(isolate, array, 0, length, result);
         }
         return false;
       }

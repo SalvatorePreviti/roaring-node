@@ -32,13 +32,10 @@ class AddonData final {
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Local<v8::Value> data = info.Data();
-    if (data.IsEmpty()) {
+    if (data.IsEmpty() || !data->IsExternal()) {
       return nullptr;
     }
-    v8::Local<v8::External> external = data.As<v8::External>();
-    if (external.IsEmpty()) {
-      return nullptr;
-    }
+    v8::Local<v8::External> external = v8::Local<v8::External>::Cast(data);
     return reinterpret_cast<AddonData *>(external->Value());
   }
 

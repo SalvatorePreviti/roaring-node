@@ -44,12 +44,6 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
   }
 
   if (shared) {
-    AddonData * addonData = AddonData::get(info);
-    if (addonData == nullptr) {
-      bare_aligned_free(ptr);
-      return v8utils::throwError(isolate, "Invalid call");
-    }
-
     auto backingStore = v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
     if (!backingStore) {
       bare_aligned_free(ptr);
@@ -57,7 +51,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     }
     auto sharedBuf = v8::SharedArrayBuffer::New(isolate, std::move(backingStore));
     v8::Local<v8::Value> bufferObj;
-    if (sharedBuf.IsEmpty() || !v8utils::bufferFromArrayBuffer(isolate, addonData, sharedBuf, 0, size, bufferObj)) {
+    if (sharedBuf.IsEmpty() || !v8utils::bufferFromArrayBuffer(isolate, sharedBuf, 0, size, bufferObj)) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
     info.GetReturnValue().Set(bufferObj);
