@@ -6,9 +6,6 @@
 /** portable version of posix_memalign */
 void * bare_aligned_malloc(size_t alignment, size_t size) {
   void * p;
-  if (size == 0) {
-    size = 1;
-  }
 #ifdef _MSC_VER
   p = _aligned_malloc(size, alignment);
 #elif defined(__MINGW32__) || defined(__MINGW64__)

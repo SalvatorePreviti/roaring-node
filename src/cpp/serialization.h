@@ -185,10 +185,56 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
       return;
     }
 
-    if (!v8utils::v8ValueToBufferWithLimit(
-          isolate, this->inputBuffer.bufferPersistent.Get(isolate), this->serializedSize, result)) {
-      return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
+    auto length = this->serializedSize;
+    auto localValue = this->inputBuffer.bufferPersistent.Get(isolate);
+
+    if (localValue->IsUint8Array()) {
+      v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
+      if (!array.IsEmpty()) {
+        if (node::Buffer::HasInstance(localValue) && array->ByteLength() == length) {
+          result = localValue;
+          return;
+        }
+        if (array->ByteLength() >= length) {
+          if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
+            return;
+          }
+        }
+      }
+    } else if (localValue->IsTypedArray()) {
+      auto array = localValue.As<v8::TypedArray>();
+      if (!array.IsEmpty() && array->ByteLength() >= length) {
+        if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
+          return;
+        }
+      }
+    } else if (localValue->IsArrayBuffer()) {
+      auto array = localValue.As<v8::ArrayBuffer>();
+      if (!array.IsEmpty() && array->ByteLength() >= length) {
+        if (node::Buffer::New(isolate, array, 0, length).ToLocal(&result)) {
+          return;
+        }
+      }
+    } else if (localValue->IsSharedArrayBuffer()) {
+      auto array = localValue.As<v8::SharedArrayBuffer>();
+      if (!array.IsEmpty() && array->ByteLength() >= length) {
+        auto uint8Array = v8::Uint8Array::New(array, 0, length);
+        if (!uint8Array.IsEmpty()) {
+          if (node::Buffer::New(isolate, uint8Array->Buffer(), 0, length).ToLocal(&result)) {
+            return;
+          }
+        }
+      }
+    } else if (localValue->IsArrayBufferView()) {
+      auto array = localValue.As<v8::ArrayBufferView>();
+      if (!array.IsEmpty() && array->ByteLength() >= length) {
+        if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
+          return;
+        }
+      }
     }
+
+    return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
   }
 
   ~RoaringBitmapSerializer() { bare_aligned_free(this->allocatedBuffer); }

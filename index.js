@@ -26,9 +26,6 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 const path = require("path");
 const util = require("util");
 
-const isBuffer = Buffer.isBuffer;
-const bufferFrom = Buffer.from;
-
 const roaring = (() => {
   try {
     return require(
@@ -41,6 +38,9 @@ const roaring = (() => {
     throw e;
   }
 })();
+
+const isBuffer = Buffer.isBuffer;
+const bufferFrom = Buffer.from;
 
 const { defineProperty } = Reflect;
 
@@ -429,19 +429,6 @@ if (!roaring[initializedSym]) {
     },
     false,
   );
-
-  const {
-    bufferAlignedAllocShared: _bufferAlignedAllocShared,
-    bufferAlignedAllocSharedUnsafe: _bufferAlignedAllocSharedUnsafe,
-  } = roaring;
-
-  roaring.bufferAlignedAllocShared = function bufferAlignedAllocShared(length, alignment) {
-    return bufferFrom(_bufferAlignedAllocShared(length, alignment).buffer);
-  };
-
-  roaring.bufferAlignedAllocSharedUnsafe = function bufferAlignedAllocSharedUnsafe(length, alignment) {
-    return bufferFrom(_bufferAlignedAllocSharedUnsafe(length, alignment).buffer);
-  };
 
   defineValue("bufferAlignedAlloc", roaring.bufferAlignedAlloc);
   defineValue("bufferAlignedAllocUnsafe", roaring.bufferAlignedAllocUnsafe);

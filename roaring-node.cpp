@@ -61,9 +61,6 @@
 /** portable version of posix_memalign */
 void * bare_aligned_malloc(size_t alignment, size_t size) {
   void * p;
-  if (size == 0) {
-    size = 1;
-  }
 #ifdef _MSC_VER
   p = _aligned_malloc(size, alignment);
 #elif defined(__MINGW32__) || defined(__MINGW64__)
@@ -2728,80 +2725,6 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  bool bufferFromArrayBuffer(
-    v8::Isolate * isolate, v8::Local<v8::Value> buffer, size_t offset, size_t length, v8::Local<v8::Value> & result) {
-    if (buffer.IsEmpty()) {
-      return false;
-    }
-
-    if (buffer->IsSharedArrayBuffer()) {
-      auto buf = buffer.As<v8::SharedArrayBuffer>();
-      if (buf.IsEmpty()) {
-        return false;
-      }
-      auto uint8Array = v8::Uint8Array::New(buf, offset, length);
-      if (uint8Array.IsEmpty()) {
-        return false;
-      }
-      return node::Buffer::New(isolate, uint8Array->Buffer(), offset, length).ToLocal(&result);
-    } else {
-      auto buf = buffer.As<v8::ArrayBuffer>();
-      if (buf.IsEmpty()) {
-        return false;
-      }
-      return node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
-    }
-  }
-
-  bool v8ValueToBufferWithLimit(
-    v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
-    v8::Local<v8::Value> localValue;
-    if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
-      if (localValue->IsUint8Array()) {
-        v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
-        if (!array.IsEmpty()) {
-          if (node::Buffer::HasInstance(localValue) && node::Buffer::Length(localValue) == length) {
-            result = array;
-            return true;
-          }
-          if (array->ByteLength() >= length) {
-            return bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
-          }
-        }
-        return false;
-      }
-      if (localValue->IsTypedArray()) {
-        auto array = localValue.As<v8::TypedArray>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
-        }
-        return false;
-      }
-      if (localValue->IsArrayBufferView()) {
-        auto array = localValue.As<v8::ArrayBufferView>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, array->Buffer(), array->ByteOffset(), length, result);
-        }
-        return false;
-      }
-      if (localValue->IsArrayBuffer()) {
-        auto array = localValue.As<v8::ArrayBuffer>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, array, 0, length, result);
-        }
-        return false;
-      }
-      if (localValue->IsSharedArrayBuffer()) {
-        auto array = localValue.As<v8::SharedArrayBuffer>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, array, 0, length, result);
-        }
-        return false;
-      }
-    }
-    return false;
-  }
-
   bool v8ValueToUint32ArrayWithLimit(
     v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
     v8::Local<v8::Value> localValue;
@@ -2898,13 +2821,51 @@ namespace v8utils {
     template <typename Q>
     bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
       if (!from.IsEmpty()) {
+        if (from->IsTypedArray()) {
+          bufferPersistent.Reset(isolate, from);
+          v8::Local<v8::TypedArray> array = v8::Local<v8::TypedArray>::Cast(from);
+          this->length = array->Length();
+          auto innerBuffer = array->Buffer();
+          if (innerBuffer.IsEmpty()) {
+            this->reset();
+            return false;
+          }
+          this->backingStore = innerBuffer->GetBackingStore();
+          if (!this->backingStore) {
+            this->reset();
+            return false;
+          }
+          auto data = this->backingStore->Data();
+          if (data) {
+            this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
+          } else {
+            this->data = nullptr;
+            this->length = 0;
+          }
+          return true;
+        }
+
         if (from->IsArrayBufferView()) {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
           this->length = array->ByteLength() / sizeof(T);
           auto arrayBuffer = array->Buffer();
+          if (arrayBuffer.IsEmpty()) {
+            this->reset();
+            return false;
+          }
           this->backingStore = arrayBuffer->GetBackingStore();
-          this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
+          if (!this->backingStore) {
+            this->reset();
+            return false;
+          }
+          auto data = this->backingStore->Data();
+          if (data) {
+            this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
+          } else {
+            this->data = nullptr;
+            this->length = 0;
+          }
           return true;
         }
 
@@ -2913,7 +2874,17 @@ namespace v8utils {
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
           this->backingStore = arrayBuffer->GetBackingStore();
-          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+          if (!this->backingStore) {
+            this->reset();
+            return false;
+          }
+          auto data = this->backingStore->Data();
+          if (data) {
+            this->data = (T *)((uint8_t *)(data));
+          } else {
+            this->data = nullptr;
+            this->length = 0;
+          }
           return true;
         }
 
@@ -2922,7 +2893,17 @@ namespace v8utils {
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
           this->backingStore = arrayBuffer->GetBackingStore();
-          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+          if (!this->backingStore) {
+            this->reset();
+            return false;
+          }
+          auto data = this->backingStore->Data();
+          if (data) {
+            this->data = (T *)((uint8_t *)(data));
+          } else {
+            this->data = nullptr;
+            this->length = 0;
+          }
           return true;
         }
       }
@@ -2968,7 +2949,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
   }
 
   void * ptr = bare_aligned_malloc(alignment, size);
-  if (!ptr) {
+  if (ptr == nullptr) {
     return v8utils::throwError(isolate, "Buffer memory allocation failed");
   }
 
@@ -2976,6 +2957,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     memset(ptr, 0, size);
   }
 
+  v8::Local<v8::Value> bufferValue;
   if (shared) {
     auto sharedBuf = v8::SharedArrayBuffer::New(
       isolate, v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
@@ -2986,10 +2968,13 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     if (result.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    info.GetReturnValue().Set(result);
+    auto bufferMaybe = node::Buffer::New(isolate, result->Buffer(), 0, size);
+    if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
+    info.GetReturnValue().Set(bufferValue);
   } else {
     auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
-    v8::Local<v8::Value> bufferValue;
     if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
       bare_aligned_free(ptr);
       return v8utils::throwError(isolate, "Buffer creation failed");
@@ -4626,6 +4611,8 @@ class RoaringBitmapSerializerBase {
   }
 };
 
+#include <iostream>
+
 class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
  public:
   v8utils::TypedArrayContent<uint8_t> inputBuffer;
@@ -4706,10 +4693,56 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
       return;
     }
 
-    if (!v8utils::v8ValueToBufferWithLimit(
-          isolate, this->inputBuffer.bufferPersistent.Get(isolate), this->serializedSize, result)) {
-      return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
+    auto length = this->serializedSize;
+    auto localValue = this->inputBuffer.bufferPersistent.Get(isolate);
+
+    if (localValue->IsUint8Array()) {
+      v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
+      if (!array.IsEmpty()) {
+        if (node::Buffer::HasInstance(localValue) && array->ByteLength() == length) {
+          result = localValue;
+          return;
+        }
+        if (array->ByteLength() >= length) {
+          if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
+            return;
+          }
+        }
+      }
+    } else if (localValue->IsTypedArray()) {
+      auto array = localValue.As<v8::TypedArray>();
+      if (!array.IsEmpty() && array->ByteLength() >= length) {
+        if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
+          return;
+        }
+      }
+    } else if (localValue->IsArrayBuffer()) {
+      auto array = localValue.As<v8::ArrayBuffer>();
+      if (!array.IsEmpty() && array->ByteLength() >= length) {
+        if (node::Buffer::New(isolate, array, 0, length).ToLocal(&result)) {
+          return;
+        }
+      }
+    } else if (localValue->IsSharedArrayBuffer()) {
+      auto array = localValue.As<v8::SharedArrayBuffer>();
+      if (!array.IsEmpty() && array->ByteLength() >= length) {
+        auto uint8Array = v8::Uint8Array::New(array, 0, length);
+        if (!uint8Array.IsEmpty()) {
+          if (node::Buffer::New(isolate, uint8Array->Buffer(), 0, length).ToLocal(&result)) {
+            return;
+          }
+        }
+      }
+    } else if (localValue->IsArrayBufferView()) {
+      auto array = localValue.As<v8::ArrayBufferView>();
+      if (!array.IsEmpty() && array->ByteLength() >= length) {
+        if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
+          return;
+        }
+      }
     }
+
+    return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
   }
 
   ~RoaringBitmapSerializer() { bare_aligned_free(this->allocatedBuffer); }
