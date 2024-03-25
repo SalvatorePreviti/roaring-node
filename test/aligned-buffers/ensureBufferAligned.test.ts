@@ -31,15 +31,14 @@ describe("ensureBufferAligned", () => {
   });
 
   it("works with SharedArrayBuffer", () => {
-    expect(true).eq(true);
-    // const sab = new SharedArrayBuffer(32);
-    // const unalignedBuffer = Buffer.from(sab, 1, 30);
-    // expect(unalignedBuffer.buffer).eq(sab);
-    // const result = ensureBufferAligned(unalignedBuffer);
-    // expect(result).not.eq(unalignedBuffer);
-    // expect(result).toBeInstanceOf(Buffer);
-    // expect(result.buffer).toBeInstanceOf(SharedArrayBuffer);
-    // expect(result.length).eq(30);
-    // expect(isBufferAligned(result)).eq(true);
+    const sab = new SharedArrayBuffer(32);
+    const unalignedBuffer = Buffer.from(sab, 1, 30);
+    expect(unalignedBuffer.buffer).eq(sab);
+    const result = ensureBufferAligned(unalignedBuffer);
+    expect(result).not.eq(unalignedBuffer);
+    expect(result).toBeInstanceOf(Buffer);
+    expect(result.buffer).toBeInstanceOf(SharedArrayBuffer);
+    expect(result.length).eq(30);
+    expect(isBufferAligned(result)).eq(true);
   });
 });
