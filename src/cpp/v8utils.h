@@ -242,18 +242,18 @@ namespace v8utils {
           return true;
         }
 
-        if (from->IsArrayBuffer()) {
+        if (from->IsSharedArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
+          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()));
           return true;
         }
 
-        if (from->IsSharedArrayBuffer()) {
+        if (from->IsArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
+          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           this->length = arrayBuffer->ByteLength() / sizeof(T);
           this->backingStore = arrayBuffer->GetBackingStore();
           this->data = (T *)((uint8_t *)(this->backingStore->Data()));

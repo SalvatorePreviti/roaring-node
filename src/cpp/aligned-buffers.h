@@ -46,11 +46,18 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
   v8::Local<v8::Value> bufferValue;
 
   if (shared) {
-    auto sharedBuf = v8::SharedArrayBuffer::New(
-      isolate, v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
+    // auto sharedBuf = v8::SharedArrayBuffer::New(
+    //   isolate, v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
+    // if (sharedBuf.IsEmpty()) {
+    //   return v8utils::throwError(isolate, "Buffer creation failed");
+    // }
+
+    auto sharedBuf = v8::ArrayBuffer::New(
+      isolate, v8::ArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
     if (sharedBuf.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
+
     auto uint8Array = v8::Uint8Array::New(sharedBuf, 0, size);
     if (uint8Array.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
