@@ -43,13 +43,11 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     memset(ptr, 0, size);
   }
 
+  v8::Local<v8::Value> bufferValue;
+
   if (shared) {
-    auto backingStore = v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
-    if (!backingStore) {
-      bare_aligned_free(ptr);
-      return v8utils::throwError(isolate, "Buffer creation failed");
-    }
-    auto sharedBuf = v8::SharedArrayBuffer::New(isolate, std::move(backingStore));
+    auto sharedBuf = v8::SharedArrayBuffer::New(
+      isolate, v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
     if (sharedBuf.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
@@ -57,21 +55,16 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     if (uint8Array.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    v8::Local<v8::Value> bufferObj;
-    auto nodeBuffer = node::Buffer::New(isolate, uint8Array->Buffer(), 0, size);
-    if (nodeBuffer.IsEmpty() || !nodeBuffer.ToLocal(&bufferObj)) {
+    auto bufferMaybe = node::Buffer::New(isolate, uint8Array->Buffer(), 0, size);
+    if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    info.GetReturnValue().Set(bufferObj);
-    return;
-  }
-
-  v8::MaybeLocal<v8::Object> bufferMaybe;
-  bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
-  v8::Local<v8::Value> bufferValue;
-  if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
-    bare_aligned_free(ptr);
-    return v8utils::throwError(isolate, "Buffer creation failed");
+  } else {
+    auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
+    if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
+      bare_aligned_free(ptr);
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
   }
 
   info.GetReturnValue().Set(bufferValue);
