@@ -771,11 +771,11 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   auto versionString = addonData->strings.CRoaringVersionValue.Get(isolate);
 
   v8::Local<v8::FunctionTemplate> ctor =
-    v8::FunctionTemplate::New(isolate, RoaringBitmap32_New, addonData->external.Get(isolate));
+    v8::FunctionTemplate::New(isolate, RoaringBitmap32_New, addonData->persistent.Get(isolate));
   if (ctor.IsEmpty()) {
     return;
   }
-  addonData->RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
+  addonData->RoaringBitmap32_constructorTemplate.Reset(isolate, ctor);
 
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
   ctor->SetClassName(className);
@@ -905,5 +905,5 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   ignoreMaybeResult(exports->Set(context, CRoaringVersion, versionString));
   ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
-  addonData->RoaringBitmap32_constructor.Set(isolate, ctorFunction);
+  addonData->RoaringBitmap32_constructor.Reset(isolate, ctorFunction);
 }

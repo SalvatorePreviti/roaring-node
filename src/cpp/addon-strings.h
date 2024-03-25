@@ -8,40 +8,40 @@ const char * const ERROR_INVALID_OBJECT = "Invalid RoaringBitmap32 object";
 
 class AddonDataStrings final {
  public:
-  v8::Eternal<v8::String> n;
-  v8::Eternal<v8::String> _default;
-  v8::Eternal<v8::String> readonly;
-  v8::Eternal<v8::String> RoaringBitmap32;
-  v8::Eternal<v8::String> RoaringBitmap32BufferedIterator;
-  v8::Eternal<v8::Symbol> symbol_rnshared;
+  v8::Persistent<v8::String> n;
+  v8::Persistent<v8::String> _default;
+  v8::Persistent<v8::String> readonly;
+  v8::Persistent<v8::String> RoaringBitmap32;
+  v8::Persistent<v8::String> RoaringBitmap32BufferedIterator;
+  v8::Persistent<v8::Symbol> symbol_rnshared;
 
-  v8::Eternal<v8::String> OperationFailed;
-  v8::Eternal<v8::String> Comma;
+  v8::Persistent<v8::String> OperationFailed;
+  v8::Persistent<v8::String> Comma;
 
-  v8::Eternal<v8::String> Uint32Array;
-  v8::Eternal<v8::String> Buffer;
+  v8::Persistent<v8::String> Uint32Array;
+  v8::Persistent<v8::String> Buffer;
 
-  v8::Eternal<v8::String> from;
+  v8::Persistent<v8::String> from;
 
-  v8::Eternal<v8::String> containers;
-  v8::Eternal<v8::String> arrayContainers;
-  v8::Eternal<v8::String> runContainers;
-  v8::Eternal<v8::String> bitsetContainers;
-  v8::Eternal<v8::String> valuesInArrayContainers;
-  v8::Eternal<v8::String> valuesInRunContainers;
-  v8::Eternal<v8::String> valuesInBitsetContainers;
-  v8::Eternal<v8::String> bytesInArrayContainers;
-  v8::Eternal<v8::String> bytesInRunContainers;
-  v8::Eternal<v8::String> bytesInBitsetContainers;
-  v8::Eternal<v8::String> maxValue;
-  v8::Eternal<v8::String> minValue;
-  v8::Eternal<v8::String> sumOfAllValues;
-  v8::Eternal<v8::String> size;
-  v8::Eternal<v8::String> isFrozen;
-  v8::Eternal<v8::String> isEmpty;
+  v8::Persistent<v8::String> containers;
+  v8::Persistent<v8::String> arrayContainers;
+  v8::Persistent<v8::String> runContainers;
+  v8::Persistent<v8::String> bitsetContainers;
+  v8::Persistent<v8::String> valuesInArrayContainers;
+  v8::Persistent<v8::String> valuesInRunContainers;
+  v8::Persistent<v8::String> valuesInBitsetContainers;
+  v8::Persistent<v8::String> bytesInArrayContainers;
+  v8::Persistent<v8::String> bytesInRunContainers;
+  v8::Persistent<v8::String> bytesInBitsetContainers;
+  v8::Persistent<v8::String> maxValue;
+  v8::Persistent<v8::String> minValue;
+  v8::Persistent<v8::String> sumOfAllValues;
+  v8::Persistent<v8::String> size;
+  v8::Persistent<v8::String> isFrozen;
+  v8::Persistent<v8::String> isEmpty;
 
-  v8::Eternal<v8::String> CRoaringVersion;
-  v8::Eternal<v8::String> CRoaringVersionValue;
+  v8::Persistent<v8::String> CRoaringVersion;
+  v8::Persistent<v8::String> CRoaringVersionValue;
 
   inline void initialize(v8::Isolate * isolate) {
     literal(isolate, this->n, "n");
@@ -77,15 +77,15 @@ class AddonDataStrings final {
     literal(isolate, CRoaringVersion, "CRoaringVersion");
     literal(isolate, CRoaringVersionValue, ROARING_VERSION);
 
-    symbol_rnshared.Set(
+    symbol_rnshared.Reset(
       isolate,
       v8::Symbol::ForApi(isolate, v8::String::NewFromUtf8Literal(isolate, "rnshared", v8::NewStringType::kInternalized)));
   }
 
  private:
   template <int N>
-  static void literal(v8::Isolate * isolate, v8::Eternal<v8::String> & result, const char (&literal)[N]) {
-    result.Set(isolate, v8::String::NewFromUtf8Literal(isolate, literal, v8::NewStringType::kInternalized));
+  static void literal(v8::Isolate * isolate, v8::Persistent<v8::String> & result, const char (&literal)[N]) {
+    result.Reset(isolate, v8::String::NewFromUtf8Literal(isolate, literal, v8::NewStringType::kInternalized));
   }
 };
 
