@@ -4,8 +4,9 @@
 #include "v8utils.h"
 #include "memory.h"
 
-void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
+void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
   v8::Isolate * isolate = info.GetIsolate();
+  v8::EscapeableHandleScope scope(isolate);
 
   int64_t size;
   int32_t alignment = 32;
@@ -57,26 +58,24 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    info.GetReturnValue().Set(bufferValue);
+    info.GetReturnValue().Set(scope.Escape(bufferValue));
   } else {
     auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
     if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
       bare_aligned_free(ptr);
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    info.GetReturnValue().Set(bufferValue);
+    info.GetReturnValue().Set(scope.Escape(bufferValue));
   }
 }
 
-void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, false); }
+void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, false, false); }
 
-void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, true, false); }
+void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, true, false); }
 
-void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, true); }
+void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, false, true); }
 
-void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  _bufferAlignedAlloc(info, true, true);
-}
+void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, true, true); }
 
 void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
