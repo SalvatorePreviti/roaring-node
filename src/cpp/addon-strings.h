@@ -13,7 +13,7 @@ class AddonDataStrings final {
   v8::Persistent<v8::String> readonly;
   v8::Persistent<v8::String> RoaringBitmap32;
   v8::Persistent<v8::String> RoaringBitmap32BufferedIterator;
-  v8::Persistent<v8::Symbol> symbol_rnshared;
+  v8::Persistent<v8::Symbol> addonDataSym;
 
   v8::Persistent<v8::String> OperationFailed;
   v8::Persistent<v8::String> Comma;
@@ -76,10 +76,6 @@ class AddonDataStrings final {
     literal(isolate, isEmpty, "isEmpty");
     literal(isolate, CRoaringVersion, "CRoaringVersion");
     literal(isolate, CRoaringVersionValue, ROARING_VERSION);
-
-    symbol_rnshared.Reset(
-      isolate,
-      v8::Symbol::ForApi(isolate, v8::String::NewFromUtf8Literal(isolate, "rnshared", v8::NewStringType::kInternalized)));
   }
 
  private:

@@ -2480,7 +2480,7 @@ class AddonDataStrings final {
   v8::Persistent<v8::String> readonly;
   v8::Persistent<v8::String> RoaringBitmap32;
   v8::Persistent<v8::String> RoaringBitmap32BufferedIterator;
-  v8::Persistent<v8::Symbol> symbol_rnshared;
+  v8::Persistent<v8::Symbol> addonDataSym;
 
   v8::Persistent<v8::String> OperationFailed;
   v8::Persistent<v8::String> Comma;
@@ -2543,10 +2543,6 @@ class AddonDataStrings final {
     literal(isolate, isEmpty, "isEmpty");
     literal(isolate, CRoaringVersion, "CRoaringVersion");
     literal(isolate, CRoaringVersionValue, ROARING_VERSION);
-
-    symbol_rnshared.Reset(
-      isolate,
-      v8::Symbol::ForApi(isolate, v8::String::NewFromUtf8Literal(isolate, "rnshared", v8::NewStringType::kInternalized)));
   }
 
  private:
@@ -2575,6 +2571,7 @@ class AddonData final {
   static const constexpr uint64_t OBJECT_TOKEN = 0x2a5a4Fd152230110;
 
   v8::Isolate * isolate;
+  v8::Persistent<v8::Symbol> addonDataSym;
   v8::Persistent<v8::Object> persistent;
 
   v8::Persistent<v8::Object> Uint32Array;
@@ -2618,7 +2615,8 @@ class AddonData final {
     return reinterpret_cast<AddonData *>(obj->GetAlignedPointerFromInternalField(0));
   }
 
-  inline void initialize(v8::Isolate * isolate) {
+  inline void initialize(v8::Isolate * isolate, v8::Local<v8::Object> exports) {
+    std::cout << ":AddonData::initialize " << this << std::endl;
     if (this->isolate) {
       return;
     }
@@ -2629,6 +2627,13 @@ class AddonData final {
 
     auto global = context->Global();
 
+    this->addonDataSym.Reset(
+      isolate,
+      v8::Symbol::ForApi(
+        isolate, v8::String::NewFromUtf8Literal(isolate, "RoaringAddonData", v8::NewStringType::kInternalized)));
+
+    this->strings.initialize(isolate);
+
     v8::Local<v8::Object> obj;
     auto objT = v8::ObjectTemplate::New(isolate);
     objT->SetInternalFieldCount(2);
@@ -2638,10 +2643,9 @@ class AddonData final {
       obj->SetAlignedPointerInInternalField(1, reinterpret_cast<void *>(OBJECT_TOKEN));
 
       this->persistent.Reset(isolate, obj);
-      this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
-    }
 
-    this->strings.initialize(isolate);
+      ignoreMaybeResult(exports->Set(context, this->addonDataSym.Get(isolate), obj));
+    }
 
     auto from = this->strings.from.Get(isolate);
 
@@ -2657,15 +2661,23 @@ class AddonData final {
     this->Uint32Array_from.Reset(isolate, uint32arrayFrom);
   }
 
+  inline void initializationCompleted() {
+    if (!this->persistent.IsEmpty() && !this->persistent.IsWeak()) {
+      this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
+    }
+  }
+
   void setMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
     v8::Isolate * isolate = this->isolate;
+    auto addonDataObj = this->persistent.Get(isolate);
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, this->persistent.Get(isolate));
+    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonDataObj);
     v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
     v8::Local<v8::String> fn_name =
       v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
     fn->SetName(fn_name);
     ignoreMaybeResult(recv->Set(context, fn_name, fn));
+    ignoreMaybeResult(fn->Set(context, this->addonDataSym.Get(isolate), addonDataObj));
   }
 };
 
@@ -8022,17 +8034,6 @@ using namespace v8;
     registration(exports);                                                                             \
   }
 
-void AddonData_DeleteInstance(void * p) {
-  auto addonData = reinterpret_cast<AddonData *>(p);
-  if (addonData != nullptr) {
-    if (thread_local_isolate == addonData->isolate) {
-      thread_local_isolate = nullptr;
-    }
-    std::cout << "AddonData_DeleteInstance" << std::endl;
-    addonData->persistent.Reset();
-  }
-}
-
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
@@ -8040,9 +8041,7 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
-  node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
-
-  addonData->initialize(isolate);
+  addonData->initialize(isolate, exports);
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);
@@ -8051,6 +8050,8 @@ void InitRoaringNode(Local<Object> exports) {
   addonData->setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
   ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
+
+  addonData->initializationCompleted();
 }
 
 MODULE_WORKER_ENABLED(roaring, InitRoaringNode);

@@ -14,17 +14,6 @@ using namespace v8;
     registration(exports);                                                                             \
   }
 
-void AddonData_DeleteInstance(void * p) {
-  auto addonData = reinterpret_cast<AddonData *>(p);
-  if (addonData != nullptr) {
-    if (thread_local_isolate == addonData->isolate) {
-      thread_local_isolate = nullptr;
-    }
-    std::cout << "AddonData_DeleteInstance" << std::endl;
-    addonData->persistent.Reset();
-  }
-}
-
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
@@ -32,9 +21,7 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData();
 
-  node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
-
-  addonData->initialize(isolate);
+  addonData->initialize(isolate, exports);
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);
@@ -43,6 +30,8 @@ void InitRoaringNode(Local<Object> exports) {
   addonData->setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
   ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
+
+  addonData->initializationCompleted();
 }
 
 MODULE_WORKER_ENABLED(roaring, InitRoaringNode);
