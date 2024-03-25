@@ -43,48 +43,36 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     memset(ptr, 0, size);
   }
 
-  v8::Local<v8::Value> bufferValue;
-
   if (shared) {
-    // auto sharedBuf = v8::SharedArrayBuffer::New(
-    //   isolate, v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
-    // if (sharedBuf.IsEmpty()) {
-    //   return v8utils::throwError(isolate, "Buffer creation failed");
-    // }
-
-    auto sharedBuf = v8::ArrayBuffer::New(
-      isolate, v8::ArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
+    auto sharedBuf = v8::SharedArrayBuffer::New(
+      isolate, v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr));
     if (sharedBuf.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-
-    auto uint8Array = v8::Uint8Array::New(sharedBuf, 0, size);
-    if (uint8Array.IsEmpty()) {
+    auto result = v8::Uint8Array::New(sharedBuf, 0, size);
+    if (result.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    auto bufferMaybe = node::Buffer::New(isolate, uint8Array->Buffer(), 0, size);
-    if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
-      return v8utils::throwError(isolate, "Buffer creation failed");
-    }
+    info.GetReturnValue().Set(result);
   } else {
     auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
+    v8::Local<v8::Value> bufferValue;
     if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
       bare_aligned_free(ptr);
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
+    info.GetReturnValue().Set(bufferValue);
   }
-
-  info.GetReturnValue().Set(bufferValue);
 }
 
 void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, false); }
 
 void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, true, false); }
 
-void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, false); }
+void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, true); }
 
 void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  _bufferAlignedAlloc(info, true, false);
+  _bufferAlignedAlloc(info, true, true);
 }
 
 void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {

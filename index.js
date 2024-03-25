@@ -26,6 +26,9 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 const path = require("path");
 const util = require("util");
 
+const isBuffer = Buffer.isBuffer;
+const bufferFrom = Buffer.from;
+
 const roaring = (() => {
   try {
     return require(
@@ -154,24 +157,24 @@ if (utilTypes) {
 }
 
 function asBufferUnsafe(buffer) {
-  if (Buffer.isBuffer(buffer)) {
+  if (isBuffer(buffer)) {
     return buffer;
   }
   if (isArrayBufView(buffer)) {
-    return Buffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    return bufferFrom(buffer.buffer, buffer.byteOffset, buffer.byteLength);
   }
   if (isArrayBuffer(buffer)) {
-    return Buffer.from(buffer);
+    return bufferFrom(buffer);
   }
   if (isSharedArrayBuffer(buffer)) {
-    return Buffer.from(buffer);
+    return bufferFrom(buffer);
   }
   return buffer;
 }
 
 function asBuffer(buffer) {
   const result = asBufferUnsafe(buffer);
-  return Buffer.isBuffer(result) ? result : Buffer.from(result);
+  return isBuffer(result) ? result : bufferFrom(result);
 }
 
 const initializedSym = Symbol.for("roaring-node");
@@ -427,6 +430,19 @@ if (!roaring[initializedSym]) {
     false,
   );
 
+  const {
+    bufferAlignedAllocShared: _bufferAlignedAllocShared,
+    bufferAlignedAllocSharedUnsafe: _bufferAlignedAllocSharedUnsafe,
+  } = roaring;
+
+  roaring.bufferAlignedAllocShared = function bufferAlignedAllocShared(length, alignment) {
+    return bufferFrom(_bufferAlignedAllocShared(length, alignment).buffer);
+  };
+
+  roaring.bufferAlignedAllocSharedUnsafe = function bufferAlignedAllocSharedUnsafe(length, alignment) {
+    return bufferFrom(_bufferAlignedAllocSharedUnsafe(length, alignment).buffer);
+  };
+
   defineValue("bufferAlignedAlloc", roaring.bufferAlignedAlloc);
   defineValue("bufferAlignedAllocUnsafe", roaring.bufferAlignedAllocUnsafe);
   defineValue("bufferAlignedAllocShared", roaring.bufferAlignedAllocShared);
@@ -438,7 +454,7 @@ if (!roaring[initializedSym]) {
       throw new TypeError("ensureBufferAligned alignment must be an integer number between 0 and 1024");
     }
     buffer = asBufferUnsafe(buffer);
-    if (!Buffer.isBuffer(buffer)) {
+    if (!isBuffer(buffer)) {
       throw new TypeError("ensureBufferAligned expects a Buffer instance");
     }
     if (!roaring.isBufferAligned(buffer, alignment)) {
