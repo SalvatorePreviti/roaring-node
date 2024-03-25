@@ -50,8 +50,16 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
     auto sharedBuf = v8::SharedArrayBuffer::New(isolate, std::move(backingStore));
+    if (sharedBuf.IsEmpty()) {
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
+    auto uint8Array = v8::Uint8Array::New(sharedBuf, 0, size);
+    if (uint8Array.IsEmpty()) {
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
     v8::Local<v8::Value> bufferObj;
-    if (sharedBuf.IsEmpty() || !v8utils::bufferFromArrayBuffer(isolate, sharedBuf, 0, size, bufferObj)) {
+    auto nodeBuffer = node::Buffer::New(isolate, uint8Array->Buffer(), 0, size);
+    if (nodeBuffer.IsEmpty() || !nodeBuffer.ToLocal(&bufferObj)) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
     info.GetReturnValue().Set(bufferObj);
