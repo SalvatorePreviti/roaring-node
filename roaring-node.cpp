@@ -7,10 +7,10 @@
 #define ROARING_NODE_ALIGNED_BUFFERS_
 
 
-// #include "v8utils.h"
+// #include "memory.h"
 
-#ifndef ROARING_NODE_V8UTILS_
-#define ROARING_NODE_V8UTILS_
+#ifndef ROARING_NODE_MEMORY_
+#define ROARING_NODE_MEMORY_
 
 
 // #include "includes.h"
@@ -50,158 +50,6 @@
 
 #ifndef ROARING_NODE_CROARING_
 #define ROARING_NODE_CROARING_
-
-
-// #include "memory.h"
-
-#ifndef ROARING_NODE_MEMORY_
-#define ROARING_NODE_MEMORY_
-
-
-#include <iostream>
-
-/** portable version of posix_memalign */
-void * bare_aligned_malloc(size_t alignment, size_t size) {
-  void * p;
-#ifdef _MSC_VER
-  p = _aligned_malloc(size, alignment);
-#elif defined(__MINGW32__) || defined(__MINGW64__)
-  p = __mingw_aligned_malloc(size, alignment);
-#else
-  // somehow, if this is used before including "x86intrin.h", it creates an
-  // implicit defined warning.
-  if (posix_memalign(&p, alignment, size) != 0) return NULL;
-#endif
-  std::cout << "bare_aligned_malloc" << p << " " << size << " " << alignment << std::endl;
-  return p;
-}
-
-/** portable version of free fo aligned allocs */
-void bare_aligned_free(void * memblock) {
-  if (memblock != nullptr) {
-#ifdef _MSC_VER
-    _aligned_free(memblock);
-#elif defined(__MINGW32__) || defined(__MINGW64__)
-    __mingw_aligned_free(memblock);
-#else
-    free(memblock);
-#endif
-  }
-}
-
-/** portable version of malloc_size */
-inline size_t bare_malloc_size(const void * ptr) {
-#if defined(__APPLE__)
-  return malloc_size((void *)ptr);
-#elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
-  return _msize((void *)ptr);
-#else
-  return malloc_usable_size((void *)ptr);
-#endif
-}
-
-/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
-inline size_t bare_aligned_malloc_size(const void * ptr) {
-#if defined(__APPLE__)
-  return malloc_size((void *)ptr);
-#elif defined(_WIN32)
-  return _aligned_msize((void *)ptr, 32, 0);
-#else
-  return malloc_usable_size((void *)ptr);
-#endif
-}
-
-std::atomic<int64_t> gcaware_totalMemCounter{0};
-
-int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
-
-thread_local v8::Isolate * thread_local_isolate = nullptr;
-
-inline void _gcaware_adjustAllocatedMemory(int64_t size) {
-  if (size != 0) {
-    v8::Isolate * isolate = v8::Isolate::GetCurrent();
-    if (isolate == nullptr) {
-      isolate = thread_local_isolate;
-    }
-    if (isolate != nullptr) {
-      isolate->AdjustAmountOfExternalAllocatedMemory(size);
-    }
-    gcaware_totalMemCounter += size;
-  }
-}
-
-inline void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
-
-inline void gcaware_removeAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory(-(int64_t)size); }
-
-void * gcaware_malloc(size_t size) {
-  void * memory = malloc(size);
-  if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
-  }
-  return memory;
-}
-
-void * gcaware_realloc(void * memory, size_t size) {
-  size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
-  memory = realloc(memory, size);
-  if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(oldSize);
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
-  }
-  return memory;
-}
-
-void * gcaware_calloc(size_t count, size_t size) {
-  void * memory = calloc(count, size);
-  if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
-  }
-  return memory;
-}
-
-void gcaware_free(void * memory) {
-  if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(bare_malloc_size(memory));
-    free(memory);
-  }
-}
-
-void * gcaware_aligned_malloc(size_t alignment, size_t size) {
-  if (size == 0) {
-    size = 1;
-  }
-  void * memory = bare_aligned_malloc(alignment, size);
-  if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));
-  }
-  return memory;
-}
-
-void gcaware_aligned_free(void * memory) {
-  if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(bare_aligned_malloc_size(memory));
-    bare_aligned_free(memory);
-  }
-}
-
-void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
-
-void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) {
-  std::cout << "bare_aligned_free_callback2" << data << " " << length << " " << deleter_data << std::endl;
-  // bare_aligned_free(data);
-}
-
-inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexcept {
-  auto iptr = reinterpret_cast<std::uintptr_t>(ptr);
-  return !(iptr % alignment);
-}
-
-void getRoaringUsedMemory(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  info.GetReturnValue().Set((double)gcaware_totalMem());
-}
-
-#endif  // ROARING_NODE_MEMORY_
 
 
 
@@ -2458,6 +2306,158 @@ typedef const char * const_char_ptr_t;
 #endif  // ROARING_NODE_INCLUDES_
 
 
+#include <iostream>
+
+/** portable version of posix_memalign */
+void * bare_aligned_malloc(size_t alignment, size_t size) {
+  void * p;
+#ifdef _MSC_VER
+  p = _aligned_malloc(size, alignment);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  p = __mingw_aligned_malloc(size, alignment);
+#else
+  // somehow, if this is used before including "x86intrin.h", it creates an
+  // implicit defined warning.
+  if (posix_memalign(&p, alignment, size) != 0) return NULL;
+#endif
+  std::cout << "bare_aligned_malloc" << p << " " << size << " " << alignment << std::endl;
+  return p;
+}
+
+/** portable version of free fo aligned allocs */
+void bare_aligned_free(void * memblock) {
+  if (memblock != nullptr) {
+#ifdef _MSC_VER
+    _aligned_free(memblock);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+    __mingw_aligned_free(memblock);
+#else
+    free(memblock);
+#endif
+  }
+}
+
+/** portable version of malloc_size */
+inline size_t bare_malloc_size(const void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size((void *)ptr);
+#elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
+  return _msize((void *)ptr);
+#else
+  return malloc_usable_size((void *)ptr);
+#endif
+}
+
+/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
+inline size_t bare_aligned_malloc_size(const void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size((void *)ptr);
+#elif defined(_WIN32)
+  return _aligned_msize((void *)ptr, 32, 0);
+#else
+  return malloc_usable_size((void *)ptr);
+#endif
+}
+
+std::atomic<int64_t> gcaware_totalMemCounter{0};
+
+int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
+
+thread_local v8::Isolate * thread_local_isolate = nullptr;
+
+inline void _gcaware_adjustAllocatedMemory(int64_t size) {
+  if (size != 0) {
+    v8::Isolate * isolate = v8::Isolate::GetCurrent();
+    if (isolate == nullptr) {
+      isolate = thread_local_isolate;
+    }
+    if (isolate != nullptr) {
+      isolate->AdjustAmountOfExternalAllocatedMemory(size);
+    }
+    gcaware_totalMemCounter += size;
+  }
+}
+
+inline void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
+
+inline void gcaware_removeAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory(-(int64_t)size); }
+
+void * gcaware_malloc(size_t size) {
+  void * memory = malloc(size);
+  if (memory != nullptr) {
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+void * gcaware_realloc(void * memory, size_t size) {
+  size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
+  memory = realloc(memory, size);
+  if (memory != nullptr) {
+    gcaware_removeAllocatedMemory(oldSize);
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+void * gcaware_calloc(size_t count, size_t size) {
+  void * memory = calloc(count, size);
+  if (memory != nullptr) {
+    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+  }
+  return memory;
+}
+
+void gcaware_free(void * memory) {
+  if (memory != nullptr) {
+    gcaware_removeAllocatedMemory(bare_malloc_size(memory));
+    free(memory);
+  }
+}
+
+void * gcaware_aligned_malloc(size_t alignment, size_t size) {
+  if (size == 0) {
+    size = 1;
+  }
+  void * memory = bare_aligned_malloc(alignment, size);
+  if (memory != nullptr) {
+    gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));
+  }
+  return memory;
+}
+
+void gcaware_aligned_free(void * memory) {
+  if (memory != nullptr) {
+    gcaware_removeAllocatedMemory(bare_aligned_malloc_size(memory));
+    bare_aligned_free(memory);
+  }
+}
+
+void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
+
+void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) {
+  std::cout << "bare_aligned_free_callback2" << data << " " << length << " " << deleter_data << std::endl;
+  bare_aligned_free(data);
+}
+
+inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexcept {
+  auto iptr = reinterpret_cast<std::uintptr_t>(ptr);
+  return !(iptr % alignment);
+}
+
+void getRoaringUsedMemory(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetReturnValue().Set((double)gcaware_totalMem());
+}
+
+#endif  // ROARING_NODE_MEMORY_
+
+
+// #include "v8utils.h"
+
+#ifndef ROARING_NODE_V8UTILS_
+#define ROARING_NODE_V8UTILS_
+
+
 // #include "addon-data.h"
 
 #ifndef ROARING_NODE_ADDON_DATA_
@@ -2923,50 +2923,34 @@ namespace v8utils {
 #endif  // ROARING_NODE_V8UTILS_
 
 
-struct BufAlignedAllocParams {
-  int64_t size;
-  int32_t alignment;
-  bool ok;
-
-  explicit BufAlignedAllocParams(const v8::FunctionCallbackInfo<v8::Value> & info) : size(0), alignment(32), ok(false) {
-    v8::Isolate * isolate = info.GetIsolate();
-
-    if (
-      info.Length() < 1 || !info[0]->IsNumber() || !info[0]->IntegerValue(isolate->GetCurrentContext()).To(&size) ||
-      size < 0) {
-      v8utils::throwTypeError(isolate, "Buffer size must be a positive integer");
-      return;
-    }
-
-    if (info.Length() >= 2 && !info[1]->IsUndefined()) {
-      if (!info[1]->IsNumber() || !info[1]->Int32Value(isolate->GetCurrentContext()).To(&alignment) || alignment <= 0) {
-        v8utils::throwTypeError(isolate, "Buffer alignment must be a positive integer");
-        return;
-      }
-    }
-
-    if (size < 0) {
-      size = 0;
-    }
-
-    if (alignment > 1024) {
-      v8utils::throwTypeError(isolate, "Buffer alignment is too large");
-      return;
-    }
-
-    ok = true;
-  }
-};
-
 inline void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
   v8::Isolate * isolate = info.GetIsolate();
-  BufAlignedAllocParams params(info);
-  if (!params.ok) {
-    return;
+
+  int64_t size;
+  int32_t alignment = 32;
+  if (
+    info.Length() < 1 || !info[0]->IsNumber() || !info[0]->IntegerValue(isolate->GetCurrentContext()).To(&size) ||
+    size < 0) {
+    return v8utils::throwTypeError(isolate, "Buffer size must be a positive integer");
   }
 
-  auto size = params.size;
-  auto alignment = params.alignment;
+  if (info.Length() >= 2 && !info[1]->IsUndefined()) {
+    if (!info[1]->IsNumber() || !info[1]->Int32Value(isolate->GetCurrentContext()).To(&alignment) || alignment <= 0) {
+      return v8utils::throwTypeError(isolate, "Buffer alignment must be a positive integer");
+    }
+  }
+
+  if (size < 0) {
+    size = 0;
+  }
+
+  if (alignment > 1024) {
+    return v8utils::throwTypeError(isolate, "Buffer alignment is too large");
+  }
+
+  if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
+    return v8utils::throwTypeError(isolate, "Buffer size is too large");
+  }
 
   void * ptr = bare_aligned_malloc(alignment, size);
   if (ptr == nullptr) {
@@ -2981,20 +2965,15 @@ inline void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, b
   if (shared) {
     std::shared_ptr<v8::BackingStore> backing_store =
       v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
-
     auto sharedBuf = v8::SharedArrayBuffer::New(isolate, backing_store);
     if (sharedBuf.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    auto result = v8::Uint8Array::New(sharedBuf, 0, size);
-    if (result.IsEmpty()) {
+    auto uint8Array = v8::Uint8Array::New(sharedBuf, 0, size);
+    if (uint8Array.IsEmpty()) {
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
-    auto bufferMaybe = node::Buffer::New(isolate, result->Buffer(), 0, size);
-    if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
-      return v8utils::throwError(isolate, "Buffer creation failed");
-    }
-    info.GetReturnValue().Set(bufferValue);
+    info.GetReturnValue().Set(uint8Array);
   } else {
     auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
     if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
@@ -3005,105 +2984,13 @@ inline void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, b
   }
 }
 
-void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  BufAlignedAllocParams params(info);
-  if (!params.ok) {
-    return;
-  }
-  void * ptr = bare_aligned_malloc(params.alignment, params.size);
-  if (ptr == nullptr) {
-    return v8utils::throwError(isolate, "Buffer memory allocation failed");
-  }
-  memset(ptr, 0, params.size);
-  v8::Local<v8::Value> bufferValue;
-  auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, params.size, bare_aligned_free_callback, nullptr);
-  if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
-    bare_aligned_free(ptr);
-    return v8utils::throwError(isolate, "Buffer creation failed");
-  }
-  info.GetReturnValue().Set(bufferValue);
-}
+void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, false, false); }
 
-void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  BufAlignedAllocParams params(info);
-  if (!params.ok) {
-    return;
-  }
-  void * ptr = bare_aligned_malloc(params.alignment, params.size);
-  if (ptr == nullptr) {
-    return v8utils::throwError(isolate, "Buffer memory allocation failed");
-  }
-  v8::Local<v8::Value> bufferValue;
-  auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, params.size, bare_aligned_free_callback, nullptr);
-  if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
-    bare_aligned_free(ptr);
-    return v8utils::throwError(isolate, "Buffer creation failed");
-  }
-  info.GetReturnValue().Set(bufferValue);
-}
+void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, true, false); }
 
-void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  BufAlignedAllocParams params(info);
-  if (!params.ok) {
-    return;
-  }
-  void * ptr = bare_aligned_malloc(params.alignment, params.size);
-  if (ptr == nullptr) {
-    return v8utils::throwError(isolate, "Buffer memory allocation failed");
-  }
-  memset(ptr, 0, params.size);
+void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, false, true); }
 
-  std::shared_ptr<v8::BackingStore> backing_store =
-    v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)params.size, bare_aligned_free_callback2, nullptr);
-
-  auto sharedBuf = v8::SharedArrayBuffer::New(isolate, backing_store);
-  if (sharedBuf.IsEmpty()) {
-    return v8utils::throwError(isolate, "Buffer creation failed");
-  }
-  auto result = v8::Uint8Array::New(sharedBuf, 0, params.size);
-  if (result.IsEmpty()) {
-    return v8utils::throwError(isolate, "Buffer creation failed");
-  }
-  auto bufferMaybe = node::Buffer::New(isolate, result->Buffer(), 0, params.size);
-  v8::Local<v8::Value> bufferValue;
-  if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
-    return v8utils::throwError(isolate, "Buffer creation failed");
-  }
-  info.GetReturnValue().Set(bufferValue);
-}
-
-void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  BufAlignedAllocParams params(info);
-  if (!params.ok) {
-    return;
-  }
-  void * ptr = bare_aligned_malloc(params.alignment, params.size);
-  if (ptr == nullptr) {
-    return v8utils::throwError(isolate, "Buffer memory allocation failed");
-  }
-
-  std::shared_ptr<v8::BackingStore> backing_store =
-    v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)params.size, bare_aligned_free_callback2, nullptr);
-
-  auto sharedBuf = v8::SharedArrayBuffer::New(isolate, backing_store);
-  if (sharedBuf.IsEmpty()) {
-    return v8utils::throwError(isolate, "Buffer creation failed");
-  }
-  auto result = v8::Uint8Array::New(sharedBuf, 0, params.size);
-  if (result.IsEmpty()) {
-    return v8utils::throwError(isolate, "Buffer creation failed");
-  }
-  auto bufferMaybe = node::Buffer::New(isolate, result->Buffer(), 0, params.size);
-  v8::Local<v8::Value> bufferValue;
-  if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
-    return v8utils::throwError(isolate, "Buffer creation failed");
-  }
-  info.GetReturnValue().Set(bufferValue);
-}
+void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, true, true); }
 
 void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();

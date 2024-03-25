@@ -22,7 +22,7 @@ describe("bufferAlignedAllocShared", () => {
     // eslint-disable-next-line no-console
     console.log("can allocate an empty buffer");
     const buffer = bufferAlignedAllocShared(0, 512);
-    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer).toBeInstanceOf(Uint8Array);
     expect(buffer.buffer).toBeInstanceOf(SharedArrayBuffer);
     expect(buffer.length).eq(0);
     expect(isBufferAligned(buffer, 512)).eq(true);
@@ -32,11 +32,11 @@ describe("bufferAlignedAllocShared", () => {
     // eslint-disable-next-line no-console
     console.log("can allocate a buffer of a given size");
     const buffer = bufferAlignedAllocShared(10);
-    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer).toBeInstanceOf(Uint8Array);
     expect(buffer.buffer).toBeInstanceOf(SharedArrayBuffer);
     expect(buffer.length).eq(10);
-    // expect(isBufferAligned(buffer)).eq(true);
-    // expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
-    // expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).eq(true);
+    expect(isBufferAligned(buffer)).eq(true);
+    expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
+    expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).eq(true);
   });
 });

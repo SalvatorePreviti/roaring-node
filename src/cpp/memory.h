@@ -134,7 +134,7 @@ void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(da
 
 void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) {
   std::cout << "bare_aligned_free_callback2" << data << " " << length << " " << deleter_data << std::endl;
-  // bare_aligned_free(data);
+  bare_aligned_free(data);
 }
 
 inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexcept {
