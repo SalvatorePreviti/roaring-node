@@ -59,18 +59,20 @@ export function bufferAlignedAllocUnsafe(size: number, alignment?: number): Buff
  * If alignment is not specified, the default alignment of 32 is used.
  * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
  *
+ * Is the same as Buffer.alloc but is aligned and uses a SharedArrayBuffer as storage.
  * We need an aligned buffer to create a roaring bitmap frozen view.
  *
  * @param {number} size The size of the buffer to allocate.
  * @param {number} [alignment=32] The alignment of the buffer to allocate.
  */
-export function bufferAlignedAllocShared(size: number, alignment?: number): Uint8Array;
+export function bufferAlignedAllocShared(size: number, alignment?: number): Buffer;
 
 /**
  * Creates a new buffer backed by a SharedArrayBuffer with the given size and alignment.
  * If alignment is not specified, the default alignment of 32 is used.
  * The buffer does not come from the nodejs buffer pool, it is allocated using aligned_malloc.
  *
+ * Is the same as Buffer.allocUnsafe but is aligned and uses a SharedArrayBuffer as storage.
  * We need an aligned buffer to create a roaring bitmap frozen view.
  *
  * WARNING: this function is unsafe because the returned buffer may contain previously unallocated memory that may contain sensitive data.
@@ -78,7 +80,7 @@ export function bufferAlignedAllocShared(size: number, alignment?: number): Uint
  * @param {number} size The size of the buffer to allocate.
  * @param {number} [alignment=32] The alignment of the buffer to allocate.
  */
-export function bufferAlignedAllocSharedUnsafe(size: number, alignment?: number): Uint8Array;
+export function bufferAlignedAllocSharedUnsafe(size: number, alignment?: number): Buffer;
 
 /**
  * Given some kind of buffer or array buffer, returns a nodejs Buffer instance that contains the same data.
@@ -87,7 +89,7 @@ export function bufferAlignedAllocSharedUnsafe(size: number, alignment?: number)
  * @param buffer The source
  * @returns A nodejs Buffer instance that contains the same data.
  */
-export function asBuffer(buffer: Buffer | ArrayBufferView | TypedArray | ArrayBuffer): Buffer;
+export function asBuffer(buffer: Buffer | ArrayBufferView | TypedArray | ArrayBuffer | SharedArrayBuffer): Buffer;
 
 export type TypedArray =
   | Uint8Array
@@ -124,7 +126,7 @@ export function isBufferAligned(
  * @memberof RoaringBitmap32
  */
 export function ensureBufferAligned(
-  buffer: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer,
+  buffer: Buffer | Uint8Array | Uint8ClampedArray | SharedArrayBuffer | Int8Array | ArrayBuffer,
   alignment?: number,
 ): Buffer;
 
