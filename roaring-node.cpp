@@ -4611,8 +4611,6 @@ class RoaringBitmapSerializerBase {
   }
 };
 
-#include <iostream>
-
 class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
  public:
   v8utils::TypedArrayContent<uint8_t> inputBuffer;
