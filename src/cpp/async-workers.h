@@ -380,12 +380,9 @@ class ParallelAsyncWorker : public AsyncWorker {
 class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
  public:
   volatile roaring_bitmap_t_ptr bitmap;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> addonDataPersistent;
 
   explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate, AddonData * addonData) :
-    AsyncWorker(isolate, addonData), bitmap(nullptr) {
-    this->addonDataPersistent.Reset(isolate, addonData->persistent.Get(isolate));
-  }
+    AsyncWorker(isolate, addonData), bitmap(nullptr) {}
 
   virtual ~RoaringBitmap32FactoryAsyncWorker() {
     if (this->bitmap != nullptr) {
@@ -396,7 +393,7 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
 
  protected:
   void done(v8::Local<v8::Value> & result) override {
-    if (this->bitmap == nullptr) {
+    if (this->bitmap == nullptr || !AddonData::isActive(this->maybeAddonData)) {
       return this->setError(WorkerError("Error deserializing roaring bitmap"));
     }
 
@@ -415,7 +412,6 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
 
     unwrapped->replaceBitmapInstance(this->isolate, this->bitmap);
     this->bitmap = nullptr;
-    this->addonDataPersistent.Reset();
   }
 };
 
@@ -681,6 +677,10 @@ class DeserializeWorker final : public AsyncWorker {
   void done(v8::Local<v8::Value> & result) final {
     v8::Isolate * isolate = this->isolate;
 
+    if (!AddonData::isActive(this->maybeAddonData)) {
+      return this->setError(WorkerError(ERROR_INVALID_OBJECT));
+    }
+
     v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
 
     if (!cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr).ToLocal(&result)) {
@@ -720,6 +720,10 @@ class DeserializeFileWorker final : public AsyncWorker {
 
   void done(v8::Local<v8::Value> & result) {
     v8::Isolate * isolate = this->isolate;
+
+    if (!AddonData::isActive(this->maybeAddonData)) {
+      return this->setError(WorkerError(ERROR_INVALID_OBJECT));
+    }
 
     v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
 
@@ -763,6 +767,10 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
   }
 
   void done(v8::Local<v8::Value> & result) final {
+    if (!AddonData::isActive(this->maybeAddonData)) {
+      return this->setError(WorkerError(ERROR_INVALID_OBJECT));
+    }
+
     v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
 
     const uint32_t itemsCount = this->loopCount;

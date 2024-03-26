@@ -4,6 +4,8 @@
 #include "includes.h"
 #include "addon-strings.h"
 #include "object-wrap.h"
+#include <unordered_set>
+#include <mutex>
 
 template <typename T>
 inline void ignoreMaybeResult(v8::Maybe<T>) {}
@@ -17,17 +19,11 @@ void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info);
 
 void AddonData_Cleanup(void * param);
 
-void AddonData_EmptyCallback(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  info.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::Empty(info.GetIsolate())));
-  info.GetReturnValue().Set(v8::Undefined(info.GetIsolate()));
-}
+class AddonData;
 
 class AddonData final {
  public:
-  static const constexpr uint64_t OBJECT_TOKEN = 0x2a5a4Fd152230110;
-
   v8::Isolate * isolate;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
 
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> Uint32Array;
   v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> Uint32Array_from;
@@ -46,6 +42,8 @@ class AddonData final {
   explicit AddonData(v8::Isolate * isolate) : isolate(isolate) {
     v8::HandleScope scope(isolate);
 
+    AddonData::AddonData_Init(this);
+
     auto context = isolate->GetCurrentContext();
 
     auto global = context->Global();
@@ -55,13 +53,6 @@ class AddonData final {
     auto objT = v8::ObjectTemplate::New(isolate);
     objT->SetInternalFieldCount(2);
 
-    v8::Local<v8::Object> obj = objT->NewInstance(context).ToLocalChecked();
-
-    int indices[2] = {0, 1};
-    void * values[2] = {this, (void *)(AddonData::OBJECT_TOKEN)};
-    obj->SetAlignedPointerInInternalFields(2, indices, values);
-
-    this->persistent.Reset(isolate, obj);
     isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(this));
 
     auto from = v8::String::NewFromUtf8Literal(isolate, "from", v8::NewStringType::kInternalized);
@@ -84,27 +75,30 @@ class AddonData final {
     this->Uint32Array_from.Reset(isolate, uint32arrayFrom);
   }
 
-  ~AddonData() {
-    if (!this->persistent.IsEmpty()) {
-      this->persistent.ClearWeak();
-      this->persistent.Reset();
-    }
-    isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this));
-  }
+  ~AddonData() { isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this)); }
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
-    return ObjectWrap::TryUnwrap<AddonData>(info.Data(), info.GetIsolate());
+    auto data = info.Data();
+    if (data->IsExternal()) {
+      auto result = static_cast<AddonData *>(v8::External::Cast(*data)->Value());
+      if (AddonData::isActive(result)) {
+        return result;
+      }
+    }
+    return nullptr;
   }
 
-  void initializationCompleted() {
-    this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
-  }
+  void initializationCompleted() {}
 
-  void setStaticMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
+  void setStaticMethod(
+    v8::Local<v8::External> addonDataExternal,
+    v8::Local<v8::Object> recv,
+    const char * name,
+    v8::FunctionCallback callback) {
     v8::Isolate * isolate = this->isolate;
     v8::HandleScope scope(isolate);
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, this->persistent.Get(isolate));
+    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonDataExternal);
     v8::Local<v8::String> fn_name =
       v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
     t->SetClassName(fn_name);
@@ -112,15 +106,30 @@ class AddonData final {
     fn->SetName(fn_name);
     ignoreMaybeResult(recv->Set(context, fn_name, fn));
   }
+
+  inline static bool isActive(const AddonData * addonData) {
+    return addonData != nullptr &&
+      AddonData::instances.find(const_cast<AddonData *>(addonData)) != AddonData::instances.end();
+  }
+
+ private:
+  static std::mutex instancesMutex;
+  static std::unordered_set<AddonData *> instances;
+
+  static void AddonData_Cleanup(void * addonData) {
+    std::lock_guard<std::mutex> lock(AddonData::instancesMutex);
+    AddonData::instances.erase(static_cast<AddonData *>(addonData));
+    delete static_cast<AddonData *>(addonData);
+  }
+
+  static void AddonData_Init(AddonData * addonData) {
+    std::lock_guard<std::mutex> lock(AddonData::instancesMutex);
+    AddonData::instances.insert(addonData);
+    node::AddEnvironmentCleanupHook(addonData->isolate, AddonData::AddonData_Cleanup, addonData);
+  }
 };
 
-void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info) {
-  AddonData * addonData = info.GetParameter();
-  if (addonData) {
-    addonData->persistent.ClearWeak();
-    addonData->persistent.Reset();
-    delete addonData;
-  }
-}
+std::mutex AddonData::instancesMutex;
+std::unordered_set<AddonData *> AddonData::instances;
 
 #endif

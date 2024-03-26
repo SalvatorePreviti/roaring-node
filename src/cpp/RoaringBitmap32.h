@@ -29,7 +29,6 @@ class RoaringBitmap32 final {
   RoaringBitmap32 * const readonlyViewOf;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> readonlyViewPersistent;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> addonDataPersistent;
   v8utils::TypedArrayContent<uint8_t> frozenStorage;
 
   inline bool isEmpty() const {

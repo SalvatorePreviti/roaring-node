@@ -114,7 +114,6 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
   instance->persistent.Reset(isolate, holder);
   instance->persistent.SetWeak(instance, RoaringBitmap32_WeakCallback, v8::WeakCallbackType::kParameter);
-  instance->addonDataPersistent.Reset(isolate, addonData->persistent);
 
   if (readonlyViewOf) {
     instance->frozenStorage.bufferPersistent.Reset(isolate, holder);
@@ -753,7 +752,7 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
   info.GetReturnValue().Set(returnValue);
 }
 
-void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
+void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData, v8::Local<v8::External> addonDataExternal) {
   if (!roaringMemoryInitialized) {
     roaring_init_memory_hook(
       {.malloc = gcaware_malloc,
@@ -774,8 +773,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   auto CRoaringVersionName = v8::String::NewFromUtf8Literal(isolate, "CRoaringVersion", v8::NewStringType::kInternalized);
   auto versionString = addonData->strings.CRoaringVersionValue.Get(isolate);
 
-  v8::Local<v8::FunctionTemplate> ctor =
-    v8::FunctionTemplate::New(isolate, RoaringBitmap32_New, addonData->persistent.Get(isolate));
+  v8::Local<v8::FunctionTemplate> ctor = v8::FunctionTemplate::New(isolate, RoaringBitmap32_New, addonDataExternal);
   if (ctor.IsEmpty()) {
     return;
   }
@@ -876,31 +874,33 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), className);
   ctor->PrototypeTemplate()->Set(CRoaringVersionName, versionString);
 
-  addonData->setStaticMethod(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);
-  addonData->setStaticMethod(ctorObject, "and", RoaringBitmap32_andStatic);
-  addonData->setStaticMethod(ctorObject, "andNot", RoaringBitmap32_andNotStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "and", RoaringBitmap32_andStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "andNot", RoaringBitmap32_andNotStatic);
 
   ignoreMaybeResult(ctorObject->Set(
     context, v8::String::NewFromUtf8Literal(isolate, "default", v8::NewStringType::kInternalized), ctorFunction));
 
-  addonData->setStaticMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic);
-  addonData->setStaticMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic);
-  addonData->setStaticMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic);
-  addonData->setStaticMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "deserialize", RoaringBitmap32_deserializeStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic);
+  addonData->setStaticMethod(
+    addonDataExternal, ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic);
+  addonData->setStaticMethod(
+    addonDataExternal, ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync);
 
   ignoreMaybeResult(ctorObject->Set(
     context, v8::String::NewFromUtf8Literal(isolate, "from", v8::NewStringType::kInternalized), ctorFunction));
 
-  addonData->setStaticMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync);
-  addonData->setStaticMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic);
-  addonData->setStaticMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic);
-  addonData->setStaticMethod(ctorObject, "of", RoaringBitmap32_ofStatic);
-  addonData->setStaticMethod(ctorObject, "or", RoaringBitmap32_orStatic);
-  addonData->setStaticMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic);
-  addonData->setStaticMethod(ctorObject, "swap", RoaringBitmap32_swapStatic);
-  addonData->setStaticMethod(ctorObject, "unsafeFrozenView", RoaringBitmap32_unsafeFrozenViewStatic);
-  addonData->setStaticMethod(ctorObject, "xor", RoaringBitmap32_xorStatic);
-  addonData->setStaticMethod(ctorObject, "xorMany", RoaringBitmap32_xorManyStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "of", RoaringBitmap32_ofStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "or", RoaringBitmap32_orStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "orMany", RoaringBitmap32_orManyStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "swap", RoaringBitmap32_swapStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "unsafeFrozenView", RoaringBitmap32_unsafeFrozenViewStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "xor", RoaringBitmap32_xorStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "xorMany", RoaringBitmap32_xorManyStatic);
 
   ignoreMaybeResult(ctorObject->Set(context, CRoaringVersionName, versionString));
   ignoreMaybeResult(ctorObject->Set(context, className, ctorFunction));

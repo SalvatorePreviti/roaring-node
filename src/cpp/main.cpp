@@ -1,7 +1,6 @@
 #include "aligned-buffers.h"
 #include "RoaringBitmap32-main.h"
 #include "RoaringBitmap32BufferedIterator.h"
-#include <mutex>
 
 using namespace v8;
 
@@ -25,16 +24,18 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData(isolate);
 
+  v8::Local<v8::External> addonDataExternal = v8::External::New(isolate, addonData);
+
   ignoreMaybeResult(exports->Set(
     isolate->GetCurrentContext(),
     v8::String::NewFromUtf8Literal(isolate, "default", v8::NewStringType::kInternalized),
     exports));
 
   AlignedBuffers_Init(exports, addonData);
-  RoaringBitmap32_Init(exports, addonData);
-  RoaringBitmap32BufferedIterator_Init(exports, addonData);
+  RoaringBitmap32_Init(exports, addonData, addonDataExternal);
+  RoaringBitmap32BufferedIterator_Init(exports, addonData, addonDataExternal);
 
-  addonData->setStaticMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
+  addonData->setStaticMethod(addonDataExternal, exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
   addonData->initializationCompleted();
 }

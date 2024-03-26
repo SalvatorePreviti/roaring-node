@@ -172,11 +172,12 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
   }
 }
 
-void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
+void RoaringBitmap32BufferedIterator_Init(
+  v8::Local<v8::Object> exports, AddonData * addonData, v8::Local<v8::External> addonDataExternal) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
   v8::Local<v8::FunctionTemplate> ctor =
-    v8::FunctionTemplate::New(isolate, RoaringBitmap32BufferedIterator_New, addonData->persistent.Get(isolate));
+    v8::FunctionTemplate::New(isolate, RoaringBitmap32BufferedIterator_New, addonDataExternal);
 
   auto className =
     v8::String::NewFromUtf8Literal(isolate, "RoaringBitmap32BufferedIterator", v8::NewStringType::kInternalized);
