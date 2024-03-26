@@ -33,8 +33,10 @@ if (!parentPort) {
   runWorkerThreadTest();
 } else {
   process.on("exit", (code) => {
-    // eslint-disable-next-line no-console
-    console.log(`worker thread exit with code ${code}`);
+    if (code) {
+      // eslint-disable-next-line no-console
+      console.log(`worker thread exit with code ${code}`);
+    }
   });
 
   process.on("uncaughtException", (err) => {

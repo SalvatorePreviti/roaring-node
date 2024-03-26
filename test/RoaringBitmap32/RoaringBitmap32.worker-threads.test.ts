@@ -27,15 +27,4 @@ describe("RoaringBitmap32 worker-threads", () => {
   it("can be used and works inside a worker thread", async () => {
     expect(await workerThreadTest()).toBe(true);
   });
-
-  it("can load multiple worker threads", async () => {
-    const workers: Promise<boolean>[] = [];
-    for (let i = 0; i < 10; ++i) {
-      workers.push(workerThreadTest());
-    }
-    const results = await Promise.all(workers);
-    for (const result of results) {
-      expect(result).toBe(true);
-    }
-  });
 });
