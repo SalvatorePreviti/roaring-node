@@ -24,7 +24,7 @@ class AddonData;
 
 class AddonData final {
  public:
-  v8::Isolate * isolate;
+  v8::Isolate * const isolate;
 
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> Uint32Array;
   v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> Uint32Array_from;
@@ -54,8 +54,6 @@ class AddonData final {
     auto objT = v8::ObjectTemplate::New(isolate);
     objT->SetInternalFieldCount(2);
 
-    isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(this));
-
     auto from = v8::String::NewFromUtf8Literal(isolate, "from", v8::NewStringType::kInternalized);
 
     auto buffer = global->Get(context, v8::String::NewFromUtf8Literal(isolate, "Buffer", v8::NewStringType::kInternalized))
@@ -74,6 +72,8 @@ class AddonData final {
 
     this->Uint32Array.Reset(isolate, uint32Array);
     this->Uint32Array_from.Reset(isolate, uint32arrayFrom);
+
+    node::AddEnvironmentCleanupHook(isolate, AddonData::AddonData_Cleanup, this);
   }
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -81,7 +81,10 @@ class AddonData final {
     if (!data.IsEmpty() && data->IsExternal()) {
       auto result = static_cast<AddonData *>(data.As<v8::External>()->Value());
       if (AddonData::isActive(result)) {
+        std::cout << "AddonData::get: " << result << std::endl;
         return result;
+      } else {
+        std::cout << "AddonData::get: AddonData is not active " << result << std::endl;
       }
     }
     return nullptr;
@@ -116,18 +119,23 @@ class AddonData final {
   static std::unordered_set<AddonData *> instances;
 
   static void AddonData_Init(AddonData * addonData) {
+    std::cout << "AddonData_Init " << addonData << std::endl;
     std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
+    addonData->isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(AddonData));
     AddonData::instances.insert(addonData);
-    node::AddEnvironmentCleanupHook(addonData->isolate, AddonData::AddonData_Cleanup, addonData);
   }
 
-  static void AddonData_Cleanup(void * addonData) {
-    std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-    AddonData::instances.erase(static_cast<AddonData *>(addonData));
-    delete static_cast<AddonData *>(addonData);
+  static void AddonData_Cleanup(void * ptr) {
+    AddonData * addonData = static_cast<AddonData *>(ptr);
+    std::cout << "AddonData_Cleanup " << addonData << std::endl;
+    if (addonData) {
+      std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
+      AddonData::instances.erase(addonData);
+      addonData->isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(AddonData));
+      delete addonData;
+    }
+    std::cout << "AddonData_Cleanup end" << addonData << std::endl;
   }
-
-  ~AddonData() { isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this)); }
 };
 
 std::shared_mutex AddonData::instancesMutex;
