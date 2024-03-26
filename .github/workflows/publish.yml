@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: npm ci --ignore-scripts --no-audit --no-save
       - run: node ./node-pre-gyp.js --custom-rebuild
-      - run: npx vitest --reporter verbose --no-file-parallelism --run
+      - run: npx vitest --reporter github-actions --no-file-parallelism --run
       - run: node --expose-gc ./scripts/test-memory-leaks.js
 
   prebuild:
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: npm install --ignore-scripts --no-audit --no-save
       - run: node ./node-pre-gyp.js --custom-rebuild
-      - run: npx vitest --reporter verbose --no-file-parallelism --run
+      - run: npx vitest --reporter github-actions --no-file-parallelism --run
       - name: Prebuild
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
@@ -52,7 +52,7 @@ jobs:
           node-version: "18.16.0"
       - uses: actions/checkout@v3
       - run: npm install
-      - run: npx vitest --reporter verbose --no-file-parallelism --run
+      - run: npx vitest --reporter github-actions --no-file-parallelism --run
 
   docs:
     needs: [test, prebuild, post-test]

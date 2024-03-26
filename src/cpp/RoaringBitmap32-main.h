@@ -115,15 +115,15 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   instance->persistent.Reset(isolate, holder);
   instance->persistent.SetWeak(instance, RoaringBitmap32_WeakCallback, v8::WeakCallbackType::kParameter);
 
-  if (readonlyViewOf) {
-    instance->frozenStorage.bufferPersistent.Reset(isolate, holder);
-  } else if (!hasCapacity) {
-    bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
-    if (hasParameter) {
-      if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
-        RoaringBitmap32_copyFrom(info);
-      } else {
-        RoaringBitmap32_addMany(info);
+  if (!readonlyViewOf) {
+    if (!hasCapacity) {
+      bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
+      if (hasParameter) {
+        if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
+          RoaringBitmap32_copyFrom(info);
+        } else {
+          RoaringBitmap32_addMany(info);
+        }
       }
     }
   }

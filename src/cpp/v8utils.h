@@ -12,6 +12,14 @@ bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
     (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer() || value->IsSharedArrayBuffer());
 }
 
+bool argumentIsValidUint32ArrayOutput(const v8::MaybeLocal<v8::Value> & value) {
+  if (value.IsEmpty()) {
+    return false;
+  }
+  v8::Local<v8::Value> local;
+  return value.ToLocal(&local) && argumentIsValidUint32ArrayOutput(local);
+}
+
 namespace v8utils {
 
   template <int N>
@@ -122,7 +130,6 @@ namespace v8utils {
   class TypedArrayContent final {
    public:
     size_t length;
-    v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
     std::shared_ptr<v8::BackingStore> backingStore;
     T * data;
 
@@ -141,7 +148,6 @@ namespace v8utils {
     inline void reset() {
       this->length = 0;
       this->data = nullptr;
-      this->bufferPersistent.Reset();
       this->backingStore.reset();
     }
 
@@ -159,7 +165,6 @@ namespace v8utils {
     bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
       if (!from.IsEmpty()) {
         if (from->IsArrayBufferView()) {
-          bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
           auto arrayBuffer = array->Buffer();
           if (arrayBuffer.IsEmpty()) {
@@ -179,7 +184,6 @@ namespace v8utils {
         }
 
         if (from->IsArrayBuffer()) {
-          bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           this->backingStore = arrayBuffer->GetBackingStore();
           auto data = this->backingStore->Data();
@@ -194,7 +198,6 @@ namespace v8utils {
         }
 
         if (from->IsSharedArrayBuffer()) {
-          bufferPersistent.Reset(isolate, from);
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->backingStore = arrayBuffer->GetBackingStore();
           auto data = this->backingStore->Data();

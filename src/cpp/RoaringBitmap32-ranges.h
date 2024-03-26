@@ -158,7 +158,7 @@ void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & i
       }
 
       v8::Local<v8::Value> result;
-      if (!v8utils::v8ValueToUint32ArrayWithLimit(isolate, typedArrayContent.bufferPersistent.Get(isolate), size, result)) {
+      if (!v8utils::v8ValueToUint32ArrayWithLimit(isolate, info[0], size, result)) {
         return v8utils::throwError(isolate, "RoaringBitmap32::toUint32Array - failed to create a new UInt32Array");
       }
 
@@ -264,9 +264,11 @@ void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> 
   }
 
   v8utils::TypedArrayContent<uint32_t> typedArrayContent;
+  v8::MaybeLocal<v8::Value> bufferMaybe;
 
   if (outputArgIndex != -1) {
-    if (!argumentIsValidUint32ArrayOutput(info[outputArgIndex]) || !typedArrayContent.set(isolate, info[outputArgIndex])) {
+    bufferMaybe = info[outputArgIndex];
+    if (!argumentIsValidUint32ArrayOutput(bufferMaybe) || !typedArrayContent.set(isolate, bufferMaybe)) {
       return v8utils::throwError(
         isolate, "RoaringBitmap32::rangeUint32Array - output argument must be a UInt32Array, Int32Array or ArrayBuffer");
     }
@@ -296,6 +298,7 @@ void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> 
     if (typedArray.IsEmpty()) {
       return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - failed to create an Uint32Array");
     }
+    bufferMaybe = typedArray;
     if (!typedArrayContent.set(isolate, typedArray)) {
       return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32Array - failed to create an Uint32Array");
     }
@@ -312,7 +315,7 @@ void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> 
   }
 
   v8::Local<v8::Value> result;
-  if (!v8utils::v8ValueToUint32ArrayWithLimit(isolate, typedArrayContent.bufferPersistent.Get(isolate), size, result)) {
+  if (!v8utils::v8ValueToUint32ArrayWithLimit(isolate, bufferMaybe, size, result)) {
     return v8utils::throwError(isolate, "RoaringBitmap32::rangeUint32ArrayAsync - failed to create an Uint32Array range");
   }
   info.GetReturnValue().Set(result);

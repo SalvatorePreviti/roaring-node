@@ -108,6 +108,7 @@ class RoaringBitmapSerializerBase {
 class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
  public:
   v8utils::TypedArrayContent<uint8_t> inputBuffer;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object> > bufferPersistent;
   uint8_t * volatile allocatedBuffer = nullptr;
 
   void parseArguments(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -142,9 +143,12 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization format argument was invalid");
     }
     if (bufferArgIndex >= 0) {
-      if (!this->inputBuffer.set(isolate, info[bufferArgIndex]->ToObject(isolate->GetCurrentContext()))) {
+      auto objMaybe = info[bufferArgIndex]->ToObject(isolate->GetCurrentContext());
+      v8::Local<v8::Object> obj;
+      if (!objMaybe.ToLocal(&obj) || !this->inputBuffer.set(isolate, obj)) {
         return v8utils::throwError(isolate, "RoaringBitmap32 serialization buffer argument was invalid");
       }
+      this->bufferPersistent.Reset(isolate, obj);
     }
     this->self = bitmap;
   }
@@ -186,7 +190,7 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
     }
 
     auto length = this->serializedSize;
-    auto localValue = this->inputBuffer.bufferPersistent.Get(isolate);
+    auto localValue = this->bufferPersistent.Get(isolate);
 
     if (localValue->IsUint8Array()) {
       v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();

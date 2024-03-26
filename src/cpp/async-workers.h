@@ -438,6 +438,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
  public:
   const v8::FunctionCallbackInfo<v8::Value> & info;
   v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bitmapPersistent;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bufferPersistent;
   RoaringBitmap32 * bitmap = nullptr;
   v8utils::TypedArrayContent<uint32_t> inputContent;
   uint32_t * volatile allocatedBuffer = nullptr;
@@ -479,10 +480,16 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
         }
         this->maxSize = maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : (size_t)maxSizeDouble);
       } else {
-        if (!argumentIsValidUint32ArrayOutput(info[0]) || !this->inputContent.set(isolate, info[0])) {
+        v8::Local<v8::Object> obj;
+
+        if (
+          !argumentIsValidUint32ArrayOutput(info[0]) || !info[0]->ToObject(isolate->GetCurrentContext()).ToLocal(&obj) ||
+          !this->inputContent.set(isolate, obj)) {
           return v8utils::throwError(
             isolate, "RoaringBitmap32::toUint32ArrayAsync - argument must be a UInt32Array, Int32Array or ArrayBuffer");
         }
+
+        this->bufferPersistent.Reset(isolate, obj);
         this->hasInput = true;
       }
     }
@@ -538,8 +545,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     uint32_t * allocatedBuffer = this->allocatedBuffer;
 
     if (this->hasInput) {
-      if (!v8utils::v8ValueToUint32ArrayWithLimit(
-            isolate, this->inputContent.bufferPersistent.Get(isolate), this->outputSize, result)) {
+      if (!v8utils::v8ValueToUint32ArrayWithLimit(isolate, this->bufferPersistent.Get(isolate), this->outputSize, result)) {
         return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create a UInt32Array range"));
       }
       return;
