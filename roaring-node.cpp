@@ -2611,10 +2611,7 @@ class AddonData final {
     if (!data.IsEmpty() && data->IsExternal()) {
       auto result = static_cast<AddonData *>(data.As<v8::External>()->Value());
       if (AddonData::isActive(result)) {
-        std::cout << "AddonData::get: " << result << std::endl;
         return result;
-      } else {
-        std::cout << "AddonData::get: AddonData is not active " << result << std::endl;
       }
     }
     return nullptr;
@@ -2644,8 +2641,6 @@ class AddonData final {
     if (AddonData::instances.find(const_cast<AddonData *>(addonData)) != AddonData::instances.end()) {
       return true;
     }
-
-    std::cout << "AddonData::isActive: AddonData is not active " << addonData << std::endl;
     return false;
   }
 
@@ -4682,6 +4677,7 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
       return;
     }
     uint8_t * allocatedBuffer = this->allocatedBuffer;
+    v8::HandleScope scope(isolate);
 
     if (allocatedBuffer) {
       // Create a new buffer using the allocated memory

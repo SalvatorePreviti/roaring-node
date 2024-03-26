@@ -7,6 +7,7 @@
 
 void RoaringBitmap32_serialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
 
   RoaringBitmapSerializer serializer;
   serializer.parseArguments(info);
