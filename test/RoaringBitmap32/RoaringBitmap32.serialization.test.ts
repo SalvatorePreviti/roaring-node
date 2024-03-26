@@ -297,14 +297,14 @@ describe("RoaringBitmap32 serialization", () => {
   });
 
   it("serialize and deserialize empty bitmaps in various formats", () => {
-    for (const format of ["portable", "croaring", "uint32_array"] as const) {
+    for (const format of ["portable", "croaring", "unsafe_frozen_croaring", "uint32_array"] as const) {
       const serialized = new RoaringBitmap32().serialize(format);
       expect(RoaringBitmap32.deserialize(serialized, format).toArray()).toEqual([]);
     }
   });
 
   it("serialize and deserialize in various formats", () => {
-    for (const format of ["portable", "croaring"] as const) {
+    for (const format of ["portable", "croaring", "unsafe_frozen_croaring"] as const) {
       const smallArray = [1, 2, 3, 100, 0xfffff, 0xffffffff];
       const serialized = new RoaringBitmap32(smallArray).serialize(format);
       expect(RoaringBitmap32.deserialize(serialized, format).toArray()).toEqual(smallArray);

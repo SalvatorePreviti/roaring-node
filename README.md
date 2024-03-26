@@ -18,11 +18,13 @@ If you want to contribute and submit a pull request, use the master branch.
 
 ## Supported node versions
 
-Node 16.20+, 18+, 20+, 21 are currently supported.
+Node 18.16+, 20+, 21 are currently supported.
 
-Node 8 and 10 support was dropped in release 2.0
+Node 16 support was dropped in release 2.4
 
 Node 12 and 14 support was dropped in release 2.3
+
+Node 8 and 10 support was dropped in release 2.0
 
 ## Worker thread support
 

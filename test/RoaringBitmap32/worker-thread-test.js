@@ -20,13 +20,18 @@ const workerThreadTest = () => {
 };
 
 const runWorkerThreadTest = () => {
-  workerThreadTest().catch((e) => {
-    // eslint-disable-next-line no-console
-    console.error("worker thread test error", e);
-    if (!process.exitCode) {
-      process.exitCode = 1;
-    }
-  });
+  workerThreadTest()
+    .then(() => {
+      // eslint-disable-next-line no-console
+      console.log("worker thread test ok");
+    })
+    .catch((e) => {
+      // eslint-disable-next-line no-console
+      console.error("worker thread test error", e);
+      if (!process.exitCode) {
+        process.exitCode = 1;
+      }
+    });
 };
 
 if (!parentPort) {

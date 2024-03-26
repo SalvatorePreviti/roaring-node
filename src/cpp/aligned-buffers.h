@@ -52,12 +52,7 @@ inline void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, b
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
 
-    std::shared_ptr<v8::BackingStore> backingStore = sharedBuf->GetBackingStore();
-    if (!backingStore) {
-      return v8utils::throwError(isolate, "Buffer creation failed");
-    }
-
-    void * ptr = backingStore->Data();
+    void * ptr = sharedBuf->Data();
     if (ptr == nullptr) {
       return v8utils::throwError(isolate, "Buffer memory allocation failed");
     }
