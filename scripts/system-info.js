@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const colors = require("chalk");
+const colors = require("ansis");
 const os = require("os");
 
 function getSystemInfo() {

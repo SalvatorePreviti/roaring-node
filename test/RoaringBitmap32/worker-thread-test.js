@@ -1,8 +1,6 @@
-// eslint-disable-next-line node/no-unsupported-features/node-builtins
 const { Worker, parentPort } = require("worker_threads");
 
 const workerThreadTest = () => {
-  // eslint-disable-next-line node/no-unsupported-features/node-builtins
   const worker = new Worker(__filename);
   return new Promise((resolve, reject) => {
     worker.on("message", (message) => {
@@ -22,19 +20,13 @@ const workerThreadTest = () => {
 };
 
 const runWorkerThreadTest = () => {
-  workerThreadTest().then(
-    () => {
-      // eslint-disable-next-line no-console
-      console.log("ok");
-    },
-    (e) => {
-      // eslint-disable-next-line no-console
-      console.error("worker thread test error", e);
-      if (!process.exitCode) {
-        process.exitCode = 1;
-      }
-    },
-  );
+  workerThreadTest().catch((e) => {
+    // eslint-disable-next-line no-console
+    console.error("worker thread test error", e);
+    if (!process.exitCode) {
+      process.exitCode = 1;
+    }
+  });
 };
 
 if (!parentPort) {
@@ -95,18 +87,11 @@ if (!parentPort) {
 
   main()
     .then(() => {
-      if (parentPort) {
-        parentPort.postMessage("ok");
-      } else {
-        // eslint-disable-next-line no-console
-        console.log("ok");
-      }
+      parentPort.postMessage("ok");
     })
     .catch((e) => {
       // eslint-disable-next-line no-console
       console.error("worker thread error", e);
-      if (parentPort) {
-        parentPort.postMessage(e);
-      }
+      parentPort.postMessage(e);
     });
 }

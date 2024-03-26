@@ -5,7 +5,7 @@
  * Of course, it does not work on Windows.
  */
 
-const colors = require("chalk");
+const colors = require("ansis");
 const { print: printSystemInfo } = require("./system-info");
 const fs = require("fs");
 const path = require("path");

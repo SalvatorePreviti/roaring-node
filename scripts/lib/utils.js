@@ -1,4 +1,4 @@
-const colors = require("chalk");
+const colors = require("ansis");
 const util = require("util");
 const fs = require("fs");
 const path = require("path");

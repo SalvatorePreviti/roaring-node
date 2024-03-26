@@ -16,7 +16,7 @@ runMain(() => {
   console.log();
 
   if (unityResult.outputText !== roaringNodeCpp) {
-    const chalk = require("chalk");
+    const chalk = require("ansis");
     console.error(
       chalk.redBright(
         `${chalk.underline.bold(
@@ -31,7 +31,7 @@ runMain(() => {
   try {
     require("../");
   } catch {
-    const chalk = require("chalk");
+    const chalk = require("ansis");
     console.error(
       chalk.redBright(
         `${chalk.underline.bold(

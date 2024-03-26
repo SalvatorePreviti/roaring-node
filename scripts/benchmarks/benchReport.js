@@ -1,4 +1,4 @@
-const colors = require("chalk");
+const colors = require("ansis");
 
 const hasIcons = colors.supportsColor.has256;
 
