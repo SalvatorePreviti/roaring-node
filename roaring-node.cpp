@@ -2968,8 +2968,6 @@ inline void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, b
       return v8utils::throwError(isolate, "Buffer creation failed");
     }
 
-    uint8Array.Clear();
-
   } else {
     void * ptr = bare_aligned_malloc(alignment, size);
     if (ptr == nullptr) {
