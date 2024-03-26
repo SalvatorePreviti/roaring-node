@@ -5400,7 +5400,7 @@ class AsyncWorker {
     v8::Isolate * isolate = worker->isolate;
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
-    isolate->PerformMicrotaskCheckpoint();
+    // isolate->PerformMicrotaskCheckpoint();
   }
 
   static void _work(uv_work_t * request) {
@@ -5561,9 +5561,12 @@ class ParallelAsyncWorker : public AsyncWorker {
 class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
  public:
   volatile roaring_bitmap_t_ptr bitmap;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> addonDataPersistent;
 
   explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate, AddonData * addonData) :
-    AsyncWorker(isolate, addonData), bitmap(nullptr) {}
+    AsyncWorker(isolate, addonData), bitmap(nullptr) {
+    this->addonDataPersistent.Reset(isolate, addonData->persistent.Get(isolate));
+  }
 
   virtual ~RoaringBitmap32FactoryAsyncWorker() {
     if (this->bitmap != nullptr) {
@@ -5593,6 +5596,7 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
 
     unwrapped->replaceBitmapInstance(this->isolate, this->bitmap);
     this->bitmap = nullptr;
+    this->addonDataPersistent.Reset();
   }
 };
 
