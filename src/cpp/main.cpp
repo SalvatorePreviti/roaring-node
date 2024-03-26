@@ -21,7 +21,10 @@ void InitRoaringNode(Local<Object> exports) {
 
   AddonData * addonData = new AddonData(isolate);
 
-  ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
+  ignoreMaybeResult(exports->Set(
+    isolate->GetCurrentContext(),
+    v8::String::NewFromUtf8Literal(isolate, "default", v8::NewStringType::kInternalized),
+    exports));
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);

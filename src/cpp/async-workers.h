@@ -259,11 +259,7 @@ class AsyncWorker {
     if (!error->IsObject()) {
       v8::MaybeLocal<v8::String> message = error->ToString(isolate->GetCurrentContext());
       if (message.IsEmpty()) {
-        if (this->maybeAddonData != nullptr) {
-          message = this->maybeAddonData->strings.OperationFailed.Get(isolate);
-        } else {
-          message = v8::String::NewFromUtf8(isolate, "Operation failed", v8::NewStringType::kInternalized);
-        }
+        message = v8::String::NewFromUtf8Literal(isolate, "Operation failed", v8::NewStringType::kInternalized);
       }
       error = v8::Exception::Error(error.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
     }

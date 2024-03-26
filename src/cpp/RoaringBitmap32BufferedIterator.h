@@ -178,7 +178,10 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
   v8::Local<v8::FunctionTemplate> ctor =
     v8::FunctionTemplate::New(isolate, RoaringBitmap32BufferedIterator_New, addonData->persistent.Get(isolate));
 
-  ctor->SetClassName(addonData->strings.RoaringBitmap32BufferedIterator.Get(isolate));
+  auto className =
+    v8::String::NewFromUtf8Literal(isolate, "RoaringBitmap32BufferedIterator", v8::NewStringType::kInternalized);
+
+  ctor->SetClassName(className);
   ctor->InstanceTemplate()->SetInternalFieldCount(2);
 
   addonData->RoaringBitmap32BufferedIterator_constructorTemplate.Reset(isolate, ctor);
@@ -194,8 +197,7 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
 
   addonData->RoaringBitmap32BufferedIterator_constructor.Reset(isolate, ctorFunction);
 
-  ignoreMaybeResult(exports->Set(
-    isolate->GetCurrentContext(), addonData->strings.RoaringBitmap32BufferedIterator.Get(isolate), ctorFunction));
+  ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), className, ctorFunction));
 }
 
 #endif  // ROARING_NODE_ROARING_BITMAP_32_BUFFERED_ITERATOR_

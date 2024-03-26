@@ -183,6 +183,10 @@ if (!roaring[initializedSym]) {
   Reflect.defineProperty(roaring, initializedSym, { value: true });
 
   const roaringBitmap32_proto = RoaringBitmap32.prototype;
+
+  roaringBitmap32_proto.toString = function toString() {
+    return `RoaringBitmap32`;
+  };
   roaringBitmap32_proto[Symbol.iterator] = iterator;
   roaringBitmap32_proto.iterator = iterator;
   roaringBitmap32_proto.keys = iterator;

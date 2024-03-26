@@ -28,17 +28,19 @@ class AddonData final {
   static const constexpr uint64_t OBJECT_TOKEN = 0x2a5a4Fd152230110;
 
   v8::Isolate * isolate;
-  v8::Persistent<v8::Object> persistent;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
 
-  v8::Persistent<v8::Object> Uint32Array;
-  v8::Persistent<v8::Function> Uint32Array_from;
-  v8::Persistent<v8::Function> Buffer_from;
+  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> Uint32Array;
+  v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> Uint32Array_from;
+  v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> Buffer_from;
 
-  v8::Persistent<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
-  v8::Persistent<v8::Function> RoaringBitmap32_constructor;
+  v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>>
+    RoaringBitmap32_constructorTemplate;
+  v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> RoaringBitmap32_constructor;
 
-  v8::Persistent<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
-  v8::Persistent<v8::Function> RoaringBitmap32BufferedIterator_constructor;
+  v8::Persistent<v8::FunctionTemplate, v8::CopyablePersistentTraits<v8::FunctionTemplate>>
+    RoaringBitmap32BufferedIterator_constructorTemplate;
+  v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> RoaringBitmap32BufferedIterator_constructor;
 
   AddonDataStrings strings;
 
@@ -63,13 +65,19 @@ class AddonData final {
     this->persistent.Reset(isolate, obj);
     isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(this));
 
-    auto from = this->strings.from.Get(isolate);
+    auto from = v8::String::NewFromUtf8Literal(isolate, "from", v8::NewStringType::kInternalized);
 
-    auto buffer = global->Get(context, this->strings.Buffer.Get(isolate)).ToLocalChecked().As<v8::Object>();
+    auto buffer = global->Get(context, v8::String::NewFromUtf8Literal(isolate, "Buffer", v8::NewStringType::kInternalized))
+                    .ToLocalChecked()
+                    .As<v8::Object>();
+
     this->Buffer_from.Reset(isolate, buffer->Get(context, from).ToLocalChecked().As<v8::Function>());
 
     auto uint32Array =
-      global->Get(context, this->strings.Uint32Array.Get(isolate)).ToLocalChecked()->ToObject(context).ToLocalChecked();
+      global->Get(context, v8::String::NewFromUtf8Literal(isolate, "Uint32Array", v8::NewStringType::kInternalized))
+        .ToLocalChecked()
+        ->ToObject(context)
+        .ToLocalChecked();
 
     auto uint32arrayFrom = v8::Local<v8::Function>::Cast(uint32Array->Get(context, from).ToLocalChecked());
 
