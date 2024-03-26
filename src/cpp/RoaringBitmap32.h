@@ -14,7 +14,7 @@ typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
 
 std::atomic<uint64_t> RoaringBitmap32_instances;
 
-class RoaringBitmap32 final : public ObjectWrap {
+class RoaringBitmap32 final {
  public:
   static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152330000;
 
@@ -22,12 +22,14 @@ class RoaringBitmap32 final : public ObjectWrap {
   static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
 
   roaring_bitmap_t * roaring;
+  AddonData * const addonData;
   int64_t sizeCache;
   int64_t _version;
   int64_t frozenCounter;
   RoaringBitmap32 * const readonlyViewOf;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> readonlyViewPersistent;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+  v8::Persistent<v8::Object> addonDataPersistent;
   v8utils::TypedArrayContent<uint8_t> frozenStorage;
 
   inline bool isEmpty() const {
@@ -102,8 +104,8 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   explicit RoaringBitmap32(AddonData * addonData, RoaringBitmap32 * readonlyViewOf) :
-    ObjectWrap(addonData),
     roaring(readonlyViewOf->roaring),
+    addonData(addonData),
     sizeCache(-1),
     frozenCounter(RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN),
     readonlyViewOf(readonlyViewOf->readonlyViewOf ? readonlyViewOf->readonlyViewOf : readonlyViewOf) {
@@ -111,8 +113,8 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity) :
-    ObjectWrap(addonData),
     roaring(roaring_bitmap_create_with_capacity(capacity)),
+    addonData(addonData),
     sizeCache(0),
     _version(0),
     frozenCounter(0),
@@ -122,6 +124,7 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   ~RoaringBitmap32() {
+    std::cout << ":~RoaringBitmap32 " << this << std::endl;
     this->readonlyViewPersistent.Reset();
     if (!this->persistent.IsEmpty()) {
       this->persistent.ClearWeak();

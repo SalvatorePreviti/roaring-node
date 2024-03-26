@@ -17,19 +17,17 @@ using namespace v8;
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  v8::HandleScope scope(isolate);
-
   AddonData * addonData = new AddonData();
 
   addonData->initialize(isolate, exports);
+
+  ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);
   RoaringBitmap32BufferedIterator_Init(exports, addonData);
 
-  addonData->setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
-
-  ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
+  addonData->setStaticMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
   addonData->initializationCompleted();
 }

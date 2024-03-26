@@ -3,13 +3,14 @@
 
 #include "RoaringBitmap32.h"
 
-class RoaringBitmap32BufferedIterator final : public ObjectWrap {
+class RoaringBitmap32BufferedIterator final {
  public:
   static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152490000;
 
   enum { allocatedMemoryDelta = 1024 };
 
   roaring_uint32_iterator_t it;
+  AddonData * const addonData;
   bool reversed;
   RoaringBitmap32 * bitmapInstance;
   int64_t bitmapVersion;
@@ -19,7 +20,7 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
 
   explicit RoaringBitmap32BufferedIterator(AddonData * addonData, bool reversed) :
-    ObjectWrap(addonData), reversed(reversed), bitmapInstance(nullptr) {
+    addonData(addonData), reversed(reversed), bitmapInstance(nullptr) {
     this->it.parent = nullptr;
     this->it.has_value = false;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));

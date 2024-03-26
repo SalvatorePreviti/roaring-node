@@ -2554,6 +2554,41 @@ class AddonDataStrings final {
 
 #endif
 
+
+// #include "object-wrap.h"
+
+#ifndef ROARING_NODE_OBJECT_WRAP_
+#define ROARING_NODE_OBJECT_WRAP_
+
+
+namespace ObjectWrap {
+  template <class T>
+  static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
+    v8::Local<v8::Object> obj;
+    if (!value->IsObject()) {
+      return nullptr;
+    }
+    if (!value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
+      return nullptr;
+    }
+    if (obj->InternalFieldCount() != 2) {
+      return nullptr;
+    }
+    if ((uintptr_t)obj->GetAlignedPointerFromInternalField(1) != T::OBJECT_TOKEN) {
+      return nullptr;
+    }
+    return reinterpret_cast<T *>(obj->GetAlignedPointerFromInternalField(0));
+  }
+
+  template <class T>
+  static T * TryUnwrap(const v8::FunctionCallbackInfo<v8::Value> & info, int argumentIndex) {
+    return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], info.GetIsolate());
+  }
+
+};  // namespace ObjectWrap
+
+#endif  // ROARING_NODE_OBJECT_WRAP_
+
 #include <iostream>
 
 template <typename T>
@@ -2566,12 +2601,18 @@ class AddonData;
 
 void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info);
 
+void AddonData_Cleanup(void * param);
+
+void AddonData_EmptyCallback(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::Empty(info.GetIsolate())));
+  info.GetReturnValue().Set(v8::Undefined(info.GetIsolate()));
+}
+
 class AddonData final {
  public:
   static const constexpr uint64_t OBJECT_TOKEN = 0x2a5a4Fd152230110;
 
   v8::Isolate * isolate;
-  v8::Persistent<v8::Symbol> addonDataSym;
   v8::Persistent<v8::Object> persistent;
 
   v8::Persistent<v8::Object> Uint32Array;
@@ -2586,7 +2627,7 @@ class AddonData final {
 
   AddonDataStrings strings;
 
-  inline AddonData() : isolate(nullptr) { std::cout << ":AddonData " << this << std::endl; }
+  AddonData() : isolate(nullptr) { std::cout << ":AddonData " << this << std::endl; }
 
   ~AddonData() {
     std::cout << ":~AddonData " << this << std::endl;
@@ -2595,27 +2636,17 @@ class AddonData final {
       this->persistent.ClearWeak();
       this->persistent.Reset();
     }
+    if (this->isolate) {
+      this->isolate = nullptr;
+      isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this));
+    }
   }
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
-    v8::Local<v8::Value> data = info.Data();
-    if (!data->IsObject()) {
-      return nullptr;
-    }
-    v8::Local<v8::Object> obj;
-    if (!data->ToObject(info.GetIsolate()->GetCurrentContext()).ToLocal(&obj)) {
-      return nullptr;
-    }
-    if (obj->InternalFieldCount() != 2) {
-      return nullptr;
-    }
-    if (obj->GetAlignedPointerFromInternalField(1) != reinterpret_cast<void *>(OBJECT_TOKEN)) {
-      return nullptr;
-    }
-    return reinterpret_cast<AddonData *>(obj->GetAlignedPointerFromInternalField(0));
+    return ObjectWrap::TryUnwrap<AddonData>(info.Data(), info.GetIsolate());
   }
 
-  inline void initialize(v8::Isolate * isolate, v8::Local<v8::Object> exports) {
+  void initialize(v8::Isolate * isolate, v8::Local<v8::Object> exports) {
     std::cout << ":AddonData::initialize " << this << std::endl;
     if (this->isolate) {
       return;
@@ -2627,25 +2658,19 @@ class AddonData final {
 
     auto global = context->Global();
 
-    this->addonDataSym.Reset(
-      isolate,
-      v8::Symbol::ForApi(
-        isolate, v8::String::NewFromUtf8Literal(isolate, "RoaringAddonData", v8::NewStringType::kInternalized)));
-
     this->strings.initialize(isolate);
 
-    v8::Local<v8::Object> obj;
     auto objT = v8::ObjectTemplate::New(isolate);
     objT->SetInternalFieldCount(2);
 
-    if (objT->NewInstance(context).ToLocal(&obj)) {
-      obj->SetAlignedPointerInInternalField(0, this);
-      obj->SetAlignedPointerInInternalField(1, reinterpret_cast<void *>(OBJECT_TOKEN));
+    v8::Local<v8::Object> obj = objT->NewInstance(context).ToLocalChecked();
 
-      this->persistent.Reset(isolate, obj);
+    int indices[2] = {0, 1};
+    void * values[2] = {this, (void *)(AddonData::OBJECT_TOKEN)};
+    obj->SetAlignedPointerInInternalFields(2, indices, values);
 
-      ignoreMaybeResult(exports->Set(context, this->addonDataSym.Get(isolate), obj));
-    }
+    this->persistent.Reset(isolate, obj);
+    isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(this));
 
     auto from = this->strings.from.Get(isolate);
 
@@ -2661,23 +2686,31 @@ class AddonData final {
     this->Uint32Array_from.Reset(isolate, uint32arrayFrom);
   }
 
-  inline void initializationCompleted() {
-    if (!this->persistent.IsEmpty() && !this->persistent.IsWeak()) {
-      this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
-    }
+  void initializationCompleted() {
+    std::cout << ":AddonData::initializationCompleted " << this << std::endl;
+    node::AddEnvironmentCleanupHook(this->isolate, AddonData_Cleanup, this);
+    this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
+  }
+
+  void Cleanup() {
+    v8::HandleScope scope(isolate);
+    this->RoaringBitmap32_constructorTemplate.Reset();
+    this->RoaringBitmap32_constructor.Reset();
+    this->RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
+    this->RoaringBitmap32BufferedIterator_constructor.Reset();
   }
 
   void setMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
     v8::Isolate * isolate = this->isolate;
-    auto addonDataObj = this->persistent.Get(isolate);
+    v8::HandleScope scope(isolate);
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonDataObj);
-    v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
+    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, this->persistent.Get(isolate));
     v8::Local<v8::String> fn_name =
       v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
+    t->SetClassName(fn_name);
+    v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
     fn->SetName(fn_name);
     ignoreMaybeResult(recv->Set(context, fn_name, fn));
-    ignoreMaybeResult(fn->Set(context, this->addonDataSym.Get(isolate), addonDataObj));
   }
 };
 
@@ -2691,47 +2724,15 @@ void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info) {
   }
 }
 
+void AddonData_Cleanup(void * param) {
+  std::cout << ":AddonData_Cleanup " << param << std::endl;
+  AddonData * addonData = static_cast<AddonData *>(param);
+  if (addonData) {
+    addonData->Cleanup();
+  }
+}
+
 #endif
-
-
-// #include "object-wrap.h"
-
-#ifndef ROARING_NODE_OBJECT_WRAP_
-#define ROARING_NODE_OBJECT_WRAP_
-
-
-class ObjectWrap {
- public:
-  AddonData * const addonData;
-
-  template <class T>
-  static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
-    v8::Local<v8::Object> obj;
-    if (!value->IsObject() || !value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
-      return nullptr;
-    }
-
-    if (obj->InternalFieldCount() != 2) {
-      return nullptr;
-    }
-
-    if ((uintptr_t)obj->GetAlignedPointerFromInternalField(1) != T::OBJECT_TOKEN) {
-      return nullptr;
-    }
-
-    return (T *)(obj->GetAlignedPointerFromInternalField(0));
-  }
-
-  template <class T>
-  static T * TryUnwrap(const v8::FunctionCallbackInfo<v8::Value> & info, int argumentIndex) {
-    return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], info.GetIsolate());
-  }
-
- protected:
-  explicit ObjectWrap(AddonData * addonData) : addonData(addonData) {}
-};
-
-#endif  // ROARING_NODE_OBJECT_WRAP_
 
 
 bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
@@ -3081,11 +3082,11 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void AlignedBuffers_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
-  addonData->setMethod(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
-  addonData->setMethod(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
-  addonData->setMethod(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared);
-  addonData->setMethod(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe);
-  addonData->setMethod(exports, "isBufferAligned", isBufferAligned);
+  NODE_SET_METHOD(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
+  NODE_SET_METHOD(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
+  NODE_SET_METHOD(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared);
+  NODE_SET_METHOD(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe);
+  NODE_SET_METHOD(exports, "isBufferAligned", isBufferAligned);
 }
 
 #endif  // ROARING_NODE_ALIGNED_BUFFERS_
@@ -3342,7 +3343,7 @@ typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
 
 std::atomic<uint64_t> RoaringBitmap32_instances;
 
-class RoaringBitmap32 final : public ObjectWrap {
+class RoaringBitmap32 final {
  public:
   static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152330000;
 
@@ -3350,12 +3351,14 @@ class RoaringBitmap32 final : public ObjectWrap {
   static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
 
   roaring_bitmap_t * roaring;
+  AddonData * const addonData;
   int64_t sizeCache;
   int64_t _version;
   int64_t frozenCounter;
   RoaringBitmap32 * const readonlyViewOf;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> readonlyViewPersistent;
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+  v8::Persistent<v8::Object> addonDataPersistent;
   v8utils::TypedArrayContent<uint8_t> frozenStorage;
 
   inline bool isEmpty() const {
@@ -3430,8 +3433,8 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   explicit RoaringBitmap32(AddonData * addonData, RoaringBitmap32 * readonlyViewOf) :
-    ObjectWrap(addonData),
     roaring(readonlyViewOf->roaring),
+    addonData(addonData),
     sizeCache(-1),
     frozenCounter(RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN),
     readonlyViewOf(readonlyViewOf->readonlyViewOf ? readonlyViewOf->readonlyViewOf : readonlyViewOf) {
@@ -3439,8 +3442,8 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity) :
-    ObjectWrap(addonData),
     roaring(roaring_bitmap_create_with_capacity(capacity)),
+    addonData(addonData),
     sizeCache(0),
     _version(0),
     frozenCounter(0),
@@ -3450,6 +3453,7 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   ~RoaringBitmap32() {
+    std::cout << ":~RoaringBitmap32 " << this << std::endl;
     this->readonlyViewPersistent.Reset();
     if (!this->persistent.IsEmpty()) {
       this->persistent.ClearWeak();
@@ -6938,6 +6942,7 @@ void RoaringBitmap32_copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) 
 }
 
 void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
+  std::cout << ":RoaringBitmap32_WeakCallback " << info.GetParameter() << std::endl;
   RoaringBitmap32 * p = info.GetParameter();
   if (p != nullptr) {
     delete p;
@@ -7024,6 +7029,7 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
   instance->persistent.Reset(isolate, holder);
   instance->persistent.SetWeak(instance, RoaringBitmap32_WeakCallback, v8::WeakCallbackType::kParameter);
+  instance->addonDataPersistent.Reset(isolate, addonData->persistent);
 
   if (readonlyViewOf) {
     instance->frozenStorage.bufferPersistent.Reset(isolate, holder);
@@ -7825,13 +7831,14 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 #define ROARING_NODE_ROARING_BITMAP_32_BUFFERED_ITERATOR_
 
 
-class RoaringBitmap32BufferedIterator final : public ObjectWrap {
+class RoaringBitmap32BufferedIterator final {
  public:
   static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152490000;
 
   enum { allocatedMemoryDelta = 1024 };
 
   roaring_uint32_iterator_t it;
+  AddonData * const addonData;
   bool reversed;
   RoaringBitmap32 * bitmapInstance;
   int64_t bitmapVersion;
@@ -7841,7 +7848,7 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
 
   explicit RoaringBitmap32BufferedIterator(AddonData * addonData, bool reversed) :
-    ObjectWrap(addonData), reversed(reversed), bitmapInstance(nullptr) {
+    addonData(addonData), reversed(reversed), bitmapInstance(nullptr) {
     this->it.parent = nullptr;
     this->it.has_value = false;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
@@ -8037,19 +8044,17 @@ using namespace v8;
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  v8::HandleScope scope(isolate);
-
   AddonData * addonData = new AddonData();
 
   addonData->initialize(isolate, exports);
+
+  ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);
   RoaringBitmap32BufferedIterator_Init(exports, addonData);
 
   addonData->setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
-
-  ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
 
   addonData->initializationCompleted();
 }

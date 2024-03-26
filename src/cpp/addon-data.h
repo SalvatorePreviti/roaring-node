@@ -3,6 +3,7 @@
 
 #include "includes.h"
 #include "addon-strings.h"
+#include "object-wrap.h"
 #include <iostream>
 
 template <typename T>
@@ -15,12 +16,18 @@ class AddonData;
 
 void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info);
 
+void AddonData_Cleanup(void * param);
+
+void AddonData_EmptyCallback(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::Empty(info.GetIsolate())));
+  info.GetReturnValue().Set(v8::Undefined(info.GetIsolate()));
+}
+
 class AddonData final {
  public:
   static const constexpr uint64_t OBJECT_TOKEN = 0x2a5a4Fd152230110;
 
   v8::Isolate * isolate;
-  v8::Persistent<v8::Symbol> addonDataSym;
   v8::Persistent<v8::Object> persistent;
 
   v8::Persistent<v8::Object> Uint32Array;
@@ -35,7 +42,7 @@ class AddonData final {
 
   AddonDataStrings strings;
 
-  inline AddonData() : isolate(nullptr) { std::cout << ":AddonData " << this << std::endl; }
+  AddonData() : isolate(nullptr) { std::cout << ":AddonData " << this << std::endl; }
 
   ~AddonData() {
     std::cout << ":~AddonData " << this << std::endl;
@@ -44,27 +51,17 @@ class AddonData final {
       this->persistent.ClearWeak();
       this->persistent.Reset();
     }
+    if (this->isolate) {
+      this->isolate = nullptr;
+      isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this));
+    }
   }
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
-    v8::Local<v8::Value> data = info.Data();
-    if (!data->IsObject()) {
-      return nullptr;
-    }
-    v8::Local<v8::Object> obj;
-    if (!data->ToObject(info.GetIsolate()->GetCurrentContext()).ToLocal(&obj)) {
-      return nullptr;
-    }
-    if (obj->InternalFieldCount() != 2) {
-      return nullptr;
-    }
-    if (obj->GetAlignedPointerFromInternalField(1) != reinterpret_cast<void *>(OBJECT_TOKEN)) {
-      return nullptr;
-    }
-    return reinterpret_cast<AddonData *>(obj->GetAlignedPointerFromInternalField(0));
+    return ObjectWrap::TryUnwrap<AddonData>(info.Data(), info.GetIsolate());
   }
 
-  inline void initialize(v8::Isolate * isolate, v8::Local<v8::Object> exports) {
+  void initialize(v8::Isolate * isolate, v8::Local<v8::Object> exports) {
     std::cout << ":AddonData::initialize " << this << std::endl;
     if (this->isolate) {
       return;
@@ -76,25 +73,19 @@ class AddonData final {
 
     auto global = context->Global();
 
-    this->addonDataSym.Reset(
-      isolate,
-      v8::Symbol::ForApi(
-        isolate, v8::String::NewFromUtf8Literal(isolate, "RoaringAddonData", v8::NewStringType::kInternalized)));
-
     this->strings.initialize(isolate);
 
-    v8::Local<v8::Object> obj;
     auto objT = v8::ObjectTemplate::New(isolate);
     objT->SetInternalFieldCount(2);
 
-    if (objT->NewInstance(context).ToLocal(&obj)) {
-      obj->SetAlignedPointerInInternalField(0, this);
-      obj->SetAlignedPointerInInternalField(1, reinterpret_cast<void *>(OBJECT_TOKEN));
+    v8::Local<v8::Object> obj = objT->NewInstance(context).ToLocalChecked();
 
-      this->persistent.Reset(isolate, obj);
+    int indices[2] = {0, 1};
+    void * values[2] = {this, (void *)(AddonData::OBJECT_TOKEN)};
+    obj->SetAlignedPointerInInternalFields(2, indices, values);
 
-      ignoreMaybeResult(exports->Set(context, this->addonDataSym.Get(isolate), obj));
-    }
+    this->persistent.Reset(isolate, obj);
+    isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(this));
 
     auto from = this->strings.from.Get(isolate);
 
@@ -110,23 +101,31 @@ class AddonData final {
     this->Uint32Array_from.Reset(isolate, uint32arrayFrom);
   }
 
-  inline void initializationCompleted() {
-    if (!this->persistent.IsEmpty() && !this->persistent.IsWeak()) {
-      this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
-    }
+  void initializationCompleted() {
+    std::cout << ":AddonData::initializationCompleted " << this << std::endl;
+    node::AddEnvironmentCleanupHook(this->isolate, AddonData_Cleanup, this);
+    this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
   }
 
-  void setMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
+  void Cleanup() {
+    v8::HandleScope scope(isolate);
+    this->RoaringBitmap32_constructorTemplate.Reset();
+    this->RoaringBitmap32_constructor.Reset();
+    this->RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
+    this->RoaringBitmap32BufferedIterator_constructor.Reset();
+  }
+
+  void setStaticMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
     v8::Isolate * isolate = this->isolate;
-    auto addonDataObj = this->persistent.Get(isolate);
+    v8::HandleScope scope(isolate);
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonDataObj);
-    v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
+    v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, this->persistent.Get(isolate));
     v8::Local<v8::String> fn_name =
       v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
+    t->SetClassName(fn_name);
+    v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
     fn->SetName(fn_name);
     ignoreMaybeResult(recv->Set(context, fn_name, fn));
-    ignoreMaybeResult(fn->Set(context, this->addonDataSym.Get(isolate), addonDataObj));
   }
 };
 
@@ -137,6 +136,14 @@ void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info) {
     addonData->persistent.ClearWeak();
     addonData->persistent.Reset();
     delete addonData;
+  }
+}
+
+void AddonData_Cleanup(void * param) {
+  std::cout << ":AddonData_Cleanup " << param << std::endl;
+  AddonData * addonData = static_cast<AddonData *>(param);
+  if (addonData) {
+    addonData->Cleanup();
   }
 }
 
