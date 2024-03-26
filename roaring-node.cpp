@@ -105,6 +105,7 @@ inline size_t bare_aligned_malloc_size(const void * ptr) {
 #include <node.h>
 #include <node_buffer.h>
 #include <uv.h>
+#include <iostream>
 
 
 // #include "croaring.h"
@@ -2819,27 +2820,6 @@ namespace v8utils {
     template <typename Q>
     bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
       if (!from.IsEmpty()) {
-        if (from->IsTypedArray()) {
-          bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::TypedArray> array = v8::Local<v8::TypedArray>::Cast(from);
-          this->length = array->Length();
-          auto arrayBuffer = array->Buffer();
-          if (arrayBuffer.IsEmpty()) {
-            this->reset();
-            return false;
-          }
-          auto data = arrayBuffer->Data();
-          if (data) {
-            this->backingStore = arrayBuffer->GetBackingStore();
-            this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
-            this->length = array->ByteLength() / sizeof(T);
-          } else {
-            this->data = nullptr;
-            this->length = 0;
-          }
-          return true;
-        }
-
         if (from->IsArrayBufferView()) {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
@@ -2860,9 +2840,9 @@ namespace v8utils {
           return true;
         }
 
-        if (from->IsSharedArrayBuffer()) {
+        if (from->IsArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
+          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           auto data = arrayBuffer->Data();
           if (data) {
             this->backingStore = arrayBuffer->GetBackingStore();
@@ -2875,9 +2855,9 @@ namespace v8utils {
           return true;
         }
 
-        if (from->IsArrayBuffer()) {
+        if (from->IsSharedArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
+          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           auto data = arrayBuffer->Data();
           if (data) {
             this->backingStore = arrayBuffer->GetBackingStore();
@@ -3009,12 +2989,24 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
     }
   }
 
-  if (alignment == 0) {
-    return info.GetReturnValue().Set(true);
+  bool result = false;
+  auto value = info[0];
+  if (value->IsArrayBufferView()) {
+    auto array = v8::Local<v8::ArrayBufferView>::Cast(value);
+    if (!array.IsEmpty()) {
+      auto arrayBuffer = array->Buffer();
+      if (!arrayBuffer.IsEmpty()) {
+        result = alignment == 0 ||
+          is_pointer_aligned(reinterpret_cast<uint8_t *>(array->Buffer()->Data()) + array->ByteOffset(), alignment);
+      }
+    }
+  } else if (value->IsArrayBuffer()) {
+    result = alignment == 0 || is_pointer_aligned(v8::Local<v8::ArrayBuffer>::Cast(value)->Data(), alignment);
+  } else if (value->IsSharedArrayBuffer()) {
+    result = alignment == 0 || is_pointer_aligned(v8::Local<v8::SharedArrayBuffer>::Cast(value)->Data(), alignment);
   }
 
-  v8utils::TypedArrayContent<uint8_t> content(isolate, info[0]);
-  info.GetReturnValue().Set(is_pointer_aligned(content.data, alignment));
+  info.GetReturnValue().Set(result);
 }
 
 void AlignedBuffers_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
@@ -4708,8 +4700,9 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
           }
         }
       }
-    } else if (localValue->IsTypedArray()) {
-      auto array = localValue.As<v8::TypedArray>();
+
+    } else if (localValue->IsArrayBufferView()) {
+      auto array = localValue.As<v8::ArrayBufferView>();
       if (!array.IsEmpty() && array->ByteLength() >= length) {
         if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
           return;
@@ -4732,16 +4725,8 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
           }
         }
       }
-    } else if (localValue->IsArrayBufferView()) {
-      auto array = localValue.As<v8::ArrayBufferView>();
-      if (!array.IsEmpty() && array->ByteLength() >= length) {
-        if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
-          return;
-        }
-      }
-    }
-
-    return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
+    } else
+      return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
   }
 
   ~RoaringBitmapSerializer() { bare_aligned_free(this->allocatedBuffer); }
@@ -7599,7 +7584,6 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
   if (!arg->IsNullOrUndefined() && !arg->IsFunction()) {
     if (arg->IsUint32Array() || arg->IsInt32Array()) {
       worker->buffer.set(isolate, arg);
-      const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
     } else if (arg->IsObject()) {
       if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(arg)) {
         return v8utils::throwTypeError(

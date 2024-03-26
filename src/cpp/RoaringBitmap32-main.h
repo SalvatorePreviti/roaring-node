@@ -724,7 +724,6 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
   if (!arg->IsNullOrUndefined() && !arg->IsFunction()) {
     if (arg->IsUint32Array() || arg->IsInt32Array()) {
       worker->buffer.set(isolate, arg);
-      const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
     } else if (arg->IsObject()) {
       if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(arg)) {
         return v8utils::throwTypeError(

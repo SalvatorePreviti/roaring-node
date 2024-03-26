@@ -5,6 +5,7 @@
 #include <node.h>
 #include <node_buffer.h>
 #include <uv.h>
+#include <iostream>
 
 #include "croaring.h"
 

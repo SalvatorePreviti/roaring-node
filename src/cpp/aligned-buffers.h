@@ -112,12 +112,24 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
     }
   }
 
-  if (alignment == 0) {
-    return info.GetReturnValue().Set(true);
+  bool result = false;
+  auto value = info[0];
+  if (value->IsArrayBufferView()) {
+    auto array = v8::Local<v8::ArrayBufferView>::Cast(value);
+    if (!array.IsEmpty()) {
+      auto arrayBuffer = array->Buffer();
+      if (!arrayBuffer.IsEmpty()) {
+        result = alignment == 0 ||
+          is_pointer_aligned(reinterpret_cast<uint8_t *>(array->Buffer()->Data()) + array->ByteOffset(), alignment);
+      }
+    }
+  } else if (value->IsArrayBuffer()) {
+    result = alignment == 0 || is_pointer_aligned(v8::Local<v8::ArrayBuffer>::Cast(value)->Data(), alignment);
+  } else if (value->IsSharedArrayBuffer()) {
+    result = alignment == 0 || is_pointer_aligned(v8::Local<v8::SharedArrayBuffer>::Cast(value)->Data(), alignment);
   }
 
-  v8utils::TypedArrayContent<uint8_t> content(isolate, info[0]);
-  info.GetReturnValue().Set(is_pointer_aligned(content.data, alignment));
+  info.GetReturnValue().Set(result);
 }
 
 void AlignedBuffers_Init(v8::Local<v8::Object> exports, AddonData * addonData) {

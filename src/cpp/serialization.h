@@ -201,8 +201,9 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
           }
         }
       }
-    } else if (localValue->IsTypedArray()) {
-      auto array = localValue.As<v8::TypedArray>();
+
+    } else if (localValue->IsArrayBufferView()) {
+      auto array = localValue.As<v8::ArrayBufferView>();
       if (!array.IsEmpty() && array->ByteLength() >= length) {
         if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
           return;
@@ -225,16 +226,8 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
           }
         }
       }
-    } else if (localValue->IsArrayBufferView()) {
-      auto array = localValue.As<v8::ArrayBufferView>();
-      if (!array.IsEmpty() && array->ByteLength() >= length) {
-        if (node::Buffer::New(isolate, array->Buffer(), array->ByteOffset(), length).ToLocal(&result)) {
-          return;
-        }
-      }
-    }
-
-    return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
+    } else
+      return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create the buffer view");
   }
 
   ~RoaringBitmapSerializer() { bare_aligned_free(this->allocatedBuffer); }

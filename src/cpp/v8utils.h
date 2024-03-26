@@ -158,27 +158,6 @@ namespace v8utils {
     template <typename Q>
     bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
       if (!from.IsEmpty()) {
-        if (from->IsTypedArray()) {
-          bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::TypedArray> array = v8::Local<v8::TypedArray>::Cast(from);
-          this->length = array->Length();
-          auto arrayBuffer = array->Buffer();
-          if (arrayBuffer.IsEmpty()) {
-            this->reset();
-            return false;
-          }
-          auto data = arrayBuffer->Data();
-          if (data) {
-            this->backingStore = arrayBuffer->GetBackingStore();
-            this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
-            this->length = array->ByteLength() / sizeof(T);
-          } else {
-            this->data = nullptr;
-            this->length = 0;
-          }
-          return true;
-        }
-
         if (from->IsArrayBufferView()) {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
@@ -199,9 +178,9 @@ namespace v8utils {
           return true;
         }
 
-        if (from->IsSharedArrayBuffer()) {
+        if (from->IsArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
+          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           auto data = arrayBuffer->Data();
           if (data) {
             this->backingStore = arrayBuffer->GetBackingStore();
@@ -214,9 +193,9 @@ namespace v8utils {
           return true;
         }
 
-        if (from->IsArrayBuffer()) {
+        if (from->IsSharedArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
-          v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
+          v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           auto data = arrayBuffer->Data();
           if (data) {
             this->backingStore = arrayBuffer->GetBackingStore();
