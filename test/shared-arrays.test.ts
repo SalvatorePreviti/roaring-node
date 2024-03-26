@@ -39,7 +39,7 @@ describe("shared arrays", () => {
       expect(isBufferAligned(buffer, 512)).eq(true);
     });
 
-    it.only("can allocate a buffer of a given size", () => {
+    it("can allocate a buffer of a given size", () => {
       const buffer = bufferAlignedAllocShared(10);
       expect(buffer).toBeInstanceOf(Uint8Array);
       expect(buffer.buffer).toBeInstanceOf(SharedArrayBuffer);
