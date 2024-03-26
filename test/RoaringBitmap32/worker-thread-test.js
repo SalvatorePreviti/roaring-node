@@ -25,14 +25,7 @@ const runWorkerThreadTest = () => {
   workerThreadTest().then(
     () => {
       // eslint-disable-next-line no-console
-      console.log("worker thread test ok");
-      setInterval(() => {
-        gc();
-      }, 1).unref();
-      gc();
-      setTimeout(() => {
-        console.log("ok");
-      }, 10001);
+      console.log("ok");
     },
     (e) => {
       // eslint-disable-next-line no-console

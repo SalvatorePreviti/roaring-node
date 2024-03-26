@@ -28,7 +28,6 @@ void RoaringBitmap32_copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) 
 }
 
 void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
-  std::cout << ":RoaringBitmap32_WeakCallback " << info.GetParameter() << std::endl;
   RoaringBitmap32 * p = info.GetParameter();
   if (p != nullptr) {
     delete p;

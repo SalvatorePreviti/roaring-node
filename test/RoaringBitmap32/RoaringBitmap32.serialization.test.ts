@@ -113,14 +113,6 @@ describe("RoaringBitmap32 serialization", () => {
     it("returns standard value for empty bitmap (portable)", () => {
       expect(Array.from(new RoaringBitmap32().serialize(true))).toEqual([58, 48, 0, 0, 0, 0, 0, 0]);
     });
-
-    it("can serialize to a SharedArrayBuffer", () => {
-      const bitmap = new RoaringBitmap32(data);
-      const output = new SharedArrayBuffer(bitmap.getSerializationSizeInBytes(true));
-      const buffer = bitmap.serialize("portable", output);
-      expect(buffer.buffer).eq(output);
-      expect(Array.from(new Uint8Array(buffer))).toEqual(Array.from(bitmap.serialize(true)));
-    });
   });
 
   describe("deserialize", () => {

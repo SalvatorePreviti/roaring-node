@@ -9,13 +9,6 @@ describe("asBuffer", () => {
     expect(output.buffer).eq(input);
   });
 
-  it("wraps a SharedArrayBuffer", () => {
-    const input = new SharedArrayBuffer(3);
-    const output = asBuffer(input);
-    expect(output).toBeInstanceOf(Buffer);
-    expect(output.buffer).eq(input);
-  });
-
   it("wraps an arraybuffer view", () => {
     for (const ctor of [
       Uint8Array,

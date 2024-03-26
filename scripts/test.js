@@ -2,8 +2,6 @@
 
 async function test() {
   process.argv.push("--run");
-  process.argv.push("--reporter", "verbose");
-  process.argv.push("test/aligned-buffers/bufferAlignedAllocShared.test.ts");
   return import("vitest/vitest.mjs");
 }
 

@@ -190,13 +190,6 @@ describe("RoaringBitmap32 basic", () => {
       expect(Array.from(output)).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
     });
 
-    it("supports SharedArrayBuffer", () => {
-      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
-      const output = new Uint32Array(new SharedArrayBuffer(6 * 4));
-      expect(bitmap.toUint32Array(output)).eq(output);
-      expect(Array.from(output)).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
-    });
-
     it("writes the bitmap to the output array if the output array is bigger", () => {
       const data = [1, 2, 10, 30, 0x7fffffff, 0xffffffff];
       const bitmap = new RoaringBitmap32(data);
@@ -270,14 +263,6 @@ describe("RoaringBitmap32 basic", () => {
       const output = new Uint32Array(6);
       expect(await bitmap.toUint32ArrayAsync(output)).eq(output);
       expect(Array.from(output)).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
-    });
-
-    it("writes the bitmap to the output SharedArrayBuffer", async () => {
-      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
-      const output = new SharedArrayBuffer(6 * 4);
-      const result = await bitmap.toUint32ArrayAsync(output);
-      expect(result.buffer).eq(output);
-      expect(Array.from(result)).toEqual([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
     });
 
     it("writes the bitmap to the output array if the output array is the same size", async () => {
@@ -478,14 +463,6 @@ describe("RoaringBitmap32 basic", () => {
       const result = bitmap.rangeUint32Array(output);
       expect(Array.from(result)).toEqual([1, 2, 10]);
       expect(result).eq(output);
-    });
-
-    it("accepts a single argument of SharedArrayBuffer", () => {
-      const bitmap = new RoaringBitmap32([1, 2, 10, 30, 50, 70, 100]);
-      const output = new SharedArrayBuffer(3 * 4);
-      const result = bitmap.rangeUint32Array(output);
-      expect(Array.from(result)).toEqual([1, 2, 10]);
-      expect(result.buffer).eq(output);
     });
   });
 

@@ -124,7 +124,6 @@ class RoaringBitmap32 final {
   }
 
   ~RoaringBitmap32() {
-    std::cout << ":~RoaringBitmap32 " << this << std::endl;
     this->readonlyViewPersistent.Reset();
     if (!this->persistent.IsEmpty()) {
       this->persistent.ClearWeak();
