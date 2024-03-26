@@ -5,7 +5,7 @@
 #include "addon-strings.h"
 #include "object-wrap.h"
 #include <unordered_set>
-#include <mutex>
+#include <shared_mutex>
 
 template <typename T>
 inline void ignoreMaybeResult(v8::Maybe<T>) {}
@@ -75,8 +75,6 @@ class AddonData final {
     this->Uint32Array_from.Reset(isolate, uint32arrayFrom);
   }
 
-  ~AddonData() { isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this)); }
-
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     auto data = info.Data();
     if (data->IsExternal()) {
@@ -108,28 +106,33 @@ class AddonData final {
   }
 
   inline static bool isActive(const AddonData * addonData) {
-    return addonData != nullptr &&
-      AddonData::instances.find(const_cast<AddonData *>(addonData)) != AddonData::instances.end();
+    if (addonData == nullptr) {
+      return false;
+    }
+    std::shared_lock<std::shared_mutex> lock(AddonData::instancesMutex);
+    return AddonData::instances.find(const_cast<AddonData *>(addonData)) != AddonData::instances.end();
   }
 
  private:
-  static std::mutex instancesMutex;
+  static std::shared_mutex instancesMutex;
   static std::unordered_set<AddonData *> instances;
 
+  static void AddonData_Init(AddonData * addonData) {
+    std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
+    AddonData::instances.insert(addonData);
+    node::AddEnvironmentCleanupHook(addonData->isolate, AddonData::AddonData_Cleanup, addonData);
+  }
+
   static void AddonData_Cleanup(void * addonData) {
-    std::lock_guard<std::mutex> lock(AddonData::instancesMutex);
+    std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
     AddonData::instances.erase(static_cast<AddonData *>(addonData));
     delete static_cast<AddonData *>(addonData);
   }
 
-  static void AddonData_Init(AddonData * addonData) {
-    std::lock_guard<std::mutex> lock(AddonData::instancesMutex);
-    AddonData::instances.insert(addonData);
-    node::AddEnvironmentCleanupHook(addonData->isolate, AddonData::AddonData_Cleanup, addonData);
-  }
+  ~AddonData() { isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this)); }
 };
 
-std::mutex AddonData::instancesMutex;
+std::shared_mutex AddonData::instancesMutex;
 std::unordered_set<AddonData *> AddonData::instances;
 
 #endif

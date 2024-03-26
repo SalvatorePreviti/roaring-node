@@ -44,7 +44,17 @@ class AsyncWorker {
 
   inline bool hasStarted() const { return this->_started; }
 
-  inline bool hasError() const { return this->_error.hasError(); }
+  inline bool hasError() const {
+    if (this->_error.hasError()) {
+      return true;
+    }
+    if (this->maybeAddonData != nullptr && !AddonData::isActive(this->maybeAddonData)) {
+      return true;
+    }
+    return false;
+  }
+
+  inline bool isDown() const { return this->maybeAddonData != nullptr && !AddonData::isActive(this->maybeAddonData); }
 
   inline void setError(const WorkerError & error) {
     if (error.hasError() && !this->_error.hasError()) {
@@ -139,6 +149,10 @@ class AsyncWorker {
   v8::Persistent<v8::Promise::Resolver, v8::CopyablePersistentTraits<v8::Promise::Resolver>> _resolver;
 
   virtual bool _start() {
+    if (this->isDown()) {
+      return false;
+    }
+
     this->_started = true;
     if (
       uv_queue_work(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &_task, AsyncWorker::_work, AsyncWorker::_done) !=
@@ -150,7 +164,8 @@ class AsyncWorker {
   }
 
   static void _resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error) {
-    if (worker->_completed) {
+    if (worker->_completed || worker->isDown()) {
+      delete worker;
       return;
     }
 
@@ -300,6 +315,10 @@ class ParallelAsyncWorker : public AsyncWorker {
   volatile uint32_t _currentIndex;
 
   bool _start() override {
+    if (this->isDown()) {
+      return false;
+    }
+
     if (concurrency == 0) {
       concurrency = getCpusCount();
     }
@@ -343,6 +362,10 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker) {
+      if (worker->isDown()) {
+        return;
+      }
+
       auto oldIsolate = thread_local_isolate;
       thread_local_isolate = worker->isolate;
       uint32_t loopCount = worker->loopCount;
@@ -360,6 +383,10 @@ class ParallelAsyncWorker : public AsyncWorker {
 
   static void _parallelDone(uv_work_t * request, int status) {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
+
+    if (worker->isDown()) {
+      return;
+    }
 
     if (worker->_completed) {
       worker->isolate->PerformMicrotaskCheckpoint();
