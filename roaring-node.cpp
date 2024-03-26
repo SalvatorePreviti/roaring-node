@@ -2534,6 +2534,7 @@ namespace ObjectWrap {
 #endif  // ROARING_NODE_OBJECT_WRAP_
 
 #include <unordered_set>
+#include <mutex>
 #include <shared_mutex>
 
 template <typename T>

@@ -5,6 +5,7 @@
 #include "addon-strings.h"
 #include "object-wrap.h"
 #include <unordered_set>
+#include <mutex>
 #include <shared_mutex>
 
 template <typename T>
