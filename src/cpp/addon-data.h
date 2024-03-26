@@ -4,7 +4,6 @@
 #include "includes.h"
 #include "addon-strings.h"
 #include "object-wrap.h"
-#include <iostream>
 
 template <typename T>
 inline void ignoreMaybeResult(v8::Maybe<T>) {}

@@ -13,17 +13,14 @@
 #define ROARING_NODE_MEMORY_
 
 
-// #include "includes.h"
+// #include "core.h"
 
-#ifndef ROARING_NODE_INCLUDES_
-#define ROARING_NODE_INCLUDES_
+#ifndef ROARING_NODE_CORE_
+#define ROARING_NODE_CORE_
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <node.h>
-#include <node_buffer.h>
-#include <uv.h>
 #include <atomic>
 #include <string.h>
 #include <math.h>
@@ -44,6 +41,70 @@
 #  define atomicIncrement32(ptr) __sync_add_and_fetch(ptr, 1)
 #  define atomicDecrement32(ptr) __sync_sub_and_fetch(ptr, 1)
 #endif
+
+typedef const char * const_char_ptr_t;
+
+/** portable version of posix_memalign */
+void * bare_aligned_malloc(size_t alignment, size_t size) {
+  void * p;
+#ifdef _MSC_VER
+  p = _aligned_malloc(size, alignment);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  p = __mingw_aligned_malloc(size, alignment);
+#else
+  // somehow, if this is used before including "x86intrin.h", it creates an
+  // implicit defined warning.
+  if (posix_memalign(&p, alignment, size) != 0) return NULL;
+#endif
+  return p;
+}
+
+/** portable version of free fo aligned allocs */
+void bare_aligned_free(void * memblock) {
+  if (memblock != nullptr) {
+#ifdef _MSC_VER
+    _aligned_free(memblock);
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+    __mingw_aligned_free(memblock);
+#else
+    free(memblock);
+#endif
+  }
+}
+
+/** portable version of malloc_size */
+inline size_t bare_malloc_size(const void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size((void *)ptr);
+#elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
+  return _msize((void *)ptr);
+#else
+  return malloc_usable_size((void *)ptr);
+#endif
+}
+
+/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
+inline size_t bare_aligned_malloc_size(const void * ptr) {
+#if defined(__APPLE__)
+  return malloc_size((void *)ptr);
+#elif defined(_WIN32)
+  return _aligned_msize((void *)ptr, 32, 0);
+#else
+  return malloc_usable_size((void *)ptr);
+#endif
+}
+
+#endif
+
+
+// #include "includes.h"
+
+#ifndef ROARING_NODE_INCLUDES_
+#define ROARING_NODE_INCLUDES_
+
+#include <node.h>
+#include <node_buffer.h>
+#include <uv.h>
 
 
 // #include "croaring.h"
@@ -2301,62 +2362,8 @@ using namespace ::roaring::api;
 #endif  // ROARING_NODE_CROARING_
 
 
-typedef const char * const_char_ptr_t;
-
 #endif  // ROARING_NODE_INCLUDES_
 
-
-#include <iostream>
-
-/** portable version of posix_memalign */
-void * bare_aligned_malloc(size_t alignment, size_t size) {
-  void * p;
-#ifdef _MSC_VER
-  p = _aligned_malloc(size, alignment);
-#elif defined(__MINGW32__) || defined(__MINGW64__)
-  p = __mingw_aligned_malloc(size, alignment);
-#else
-  // somehow, if this is used before including "x86intrin.h", it creates an
-  // implicit defined warning.
-  if (posix_memalign(&p, alignment, size) != 0) return NULL;
-#endif
-  return p;
-}
-
-/** portable version of free fo aligned allocs */
-void bare_aligned_free(void * memblock) {
-  if (memblock != nullptr) {
-#ifdef _MSC_VER
-    _aligned_free(memblock);
-#elif defined(__MINGW32__) || defined(__MINGW64__)
-    __mingw_aligned_free(memblock);
-#else
-    free(memblock);
-#endif
-  }
-}
-
-/** portable version of malloc_size */
-inline size_t bare_malloc_size(const void * ptr) {
-#if defined(__APPLE__)
-  return malloc_size((void *)ptr);
-#elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
-  return _msize((void *)ptr);
-#else
-  return malloc_usable_size((void *)ptr);
-#endif
-}
-
-/** portable version of malloc_size for memory allocated with bare_aligned_malloc */
-inline size_t bare_aligned_malloc_size(const void * ptr) {
-#if defined(__APPLE__)
-  return malloc_size((void *)ptr);
-#elif defined(_WIN32)
-  return _aligned_msize((void *)ptr, 32, 0);
-#else
-  return malloc_usable_size((void *)ptr);
-#endif
-}
 
 std::atomic<int64_t> gcaware_totalMemCounter{0};
 
@@ -2432,17 +2439,13 @@ void gcaware_aligned_free(void * memory) {
   }
 }
 
-void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
+void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(hint); }
 
-void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) { bare_aligned_free(data); }
+void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) { bare_aligned_free(deleter_data); }
 
 inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexcept {
   auto iptr = reinterpret_cast<std::uintptr_t>(ptr);
   return !(iptr % alignment);
-}
-
-void getRoaringUsedMemory(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  info.GetReturnValue().Set((double)gcaware_totalMem());
 }
 
 #endif  // ROARING_NODE_MEMORY_
@@ -2530,7 +2533,6 @@ namespace ObjectWrap {
 
 #endif  // ROARING_NODE_OBJECT_WRAP_
 
-#include <iostream>
 
 template <typename T>
 inline void ignoreMaybeResult(v8::Maybe<T>) {}
@@ -2942,7 +2944,7 @@ inline void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, b
   v8::Local<v8::Value> bufferValue;
   if (shared) {
     std::shared_ptr<v8::BackingStore> backing_store =
-      v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
+      v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, ptr);
 
     auto sharedBuf = v8::SharedArrayBuffer::New(isolate, backing_store);
     if (sharedBuf.IsEmpty()) {
@@ -2958,7 +2960,7 @@ inline void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, b
     }
     info.GetReturnValue().Set(bufferValue);
   } else {
-    auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
+    auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, ptr);
     if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
       bare_aligned_free(ptr);
       return v8utils::throwError(isolate, "Buffer creation failed");
@@ -4666,8 +4668,8 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
 
     if (allocatedBuffer) {
       // Create a new buffer using the allocated memory
-      v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal =
-        node::Buffer::New(isolate, (char *)allocatedBuffer, this->serializedSize, bare_aligned_free_callback, nullptr);
+      v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
+        isolate, (char *)allocatedBuffer, this->serializedSize, bare_aligned_free_callback, allocatedBuffer);
       if (!nodeBufferMaybeLocal.ToLocal(&result)) {
         return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create a new buffer");
       }
@@ -5685,7 +5687,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     if (allocatedBuffer && this->outputSize != 0) {
       // Create a new buffer using the allocated memory
       v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate, (char *)allocatedBuffer, this->outputSize * sizeof(uint32_t), bare_aligned_free_callback, nullptr);
+        isolate, (char *)allocatedBuffer, this->outputSize * sizeof(uint32_t), bare_aligned_free_callback, allocatedBuffer);
       if (!nodeBufferMaybeLocal.IsEmpty()) {
         this->allocatedBuffer = nullptr;
       }
@@ -7956,6 +7958,10 @@ using namespace v8;
     v8::Local<v8::Object> exports, v8::Local<v8::Value> module, v8::Local<v8::Context> context) {      \
     registration(exports);                                                                             \
   }
+
+void getRoaringUsedMemory(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetReturnValue().Set((double)gcaware_totalMem());
+}
 
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
