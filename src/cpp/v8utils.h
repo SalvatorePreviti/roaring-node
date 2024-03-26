@@ -123,6 +123,7 @@ namespace v8utils {
    public:
     size_t length;
     v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
+    std::shared_ptr<v8::BackingStore> backingStore;
     T * data;
 
     inline TypedArrayContent() : length(0), data(nullptr) {}
@@ -141,6 +142,7 @@ namespace v8utils {
       this->length = 0;
       this->data = nullptr;
       this->bufferPersistent.Reset();
+      this->backingStore.reset();
     }
 
     template <typename Q>
@@ -160,13 +162,14 @@ namespace v8utils {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::TypedArray> array = v8::Local<v8::TypedArray>::Cast(from);
           this->length = array->Length();
-          auto innerBuffer = array->Buffer();
-          if (innerBuffer.IsEmpty()) {
+          auto arrayBuffer = array->Buffer();
+          if (arrayBuffer.IsEmpty()) {
             this->reset();
             return false;
           }
-          auto data = innerBuffer->Data();
+          auto data = arrayBuffer->Data();
           if (data) {
+            this->backingStore = arrayBuffer->GetBackingStore();
             this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
             this->length = array->ByteLength() / sizeof(T);
           } else {
@@ -186,6 +189,7 @@ namespace v8utils {
           }
           auto data = arrayBuffer->Data();
           if (data) {
+            this->backingStore = arrayBuffer->GetBackingStore();
             this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
             this->length = array->ByteLength() / sizeof(T);
           } else {
@@ -200,6 +204,7 @@ namespace v8utils {
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           auto data = arrayBuffer->Data();
           if (data) {
+            this->backingStore = arrayBuffer->GetBackingStore();
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
           } else {
@@ -214,6 +219,7 @@ namespace v8utils {
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           auto data = arrayBuffer->Data();
           if (data) {
+            this->backingStore = arrayBuffer->GetBackingStore();
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
           } else {
