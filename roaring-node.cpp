@@ -2641,7 +2641,12 @@ class AddonData final {
       return false;
     }
     std::shared_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-    return AddonData::instances.find(const_cast<AddonData *>(addonData)) != AddonData::instances.end();
+    if (AddonData::instances.find(const_cast<AddonData *>(addonData)) != AddonData::instances.end()) {
+      return true;
+    }
+
+    std::cout << "AddonData::isActive: AddonData is not active " << addonData << std::endl;
+    return false;
   }
 
  private:
