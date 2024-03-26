@@ -349,19 +349,19 @@ if (!roaring[initializedSym]) {
     defineProperty(roaringBitmap32_proto, name, prop);
   };
 
-  const defineValue = (name, value, writable) =>
-    defineProp(name, { value, writable: !!writable, configurable: false, enumerable: true });
+  const defineValue = (name, value) =>
+    defineProp(name, { value, writable: true, configurable: true, enumerable: true });
 
   let packageVersion = null;
 
   defineProp("PackageVersion", {
     get: () => (packageVersion !== null ? packageVersion : (packageVersion = require("./package.json").version)),
-    configurable: false,
+    configurable: true,
     enumerable: true,
   });
 
-  defineValue("RoaringBitmap32Iterator", RoaringBitmap32Iterator, false);
-  defineValue("RoaringBitmap32ReverseIterator", RoaringBitmap32ReverseIterator, false);
+  defineValue("RoaringBitmap32Iterator", RoaringBitmap32Iterator);
+  defineValue("RoaringBitmap32ReverseIterator", RoaringBitmap32ReverseIterator);
 
   defineValue(
     "SerializationFormat",

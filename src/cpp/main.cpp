@@ -17,9 +17,9 @@ using namespace v8;
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  AddonData * addonData = new AddonData();
+  v8::HandleScope scope(isolate);
 
-  addonData->initialize(isolate, exports);
+  AddonData * addonData = new AddonData(isolate);
 
   ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
 

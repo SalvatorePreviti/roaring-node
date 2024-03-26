@@ -42,32 +42,8 @@ class AddonData final {
 
   AddonDataStrings strings;
 
-  AddonData() : isolate(nullptr) { std::cout << ":AddonData " << this << std::endl; }
-
-  ~AddonData() {
-    std::cout << ":~AddonData " << this << std::endl;
-
-    if (!this->persistent.IsEmpty()) {
-      this->persistent.ClearWeak();
-      this->persistent.Reset();
-    }
-    if (this->isolate) {
-      this->isolate = nullptr;
-      isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this));
-    }
-  }
-
-  static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
-    return ObjectWrap::TryUnwrap<AddonData>(info.Data(), info.GetIsolate());
-  }
-
-  void initialize(v8::Isolate * isolate, v8::Local<v8::Object> exports) {
-    std::cout << ":AddonData::initialize " << this << std::endl;
-    if (this->isolate) {
-      return;
-    }
-
-    this->isolate = isolate;
+  explicit AddonData(v8::Isolate * isolate) : isolate(isolate) {
+    v8::HandleScope scope(isolate);
 
     auto context = isolate->GetCurrentContext();
 
@@ -101,18 +77,20 @@ class AddonData final {
     this->Uint32Array_from.Reset(isolate, uint32arrayFrom);
   }
 
-  void initializationCompleted() {
-    std::cout << ":AddonData::initializationCompleted " << this << std::endl;
-    node::AddEnvironmentCleanupHook(this->isolate, AddonData_Cleanup, this);
-    this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
+  ~AddonData() {
+    if (!this->persistent.IsEmpty()) {
+      this->persistent.ClearWeak();
+      this->persistent.Reset();
+    }
+    isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this));
   }
 
-  void Cleanup() {
-    v8::HandleScope scope(isolate);
-    this->RoaringBitmap32_constructorTemplate.Reset();
-    this->RoaringBitmap32_constructor.Reset();
-    this->RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
-    this->RoaringBitmap32BufferedIterator_constructor.Reset();
+  static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
+    return ObjectWrap::TryUnwrap<AddonData>(info.Data(), info.GetIsolate());
+  }
+
+  void initializationCompleted() {
+    this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
   }
 
   void setStaticMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
@@ -130,20 +108,11 @@ class AddonData final {
 };
 
 void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info) {
-  std::cout << ":AddonData_WeakCallback " << info.GetParameter() << std::endl;
   AddonData * addonData = info.GetParameter();
   if (addonData) {
     addonData->persistent.ClearWeak();
     addonData->persistent.Reset();
     delete addonData;
-  }
-}
-
-void AddonData_Cleanup(void * param) {
-  std::cout << ":AddonData_Cleanup " << param << std::endl;
-  AddonData * addonData = static_cast<AddonData *>(param);
-  if (addonData) {
-    addonData->Cleanup();
   }
 }
 

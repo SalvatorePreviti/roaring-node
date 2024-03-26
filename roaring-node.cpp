@@ -2320,7 +2320,6 @@ void * bare_aligned_malloc(size_t alignment, size_t size) {
   // implicit defined warning.
   if (posix_memalign(&p, alignment, size) != 0) return NULL;
 #endif
-  std::cout << "bare_aligned_malloc" << p << " " << size << " " << alignment << std::endl;
   return p;
 }
 
@@ -2435,10 +2434,7 @@ void gcaware_aligned_free(void * memory) {
 
 void bare_aligned_free_callback(char * data, void * hint) { bare_aligned_free(data); }
 
-void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) {
-  std::cout << "bare_aligned_free_callback2" << data << " " << length << " " << deleter_data << std::endl;
-  bare_aligned_free(data);
-}
+void bare_aligned_free_callback2(void * data, size_t length, void * deleter_data) { bare_aligned_free(data); }
 
 inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexcept {
   auto iptr = reinterpret_cast<std::uintptr_t>(ptr);
@@ -2627,32 +2623,8 @@ class AddonData final {
 
   AddonDataStrings strings;
 
-  AddonData() : isolate(nullptr) { std::cout << ":AddonData " << this << std::endl; }
-
-  ~AddonData() {
-    std::cout << ":~AddonData " << this << std::endl;
-
-    if (!this->persistent.IsEmpty()) {
-      this->persistent.ClearWeak();
-      this->persistent.Reset();
-    }
-    if (this->isolate) {
-      this->isolate = nullptr;
-      isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this));
-    }
-  }
-
-  static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
-    return ObjectWrap::TryUnwrap<AddonData>(info.Data(), info.GetIsolate());
-  }
-
-  void initialize(v8::Isolate * isolate, v8::Local<v8::Object> exports) {
-    std::cout << ":AddonData::initialize " << this << std::endl;
-    if (this->isolate) {
-      return;
-    }
-
-    this->isolate = isolate;
+  explicit AddonData(v8::Isolate * isolate) : isolate(isolate) {
+    v8::HandleScope scope(isolate);
 
     auto context = isolate->GetCurrentContext();
 
@@ -2686,21 +2658,23 @@ class AddonData final {
     this->Uint32Array_from.Reset(isolate, uint32arrayFrom);
   }
 
+  ~AddonData() {
+    if (!this->persistent.IsEmpty()) {
+      this->persistent.ClearWeak();
+      this->persistent.Reset();
+    }
+    isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(this));
+  }
+
+  static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
+    return ObjectWrap::TryUnwrap<AddonData>(info.Data(), info.GetIsolate());
+  }
+
   void initializationCompleted() {
-    std::cout << ":AddonData::initializationCompleted " << this << std::endl;
-    node::AddEnvironmentCleanupHook(this->isolate, AddonData_Cleanup, this);
     this->persistent.SetWeak(this, AddonData_WeakCallback, v8::WeakCallbackType::kParameter);
   }
 
-  void Cleanup() {
-    v8::HandleScope scope(isolate);
-    this->RoaringBitmap32_constructorTemplate.Reset();
-    this->RoaringBitmap32_constructor.Reset();
-    this->RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
-    this->RoaringBitmap32BufferedIterator_constructor.Reset();
-  }
-
-  void setMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
+  void setStaticMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
     v8::Isolate * isolate = this->isolate;
     v8::HandleScope scope(isolate);
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
@@ -2715,20 +2689,11 @@ class AddonData final {
 };
 
 void AddonData_WeakCallback(const v8::WeakCallbackInfo<AddonData> & info) {
-  std::cout << ":AddonData_WeakCallback " << info.GetParameter() << std::endl;
   AddonData * addonData = info.GetParameter();
   if (addonData) {
     addonData->persistent.ClearWeak();
     addonData->persistent.Reset();
     delete addonData;
-  }
-}
-
-void AddonData_Cleanup(void * param) {
-  std::cout << ":AddonData_Cleanup " << param << std::endl;
-  AddonData * addonData = static_cast<AddonData *>(param);
-  if (addonData) {
-    addonData->Cleanup();
   }
 }
 
@@ -7789,29 +7754,29 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), className);
   ctor->PrototypeTemplate()->Set(addonData->strings.CRoaringVersion.Get(isolate), versionString);
 
-  addonData->setMethod(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);
-  addonData->setMethod(ctorObject, "and", RoaringBitmap32_andStatic);
-  addonData->setMethod(ctorObject, "andNot", RoaringBitmap32_andNotStatic);
+  addonData->setStaticMethod(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);
+  addonData->setStaticMethod(ctorObject, "and", RoaringBitmap32_andStatic);
+  addonData->setStaticMethod(ctorObject, "andNot", RoaringBitmap32_andNotStatic);
 
   ignoreMaybeResult(ctorObject->Set(context, addonData->strings._default.Get(isolate), ctorFunction));
 
-  addonData->setMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic);
-  addonData->setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic);
-  addonData->setMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic);
-  addonData->setMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync);
+  addonData->setStaticMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic);
+  addonData->setStaticMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic);
+  addonData->setStaticMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic);
+  addonData->setStaticMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync);
 
   ignoreMaybeResult(ctorObject->Set(context, addonData->strings.from.Get(isolate), ctorFunction));
 
-  addonData->setMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync);
-  addonData->setMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic);
-  addonData->setMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic);
-  addonData->setMethod(ctorObject, "of", RoaringBitmap32_ofStatic);
-  addonData->setMethod(ctorObject, "or", RoaringBitmap32_orStatic);
-  addonData->setMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic);
-  addonData->setMethod(ctorObject, "swap", RoaringBitmap32_swapStatic);
-  addonData->setMethod(ctorObject, "unsafeFrozenView", RoaringBitmap32_unsafeFrozenViewStatic);
-  addonData->setMethod(ctorObject, "xor", RoaringBitmap32_xorStatic);
-  addonData->setMethod(ctorObject, "xorMany", RoaringBitmap32_xorManyStatic);
+  addonData->setStaticMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync);
+  addonData->setStaticMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic);
+  addonData->setStaticMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic);
+  addonData->setStaticMethod(ctorObject, "of", RoaringBitmap32_ofStatic);
+  addonData->setStaticMethod(ctorObject, "or", RoaringBitmap32_orStatic);
+  addonData->setStaticMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic);
+  addonData->setStaticMethod(ctorObject, "swap", RoaringBitmap32_swapStatic);
+  addonData->setStaticMethod(ctorObject, "unsafeFrozenView", RoaringBitmap32_unsafeFrozenViewStatic);
+  addonData->setStaticMethod(ctorObject, "xor", RoaringBitmap32_xorStatic);
+  addonData->setStaticMethod(ctorObject, "xorMany", RoaringBitmap32_xorManyStatic);
 
   auto CRoaringVersion = addonData->strings.CRoaringVersion.Get(isolate);
 
@@ -8044,9 +8009,9 @@ using namespace v8;
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  AddonData * addonData = new AddonData();
+  v8::HandleScope scope(isolate);
 
-  addonData->initialize(isolate, exports);
+  AddonData * addonData = new AddonData(isolate);
 
   ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), addonData->strings._default.Get(isolate), exports));
 
@@ -8054,7 +8019,7 @@ void InitRoaringNode(Local<Object> exports) {
   RoaringBitmap32_Init(exports, addonData);
   RoaringBitmap32BufferedIterator_Init(exports, addonData);
 
-  addonData->setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
+  addonData->setStaticMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
   addonData->initializationCompleted();
 }
