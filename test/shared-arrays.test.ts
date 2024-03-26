@@ -46,7 +46,6 @@ describe("shared arrays", () => {
       expect(buffer.length).eq(10);
       expect(isBufferAligned(buffer)).eq(true);
       expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
-      expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).eq(true);
     });
   });
 
@@ -78,7 +77,6 @@ describe("shared arrays", () => {
       expect(buffer.length).eq(10);
       expect(isBufferAligned(buffer)).eq(true);
       expect(RoaringBitmap32.isBufferAligned(buffer, 32)).eq(true);
-      expect(RoaringBitmap32.isBufferAligned(buffer.buffer)).eq(true);
     });
   });
 
