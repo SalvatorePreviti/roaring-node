@@ -36,8 +36,6 @@ void InitRoaringNode(Local<Object> exports) {
   RoaringBitmap32BufferedIterator_Init(exports, addonData, addonDataExternal);
 
   addonData->setStaticMethod(addonDataExternal, exports, "getRoaringUsedMemory", getRoaringUsedMemory);
-
-  addonData->initializationCompleted();
 }
 
 MODULE_WORKER_ENABLED(roaring, InitRoaringNode);

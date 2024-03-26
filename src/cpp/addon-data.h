@@ -78,8 +78,8 @@ class AddonData final {
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     auto data = info.Data();
-    if (data->IsExternal()) {
-      auto result = static_cast<AddonData *>(v8::External::Cast(*data)->Value());
+    if (!data.IsEmpty() && data->IsExternal()) {
+      auto result = static_cast<AddonData *>(data.As<v8::External>()->Value());
       if (AddonData::isActive(result)) {
         return result;
       }
@@ -87,19 +87,16 @@ class AddonData final {
     return nullptr;
   }
 
-  void initializationCompleted() {}
-
+  template <int N>
   void setStaticMethod(
     v8::Local<v8::External> addonDataExternal,
     v8::Local<v8::Object> recv,
-    const char * name,
+    const char (&literal)[N],
     v8::FunctionCallback callback) {
     v8::Isolate * isolate = this->isolate;
-    v8::HandleScope scope(isolate);
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonDataExternal);
-    v8::Local<v8::String> fn_name =
-      v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
+    v8::Local<v8::String> fn_name = v8::String::NewFromUtf8Literal(isolate, literal, v8::NewStringType::kInternalized);
     t->SetClassName(fn_name);
     v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
     fn->SetName(fn_name);

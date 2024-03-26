@@ -2608,8 +2608,8 @@ class AddonData final {
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     auto data = info.Data();
-    if (data->IsExternal()) {
-      auto result = static_cast<AddonData *>(v8::External::Cast(*data)->Value());
+    if (!data.IsEmpty() && data->IsExternal()) {
+      auto result = static_cast<AddonData *>(data.As<v8::External>()->Value());
       if (AddonData::isActive(result)) {
         return result;
       }
@@ -2617,19 +2617,16 @@ class AddonData final {
     return nullptr;
   }
 
-  void initializationCompleted() {}
-
+  template <int N>
   void setStaticMethod(
     v8::Local<v8::External> addonDataExternal,
     v8::Local<v8::Object> recv,
-    const char * name,
+    const char (&literal)[N],
     v8::FunctionCallback callback) {
     v8::Isolate * isolate = this->isolate;
-    v8::HandleScope scope(isolate);
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonDataExternal);
-    v8::Local<v8::String> fn_name =
-      v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
+    v8::Local<v8::String> fn_name = v8::String::NewFromUtf8Literal(isolate, literal, v8::NewStringType::kInternalized);
     t->SetClassName(fn_name);
     v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
     fn->SetName(fn_name);
@@ -2828,9 +2825,9 @@ namespace v8utils {
             this->reset();
             return false;
           }
-          auto data = arrayBuffer->Data();
+          this->backingStore = arrayBuffer->GetBackingStore();
+          auto data = this->backingStore->Data();
           if (data) {
-            this->backingStore = arrayBuffer->GetBackingStore();
             this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
             this->length = array->ByteLength() / sizeof(T);
           } else {
@@ -2843,9 +2840,9 @@ namespace v8utils {
         if (from->IsArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
-          auto data = arrayBuffer->Data();
+          this->backingStore = arrayBuffer->GetBackingStore();
+          auto data = this->backingStore->Data();
           if (data) {
-            this->backingStore = arrayBuffer->GetBackingStore();
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
           } else {
@@ -2858,9 +2855,9 @@ namespace v8utils {
         if (from->IsSharedArrayBuffer()) {
           bufferPersistent.Reset(isolate, from);
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
-          auto data = arrayBuffer->Data();
+          this->backingStore = arrayBuffer->GetBackingStore();
+          auto data = this->backingStore->Data();
           if (data) {
-            this->backingStore = arrayBuffer->GetBackingStore();
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
           } else {
@@ -8012,8 +8009,6 @@ void InitRoaringNode(Local<Object> exports) {
   RoaringBitmap32BufferedIterator_Init(exports, addonData, addonDataExternal);
 
   addonData->setStaticMethod(addonDataExternal, exports, "getRoaringUsedMemory", getRoaringUsedMemory);
-
-  addonData->initializationCompleted();
 }
 
 MODULE_WORKER_ENABLED(roaring, InitRoaringNode);
