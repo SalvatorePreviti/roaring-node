@@ -234,7 +234,6 @@ class AsyncWorker {
     v8::Isolate * isolate = worker->isolate;
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
-    // isolate->PerformMicrotaskCheckpoint();
   }
 
   static void _work(uv_work_t * request) {
@@ -384,12 +383,7 @@ class ParallelAsyncWorker : public AsyncWorker {
   static void _parallelDone(uv_work_t * request, int status) {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
-    if (worker->isDown()) {
-      return;
-    }
-
     if (worker->_completed) {
-      worker->isolate->PerformMicrotaskCheckpoint();
       return;
     }
 
@@ -397,8 +391,6 @@ class ParallelAsyncWorker : public AsyncWorker {
       _complete(worker);
       return;
     }
-
-    worker->isolate->PerformMicrotaskCheckpoint();
   }
 };
 
