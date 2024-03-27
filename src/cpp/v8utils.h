@@ -126,6 +126,8 @@ namespace v8utils {
     return false;
   }
 
+  uint64_t _emptyUint64 = 0;
+
   template <typename T>
   class TypedArrayContent final {
    public:
@@ -176,7 +178,7 @@ namespace v8utils {
               this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
               this->length = array->ByteLength() / sizeof(T);
             } else {
-              this->data = nullptr;
+              this->data = reinterpret_cast<T *>(&_emptyUint64);
               this->length = 0;
             }
             return true;
@@ -191,7 +193,7 @@ namespace v8utils {
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
           } else {
-            this->data = nullptr;
+            this->data = reinterpret_cast<T *>(&_emptyUint64);
             this->length = 0;
           }
           return true;
@@ -205,7 +207,7 @@ namespace v8utils {
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
           } else {
-            this->data = nullptr;
+            this->data = reinterpret_cast<T *>(&_emptyUint64);
             this->length = 0;
           }
           return true;

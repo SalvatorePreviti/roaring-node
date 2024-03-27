@@ -111,14 +111,14 @@ class AddonData final {
       return false;
     }
     std::shared_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-    const auto & found = AddonData::instances.find(const_cast<AddonData *>(addonData));
+    const auto & found = AddonData::instances.find(addonData);
     return found != AddonData::instances.end() && found->second == addonData->id;
   }
 
  private:
   static uint64_t instancesIdProvider;
   static std::shared_mutex instancesMutex;
-  static std::unordered_map<AddonData *, uint64_t> instances;
+  static std::unordered_map<const AddonData *, uint64_t> instances;
 
   static void AddonData_Init(AddonData * addonData) {
     std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
@@ -145,6 +145,6 @@ class AddonData final {
 
 uint64_t AddonData::instancesIdProvider = 0;
 std::shared_mutex AddonData::instancesMutex;
-std::unordered_map<AddonData *, uint64_t> AddonData::instances;
+std::unordered_map<const AddonData *, uint64_t> AddonData::instances;
 
 #endif
