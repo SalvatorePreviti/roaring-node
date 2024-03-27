@@ -105,7 +105,6 @@ inline size_t bare_aligned_malloc_size(const void * ptr) {
 #include <node.h>
 #include <node_buffer.h>
 #include <uv.h>
-#include <iostream>
 
 
 // #include "croaring.h"
@@ -2483,7 +2482,6 @@ class AddonDataStrings final {
   inline void initialize(v8::Isolate * isolate) {
     literal(isolate, this->n, "n");
     literal(isolate, this->readonly, "readonly");
-
     literal(isolate, CRoaringVersionValue, ROARING_VERSION);
   }
 
@@ -2534,7 +2532,7 @@ namespace ObjectWrap {
 
 #endif  // ROARING_NODE_OBJECT_WRAP_
 
-#include <unordered_set>
+#include <unordered_map>
 #include <mutex>
 #include <shared_mutex>
 
@@ -2554,6 +2552,7 @@ class AddonData;
 
 class AddonData final {
  public:
+  uint64_t id;
   v8::Isolate * const isolate;
 
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> Uint32Array;
@@ -2571,8 +2570,9 @@ class AddonData final {
   AddonDataStrings strings;
 
   explicit AddonData(v8::Isolate * isolate) : isolate(isolate) {
-    v8::HandleScope scope(isolate);
+    isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(AddonData));
 
+    v8::HandleScope scope(isolate);
     AddonData::AddonData_Init(this);
 
     auto context = isolate->GetCurrentContext();
@@ -2638,38 +2638,42 @@ class AddonData final {
       return false;
     }
     std::shared_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-    if (AddonData::instances.find(const_cast<AddonData *>(addonData)) != AddonData::instances.end()) {
-      return true;
-    }
-    return false;
+    const auto & found = AddonData::instances.find(const_cast<AddonData *>(addonData));
+    return found != AddonData::instances.end() && found->second == addonData->id;
   }
 
  private:
+  static uint64_t instancesIdProvider;
   static std::shared_mutex instancesMutex;
-  static std::unordered_set<AddonData *> instances;
+  static std::unordered_map<AddonData *, uint64_t> instances;
 
   static void AddonData_Init(AddonData * addonData) {
-    std::cout << "AddonData_Init " << addonData << std::endl;
     std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-    addonData->isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(AddonData));
-    AddonData::instances.insert(addonData);
+    uint64_t id = ++AddonData::instancesIdProvider;
+    addonData->id = id;
+    AddonData::instances.emplace(addonData, id);
   }
 
   static void AddonData_Cleanup(void * ptr) {
     AddonData * addonData = static_cast<AddonData *>(ptr);
-    std::cout << "AddonData_Cleanup " << addonData << std::endl;
     if (addonData) {
-      std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-      AddonData::instances.erase(addonData);
+      if (thread_local_isolate == addonData->isolate) {
+        thread_local_isolate = nullptr;
+      }
       addonData->isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(AddonData));
+
+      {
+        std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
+        AddonData::instances.erase(addonData);
+      }
       delete addonData;
     }
-    std::cout << "AddonData_Cleanup end" << addonData << std::endl;
   }
 };
 
+uint64_t AddonData::instancesIdProvider = 0;
 std::shared_mutex AddonData::instancesMutex;
-std::unordered_set<AddonData *> AddonData::instances;
+std::unordered_map<AddonData *, uint64_t> AddonData::instances;
 
 #endif
 
@@ -2796,8 +2800,8 @@ namespace v8utils {
   template <typename T>
   class TypedArrayContent final {
    public:
-    size_t length;
     std::shared_ptr<v8::BackingStore> backingStore;
+    size_t length;
     T * data;
 
     inline TypedArrayContent() : length(0), data(nullptr) {}
@@ -2815,7 +2819,7 @@ namespace v8utils {
     inline void reset() {
       this->length = 0;
       this->data = nullptr;
-      this->backingStore.reset();
+      this->backingStore = nullptr;
     }
 
     template <typename Q>
@@ -2830,30 +2834,30 @@ namespace v8utils {
 
     template <typename Q>
     bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
+      this->reset();
+
       if (!from.IsEmpty()) {
         if (from->IsArrayBufferView()) {
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
           auto arrayBuffer = array->Buffer();
-          if (arrayBuffer.IsEmpty()) {
-            this->reset();
-            return false;
+          if (!arrayBuffer.IsEmpty()) {
+            this->backingStore = arrayBuffer->GetBackingStore();
+            auto data = this->backingStore ? this->backingStore->Data() : nullptr;
+            if (data) {
+              this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
+              this->length = array->ByteLength() / sizeof(T);
+            } else {
+              this->data = nullptr;
+              this->length = 0;
+            }
+            return true;
           }
-          this->backingStore = arrayBuffer->GetBackingStore();
-          auto data = this->backingStore->Data();
-          if (data) {
-            this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
-            this->length = array->ByteLength() / sizeof(T);
-          } else {
-            this->data = nullptr;
-            this->length = 0;
-          }
-          return true;
         }
 
         if (from->IsArrayBuffer()) {
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           this->backingStore = arrayBuffer->GetBackingStore();
-          auto data = this->backingStore->Data();
+          auto data = this->backingStore ? this->backingStore->Data() : nullptr;
           if (data) {
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
@@ -2867,7 +2871,7 @@ namespace v8utils {
         if (from->IsSharedArrayBuffer()) {
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->backingStore = arrayBuffer->GetBackingStore();
-          auto data = this->backingStore->Data();
+          auto data = this->backingStore ? this->backingStore->Data() : nullptr;
           if (data) {
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
@@ -2879,7 +2883,6 @@ namespace v8utils {
         }
       }
 
-      this->reset();
       return false;
     }
   };
@@ -5400,14 +5403,21 @@ class AsyncWorker {
   }
 
   static void _complete(AsyncWorker * worker) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
-    v8::Isolate * isolate = worker->isolate;
+    if (worker->_completed || worker->isDown()) {
+      delete worker;
+      return;
+    }
+    auto oldIsolate = thread_local_isolate;
+    thread_local_isolate = worker->isolate;
+
+    v8::HandleScope scope(worker->isolate);
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
+
+    thread_local_isolate = oldIsolate;
   }
 
   static void _work(uv_work_t * request) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (worker && !worker->hasError()) {
       auto oldIsolate = thread_local_isolate;
@@ -5421,7 +5431,6 @@ class AsyncWorker {
   }
 
   static void _done(uv_work_t * request, int status) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
 
     auto oldIsolate = thread_local_isolate;

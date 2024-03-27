@@ -230,14 +230,21 @@ class AsyncWorker {
   }
 
   static void _complete(AsyncWorker * worker) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
-    v8::Isolate * isolate = worker->isolate;
+    if (worker->_completed || worker->isDown()) {
+      delete worker;
+      return;
+    }
+    auto oldIsolate = thread_local_isolate;
+    thread_local_isolate = worker->isolate;
+
+    v8::HandleScope scope(worker->isolate);
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
+
+    thread_local_isolate = oldIsolate;
   }
 
   static void _work(uv_work_t * request) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (worker && !worker->hasError()) {
       auto oldIsolate = thread_local_isolate;
@@ -251,7 +258,6 @@ class AsyncWorker {
   }
 
   static void _done(uv_work_t * request, int status) {
-    std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
 
     auto oldIsolate = thread_local_isolate;

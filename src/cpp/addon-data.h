@@ -2,9 +2,10 @@
 #define ROARING_NODE_ADDON_DATA_
 
 #include "includes.h"
+#include "memory.h"
 #include "addon-strings.h"
 #include "object-wrap.h"
-#include <unordered_set>
+#include <unordered_map>
 #include <mutex>
 #include <shared_mutex>
 
@@ -24,6 +25,7 @@ class AddonData;
 
 class AddonData final {
  public:
+  uint64_t id;
   v8::Isolate * const isolate;
 
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> Uint32Array;
@@ -41,8 +43,9 @@ class AddonData final {
   AddonDataStrings strings;
 
   explicit AddonData(v8::Isolate * isolate) : isolate(isolate) {
-    v8::HandleScope scope(isolate);
+    isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(AddonData));
 
+    v8::HandleScope scope(isolate);
     AddonData::AddonData_Init(this);
 
     auto context = isolate->GetCurrentContext();
@@ -108,37 +111,40 @@ class AddonData final {
       return false;
     }
     std::shared_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-    if (AddonData::instances.find(const_cast<AddonData *>(addonData)) != AddonData::instances.end()) {
-      return true;
-    }
-    return false;
+    const auto & found = AddonData::instances.find(const_cast<AddonData *>(addonData));
+    return found != AddonData::instances.end() && found->second == addonData->id;
   }
 
  private:
+  static uint64_t instancesIdProvider;
   static std::shared_mutex instancesMutex;
-  static std::unordered_set<AddonData *> instances;
+  static std::unordered_map<AddonData *, uint64_t> instances;
 
   static void AddonData_Init(AddonData * addonData) {
-    std::cout << "AddonData_Init " << addonData << std::endl;
     std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-    addonData->isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(AddonData));
-    AddonData::instances.insert(addonData);
+    uint64_t id = ++AddonData::instancesIdProvider;
+    addonData->id = id;
+    AddonData::instances.emplace(addonData, id);
   }
 
   static void AddonData_Cleanup(void * ptr) {
     AddonData * addonData = static_cast<AddonData *>(ptr);
-    std::cout << "AddonData_Cleanup " << addonData << std::endl;
     if (addonData) {
-      std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
-      AddonData::instances.erase(addonData);
+      if (thread_local_isolate == addonData->isolate) {
+        thread_local_isolate = nullptr;
+      }
       addonData->isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(AddonData));
+      {
+        std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
+        AddonData::instances.erase(addonData);
+      }
       delete addonData;
     }
-    std::cout << "AddonData_Cleanup end" << addonData << std::endl;
   }
 };
 
+uint64_t AddonData::instancesIdProvider = 0;
 std::shared_mutex AddonData::instancesMutex;
-std::unordered_set<AddonData *> AddonData::instances;
+std::unordered_map<AddonData *, uint64_t> AddonData::instances;
 
 #endif

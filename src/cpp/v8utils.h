@@ -129,8 +129,8 @@ namespace v8utils {
   template <typename T>
   class TypedArrayContent final {
    public:
-    size_t length;
     std::shared_ptr<v8::BackingStore> backingStore;
+    size_t length;
     T * data;
 
     inline TypedArrayContent() : length(0), data(nullptr) {}
@@ -148,7 +148,7 @@ namespace v8utils {
     inline void reset() {
       this->length = 0;
       this->data = nullptr;
-      this->backingStore.reset();
+      this->backingStore = nullptr;
     }
 
     template <typename Q>
@@ -163,30 +163,30 @@ namespace v8utils {
 
     template <typename Q>
     bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
+      this->reset();
+
       if (!from.IsEmpty()) {
         if (from->IsArrayBufferView()) {
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
           auto arrayBuffer = array->Buffer();
-          if (arrayBuffer.IsEmpty()) {
-            this->reset();
-            return false;
+          if (!arrayBuffer.IsEmpty()) {
+            this->backingStore = arrayBuffer->GetBackingStore();
+            auto data = this->backingStore ? this->backingStore->Data() : nullptr;
+            if (data) {
+              this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
+              this->length = array->ByteLength() / sizeof(T);
+            } else {
+              this->data = nullptr;
+              this->length = 0;
+            }
+            return true;
           }
-          this->backingStore = arrayBuffer->GetBackingStore();
-          auto data = this->backingStore->Data();
-          if (data) {
-            this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
-            this->length = array->ByteLength() / sizeof(T);
-          } else {
-            this->data = nullptr;
-            this->length = 0;
-          }
-          return true;
         }
 
         if (from->IsArrayBuffer()) {
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           this->backingStore = arrayBuffer->GetBackingStore();
-          auto data = this->backingStore->Data();
+          auto data = this->backingStore ? this->backingStore->Data() : nullptr;
           if (data) {
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
@@ -200,7 +200,7 @@ namespace v8utils {
         if (from->IsSharedArrayBuffer()) {
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->backingStore = arrayBuffer->GetBackingStore();
-          auto data = this->backingStore->Data();
+          auto data = this->backingStore ? this->backingStore->Data() : nullptr;
           if (data) {
             this->data = (T *)(data);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
@@ -212,7 +212,6 @@ namespace v8utils {
         }
       }
 
-      this->reset();
       return false;
     }
   };

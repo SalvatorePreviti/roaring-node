@@ -16,7 +16,6 @@ class AddonDataStrings final {
   inline void initialize(v8::Isolate * isolate) {
     literal(isolate, this->n, "n");
     literal(isolate, this->readonly, "readonly");
-
     literal(isolate, CRoaringVersionValue, ROARING_VERSION);
   }
 
