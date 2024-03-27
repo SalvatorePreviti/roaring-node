@@ -177,9 +177,6 @@ void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & i
     return v8utils::throwError(isolate, "RoaringBitmap32::toUint32Array - failed to allocate memory");
   }
   auto typedArray = v8::Uint32Array::New(arrayBuffer, 0, maxSize);
-  if (typedArray.IsEmpty()) {
-    return v8utils::throwError(isolate, "RoaringBitmap32::toUint32Array - failed to allocate memory");
-  }
 
   if (maxSize != 0) {
     if (!typedArrayContent.set(isolate, typedArray)) {
@@ -190,6 +187,8 @@ void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & i
     } else {
       roaring_bitmap_to_uint32_array(self->roaring, typedArrayContent.data);
     }
+  } else if (typedArray.IsEmpty()) {
+    return v8utils::throwError(isolate, "RoaringBitmap32::toUint32Array - failed to allocate memory");
   }
 
   info.GetReturnValue().Set(typedArray);

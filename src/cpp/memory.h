@@ -32,16 +32,27 @@ void * gcaware_malloc(size_t size) {
   if (memory != nullptr) {
     gcaware_addAllocatedMemory(bare_malloc_size(memory));
   }
+#ifdef ROARING_NODE_DEBUG_MEMORY
+  roaringDebugMemoryOnAlloc(memory, size);
+#endif
   return memory;
 }
 
 void * gcaware_realloc(void * memory, size_t size) {
   size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
+#ifdef ROARING_NODE_DEBUG_MEMORY
+  if (memory) {
+    roaringDebugMemoryOnFree(memory);
+  }
+#endif
   memory = realloc(memory, size);
   if (memory != nullptr) {
     gcaware_removeAllocatedMemory(oldSize);
     gcaware_addAllocatedMemory(bare_malloc_size(memory));
   }
+#ifdef ROARING_NODE_DEBUG_MEMORY
+  roaringDebugMemoryOnAlloc(memory, size);
+#endif
   return memory;
 }
 
@@ -50,10 +61,16 @@ void * gcaware_calloc(size_t count, size_t size) {
   if (memory != nullptr) {
     gcaware_addAllocatedMemory(bare_malloc_size(memory));
   }
+#ifdef ROARING_NODE_DEBUG_MEMORY
+  roaringDebugMemoryOnAlloc(memory, count * size);
+#endif
   return memory;
 }
 
 void gcaware_free(void * memory) {
+#ifdef ROARING_NODE_DEBUG_MEMORY
+  roaringDebugMemoryOnFree(memory);
+#endif
   if (memory != nullptr) {
     gcaware_removeAllocatedMemory(bare_malloc_size(memory));
     free(memory);
@@ -61,9 +78,6 @@ void gcaware_free(void * memory) {
 }
 
 void * gcaware_aligned_malloc(size_t alignment, size_t size) {
-  if (size == 0) {
-    size = 1;
-  }
   void * memory = bare_aligned_malloc(alignment, size);
   if (memory != nullptr) {
     gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));

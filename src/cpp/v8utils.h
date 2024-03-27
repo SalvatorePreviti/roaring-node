@@ -149,7 +149,6 @@ namespace v8utils {
 
     template <typename Q>
     inline bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
-      v8::HandleScope scope(isolate);
       v8::Local<Q> local;
       if (from.ToLocal(&local)) {
         return this->set(isolate, local);

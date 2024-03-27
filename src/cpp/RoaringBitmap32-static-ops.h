@@ -13,8 +13,8 @@ void RoaringBitmap32_addOffsetStatic(const v8::FunctionCallbackInfo<v8::Value> &
   RoaringBitmap32 * a = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
   if (a == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::addOffset first argument must be a RoaringBitmap32");
-
-  v8::Local<v8::Function> cons = a->addonData->RoaringBitmap32_constructor.Get(isolate);
+  AddonData * addonData = a->addonData;
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -58,7 +58,8 @@ void RoaringBitmap32_andStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
   if (b == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::and second argument must be a RoaringBitmap32");
 
-  v8::Local<v8::Function> cons = a->addonData->RoaringBitmap32_constructor.Get(isolate);
+  AddonData * addonData = a->addonData;
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -96,7 +97,8 @@ void RoaringBitmap32_orStatic(const v8::FunctionCallbackInfo<v8::Value> & info) 
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::or second argument must be a RoaringBitmap32");
   }
 
-  v8::Local<v8::Function> cons = a->addonData->RoaringBitmap32_constructor.Get(isolate);
+  AddonData * addonData = a->addonData;
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -132,7 +134,8 @@ void RoaringBitmap32_xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor second argument must be a RoaringBitmap32");
   }
 
-  v8::Local<v8::Function> cons = a->addonData->RoaringBitmap32_constructor.Get(isolate);
+  AddonData * addonData = a->addonData;
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -166,7 +169,8 @@ void RoaringBitmap32_andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & in
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::andnot second argument must be a RoaringBitmap32");
   }
 
-  v8::Local<v8::Function> cons = a->addonData->RoaringBitmap32_constructor.Get(isolate);
+  AddonData * addonData = a->addonData;
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
 
   auto resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
   v8::Local<v8::Object> result;
@@ -194,16 +198,16 @@ void roaringOpMany(
   const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
-  int length = info.Length();
-
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
 
-  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
+  int length = info.Length();
 
   auto context = isolate->GetCurrentContext();
+
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
 
   if (length == 0) {
     auto vMaybe = cons->NewInstance(context, 0, nullptr);

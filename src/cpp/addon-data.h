@@ -4,7 +4,6 @@
 #include "includes.h"
 #include "memory.h"
 #include "addon-strings.h"
-#include "object-wrap.h"
 #include <unordered_map>
 #include <mutex>
 #include <shared_mutex>

@@ -474,6 +474,9 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
       return this->setError(WorkerError(ERROR_INVALID_OBJECT));
     }
     if (this->maybeAddonData == nullptr) {
+      if (!AddonData::isActive(self->addonData)) {
+        return this->setError(WorkerError(ERROR_INVALID_OBJECT));
+      }
       this->maybeAddonData = self->addonData;
     }
 
@@ -612,6 +615,9 @@ class SerializeWorker final : public AsyncWorker {
     if (this->serializer.self) {
       if (this->maybeAddonData == nullptr) {
         this->maybeAddonData = this->serializer.self->addonData;
+        if (this->maybeAddonData != nullptr && !AddonData::isActive(this->maybeAddonData)) {
+          return this->setError(WorkerError(ERROR_INVALID_OBJECT));
+        }
       }
       this->bitmapPersistent.Reset(isolate, this->info.Holder());
       this->serializer.self->beginFreeze();
@@ -653,6 +659,9 @@ class SerializeFileWorker final : public AsyncWorker {
     if (this->serializer.self) {
       if (this->maybeAddonData == nullptr) {
         this->maybeAddonData = this->serializer.self->addonData;
+        if (this->maybeAddonData != nullptr && !AddonData::isActive(this->maybeAddonData)) {
+          return this->setError(WorkerError(ERROR_INVALID_OBJECT));
+        }
       }
       this->bitmapPersistent.Reset(isolate, this->info.Holder());
       this->serializer.self->beginFreeze();
@@ -697,8 +706,8 @@ class DeserializeWorker final : public AsyncWorker {
       if (this->deserializer.targetBitmap != nullptr) {
         this->maybeAddonData = this->deserializer.targetBitmap->addonData;
       }
-      if (this->maybeAddonData == nullptr && !this->hasError()) {
-        this->setError(WorkerError("RoaringBitmap32 deserialization failed to get the addon data"));
+      if (this->maybeAddonData == nullptr && !AddonData::isActive(this->maybeAddonData)) {
+        return this->setError(WorkerError(ERROR_INVALID_OBJECT));
       }
     }
   }

@@ -1,12 +1,10 @@
 const colors = require("ansis");
 
-const hasIcons = colors.supportsColor.has256;
-
 const icons = {
-  success: colors.green(hasIcons ? "✔" : "√"),
-  error: hasIcons ? "✖" : "×",
-  arrow: hasIcons ? "➔" : "-",
-  bullet: hasIcons ? "•" : "*",
+  success: colors.green("✔"),
+  error: "✖",
+  arrow: "➔",
+  bullet: "•",
 };
 
 function printBenchError(suiteName, bench, error) {
@@ -90,6 +88,6 @@ module.exports = {
   },
 
   get colorFlags() {
-    return colors.supportsColor.hasBasic ? (colors.supportsColor.has256 ? "--color=256" : "--colors") : "";
+    return colors.supportsColor ? "--colors" : "";
   },
 };

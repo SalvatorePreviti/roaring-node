@@ -2,6 +2,7 @@
 #define ROARING_NODE_OBJECT_WRAP_
 
 #include "includes.h"
+#include "addon-data.h"
 
 namespace ObjectWrap {
   template <class T>
@@ -19,7 +20,11 @@ namespace ObjectWrap {
     if ((uintptr_t)obj->GetAlignedPointerFromInternalField(1) != T::OBJECT_TOKEN) {
       return nullptr;
     }
-    return reinterpret_cast<T *>(obj->GetAlignedPointerFromInternalField(0));
+    T * result = reinterpret_cast<T *>(obj->GetAlignedPointerFromInternalField(0));
+    if (!AddonData::isActive(result->addonData)) {
+      return nullptr;
+    }
+    return result;
   }
 
   template <class T>

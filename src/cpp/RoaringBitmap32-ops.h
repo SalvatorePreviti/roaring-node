@@ -48,7 +48,6 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
   }
 
   AddonData * addonData = self->addonData;
-
   v8::Local<v8::Value> argv[] = {arg};
   auto tMaybe = addonData->Uint32Array_from.Get(isolate)->Call(
     isolate->GetCurrentContext(), addonData->Uint32Array.Get(isolate), 1, argv);
@@ -387,7 +386,8 @@ void RoaringBitmap32_andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
       return info.GetReturnValue().Set(info.Holder());
     }
 
-    RoaringBitmap32 tmp(self->addonData, 0U);
+    AddonData * addonData = self->addonData;
+    RoaringBitmap32 tmp(addonData, 0U);
     if (roaringAddMany(isolate, &tmp, arg)) {
       roaring_bitmap_and_inplace(self->roaring, tmp.roaring);
       self->invalidate();
@@ -416,7 +416,8 @@ void RoaringBitmap32_xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
       return info.GetReturnValue().Set(info.Holder());
     }
 
-    RoaringBitmap32 tmp(self->addonData, 0U);
+    AddonData * addonData = self->addonData;
+    RoaringBitmap32 tmp(addonData, 0U);
     roaringAddMany(info.GetIsolate(), &tmp, arg);
     roaring_bitmap_xor_inplace(self->roaring, tmp.roaring);
     self->invalidate();
