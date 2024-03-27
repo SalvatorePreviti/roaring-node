@@ -94,12 +94,12 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
           "You can use bufferAlignedAlloc, bufferAlignedAllocUnsafe or ensureBufferAligned exposed by the roaring library.");
       }
 
-      bitmap =
-        const_cast<roaring_bitmap_t *>(roaring_bitmap_frozen_view((const char *)frozenStorage.data, frozenStorage.length));
+      bitmap = const_cast<roaring_bitmap_t *>(
+        roaring_bitmap_frozen_view(reinterpret_cast<const char *>(frozenStorage.data), frozenStorage.length));
       break;
     }
     case FrozenViewFormat::unsafe_frozen_portable: {
-      bitmap = roaring_bitmap_portable_deserialize_frozen((const char *)frozenStorage.data);
+      bitmap = roaring_bitmap_portable_deserialize_frozen(reinterpret_cast<const char *>(frozenStorage.data));
       break;
     }
     default: {

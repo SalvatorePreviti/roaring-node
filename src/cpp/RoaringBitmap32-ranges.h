@@ -51,7 +51,7 @@ inline bool getRangeOperationParameters(
 void RoaringBitmap32_rangeCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
   uint64_t minInteger, maxInteger;
   if (getRangeOperationParameters(info, minInteger, maxInteger)) {
-    RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+    const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
     if (!self) {
       return info.GetReturnValue().Set(0u);
     }
@@ -74,10 +74,8 @@ void RoaringBitmap32_flipRange(const v8::FunctionCallbackInfo<v8::Value> & info)
     return v8utils::throwError(info.GetIsolate(), ERROR_FROZEN);
   }
   if (getRangeOperationParameters(info, minInteger, maxInteger)) {
-    if (self != nullptr) {
-      roaring_bitmap_flip_inplace(self->roaring, minInteger, maxInteger);
-      self->invalidate();
-    }
+    roaring_bitmap_flip_inplace(self->roaring, minInteger, maxInteger);
+    self->invalidate();
   }
   info.GetReturnValue().Set(info.Holder());
 }
@@ -92,10 +90,8 @@ void RoaringBitmap32_addRange(const v8::FunctionCallbackInfo<v8::Value> & info) 
     return v8utils::throwError(info.GetIsolate(), ERROR_FROZEN);
   }
   if (getRangeOperationParameters(info, minInteger, maxInteger)) {
-    if (self != nullptr) {
-      roaring_bitmap_add_range_closed(self->roaring, (uint32_t)minInteger, (uint32_t)(maxInteger - 1));
-      self->invalidate();
-    }
+    roaring_bitmap_add_range_closed(self->roaring, (uint32_t)minInteger, (uint32_t)(maxInteger - 1));
+    self->invalidate();
   }
   info.GetReturnValue().Set(info.Holder());
 }
@@ -110,16 +106,14 @@ void RoaringBitmap32_removeRange(const v8::FunctionCallbackInfo<v8::Value> & inf
     return v8utils::throwError(info.GetIsolate(), ERROR_FROZEN);
   }
   if (getRangeOperationParameters(info, minInteger, maxInteger)) {
-    if (self != nullptr) {
-      roaring_bitmap_remove_range_closed(self->roaring, (uint32_t)minInteger, (uint32_t)(maxInteger - 1));
-      self->invalidate();
-    }
+    roaring_bitmap_remove_range_closed(self->roaring, (uint32_t)minInteger, (uint32_t)(maxInteger - 1));
+    self->invalidate();
   }
   info.GetReturnValue().Set(info.Holder());
 }
 
 void RoaringBitmap32_intersectsWithRange(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
   uint64_t minInteger, maxInteger;
   info.GetReturnValue().Set(
     self != nullptr && getRangeOperationParameters(info, minInteger, maxInteger) &&
@@ -129,7 +123,7 @@ void RoaringBitmap32_intersectsWithRange(const v8::FunctionCallbackInfo<v8::Valu
 void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -206,7 +200,7 @@ void RoaringBitmap32_toUint32ArrayAsync(const v8::FunctionCallbackInfo<v8::Value
 void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -325,7 +319,7 @@ void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> 
 void RoaringBitmap32_toArray(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   size_t cardinality = self ? self->getSize() : 0;
 
   struct iter_data {
@@ -402,13 +396,13 @@ void RoaringBitmap32_toArray(const v8::FunctionCallbackInfo<v8::Value> & info) {
         return (p->count++) < p->maxLength &&
           p->jsArray->Set(p->context, p->index++, v8::Uint32::NewFromUnsigned(p->isolate, value)).To(&r) && r;
       },
-      (void *)&iterData);
+      reinterpret_cast<void *>(&iterData));
   }
 }
 
 void RoaringBitmap32_toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  v8::Isolate * const isolate = info.GetIsolate();
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -456,7 +450,7 @@ void RoaringBitmap32_toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
   info.GetReturnValue().Set(iterData.jsSet);
 
-  if (self != nullptr && !self->isEmpty()) {
+  if (!self->isEmpty()) {
     roaring_iterate(
       self->roaring,
       [](uint32_t value, void * vp) -> bool {
@@ -464,7 +458,7 @@ void RoaringBitmap32_toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
         return p->count++ < p->maxLength &&
           !p->jsSet->Add(p->context, v8::Uint32::NewFromUnsigned(p->isolate, value)).IsEmpty();
       },
-      (void *)&iterData);
+      reinterpret_cast<void *>(&iterData));
   }
 }
 

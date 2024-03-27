@@ -50,7 +50,7 @@
   "clang-tidy.blacklist": ["submodules"],
   "clang-tidy.fixOnSave": true,
   "clang-tidy.compilerArgs": [
-    "-std=c++14",
+    "-std=c++17",
     "-I/usr/local/include",
     "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
     "-I/usr/local/include/node",

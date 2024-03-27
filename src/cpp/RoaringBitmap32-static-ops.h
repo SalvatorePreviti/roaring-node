@@ -51,10 +51,10 @@ void RoaringBitmap32_andStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
 
   if (info.Length() < 2) return v8utils::throwTypeError(isolate, "RoaringBitmap32::and expects 2 arguments");
 
-  RoaringBitmap32 * a = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
+  RoaringBitmap32 * const a = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
   if (a == nullptr) return v8utils::throwTypeError(isolate, "RoaringBitmap32::and first argument must be a RoaringBitmap32");
 
-  RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
+  const RoaringBitmap32 * const b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
   if (b == nullptr)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::and second argument must be a RoaringBitmap32");
 
@@ -92,7 +92,7 @@ void RoaringBitmap32_orStatic(const v8::FunctionCallbackInfo<v8::Value> & info) 
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::or first argument must be a RoaringBitmap32");
   }
 
-  RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
+  const RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
   if (b == nullptr) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::or second argument must be a RoaringBitmap32");
   }
@@ -129,7 +129,7 @@ void RoaringBitmap32_xorStatic(const v8::FunctionCallbackInfo<v8::Value> & info)
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor first argument must be a RoaringBitmap32");
   }
 
-  RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
+  const RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
   if (b == nullptr) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::xor second argument must be a RoaringBitmap32");
   }
@@ -164,7 +164,7 @@ void RoaringBitmap32_andNotStatic(const v8::FunctionCallbackInfo<v8::Value> & in
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::andnot first argument must be a RoaringBitmap32");
   }
 
-  RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
+  const RoaringBitmap32 * b = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[1], isolate);
   if (b == nullptr) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32::andnot second argument must be a RoaringBitmap32");
   }
@@ -250,26 +250,27 @@ void roaringOpMany(
         return;
       }
 
-      const auto ** x = (const roaring_bitmap_t **)gcaware_malloc(arrayLength * sizeof(roaring_bitmap_t *));
-      if (x == nullptr) {
+      const auto ** v =
+        reinterpret_cast<const roaring_bitmap_t **>(gcaware_malloc(arrayLength * sizeof(roaring_bitmap_t *)));
+      if (v == nullptr) {
         return v8utils::throwTypeError(isolate, opName, " failed allocation");
       }
 
       for (size_t i = 0; i < arrayLength; ++i) {
         v8::Local<v8::Value> item;
-        RoaringBitmap32 * p =
+        const RoaringBitmap32 * p =
           array->Get(context, i).ToLocal(&item) ? ObjectWrap::TryUnwrap<RoaringBitmap32>(item, isolate) : nullptr;
         if (p == nullptr) {
-          gcaware_free(x);
+          gcaware_free(v);
           return v8utils::throwTypeError(isolate, opName, " accepts only RoaringBitmap32 instances");
         }
-        x[i] = p->roaring;
+        v[i] = p->roaring;
       }
 
       auto resultMaybe = cons->NewInstance(context, 0, nullptr);
       v8::Local<v8::Object> result;
       if (!resultMaybe.ToLocal(&result)) {
-        gcaware_free(x);
+        gcaware_free(v);
         return;
       }
 
@@ -278,9 +279,9 @@ void roaringOpMany(
         return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
       }
 
-      roaring_bitmap_t * r = op((TSize)arrayLength, x);
+      roaring_bitmap_t * r = op((TSize)arrayLength, v);
       if (r == nullptr) {
-        gcaware_free(x);
+        gcaware_free(v);
         return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
       }
 
@@ -297,24 +298,24 @@ void roaringOpMany(
       }
     }
   } else {
-    const auto ** x = (const roaring_bitmap_t **)gcaware_malloc(length * sizeof(roaring_bitmap_t *));
-    if (x == nullptr) {
+    const auto ** v = (const roaring_bitmap_t **)gcaware_malloc(length * sizeof(roaring_bitmap_t *));
+    if (v == nullptr) {
       return v8utils::throwTypeError(isolate, opName, " failed allocation");
     }
 
     for (int i = 0; i < length; ++i) {
       RoaringBitmap32 * p = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, i);
       if (p == nullptr) {
-        gcaware_free(x);
+        gcaware_free(v);
         return v8utils::throwTypeError(isolate, opName, " accepts only RoaringBitmap32 instances");
       }
-      x[i] = p->roaring;
+      v[i] = p->roaring;
     }
 
     v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
     v8::Local<v8::Object> result;
     if (!resultMaybe.ToLocal(&result)) {
-      gcaware_free(x);
+      gcaware_free(v);
       return;
     }
 
@@ -323,9 +324,9 @@ void roaringOpMany(
       return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
     }
 
-    roaring_bitmap_t * r = op((TSize)length, x);
+    roaring_bitmap_t * r = op((TSize)length, v);
     if (r == nullptr) {
-      gcaware_free(x);
+      gcaware_free(v);
       return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
     }
 

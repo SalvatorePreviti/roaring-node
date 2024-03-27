@@ -168,9 +168,9 @@ namespace v8utils {
           auto arrayBuffer = array->Buffer();
           if (!arrayBuffer.IsEmpty()) {
             this->backingStore = arrayBuffer->GetBackingStore();
-            auto data = this->backingStore ? this->backingStore->Data() : nullptr;
-            if (data) {
-              this->data = (T *)((uint8_t *)(data) + array->ByteOffset());
+            auto d = this->backingStore ? this->backingStore->Data() : nullptr;
+            if (d) {
+              this->data = reinterpret_cast<T *>(reinterpret_cast<uint8_t *>(d) + array->ByteOffset());
               this->length = array->ByteLength() / sizeof(T);
             } else {
               this->data = reinterpret_cast<T *>(&_emptyUint64);
@@ -183,9 +183,9 @@ namespace v8utils {
         if (from->IsArrayBuffer()) {
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
           this->backingStore = arrayBuffer->GetBackingStore();
-          auto data = this->backingStore ? this->backingStore->Data() : nullptr;
-          if (data) {
-            this->data = (T *)(data);
+          auto d = this->backingStore ? this->backingStore->Data() : nullptr;
+          if (d) {
+            this->data = reinterpret_cast<T *>(d);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
           } else {
             this->data = reinterpret_cast<T *>(&_emptyUint64);
@@ -197,9 +197,9 @@ namespace v8utils {
         if (from->IsSharedArrayBuffer()) {
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
           this->backingStore = arrayBuffer->GetBackingStore();
-          auto data = this->backingStore ? this->backingStore->Data() : nullptr;
-          if (data) {
-            this->data = (T *)(data);
+          auto d = this->backingStore ? this->backingStore->Data() : nullptr;
+          if (d) {
+            this->data = reinterpret_cast<T *>(d);
             this->length = arrayBuffer->ByteLength() / sizeof(T);
           } else {
             this->data = reinterpret_cast<T *>(&_emptyUint64);

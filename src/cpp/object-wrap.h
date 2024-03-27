@@ -17,7 +17,7 @@ namespace ObjectWrap {
     if (obj->InternalFieldCount() != 2) {
       return nullptr;
     }
-    if ((uintptr_t)obj->GetAlignedPointerFromInternalField(1) != T::OBJECT_TOKEN) {
+    if (obj->GetAlignedPointerFromInternalField(1) != &T::_OBJECT_TOKEN) {
       return nullptr;
     }
     T * result = reinterpret_cast<T *>(obj->GetAlignedPointerFromInternalField(0));

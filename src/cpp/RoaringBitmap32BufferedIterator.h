@@ -5,7 +5,7 @@
 
 class RoaringBitmap32BufferedIterator final {
  public:
-  static constexpr const uint64_t OBJECT_TOKEN = 0x21524F4152490000;
+  static uint32_t _OBJECT_TOKEN;
 
   enum { allocatedMemoryDelta = 1024 };
 
@@ -20,7 +20,7 @@ class RoaringBitmap32BufferedIterator final {
   v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
 
   explicit RoaringBitmap32BufferedIterator(AddonData * addonData, bool reversed) :
-    addonData(addonData), reversed(reversed), bitmapInstance(nullptr) {
+    addonData(addonData), reversed(reversed), bitmapInstance(nullptr), bitmapVersion(0) {
     this->it.parent = nullptr;
     this->it.has_value = false;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
@@ -127,7 +127,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
   }
 
   int indices[2] = {0, 1};
-  void * values[2] = {instance, (void *)(RoaringBitmap32BufferedIterator::OBJECT_TOKEN)};
+  void * values[2] = {instance, &RoaringBitmap32BufferedIterator::_OBJECT_TOKEN};
   holder->SetAlignedPointerInInternalFields(2, indices, values);
 
   info.GetReturnValue().Set(holder);
@@ -196,5 +196,7 @@ void RoaringBitmap32BufferedIterator_Init(
 
   ignoreMaybeResult(exports->Set(isolate->GetCurrentContext(), className, ctorFunction));
 }
+
+uint32_t RoaringBitmap32BufferedIterator::_OBJECT_TOKEN = 0;
 
 #endif  // ROARING_NODE_ROARING_BITMAP_32_BUFFERED_ITERATOR_

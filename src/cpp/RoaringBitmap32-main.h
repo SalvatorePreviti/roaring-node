@@ -109,7 +109,7 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   }
 
   int indices[2] = {0, 1};
-  void * values[2] = {instance, (void *)(RoaringBitmap32::OBJECT_TOKEN)};
+  void * values[2] = {instance, &RoaringBitmap32::_OBJECT_TOKEN};
   holder->SetAlignedPointerInInternalFields(2, indices, values);
 
   instance->persistent.Reset(isolate, holder);
