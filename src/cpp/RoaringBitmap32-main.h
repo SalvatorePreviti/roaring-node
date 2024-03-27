@@ -703,7 +703,7 @@ void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> &
 }
 
 void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
 
   v8::Local<v8::Value> arg;
 
@@ -763,7 +763,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData, 
     roaringMemoryInitialized = true;
   }
 
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = addonData->isolate;
   v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
   v8::Local<v8::String> className =

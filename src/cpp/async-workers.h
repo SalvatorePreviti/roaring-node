@@ -154,9 +154,7 @@ class AsyncWorker {
     }
 
     this->_started = true;
-    if (
-      uv_queue_work(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &_task, AsyncWorker::_work, AsyncWorker::_done) !=
-      0) {
+    if (uv_queue_work(node::GetCurrentEventLoop(this->isolate), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
       setError(WorkerError("Error starting async thread"));
       return false;
     }
@@ -234,6 +232,7 @@ class AsyncWorker {
       delete worker;
       return;
     }
+
     auto oldIsolate = thread_local_isolate;
     thread_local_isolate = worker->isolate;
 
@@ -246,7 +245,7 @@ class AsyncWorker {
 
   static void _work(uv_work_t * request) {
     auto * worker = static_cast<AsyncWorker *>(request->data);
-    if (worker && !worker->hasError()) {
+    if (worker && !worker->_completed && !worker->hasError()) {
       auto oldIsolate = thread_local_isolate;
       thread_local_isolate = worker->isolate;
 
@@ -367,7 +366,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker) {
-      if (worker->isDown()) {
+      if (worker->hasError() || worker->_completed) {
         return;
       }
 

@@ -174,7 +174,7 @@ void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & inf
 }
 
 void RoaringBitmap32_deserializeAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -194,7 +194,7 @@ void RoaringBitmap32_deserializeAsyncStatic(const v8::FunctionCallbackInfo<v8::V
 }
 
 void RoaringBitmap32_deserializeFileAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -214,8 +214,7 @@ void RoaringBitmap32_deserializeFileAsyncStatic(const v8::FunctionCallbackInfo<v
 }
 
 void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
-
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);

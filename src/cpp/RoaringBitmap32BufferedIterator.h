@@ -100,16 +100,12 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs 2 or 3 arguments");
   }
 
-  AddonData * addonData = AddonData::get(info);
-  if (addonData == nullptr) {
-    return v8utils::throwTypeError(isolate, ERROR_INVALID_OBJECT);
-  }
-
   RoaringBitmap32 * bitmapInstance = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
   if (bitmapInstance == nullptr) {
     return v8utils::throwTypeError(
       isolate, "RoaringBitmap32BufferedIterator::ctor - first argument must be of type RoaringBitmap32");
   }
+  AddonData * addonData = bitmapInstance->addonData;
 
   bool reversed = info.Length() > 2 && info[2]->BooleanValue(isolate);
 
@@ -174,7 +170,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
 
 void RoaringBitmap32BufferedIterator_Init(
   v8::Local<v8::Object> exports, AddonData * addonData, v8::Local<v8::External> addonDataExternal) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = addonData->isolate;
 
   v8::Local<v8::FunctionTemplate> ctor =
     v8::FunctionTemplate::New(isolate, RoaringBitmap32BufferedIterator_New, addonDataExternal);

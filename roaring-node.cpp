@@ -2551,7 +2551,6 @@ class AddonData final {
   explicit AddonData(v8::Isolate * isolate) : isolate(isolate) {
     isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(AddonData));
 
-    v8::HandleScope scope(isolate);
     AddonData::AddonData_Init(this);
 
     auto context = isolate->GetCurrentContext();
@@ -2589,7 +2588,7 @@ class AddonData final {
     auto data = info.Data();
     if (!data.IsEmpty() && data->IsExternal()) {
       auto result = static_cast<AddonData *>(data.As<v8::External>()->Value());
-      if (AddonData::isActive(result)) {
+      if (AddonData::isActive(result) && result->isolate == info.GetIsolate()) {
         return result;
       }
     }
@@ -5350,9 +5349,7 @@ class AsyncWorker {
     }
 
     this->_started = true;
-    if (
-      uv_queue_work(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &_task, AsyncWorker::_work, AsyncWorker::_done) !=
-      0) {
+    if (uv_queue_work(node::GetCurrentEventLoop(this->isolate), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
       setError(WorkerError("Error starting async thread"));
       return false;
     }
@@ -5430,6 +5427,7 @@ class AsyncWorker {
       delete worker;
       return;
     }
+
     auto oldIsolate = thread_local_isolate;
     thread_local_isolate = worker->isolate;
 
@@ -5442,7 +5440,7 @@ class AsyncWorker {
 
   static void _work(uv_work_t * request) {
     auto * worker = static_cast<AsyncWorker *>(request->data);
-    if (worker && !worker->hasError()) {
+    if (worker && !worker->_completed && !worker->hasError()) {
       auto oldIsolate = thread_local_isolate;
       thread_local_isolate = worker->isolate;
 
@@ -5563,7 +5561,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker) {
-      if (worker->isDown()) {
+      if (worker->hasError() || worker->_completed) {
         return;
       }
 
@@ -6238,7 +6236,7 @@ void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & inf
 }
 
 void RoaringBitmap32_deserializeAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -6258,7 +6256,7 @@ void RoaringBitmap32_deserializeAsyncStatic(const v8::FunctionCallbackInfo<v8::V
 }
 
 void RoaringBitmap32_deserializeFileAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -6278,8 +6276,7 @@ void RoaringBitmap32_deserializeFileAsyncStatic(const v8::FunctionCallbackInfo<v
 }
 
 void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
-
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -6891,7 +6888,7 @@ void RoaringBitmap32_hasRange(const v8::FunctionCallbackInfo<v8::Value> & info) 
 }
 
 void RoaringBitmap32_fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
@@ -7627,7 +7624,7 @@ void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> &
 }
 
 void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
 
   v8::Local<v8::Value> arg;
 
@@ -7687,7 +7684,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData, 
     roaringMemoryInitialized = true;
   }
 
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = addonData->isolate;
   v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
   v8::Local<v8::String> className =
@@ -7938,16 +7935,12 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs 2 or 3 arguments");
   }
 
-  AddonData * addonData = AddonData::get(info);
-  if (addonData == nullptr) {
-    return v8utils::throwTypeError(isolate, ERROR_INVALID_OBJECT);
-  }
-
   RoaringBitmap32 * bitmapInstance = ObjectWrap::TryUnwrap<RoaringBitmap32>(info[0], isolate);
   if (bitmapInstance == nullptr) {
     return v8utils::throwTypeError(
       isolate, "RoaringBitmap32BufferedIterator::ctor - first argument must be of type RoaringBitmap32");
   }
+  AddonData * addonData = bitmapInstance->addonData;
 
   bool reversed = info.Length() > 2 && info[2]->BooleanValue(isolate);
 
@@ -8012,7 +8005,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
 
 void RoaringBitmap32BufferedIterator_Init(
   v8::Local<v8::Object> exports, AddonData * addonData, v8::Local<v8::External> addonDataExternal) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = addonData->isolate;
 
   v8::Local<v8::FunctionTemplate> ctor =
     v8::FunctionTemplate::New(isolate, RoaringBitmap32BufferedIterator_New, addonDataExternal);

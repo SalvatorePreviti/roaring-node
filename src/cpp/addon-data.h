@@ -44,7 +44,6 @@ class AddonData final {
   explicit AddonData(v8::Isolate * isolate) : isolate(isolate) {
     isolate->AdjustAmountOfExternalAllocatedMemory(sizeof(AddonData));
 
-    v8::HandleScope scope(isolate);
     AddonData::AddonData_Init(this);
 
     auto context = isolate->GetCurrentContext();
@@ -82,7 +81,7 @@ class AddonData final {
     auto data = info.Data();
     if (!data.IsEmpty() && data->IsExternal()) {
       auto result = static_cast<AddonData *>(data.As<v8::External>()->Value());
-      if (AddonData::isActive(result)) {
+      if (AddonData::isActive(result) && result->isolate == info.GetIsolate()) {
         return result;
       }
     }
