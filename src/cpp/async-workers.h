@@ -333,7 +333,7 @@ class ParallelAsyncWorker : public AsyncWorker {
       return AsyncWorker::_start();
     }
 
-    uv_work_t * tasks = (uv_work_t *)gcaware_malloc(tasksCount * sizeof(uv_work_t));
+    uv_work_t * tasks = reinterpret_cast<uv_work_t *>(gcaware_malloc(tasksCount * sizeof(uv_work_t)));
     if (tasks == nullptr) {
       this->setError(WorkerError("Failed to allocate memory"));
       return false;
@@ -523,24 +523,24 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
       return;
     }
 
-    auto maxSize = this->maxSize;
-    if (maxSize > size) {
-      maxSize = size;
+    auto mazsz = this->maxSize;
+    if (mazsz > size) {
+      mazsz = size;
     }
 
     // Allocate a new buffer
-    this->allocatedBuffer = (uint32_t *)bare_aligned_malloc(32, size * sizeof(uint32_t));
+    this->allocatedBuffer = reinterpret_cast<uint32_t *>(bare_aligned_malloc(32, size * sizeof(uint32_t)));
     if (!this->allocatedBuffer) {
       return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to allocate memory"));
     }
 
-    if (maxSize < size) {
-      roaring_bitmap_range_uint32_array(this->bitmap->roaring, 0, maxSize, this->allocatedBuffer);
+    if (mazsz < size) {
+      roaring_bitmap_range_uint32_array(this->bitmap->roaring, 0, mazsz, this->allocatedBuffer);
     } else {
       roaring_bitmap_to_uint32_array(this->bitmap->roaring, this->allocatedBuffer);
     }
 
-    this->outputSize = maxSize;
+    this->outputSize = mazsz;
   }
 
   void finally() final {
@@ -550,7 +550,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
   }
 
   void done(v8::Local<v8::Value> & result) final {
-    uint32_t * allocatedBuffer = this->allocatedBuffer;
+    uint32_t * bufp = this->allocatedBuffer;
 
     if (this->hasInput) {
       if (!v8utils::v8ValueToUint32ArrayWithLimit(isolate, this->bufferPersistent.Get(isolate), this->outputSize, result)) {
@@ -559,14 +559,10 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
       return;
     }
 
-    if (allocatedBuffer && this->outputSize != 0) {
+    if (bufp && this->outputSize != 0) {
       // Create a new buffer using the allocated memory
       v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate,
-        reinterpret_cast<char *>(allocatedBuffer),
-        this->outputSize * sizeof(uint32_t),
-        bare_aligned_free_callback,
-        allocatedBuffer);
+        isolate, reinterpret_cast<char *>(bufp), this->outputSize * sizeof(uint32_t), bare_aligned_free_callback, bufp);
       if (!nodeBufferMaybeLocal.IsEmpty()) {
         this->allocatedBuffer = nullptr;
       }
@@ -709,7 +705,7 @@ class DeserializeWorker final : public AsyncWorker {
       if (this->deserializer.targetBitmap != nullptr) {
         this->maybeAddonData = this->deserializer.targetBitmap->addonData;
       }
-      if (this->maybeAddonData == nullptr && !AddonData::isActive(this->maybeAddonData)) {
+      if (!AddonData::isActive(this->maybeAddonData)) {
         return this->setError(WorkerError(ERROR_INVALID_OBJECT));
       }
     }
@@ -761,7 +757,7 @@ class DeserializeFileWorker final : public AsyncWorker {
 
   void work() final { this->setError(this->deserializer.deserialize()); }
 
-  void done(v8::Local<v8::Value> & result) {
+  void done(v8::Local<v8::Value> & result) override {
     v8::Isolate * isolate = this->isolate;
 
     if (!AddonData::isActive(this->maybeAddonData)) {
@@ -801,7 +797,7 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
   }
 
  protected:
-  virtual void parallelWork(uint32_t index) {
+  virtual void parallelWork(uint32_t index) override {
     RoaringBitmapDeserializer & item = items[index];
     const WorkerError error = item.deserialize();
     if (error.hasError()) {
@@ -817,7 +813,7 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
     v8::Local<v8::Function> cons = this->maybeAddonData->RoaringBitmap32_constructor.Get(isolate);
 
     const uint32_t itemsCount = this->loopCount;
-    RoaringBitmapDeserializer * items = this->items;
+    RoaringBitmapDeserializer * itms = this->items;
 
     v8::MaybeLocal<v8::Array> resultArrayMaybe = v8::Array::New(isolate, itemsCount);
     v8::Local<v8::Array> resultArray;
@@ -839,7 +835,7 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
         return this->setError(WorkerError(ERROR_INVALID_OBJECT));
       }
 
-      RoaringBitmapDeserializer & item = items[i];
+      RoaringBitmapDeserializer & item = itms[i];
       item.finalizeTargetBitmap(unwrapped);
       ignoreMaybeResult(resultArray->Set(currentContext, i, instance));
     }

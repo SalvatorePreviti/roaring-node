@@ -32,8 +32,8 @@ struct WorkerError {
       output = node::ErrnoException(
         isolate, this->errorno, this->syscall, this->msg && this->msg[0] ? this->msg : nullptr, this->path.c_str());
     } else {
-      const char * msg = this->msg && this->msg[0] ? this->msg : "Invalid operation";
-      v8::MaybeLocal<v8::String> message = v8::String::NewFromUtf8(isolate, msg, v8::NewStringType::kInternalized);
+      const char * m = this->msg && this->msg[0] ? this->msg : "Invalid operation";
+      v8::MaybeLocal<v8::String> message = v8::String::NewFromUtf8(isolate, m, v8::NewStringType::kInternalized);
       output = v8::Exception::Error(message.IsEmpty() ? v8::String::Empty(isolate) : message.ToLocalChecked());
     }
     return handle_scope.Escape(output);

@@ -107,7 +107,6 @@ struct CsvFileDescriptorSerializer final {
 
     char * str = this->buf + this->bufPos;
     int32_t i, j;
-    char c;
 
     /* uint to decimal  */
     i = 0;
@@ -121,7 +120,7 @@ struct CsvFileDescriptorSerializer final {
 
     /* reverse string */
     for (j = 0, i--; j < i; j++, i--) {
-      c = str[i];
+      char c = str[i];
       str[i] = str[j];
       str[j] = c;
     }

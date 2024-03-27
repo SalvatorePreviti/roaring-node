@@ -276,9 +276,6 @@ void RoaringBitmap32_rangeUint32Array(const v8::FunctionCallbackInfo<v8::Value> 
     size = 0;
   } else {
     size = limit < cardinality - offset ? limit : cardinality - offset;
-    if (offset > cardinality) {
-      size = 0;
-    }
     if (limit > cardinality - offset) {
       limit = cardinality - offset;
     }

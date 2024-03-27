@@ -58,22 +58,22 @@ void bare_aligned_free(void * memblock) {
 /** portable version of malloc_size */
 inline size_t bare_malloc_size(const void * ptr) {
 #if defined(__APPLE__)
-  return malloc_size((void *)ptr);
+  return malloc_size(const_cast<void *>(ptr));
 #elif defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
-  return _msize((void *)ptr);
+  return _msize(const_cast<void *>(ptr));
 #else
-  return malloc_usable_size((void *)ptr);
+  return malloc_usable_size(const_cast<void *>(ptr));
 #endif
 }
 
 /** portable version of malloc_size for memory allocated with bare_aligned_malloc */
 inline size_t bare_aligned_malloc_size(const void * ptr) {
 #if defined(__APPLE__)
-  return malloc_size((void *)ptr);
+  return malloc_size(const_cast<void *>(ptr));
 #elif defined(_WIN32)
-  return _aligned_msize((void *)ptr, 32, 0);
+  return _aligned_msize(const_cast<void *>(ptr), 32, 0);
 #else
-  return malloc_usable_size((void *)ptr);
+  return malloc_usable_size(const_cast<void *>(ptr));
 #endif
 }
 

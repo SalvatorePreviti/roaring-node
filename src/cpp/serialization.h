@@ -176,16 +176,11 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
     if (!this->self) {
       return;
     }
-    uint8_t * allocatedBuffer = this->allocatedBuffer;
-
+    uint8_t * bufp = this->allocatedBuffer;
     if (allocatedBuffer) {
       // Create a new buffer using the allocated memory
-      v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate,
-        reinterpret_cast<char *>(allocatedBuffer),
-        this->serializedSize,
-        bare_aligned_free_callback,
-        allocatedBuffer);
+      v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal =
+        node::Buffer::New(isolate, reinterpret_cast<char *>(bufp), this->serializedSize, bare_aligned_free_callback, bufp);
       if (!nodeBufferMaybeLocal.ToLocal(&result)) {
         return v8utils::throwError(isolate, "RoaringBitmap32 serialization failed to create a new buffer");
       }

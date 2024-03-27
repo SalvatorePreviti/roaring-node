@@ -1,3 +1,4 @@
+#include "includes.h"
 #include "aligned-buffers.h"
 #include "RoaringBitmap32-main.h"
 #include "RoaringBitmap32BufferedIterator.h"

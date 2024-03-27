@@ -31,12 +31,12 @@ async function development() {
 }
 
 async function build() {
-  if (
+  const isDebug =
     process.argv.includes("dev") ||
     process.argv.includes("--dev") ||
     process.argv.includes("development") ||
-    process.argv.includes("--development")
-  ) {
+    process.argv.includes("--development");
+  if (isDebug) {
     console.time("Development mode");
     await development();
     console.timeEnd("Development mode");
@@ -90,7 +90,11 @@ async function build() {
   });
 
   if (!process.argv.includes("--no-compile")) {
-    await forkAsync(path.resolve(ROOT_FOLDER, "node-pre-gyp.js"), [`--custom-rebuild`]);
+    const options = [`--custom-rebuild`];
+    if (isDebug) {
+      options.push("--debug");
+    }
+    await forkAsync(path.resolve(ROOT_FOLDER, "node-pre-gyp.js"), options);
     await forkAsync(require.resolve("./test.js"));
   }
 }
