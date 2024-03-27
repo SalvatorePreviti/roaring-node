@@ -2661,7 +2661,6 @@ class AddonData final {
         thread_local_isolate = nullptr;
       }
       addonData->isolate->AdjustAmountOfExternalAllocatedMemory(-sizeof(AddonData));
-
       {
         std::unique_lock<std::shared_mutex> lock(AddonData::instancesMutex);
         AddonData::instances.erase(addonData);
