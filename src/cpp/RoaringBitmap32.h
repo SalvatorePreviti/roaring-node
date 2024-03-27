@@ -12,14 +12,17 @@ class RoaringBitmap32;
 
 typedef roaring_bitmap_t * roaring_bitmap_t_ptr;
 
-class RoaringBitmap32 final : public ObjectWrap {
+std::atomic<uint64_t> RoaringBitmap32_instances;
+
+class RoaringBitmap32 final {
  public:
-  static const constexpr uint64_t OBJECT_TOKEN = 0x21524F4152330000;
+  static uint32_t _OBJECT_TOKEN;
 
   static const constexpr int64_t FROZEN_COUNTER_SOFT_FROZEN = -1;
   static const constexpr int64_t FROZEN_COUNTER_HARD_FROZEN = -2;
 
   roaring_bitmap_t * roaring;
+  AddonData * const addonData;
   int64_t sizeCache;
   int64_t _version;
   int64_t frozenCounter;
@@ -35,8 +38,8 @@ class RoaringBitmap32 final : public ObjectWrap {
     if (this->readonlyViewOf != nullptr) {
       return this->readonlyViewOf->isEmpty();
     }
-    const roaring_bitmap_t_ptr roaring = this->roaring;
-    bool result = roaring == nullptr || roaring_bitmap_is_empty(roaring);
+    const roaring_bitmap_t_ptr r = this->roaring;
+    bool result = r == nullptr || roaring_bitmap_is_empty(r);
     if (result) {
       const_cast<RoaringBitmap32 *>(this)->sizeCache = 0;
     }
@@ -49,8 +52,8 @@ class RoaringBitmap32 final : public ObjectWrap {
       if (this->readonlyViewOf != nullptr) {
         return this->readonlyViewOf->getSize();
       }
-      const roaring_bitmap_t_ptr roaring = this->roaring;
-      size = roaring != nullptr ? (int64_t)roaring_bitmap_get_cardinality(roaring) : 0;
+      const roaring_bitmap_t_ptr r = this->roaring;
+      size = r != nullptr ? (int64_t)roaring_bitmap_get_cardinality(r) : 0;
       const_cast<RoaringBitmap32 *>(this)->sizeCache = size;
     }
     return (size_t)size;
@@ -84,7 +87,7 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   bool replaceBitmapInstance(v8::Isolate * isolate, roaring_bitmap_t * newInstance) {
-    roaring_bitmap_t * oldInstance = this->roaring;
+    roaring_bitmap_t * const oldInstance = this->roaring;
     if (oldInstance == newInstance) {
       return false;
     }
@@ -100,29 +103,35 @@ class RoaringBitmap32 final : public ObjectWrap {
   }
 
   explicit RoaringBitmap32(AddonData * addonData, RoaringBitmap32 * readonlyViewOf) :
-    ObjectWrap(addonData),
     roaring(readonlyViewOf->roaring),
+    addonData(addonData),
     sizeCache(-1),
+    _version(0),
     frozenCounter(RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN),
     readonlyViewOf(readonlyViewOf->readonlyViewOf ? readonlyViewOf->readonlyViewOf : readonlyViewOf) {
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
   }
 
   explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity) :
-    ObjectWrap(addonData),
     roaring(roaring_bitmap_create_with_capacity(capacity)),
+    addonData(addonData),
     sizeCache(0),
     _version(0),
     frozenCounter(0),
     readonlyViewOf(nullptr) {
-    ++addonData->RoaringBitmap32_instances;
+    ++RoaringBitmap32_instances;
     gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
   }
 
   ~RoaringBitmap32() {
+    this->readonlyViewPersistent.Reset();
+    if (!this->persistent.IsEmpty()) {
+      this->persistent.ClearWeak();
+      this->persistent.Reset();
+    }
     gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32));
     if (!this->readonlyViewOf) {
-      --this->addonData->RoaringBitmap32_instances;
+      --RoaringBitmap32_instances;
       if (this->roaring != nullptr) {
         roaring_bitmap_free(this->roaring);
       }
@@ -130,10 +139,9 @@ class RoaringBitmap32 final : public ObjectWrap {
         gcaware_aligned_free(this->frozenStorage.data);
       }
     }
-    if (!this->persistent.IsEmpty()) {
-      this->persistent.ClearWeak();
-    }
   }
 };
+
+uint32_t RoaringBitmap32::_OBJECT_TOKEN = 0;
 
 #endif

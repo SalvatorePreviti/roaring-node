@@ -29,7 +29,7 @@ SOFTWARE.
 
 const path = require("path");
 const fs = require("fs");
-const colors = require("chalk");
+const colors = require("ansis");
 
 const { Octokit } = require("@octokit/rest");
 

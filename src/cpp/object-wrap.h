@@ -1,32 +1,30 @@
 #ifndef ROARING_NODE_OBJECT_WRAP_
 #define ROARING_NODE_OBJECT_WRAP_
 
+#include "includes.h"
 #include "addon-data.h"
 
-class ObjectWrap {
- public:
-  AddonData * const addonData;
-
+namespace ObjectWrap {
   template <class T>
   static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
     v8::Local<v8::Object> obj;
     if (!value->IsObject()) {
       return nullptr;
     }
-
     if (!value->ToObject(isolate->GetCurrentContext()).ToLocal(&obj)) {
       return nullptr;
     }
-
     if (obj->InternalFieldCount() != 2) {
       return nullptr;
     }
-
-    if ((uintptr_t)obj->GetAlignedPointerFromInternalField(1) != T::OBJECT_TOKEN) {
+    if (obj->GetAlignedPointerFromInternalField(1) != &T::_OBJECT_TOKEN) {
       return nullptr;
     }
-
-    return (T *)(obj->GetAlignedPointerFromInternalField(0));
+    T * result = reinterpret_cast<T *>(obj->GetAlignedPointerFromInternalField(0));
+    if (!AddonData::isActive(result->addonData)) {
+      return nullptr;
+    }
+    return result;
   }
 
   template <class T>
@@ -34,8 +32,6 @@ class ObjectWrap {
     return info.Length() <= argumentIndex ? nullptr : ObjectWrap::TryUnwrap<T>(info[argumentIndex], info.GetIsolate());
   }
 
- protected:
-  explicit ObjectWrap(AddonData * addonData) : addonData(addonData) {}
-};
+};  // namespace ObjectWrap
 
 #endif  // ROARING_NODE_OBJECT_WRAP_

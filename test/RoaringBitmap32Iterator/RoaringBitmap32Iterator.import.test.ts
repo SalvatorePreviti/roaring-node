@@ -1,11 +1,11 @@
 import RoaringBitmap32Iterator from "../../RoaringBitmap32Iterator";
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
 
 describe("RoaringBitmap32Iterator import", () => {
   it('exports itself with a "default" property', () => {
     const required = require("../../RoaringBitmap32Iterator");
-    expect(!!required).to.be.true;
-    expect(required === required.default).to.be.true;
+    expect(!!required).toBe(true);
+    expect(required === required.default).toBe(true);
   });
 
   it("supports typescript \"import RoaringBitmap32Iterator from 'roaring/RoaringBitmap32Iterator'\" syntax", () => {

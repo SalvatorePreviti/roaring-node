@@ -1,22 +1,20 @@
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect, use as chaiUse } from "chai";
-
-chaiUse(require("chai-as-promised"));
+import { expect, describe, it } from "vitest";
 
 describe("RoaringBitmap32 deserializeParallelAsync", () => {
   describe("async/await", () => {
     describe("one empty buffer", () => {
       it("deserializes an empty buffer (non portable)", async () => {
         const bitmap = await RoaringBitmap32.deserializeParallelAsync([Buffer.from([])], false);
-        expect(bitmap).to.have.lengthOf(1);
-        expect(bitmap[0]).to.be.instanceOf(RoaringBitmap32);
+        expect(bitmap).toHaveLength(1);
+        expect(bitmap[0]).toBeInstanceOf(RoaringBitmap32);
         expect(bitmap[0].size).eq(0);
       });
 
       it("deserializes an empty buffer (portable)", async () => {
         const bitmap = await RoaringBitmap32.deserializeParallelAsync([Buffer.from([])], true);
-        expect(bitmap).to.have.lengthOf(1);
-        expect(bitmap[0]).to.be.instanceOf(RoaringBitmap32);
+        expect(bitmap).toHaveLength(1);
+        expect(bitmap[0]).toBeInstanceOf(RoaringBitmap32);
         expect(bitmap[0].size).eq(0);
       });
     });
@@ -27,9 +25,9 @@ describe("RoaringBitmap32 deserializeParallelAsync", () => {
           [Buffer.from([]), Buffer.from([]), Buffer.from([])],
           false,
         );
-        expect(bitmap).to.have.lengthOf(3);
+        expect(bitmap).toHaveLength(3);
         for (let i = 0; i < 3; ++i) {
-          expect(bitmap[i]).to.be.instanceOf(RoaringBitmap32);
+          expect(bitmap[i]).toBeInstanceOf(RoaringBitmap32);
           expect(bitmap[i].size).eq(0);
         }
       });
@@ -39,9 +37,9 @@ describe("RoaringBitmap32 deserializeParallelAsync", () => {
           [Buffer.from([]), Buffer.from([]), Buffer.from([])],
           true,
         );
-        expect(bitmap).to.have.lengthOf(3);
+        expect(bitmap).toHaveLength(3);
         for (let i = 0; i < 3; ++i) {
-          expect(bitmap[i]).to.be.instanceOf(RoaringBitmap32);
+          expect(bitmap[i]).toBeInstanceOf(RoaringBitmap32);
           expect(bitmap[i].size).eq(0);
         }
       });
@@ -61,9 +59,9 @@ describe("RoaringBitmap32 deserializeParallelAsync", () => {
         sources.map((x) => x.serialize(false)),
         false,
       );
-      expect(result).to.have.lengthOf(sources.length);
+      expect(result).toHaveLength(sources.length);
       for (let i = 0; i < sources.length; ++i) {
-        expect(result[i].toArray()).deep.equal(sources[i].toArray());
+        expect(result[i].toArray()).toEqual(sources[i].toArray());
       }
     });
 
@@ -81,9 +79,9 @@ describe("RoaringBitmap32 deserializeParallelAsync", () => {
         sources.map((x) => x.serialize(true)),
         true,
       );
-      expect(result).to.have.lengthOf(sources.length);
+      expect(result).toHaveLength(sources.length);
       for (let i = 0; i < sources.length; ++i) {
-        expect(result[i].toArray()).deep.equal(sources[i].toArray());
+        expect(result[i].toArray()).toEqual(sources[i].toArray());
       }
     });
   });

@@ -9,17 +9,14 @@ const { unity } = require("./lib/unity");
 runMain(() => {
   const roaringNodeCpp = fs.readFileSync(CPP_UNITY_FILE_PATH, "utf8");
 
-  const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
-  if (nodeVersion >= 14) {
-    execSync("npx lint-staged");
-  }
+  execSync("npx lint-staged");
 
   const unityResult = unity();
 
   console.log();
 
   if (unityResult.outputText !== roaringNodeCpp) {
-    const chalk = require("chalk");
+    const chalk = require("ansis");
     console.error(
       chalk.redBright(
         `${chalk.underline.bold(
@@ -34,7 +31,7 @@ runMain(() => {
   try {
     require("../");
   } catch {
-    const chalk = require("chalk");
+    const chalk = require("ansis");
     console.error(
       chalk.redBright(
         `${chalk.underline.bold(
@@ -47,5 +44,5 @@ runMain(() => {
   }
 
   execSync("npm run lint", { stdio: "inherit" });
-  execSync("npm run test", { stdio: "inherit" });
+  execSync("npx vitest --run", { stdio: "inherit" });
 }, "prepush");

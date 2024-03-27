@@ -1,6 +1,6 @@
 import RoaringBitmap32 from "../../RoaringBitmap32";
 import RoaringBitmap32Iterator from "../../RoaringBitmap32Iterator";
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 
 describe("RoaringBitmap32 ranges", () => {
   describe("fromRange", () => {
@@ -15,13 +15,13 @@ describe("RoaringBitmap32 ranges", () => {
     it("works with range 0, 6", () => {
       const bitmap = RoaringBitmap32.fromRange(0, 6);
       expect(bitmap.size).eq(6);
-      expect(bitmap.toArray()).deep.equal([0, 1, 2, 3, 4, 5]);
+      expect(bitmap.toArray()).toEqual([0, 1, 2, 3, 4, 5]);
     });
 
     it("works with range 10, 16", () => {
       const bitmap = RoaringBitmap32.fromRange(10, 16);
       expect(bitmap.size).eq(6);
-      expect(bitmap.toArray()).deep.equal([10, 11, 12, 13, 14, 15]);
+      expect(bitmap.toArray()).toEqual([10, 11, 12, 13, 14, 15]);
     });
 
     it("works with range 100, 70000", () => {
@@ -31,30 +31,30 @@ describe("RoaringBitmap32 ranges", () => {
 
     it("works with step 2", () => {
       const bitmap = RoaringBitmap32.fromRange(0, 20, 2);
-      expect(bitmap.toArray()).deep.equal([0, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
+      expect(bitmap.toArray()).toEqual([0, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
     });
 
     it("works with step 5", () => {
       const bitmap = RoaringBitmap32.fromRange(0, 53, 5);
-      expect(bitmap.toArray()).deep.equal([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]);
+      expect(bitmap.toArray()).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]);
     });
 
     it("works with big values", () => {
-      expect(RoaringBitmap32.fromRange(0xfffffffd, 0xfffffffe).toArray()).deep.equal([0xfffffffd]);
-      expect(RoaringBitmap32.fromRange(0xfffffffd, 0xffffffff).toArray()).deep.equal([0xfffffffd, 0xfffffffe]);
-      expect(RoaringBitmap32.fromRange(0xfffffffe, 0x100000000).toArray()).deep.equal([0xfffffffe, 0xffffffff]);
-      expect(RoaringBitmap32.fromRange(0xfffffffe, Number.MAX_SAFE_INTEGER).toArray()).deep.equal([
+      expect(RoaringBitmap32.fromRange(0xfffffffd, 0xfffffffe).toArray()).toEqual([0xfffffffd]);
+      expect(RoaringBitmap32.fromRange(0xfffffffd, 0xffffffff).toArray()).toEqual([0xfffffffd, 0xfffffffe]);
+      expect(RoaringBitmap32.fromRange(0xfffffffe, 0x100000000).toArray()).toEqual([0xfffffffe, 0xffffffff]);
+      expect(RoaringBitmap32.fromRange(0xfffffffe, Number.MAX_SAFE_INTEGER).toArray()).toEqual([
         0xfffffffe, 0xffffffff,
       ]);
-      expect(RoaringBitmap32.fromRange(0xffffffff, 0xffffffff).toArray()).deep.equal([]);
-      expect(RoaringBitmap32.fromRange(0xffffffff, 0x100000000).toArray()).deep.equal([0xffffffff]);
-      expect(RoaringBitmap32.fromRange(0x100000000, 0x100000005).toArray()).deep.equal([]);
+      expect(RoaringBitmap32.fromRange(0xffffffff, 0xffffffff).toArray()).toEqual([]);
+      expect(RoaringBitmap32.fromRange(0xffffffff, 0x100000000).toArray()).toEqual([0xffffffff]);
+      expect(RoaringBitmap32.fromRange(0x100000000, 0x100000005).toArray()).toEqual([]);
     });
 
     it("works with negative values", () => {
-      expect(RoaringBitmap32.fromRange(-1, 3).toArray()).deep.equal([0, 1, 2]);
-      expect(RoaringBitmap32.fromRange(-1000, 3).toArray()).deep.equal([0, 1, 2]);
-      expect(RoaringBitmap32.fromRange(Number.MIN_SAFE_INTEGER, 3).toArray()).deep.equal([0, 1, 2]);
+      expect(RoaringBitmap32.fromRange(-1, 3).toArray()).toEqual([0, 1, 2]);
+      expect(RoaringBitmap32.fromRange(-1000, 3).toArray()).toEqual([0, 1, 2]);
+      expect(RoaringBitmap32.fromRange(Number.MIN_SAFE_INTEGER, 3).toArray()).toEqual([0, 1, 2]);
     });
   });
 
@@ -206,7 +206,7 @@ describe("RoaringBitmap32 ranges", () => {
   describe("addRange", () => {
     it("does nothing for invalid values", () => {
       const bitmap = new RoaringBitmap32([1, 2]);
-      expect(bitmap.toArray()).deep.equal([1, 2]);
+      expect(bitmap.toArray()).toEqual([1, 2]);
       bitmap.addRange(null as any, 6);
       bitmap.addRange("0" as any, 6);
       bitmap.addRange(0, [8] as any);
@@ -216,7 +216,7 @@ describe("RoaringBitmap32 ranges", () => {
       bitmap.addRange(-4, -2);
       bitmap.addRange(4, 2);
       bitmap.addRange(4, -2);
-      expect(bitmap.toArray()).deep.equal([1, 2]);
+      expect(bitmap.toArray()).toEqual([1, 2]);
     });
 
     it("flips a ranges on an empty bitmap", () => {
@@ -224,31 +224,31 @@ describe("RoaringBitmap32 ranges", () => {
       bitmap.addRange(1, 3);
       bitmap.addRange(3, 5);
       bitmap.addRange(8, 10);
-      expect(bitmap.toArray()).deep.equal([1, 2, 3, 4, 8, 9]);
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 8, 9]);
     });
 
     it("accepts negative numbers", () => {
       const bitmap = new RoaringBitmap32([1]);
       bitmap.addRange(-4, 3);
-      expect(bitmap.toArray()).deep.equal([0, 1, 2]);
+      expect(bitmap.toArray()).toEqual([0, 1, 2]);
     });
 
     it("accepts negative infinity", () => {
       const bitmap = new RoaringBitmap32([1]);
       bitmap.addRange(-Infinity, 3);
-      expect(bitmap.toArray()).deep.equal([0, 1, 2]);
+      expect(bitmap.toArray()).toEqual([0, 1, 2]);
     });
 
     it("adds ranges", () => {
       const bitmap = new RoaringBitmap32([4, 6, 7]);
       bitmap.addRange(1, 3);
       bitmap.addRange(3, 5);
-      expect(bitmap.toArray()).deep.equal([1, 2, 3, 4, 6, 7]);
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 6, 7]);
       bitmap.addRange(8, 10);
       bitmap.addRange(4, 10);
-      expect(bitmap.toArray()).deep.equal([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
       bitmap.addRange(4, 10);
-      expect(bitmap.toArray()).deep.equal([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 
     it("adds 0xFFFFFFFF", () => {
@@ -284,8 +284,8 @@ describe("RoaringBitmap32 ranges", () => {
       const bitmap = new RoaringBitmap32();
       const iterator = new RoaringBitmap32Iterator(bitmap);
       bitmap.addRange(4294967295, 4294967296);
-      expect(iterator.next()).deep.equal({ done: false, value: 4294967295 });
-      expect(iterator.next()).deep.equal({ done: true, value: undefined });
+      expect(iterator.next()).toEqual({ done: false, value: 4294967295 });
+      expect(iterator.next()).toEqual({ done: true, value: undefined });
     });
   });
 
@@ -300,20 +300,20 @@ describe("RoaringBitmap32 ranges", () => {
       bitmap.removeRange(0, 0);
       bitmap.removeRange(5, 5);
       bitmap.removeRange(5, "xxx" as any);
-      expect(bitmap.toArray()).deep.equal(values);
+      expect(bitmap.toArray()).toEqual(values);
     });
 
     it("removes a range", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
       bitmap.removeRange(3, 7);
-      expect(bitmap.toArray()).deep.equal([1, 2, 7, 8, 9, 10]);
+      expect(bitmap.toArray()).toEqual([1, 2, 7, 8, 9, 10]);
     });
   });
 
   describe("flipRange", () => {
     it("does nothing for invalid values", () => {
       const bitmap = new RoaringBitmap32([1, 2]);
-      expect(bitmap.toArray()).deep.equal([1, 2]);
+      expect(bitmap.toArray()).toEqual([1, 2]);
       bitmap.flipRange(null as any, 6);
       bitmap.flipRange("0" as any, 6);
       bitmap.flipRange(0, [8] as any);
@@ -322,7 +322,7 @@ describe("RoaringBitmap32 ranges", () => {
       bitmap.flipRange(-4, -2);
       bitmap.flipRange(4, 2);
       bitmap.flipRange(4, -2);
-      expect(bitmap.toArray()).deep.equal([1, 2]);
+      expect(bitmap.toArray()).toEqual([1, 2]);
     });
 
     it("flips a ranges on an empty bitmap", () => {
@@ -330,19 +330,19 @@ describe("RoaringBitmap32 ranges", () => {
       expect(bitmap.flipRange(1, 3)).eq(bitmap);
       bitmap.flipRange(3, 5);
       bitmap.flipRange(8, 10);
-      expect(bitmap.toArray()).deep.equal([1, 2, 3, 4, 8, 9]);
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 8, 9]);
     });
 
     it("accepts negative numbers", () => {
       const bitmap = new RoaringBitmap32([1]);
       bitmap.flipRange(-4, 3);
-      expect(bitmap.toArray()).deep.equal([0, 2]);
+      expect(bitmap.toArray()).toEqual([0, 2]);
     });
 
     it("accepts negative infinity", () => {
       const bitmap = new RoaringBitmap32([1]);
       bitmap.flipRange(-Infinity, 3);
-      expect(bitmap.toArray()).deep.equal([0, 2]);
+      expect(bitmap.toArray()).toEqual([0, 2]);
     });
 
     it("flips a ranges", () => {
@@ -351,9 +351,9 @@ describe("RoaringBitmap32 ranges", () => {
       bitmap.flipRange(3, 5);
       bitmap.flipRange(8, 10);
       bitmap.flipRange(4, 10);
-      expect(bitmap.toArray()).deep.equal([1, 2, 3, 4, 5]);
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 4, 5]);
       bitmap.flipRange(4, 10);
-      expect(bitmap.toArray()).deep.equal([1, 2, 3, 6, 7, 8, 9]);
+      expect(bitmap.toArray()).toEqual([1, 2, 3, 6, 7, 8, 9]);
     });
 
     it("flips 0xFFFFFFFF", () => {
@@ -389,8 +389,8 @@ describe("RoaringBitmap32 ranges", () => {
       const bitmap = new RoaringBitmap32();
       const iterator = new RoaringBitmap32Iterator(bitmap);
       bitmap.flipRange(4294967295, 4294967296);
-      expect(iterator.next()).deep.equal({ done: false, value: 4294967295 });
-      expect(iterator.next()).deep.equal({ done: true, value: undefined });
+      expect(iterator.next()).toEqual({ done: false, value: 4294967295 });
+      expect(iterator.next()).toEqual({ done: true, value: undefined });
     });
   });
 });

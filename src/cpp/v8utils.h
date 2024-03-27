@@ -12,17 +12,26 @@ bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
     (value->IsUint32Array() || value->IsInt32Array() || value->IsArrayBuffer() || value->IsSharedArrayBuffer());
 }
 
+bool argumentIsValidUint32ArrayOutput(const v8::MaybeLocal<v8::Value> & value) {
+  if (value.IsEmpty()) {
+    return false;
+  }
+  v8::Local<v8::Value> local;
+  return value.ToLocal(&local) && argumentIsValidUint32ArrayOutput(local);
+}
+
 namespace v8utils {
 
   template <int N>
   inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
-    isolate->ThrowException(v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
+    isolate->ThrowException(
+      v8::Exception::Error(v8::String::NewFromUtf8Literal(isolate, message, v8::NewStringType::kInternalized)));
   }
 
   template <int N>
   inline void throwTypeError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(
-      v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));
+      v8::Exception::TypeError(v8::String::NewFromUtf8Literal(isolate, message, v8::NewStringType::kInternalized)));
   }
 
   void throwError(v8::Isolate * isolate, const char * message) {
@@ -36,7 +45,7 @@ namespace v8utils {
       }
     }
     isolate->ThrowException(
-      v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
+      v8::Exception::Error(v8::String::NewFromUtf8Literal(isolate, "Operation failed", v8::NewStringType::kInternalized)));
   }
 
   void throwTypeError(v8::Isolate * isolate, const char * message) {
@@ -49,8 +58,8 @@ namespace v8utils {
         return;
       }
     }
-    isolate->ThrowException(
-      v8::Exception::TypeError(NEW_LITERAL_V8_STRING(isolate, "Operation failed", v8::NewStringType::kInternalized)));
+    isolate->ThrowException(v8::Exception::TypeError(
+      v8::String::NewFromUtf8Literal(isolate, "Operation failed", v8::NewStringType::kInternalized)));
   }
 
   void throwTypeError(v8::Isolate * isolate, const char * context, const char * message) {
@@ -61,154 +70,33 @@ namespace v8utils {
     isolate->ThrowException(v8::Exception::TypeError(msg.IsEmpty() ? v8::String::Empty(isolate) : msg.ToLocalChecked()));
   }
 
-  template <int N>
-  void defineHiddenField(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
-    v8::HandleScope scope(isolate);
-    v8::PropertyDescriptor propertyDescriptor(value, false);
-    propertyDescriptor.set_configurable(false);
-    propertyDescriptor.set_enumerable(false);
-    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
-    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
-  }
-
-  void defineHiddenField(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, v8::Local<v8::Name> name, v8::Local<v8::Value> value) {
-    v8::HandleScope scope(isolate);
-    v8::PropertyDescriptor propertyDescriptor(value, false);
-    propertyDescriptor.set_configurable(false);
-    propertyDescriptor.set_enumerable(false);
-    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
-  }
-
-  template <int N>
-  void defineReadonlyField(
-    v8::Isolate * isolate, v8::Local<v8::Object> target, const char (&literal)[N], v8::Local<v8::Value> value) {
-    v8::HandleScope scope(isolate);
-    v8::PropertyDescriptor propertyDescriptor(value, false);
-    propertyDescriptor.set_configurable(false);
-    propertyDescriptor.set_enumerable(true);
-
-    auto name = NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized);
-    ignoreMaybeResult(target->DefineProperty(isolate->GetCurrentContext(), name, propertyDescriptor));
-  }
-
-  bool bufferFromArrayBuffer(
-    v8::Isolate * isolate,
-    AddonData * addonData,
-    v8::Local<v8::Value> buffer,
-    size_t offset,
-    size_t length,
-    v8::Local<v8::Value> & result) {
-    if (buffer.IsEmpty()) {
-      return false;
-    }
-
-    if (buffer->IsSharedArrayBuffer()) {
-      auto buf = buffer.As<v8::SharedArrayBuffer>();
-      if (buf.IsEmpty()) {
-        return false;
-      }
-      auto uint8Array = v8::Uint8Array::New(buf, offset, length);
-      if (uint8Array.IsEmpty()) {
-        return false;
-      }
-      return node::Buffer::New(isolate, uint8Array->Buffer(), offset, length).ToLocal(&result);
-    } else {
-      auto buf = buffer.As<v8::ArrayBuffer>();
-      if (buf.IsEmpty()) {
-        return false;
-      }
-      return node::Buffer::New(isolate, buf, offset, length).ToLocal(&result);
-    }
-  }
-
-  bool v8ValueToBufferWithLimit(
-    v8::Isolate * isolate,
-    AddonData * addonData,
-    v8::MaybeLocal<v8::Value> value,
-    size_t length,
-    v8::Local<v8::Value> & result) {
-    v8::Local<v8::Value> localValue;
-    if (value.ToLocal(&localValue) && !localValue.IsEmpty()) {
-      if (localValue->IsUint8Array()) {
-        v8::Local<v8::Uint8Array> array = localValue.As<v8::Uint8Array>();
-        if (!array.IsEmpty()) {
-          if (node::Buffer::HasInstance(localValue) && node::Buffer::Length(localValue) == length) {
-            result = array;
-            return true;
-          }
-          if (array->ByteLength() >= length) {
-            return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
-          }
-        }
-        return false;
-      }
-      if (localValue->IsTypedArray()) {
-        auto array = localValue.As<v8::TypedArray>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
-        }
-        return false;
-      }
-      if (localValue->IsArrayBufferView()) {
-        auto array = localValue.As<v8::ArrayBufferView>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, addonData, array->Buffer(), array->ByteOffset(), length, result);
-        }
-        return false;
-      }
-      if (localValue->IsArrayBuffer()) {
-        auto array = localValue.As<v8::ArrayBuffer>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
-        }
-        return false;
-      }
-      if (localValue->IsSharedArrayBuffer()) {
-        auto array = localValue.As<v8::SharedArrayBuffer>();
-        if (!array.IsEmpty() && array->ByteLength() >= length) {
-          return bufferFromArrayBuffer(isolate, addonData, array, 0, length, result);
-        }
-        return false;
-      }
-    }
-    return false;
-  }
-
   bool v8ValueToUint32ArrayWithLimit(
     v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
+    v8::EscapableHandleScope scope(isolate);
+
     v8::Local<v8::Value> localValue;
     if (!value.ToLocal(&localValue)) {
-      return {};
+      return false;
     }
     if (localValue->IsUint32Array()) {
       auto array = localValue.As<v8::Uint32Array>();
       if (!array.IsEmpty()) {
         auto arrayLength = array->Length();
         if (arrayLength == length) {
-          result = array;
+          result = scope.Escape(array);
           return true;
         }
         if (arrayLength > length) {
-          result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+          result = scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
           return !result.IsEmpty();
         }
-      }
-      return false;
-    }
-    if (localValue->IsTypedArray()) {
-      auto array = localValue.As<v8::TypedArray>();
-      if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
-        return !result.IsEmpty();
       }
       return false;
     }
     if (localValue->IsArrayBufferView()) {
       auto array = localValue.As<v8::ArrayBufferView>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+        result = scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
         return !result.IsEmpty();
       }
       return false;
@@ -216,7 +104,7 @@ namespace v8utils {
     if (localValue->IsArrayBuffer()) {
       auto array = localValue.As<v8::ArrayBuffer>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array, 0, length);
+        result = scope.Escape(v8::Uint32Array::New(array, 0, length));
         return !result.IsEmpty();
       }
       return false;
@@ -224,7 +112,7 @@ namespace v8utils {
     if (localValue->IsSharedArrayBuffer()) {
       auto array = localValue.As<v8::SharedArrayBuffer>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array, 0, length);
+        result = scope.Escape(v8::Uint32Array::New(array, 0, length));
         return !result.IsEmpty();
       }
       return false;
@@ -232,13 +120,14 @@ namespace v8utils {
     return false;
   }
 
+  uint64_t _emptyUint64 = 0;
+
   template <typename T>
   class TypedArrayContent final {
    public:
+    std::shared_ptr<v8::BackingStore> backingStore;
     size_t length;
     T * data;
-    v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
-    std::shared_ptr<v8::BackingStore> backingStore;
 
     inline TypedArrayContent() : length(0), data(nullptr) {}
 
@@ -256,11 +145,10 @@ namespace v8utils {
       this->length = 0;
       this->data = nullptr;
       this->backingStore = nullptr;
-      this->bufferPersistent.Reset();
     }
 
     template <typename Q>
-    bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
+    inline bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
       v8::Local<Q> local;
       if (from.ToLocal(&local)) {
         return this->set(isolate, local);
@@ -271,37 +159,56 @@ namespace v8utils {
 
     template <typename Q>
     bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
+      v8::HandleScope scope(isolate);
+      this->reset();
+
       if (!from.IsEmpty()) {
         if (from->IsArrayBufferView()) {
-          bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBufferView> array = v8::Local<v8::ArrayBufferView>::Cast(from);
-          this->length = array->ByteLength() / sizeof(T);
           auto arrayBuffer = array->Buffer();
-          this->backingStore = arrayBuffer->GetBackingStore();
-          this->data = (T *)((uint8_t *)(this->backingStore->Data()) + array->ByteOffset());
-          return true;
+          if (!arrayBuffer.IsEmpty()) {
+            this->backingStore = arrayBuffer->GetBackingStore();
+            auto d = this->backingStore ? this->backingStore->Data() : nullptr;
+            if (d) {
+              this->data = reinterpret_cast<T *>(reinterpret_cast<uint8_t *>(d) + array->ByteOffset());
+              this->length = array->ByteLength() / sizeof(T);
+            } else {
+              this->data = reinterpret_cast<T *>(&_emptyUint64);
+              this->length = 0;
+            }
+            return true;
+          }
         }
 
         if (from->IsArrayBuffer()) {
-          bufferPersistent.Reset(isolate, from);
           v8::Local<v8::ArrayBuffer> arrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(from);
-          this->length = arrayBuffer->ByteLength() / sizeof(T);
           this->backingStore = arrayBuffer->GetBackingStore();
-          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+          auto d = this->backingStore ? this->backingStore->Data() : nullptr;
+          if (d) {
+            this->data = reinterpret_cast<T *>(d);
+            this->length = arrayBuffer->ByteLength() / sizeof(T);
+          } else {
+            this->data = reinterpret_cast<T *>(&_emptyUint64);
+            this->length = 0;
+          }
           return true;
         }
 
         if (from->IsSharedArrayBuffer()) {
-          bufferPersistent.Reset(isolate, from);
           v8::Local<v8::SharedArrayBuffer> arrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(from);
-          this->length = arrayBuffer->ByteLength() / sizeof(T);
           this->backingStore = arrayBuffer->GetBackingStore();
-          this->data = (T *)((uint8_t *)(this->backingStore->Data()));
+          auto d = this->backingStore ? this->backingStore->Data() : nullptr;
+          if (d) {
+            this->data = reinterpret_cast<T *>(d);
+            this->length = arrayBuffer->ByteLength() / sizeof(T);
+          } else {
+            this->data = reinterpret_cast<T *>(&_emptyUint64);
+            this->length = 0;
+          }
           return true;
         }
       }
 
-      this->reset();
       return false;
     }
   };

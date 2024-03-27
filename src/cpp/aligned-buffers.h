@@ -1,10 +1,10 @@
 #ifndef ROARING_NODE_ALIGNED_BUFFERS_
 #define ROARING_NODE_ALIGNED_BUFFERS_
 
-#include "v8utils.h"
 #include "memory.h"
+#include "v8utils.h"
 
-void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
+inline void _bufAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
 
@@ -26,65 +26,75 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
     size = 0;
   }
 
-  if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
-    return v8utils::throwTypeError(isolate, "Buffer size is too large");
-  }
-
   if (alignment > 1024) {
     return v8utils::throwTypeError(isolate, "Buffer alignment is too large");
   }
 
-  void * ptr = bare_aligned_malloc(alignment, size);
-  if (!ptr) {
-    return v8utils::throwError(isolate, "Buffer memory allocation failed");
+  if ((uint64_t)size > node::Buffer::kMaxLength || (uint64_t)size + alignment >= node::Buffer::kMaxLength) {
+    return v8utils::throwTypeError(isolate, "Buffer size is too large");
   }
 
-  if (!unsafe) {
-    memset(ptr, 0, size);
-  }
-
-  if (shared) {
-    AddonData * addonData = AddonData::get(info);
-    if (addonData == nullptr) {
-      bare_aligned_free(ptr);
-      return v8utils::throwError(isolate, "Invalid call");
-    }
-
-    auto backingStore = v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, nullptr);
-    if (!backingStore) {
-      bare_aligned_free(ptr);
-      return v8utils::throwError(isolate, "Buffer creation failed");
-    }
-    auto sharedBuf = v8::SharedArrayBuffer::New(isolate, std::move(backingStore));
-    v8::Local<v8::Value> bufferObj;
-    if (sharedBuf.IsEmpty() || !v8utils::bufferFromArrayBuffer(isolate, addonData, sharedBuf, 0, size, bufferObj)) {
-      bare_aligned_free(ptr);
-      return v8utils::throwError(isolate, "Buffer creation failed");
-    }
-    info.GetReturnValue().Set(bufferObj);
-    return;
-  }
-
-  v8::MaybeLocal<v8::Object> bufferMaybe;
-  bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, nullptr);
   v8::Local<v8::Value> bufferValue;
-  if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
-    bare_aligned_free(ptr);
-    return v8utils::throwError(isolate, "Buffer creation failed");
+  if (shared) {
+    // Old implementation: doesn't seems to work on ubuntu, and I don't know why.
+    // It seems that it causes random segfaults when a worker thread terminates, evident using vitest
+    //
+    //     std::shared_ptr<v8::BackingStore> backing_store =
+    //       v8::SharedArrayBuffer::NewBackingStore(ptr, (size_t)size, bare_aligned_free_callback2, ptr);
+    //
+    //     auto sharedBuf = v8::SharedArrayBuffer::New(isolate, backing_store);
+    //     if (sharedBuf.IsEmpty()) {
+    //       return v8utils::throwError(isolate, "Buffer creation failed");
+    //     }
+
+    auto sharedBuf = v8::SharedArrayBuffer::New(isolate, size + alignment);
+    if (sharedBuf.IsEmpty()) {
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
+
+    void * ptr = sharedBuf->Data();
+    if (ptr == nullptr) {
+      return v8utils::throwError(isolate, "Buffer memory allocation failed");
+    }
+
+    size_t byteOffset = alignment > 0 ? alignment - ((size_t)ptr % alignment) : 0;
+
+    auto uint8Array = v8::Uint8Array::New(sharedBuf, 0, size);
+    if (uint8Array.IsEmpty()) {
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
+
+    auto bufferMaybe = node::Buffer::New(isolate, uint8Array->Buffer(), byteOffset, size);
+    if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
+
+  } else {
+    void * ptr = bare_aligned_malloc(alignment, size);
+    if (ptr == nullptr) {
+      return v8utils::throwError(isolate, "Buffer memory allocation failed");
+    }
+
+    if (!unsafe) {
+      memset(ptr, 0, size);
+    }
+    auto bufferMaybe = node::Buffer::New(isolate, (char *)ptr, size, bare_aligned_free_callback, ptr);
+    if (!bufferMaybe.ToLocal(&bufferValue) || bufferValue.IsEmpty()) {
+      bare_aligned_free(ptr);
+      return v8utils::throwError(isolate, "Buffer creation failed");
+    }
   }
 
   info.GetReturnValue().Set(bufferValue);
 }
 
-void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, false); }
+void bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, false, false); }
 
-void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, true, false); }
+void bufferAlignedAllocUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, true, false); }
 
-void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufferAlignedAlloc(info, false, true); }
+void bufferAlignedAllocShared(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, false, true); }
 
-void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  _bufferAlignedAlloc(info, true, true);
-}
+void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & info) { _bufAlignedAlloc(info, true, true); }
 
 void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
@@ -102,20 +112,32 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
     }
   }
 
-  if (alignment == 0) {
-    return info.GetReturnValue().Set(true);
+  bool result = false;
+  auto value = info[0];
+  if (value->IsArrayBufferView()) {
+    auto array = v8::Local<v8::ArrayBufferView>::Cast(value);
+    if (!array.IsEmpty()) {
+      auto arrayBuffer = array->Buffer();
+      if (!arrayBuffer.IsEmpty()) {
+        result = alignment == 0 ||
+          is_pointer_aligned(reinterpret_cast<uint8_t *>(array->Buffer()->Data()) + array->ByteOffset(), alignment);
+      }
+    }
+  } else if (value->IsArrayBuffer()) {
+    result = alignment == 0 || is_pointer_aligned(v8::Local<v8::ArrayBuffer>::Cast(value)->Data(), alignment);
+  } else if (value->IsSharedArrayBuffer()) {
+    result = alignment == 0 || is_pointer_aligned(v8::Local<v8::SharedArrayBuffer>::Cast(value)->Data(), alignment);
   }
 
-  v8utils::TypedArrayContent<uint8_t> content(isolate, info[0]);
-  info.GetReturnValue().Set(is_pointer_aligned(content.data, alignment));
+  info.GetReturnValue().Set(result);
 }
 
 void AlignedBuffers_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
-  AddonData_setMethod(exports, "bufferAlignedAlloc", bufferAlignedAlloc, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe, addonData);
-  AddonData_setMethod(exports, "isBufferAligned", isBufferAligned, addonData);
+  NODE_SET_METHOD(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
+  NODE_SET_METHOD(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
+  NODE_SET_METHOD(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared);
+  NODE_SET_METHOD(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe);
+  NODE_SET_METHOD(exports, "isBufferAligned", isBufferAligned);
 }
 
 #endif  // ROARING_NODE_ALIGNED_BUFFERS_

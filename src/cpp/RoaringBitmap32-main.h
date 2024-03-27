@@ -8,6 +8,8 @@
 #include "RoaringBitmap32-serialization.h"
 #include "RoaringBitmap32-ranges.h"
 
+static bool roaringMemoryInitialized = false;
+
 void RoaringBitmap32_copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
@@ -28,8 +30,7 @@ void RoaringBitmap32_copyFrom(const v8::FunctionCallbackInfo<v8::Value> & info) 
 void RoaringBitmap32_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32> const & info) {
   RoaringBitmap32 * p = info.GetParameter();
   if (p != nullptr) {
-    p->~RoaringBitmap32();
-    bare_aligned_free(p);
+    delete p;
   }
 }
 
@@ -75,12 +76,11 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
     }
   }
 
-  auto * instanceMemory = bare_aligned_malloc(32, sizeof(RoaringBitmap32));
-  RoaringBitmap32 * instance;
+  RoaringBitmap32 * instance = nullptr;
   bool hasCapacity = false;
 
   if (readonlyViewOf) {
-    instance = new (instanceMemory) RoaringBitmap32(addonData, readonlyViewOf);
+    instance = new RoaringBitmap32(addonData, readonlyViewOf);
   } else {
     if (info.Length() > 0 && info[0]->IsNumber()) {
       hasCapacity = true;
@@ -93,9 +93,9 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
       } else if (capacity > UINT32_MAX) {
         capacity = UINT32_MAX;
       }
-      instance = new (instanceMemory) RoaringBitmap32(addonData, (uint32_t)capacity);
+      instance = new RoaringBitmap32(addonData, (uint32_t)capacity);
     } else {
-      instance = new (instanceMemory) RoaringBitmap32(addonData, 0U);
+      instance = new RoaringBitmap32(addonData, 0U);
     }
   }
 
@@ -104,27 +104,26 @@ void RoaringBitmap32_New(const v8::FunctionCallbackInfo<v8::Value> & info) {
   }
 
   if (instance->roaring == nullptr) {
-    instance->~RoaringBitmap32();
-    bare_aligned_free(instance);
+    delete instance;
     return v8utils::throwError(isolate, "RoaringBitmap32::ctor - failed to create native RoaringBitmap32 instance");
   }
 
   int indices[2] = {0, 1};
-  void * values[2] = {instance, (void *)(RoaringBitmap32::OBJECT_TOKEN)};
+  void * values[2] = {instance, &RoaringBitmap32::_OBJECT_TOKEN};
   holder->SetAlignedPointerInInternalFields(2, indices, values);
 
   instance->persistent.Reset(isolate, holder);
   instance->persistent.SetWeak(instance, RoaringBitmap32_WeakCallback, v8::WeakCallbackType::kParameter);
 
-  if (readonlyViewOf) {
-    instance->frozenStorage.bufferPersistent.Reset(isolate, holder);
-  } else if (!hasCapacity) {
-    bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
-    if (hasParameter) {
-      if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
-        RoaringBitmap32_copyFrom(info);
-      } else {
-        RoaringBitmap32_addMany(info);
+  if (!readonlyViewOf) {
+    if (!hasCapacity) {
+      bool hasParameter = info.Length() != 0 && !info[0]->IsUndefined() && !info[0]->IsNull();
+      if (hasParameter) {
+        if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(info[0])) {
+          RoaringBitmap32_copyFrom(info);
+        } else {
+          RoaringBitmap32_addMany(info);
+        }
       }
     }
   }
@@ -194,8 +193,7 @@ void RoaringBitmap32_ofStatic(const v8::FunctionCallbackInfo<v8::Value> & info) 
 }
 
 void RoaringBitmap32_getInstanceCountStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  AddonData * addonData = AddonData::get(info);
-  info.GetReturnValue().Set(addonData ? (double)(addonData->RoaringBitmap32_instances) : 0.0);
+  info.GetReturnValue().Set((double)(RoaringBitmap32_instances));
 }
 
 void RoaringBitmap32_asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -331,7 +329,7 @@ void RoaringBitmap32_maximum(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_rank(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return info.GetReturnValue().Set(0);
   }
@@ -344,7 +342,7 @@ void RoaringBitmap32_rank(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_select(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return info.GetReturnValue().Set(0);
   }
@@ -426,7 +424,7 @@ void RoaringBitmap32_clone(const v8::FunctionCallbackInfo<v8::Value> & info) {
 void RoaringBitmap32_statistics(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -436,63 +434,63 @@ void RoaringBitmap32_statistics(const v8::FunctionCallbackInfo<v8::Value> & info
   auto result = v8::Object::New(isolate);
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "containers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "containers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "arrayContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "arrayContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_array_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "runContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "runContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_run_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "bitsetContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "bitsetContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_bitset_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "valuesInArrayContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "valuesInArrayContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_values_array_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "valuesInRunContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "valuesInRunContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_values_run_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "valuesInBitsetContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "valuesInBitsetContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_values_bitset_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "bytesInArrayContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "bytesInArrayContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_array_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "bytesInRunContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "bytesInRunContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_run_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "bytesInBitsetContainers", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "bytesInBitsetContainers", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.n_bytes_bitset_containers)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "maxValue", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "maxValue", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.max_value)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "minValue", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "minValue", v8::NewStringType::kInternalized),
     v8::Uint32::NewFromUnsigned(isolate, stats.min_value)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "sumOfAllValues", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "sumOfAllValues", v8::NewStringType::kInternalized),
     v8::Number::New(isolate, (double)stats.sum_value)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "size", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "size", v8::NewStringType::kInternalized),
     v8::Number::New(isolate, (double)stats.cardinality)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "isFrozen", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "isFrozen", v8::NewStringType::kInternalized),
     v8::Boolean::New(isolate, self->isFrozen())));
   info.GetReturnValue().Set(result);
 }
@@ -555,18 +553,9 @@ void RoaringBitmap32_swapStatic(const v8::FunctionCallbackInfo<v8::Value> & info
   }
 }
 
-void RoaringBitmap32_toString(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
-  if (self == nullptr) {
-    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-  }
-  info.GetReturnValue().Set(self->addonData->strings.RoaringBitmap32.Get(isolate));
-}
-
 void RoaringBitmap32_at(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -614,7 +603,7 @@ void RoaringBitmap32_at(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_join(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -634,7 +623,7 @@ void RoaringBitmap32_join(const v8::FunctionCallbackInfo<v8::Value> & info) {
     iterData.sep = ",";
   }
 
-  if (self != nullptr && !self->isEmpty()) {
+  if (!self->isEmpty()) {
     roaring_iterate(
       self->roaring,
       [](uint32_t value, void * vp) -> bool {
@@ -649,7 +638,8 @@ void RoaringBitmap32_join(const v8::FunctionCallbackInfo<v8::Value> & info) {
         p->result.append(std::to_string(value));
         return true;
       },
-      (void *)&iterData);
+
+      &iterData);
   }
 
   auto returnValue = v8::String::NewFromUtf8(isolate, iterData.result.c_str(), v8::NewStringType::kNormal);
@@ -683,7 +673,7 @@ void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> &
     iterData.maxLen = 536870880;
   }
 
-  if (self != nullptr && !self->isEmpty()) {
+  if (!self->isEmpty()) {
     roaring_iterate(
       self->roaring,
       [](uint32_t value, void * vp) -> bool {
@@ -698,7 +688,7 @@ void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> &
         p->first_char = ',';
         return true;
       },
-      (void *)&iterData);
+      &iterData);
   } else {
     iterData.str = '[';
   }
@@ -714,7 +704,7 @@ void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> &
 }
 
 void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
 
   v8::Local<v8::Value> arg;
 
@@ -735,7 +725,6 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
   if (!arg->IsNullOrUndefined() && !arg->IsFunction()) {
     if (arg->IsUint32Array() || arg->IsInt32Array()) {
       worker->buffer.set(isolate, arg);
-      const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
     } else if (arg->IsObject()) {
       if (addonData->RoaringBitmap32_constructorTemplate.Get(isolate)->HasInstance(arg)) {
         return v8utils::throwTypeError(
@@ -763,22 +752,32 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
   info.GetReturnValue().Set(returnValue);
 }
 
-void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
-  croaringMemoryInitialize();
+void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData, v8::Local<v8::External> addonDataExternal) {
+  if (!roaringMemoryInitialized) {
+    roaring_init_memory_hook(
+      {.malloc = gcaware_malloc,
+       .realloc = gcaware_realloc,
+       .calloc = gcaware_calloc,
+       .free = gcaware_free,
+       .aligned_malloc = gcaware_aligned_malloc,
+       .aligned_free = gcaware_aligned_free});
+    roaringMemoryInitialized = true;
+  }
 
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = addonData->isolate;
   v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
-  v8::Local<v8::String> className = addonData->strings.RoaringBitmap32.Get(isolate);
+  v8::Local<v8::String> className =
+    v8::String::NewFromUtf8Literal(isolate, "RoaringBitmap32", v8::NewStringType::kInternalized);
 
-  auto versionString = NEW_LITERAL_V8_STRING(isolate, ROARING_VERSION, v8::NewStringType::kInternalized);
+  auto CRoaringVersionName = v8::String::NewFromUtf8Literal(isolate, "CRoaringVersion", v8::NewStringType::kInternalized);
+  auto versionString = addonData->strings.CRoaringVersionValue.Get(isolate);
 
-  v8::Local<v8::FunctionTemplate> ctor =
-    v8::FunctionTemplate::New(isolate, RoaringBitmap32_New, addonData->external.Get(isolate));
+  v8::Local<v8::FunctionTemplate> ctor = v8::FunctionTemplate::New(isolate, RoaringBitmap32_New, addonDataExternal);
   if (ctor.IsEmpty()) {
     return;
   }
-  addonData->RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
+  addonData->RoaringBitmap32_constructorTemplate.Reset(isolate, ctor);
 
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
   ctor->SetClassName(className);
@@ -786,7 +785,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   ctorInstanceTemplate->SetInternalFieldCount(2);
 
   ctorInstanceTemplate->SetAccessor(
-    NEW_LITERAL_V8_STRING(isolate, "isEmpty", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "isEmpty", v8::NewStringType::kInternalized),
     RoaringBitmap32_isEmpty_getter,
     nullptr,
     v8::Local<v8::Value>(),
@@ -794,7 +793,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     (v8::PropertyAttribute)(v8::ReadOnly));
 
   ctorInstanceTemplate->SetAccessor(
-    NEW_LITERAL_V8_STRING(isolate, "size", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "size", v8::NewStringType::kInternalized),
     RoaringBitmap32_size_getter,
     nullptr,
     v8::Local<v8::Value>(),
@@ -802,7 +801,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     (v8::PropertyAttribute)(v8::ReadOnly));
 
   ctorInstanceTemplate->SetAccessor(
-    NEW_LITERAL_V8_STRING(isolate, "isFrozen", v8::NewStringType::kInternalized),
+    v8::String::NewFromUtf8Literal(isolate, "isFrozen", v8::NewStringType::kInternalized),
     RoaringBitmap32_isFrozen_getter,
     nullptr,
     v8::Local<v8::Value>(),
@@ -863,7 +862,6 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   NODE_SET_PROTOTYPE_METHOD(ctor, "statistics", RoaringBitmap32_statistics);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toArray", RoaringBitmap32_toArray);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toSet", RoaringBitmap32_toSet);
-  NODE_SET_PROTOTYPE_METHOD(ctor, "toString", RoaringBitmap32_toString);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32Array", RoaringBitmap32_toUint32Array);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32ArrayAsync", RoaringBitmap32_toUint32ArrayAsync);
   NODE_SET_PROTOTYPE_METHOD(ctor, "tryAdd", RoaringBitmap32_tryAdd);
@@ -874,39 +872,41 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   auto ctorObject = ctorFunction->ToObject(context).ToLocalChecked();
 
   ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), className);
-  ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
+  ctor->PrototypeTemplate()->Set(CRoaringVersionName, versionString);
 
-  AddonData_setMethod(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic, addonData);
-  AddonData_setMethod(ctorObject, "and", RoaringBitmap32_andStatic, addonData);
-  AddonData_setMethod(ctorObject, "andNot", RoaringBitmap32_andNotStatic, addonData);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "and", RoaringBitmap32_andStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "andNot", RoaringBitmap32_andNotStatic);
 
-  v8utils::defineHiddenField(isolate, ctorObject, "default", ctorFunction);
+  ignoreMaybeResult(ctorObject->Set(
+    context, v8::String::NewFromUtf8Literal(isolate, "default", v8::NewStringType::kInternalized), ctorFunction));
 
-  AddonData_setMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic, addonData);
-  AddonData_setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic, addonData);
-  AddonData_setMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic, addonData);
-  AddonData_setMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync, addonData);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "deserialize", RoaringBitmap32_deserializeStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic);
+  addonData->setStaticMethod(
+    addonDataExternal, ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic);
+  addonData->setStaticMethod(
+    addonDataExternal, ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync);
 
-  ignoreMaybeResult(
-    ctorObject->Set(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized), ctorFunction));
+  ignoreMaybeResult(ctorObject->Set(
+    context, v8::String::NewFromUtf8Literal(isolate, "from", v8::NewStringType::kInternalized), ctorFunction));
 
-  AddonData_setMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync, addonData);
-  AddonData_setMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic, addonData);
-  AddonData_setMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic, addonData);
-  AddonData_setMethod(ctorObject, "of", RoaringBitmap32_ofStatic, addonData);
-  AddonData_setMethod(ctorObject, "or", RoaringBitmap32_orStatic, addonData);
-  AddonData_setMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic, addonData);
-  AddonData_setMethod(ctorObject, "swap", RoaringBitmap32_swapStatic, addonData);
-  AddonData_setMethod(ctorObject, "unsafeFrozenView", RoaringBitmap32_unsafeFrozenViewStatic, addonData);
-  AddonData_setMethod(ctorObject, "xor", RoaringBitmap32_xorStatic, addonData);
-  AddonData_setMethod(ctorObject, "xorMany", RoaringBitmap32_xorManyStatic, addonData);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "of", RoaringBitmap32_ofStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "or", RoaringBitmap32_orStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "orMany", RoaringBitmap32_orManyStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "swap", RoaringBitmap32_swapStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "unsafeFrozenView", RoaringBitmap32_unsafeFrozenViewStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "xor", RoaringBitmap32_xorStatic);
+  addonData->setStaticMethod(addonDataExternal, ctorObject, "xorMany", RoaringBitmap32_xorManyStatic);
 
-  v8utils::defineReadonlyField(isolate, ctorObject, "CRoaringVersion", versionString);
-  v8utils::defineReadonlyField(isolate, exports, "CRoaringVersion", versionString);
+  ignoreMaybeResult(ctorObject->Set(context, CRoaringVersionName, versionString));
+  ignoreMaybeResult(ctorObject->Set(context, className, ctorFunction));
 
-  v8utils::defineHiddenField(isolate, ctorObject, className, ctorFunction);
-
+  ignoreMaybeResult(exports->Set(context, CRoaringVersionName, versionString));
   ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
-  addonData->RoaringBitmap32_constructor.Set(isolate, ctorFunction);
+  addonData->RoaringBitmap32_constructor.Reset(isolate, ctorFunction);
 }

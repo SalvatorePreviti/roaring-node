@@ -39,7 +39,8 @@ const roaring = (() => {
   }
 })();
 
-module.exports = roaring;
+const isBuffer = Buffer.isBuffer;
+const bufferFrom = Buffer.from;
 
 const { defineProperty } = Reflect;
 
@@ -156,24 +157,24 @@ if (utilTypes) {
 }
 
 function asBufferUnsafe(buffer) {
-  if (Buffer.isBuffer(buffer)) {
+  if (isBuffer(buffer)) {
     return buffer;
   }
   if (isArrayBufView(buffer)) {
-    return Buffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    return bufferFrom(buffer.buffer, buffer.byteOffset, buffer.byteLength);
   }
   if (isArrayBuffer(buffer)) {
-    return Buffer.from(buffer);
+    return bufferFrom(buffer);
   }
   if (isSharedArrayBuffer(buffer)) {
-    return Buffer.from(buffer);
+    return bufferFrom(buffer);
   }
   return buffer;
 }
 
 function asBuffer(buffer) {
   const result = asBufferUnsafe(buffer);
-  return Buffer.isBuffer(result) ? result : Buffer.from(result);
+  return isBuffer(result) ? result : bufferFrom(result);
 }
 
 const initializedSym = Symbol.for("roaring-node");
@@ -182,6 +183,10 @@ if (!roaring[initializedSym]) {
   Reflect.defineProperty(roaring, initializedSym, { value: true });
 
   const roaringBitmap32_proto = RoaringBitmap32.prototype;
+
+  roaringBitmap32_proto.toString = function toString() {
+    return `RoaringBitmap32`;
+  };
   roaringBitmap32_proto[Symbol.iterator] = iterator;
   roaringBitmap32_proto.iterator = iterator;
   roaringBitmap32_proto.keys = iterator;
@@ -348,19 +353,19 @@ if (!roaring[initializedSym]) {
     defineProperty(roaringBitmap32_proto, name, prop);
   };
 
-  const defineValue = (name, value, writable) =>
-    defineProp(name, { value, writable: !!writable, configurable: false, enumerable: true });
+  const defineValue = (name, value) =>
+    defineProp(name, { value, writable: true, configurable: true, enumerable: true });
 
   let packageVersion = null;
 
   defineProp("PackageVersion", {
     get: () => (packageVersion !== null ? packageVersion : (packageVersion = require("./package.json").version)),
-    configurable: false,
+    configurable: true,
     enumerable: true,
   });
 
-  defineValue("RoaringBitmap32Iterator", RoaringBitmap32Iterator, false);
-  defineValue("RoaringBitmap32ReverseIterator", RoaringBitmap32ReverseIterator, false);
+  defineValue("RoaringBitmap32Iterator", RoaringBitmap32Iterator);
+  defineValue("RoaringBitmap32ReverseIterator", RoaringBitmap32ReverseIterator);
 
   defineValue(
     "SerializationFormat",
@@ -440,7 +445,7 @@ if (!roaring[initializedSym]) {
       throw new TypeError("ensureBufferAligned alignment must be an integer number between 0 and 1024");
     }
     buffer = asBufferUnsafe(buffer);
-    if (!Buffer.isBuffer(buffer)) {
+    if (!isBuffer(buffer)) {
       throw new TypeError("ensureBufferAligned expects a Buffer instance");
     }
     if (!roaring.isBufferAligned(buffer, alignment)) {
@@ -457,3 +462,5 @@ if (!roaring[initializedSym]) {
 
   roaring.asBuffer = asBuffer;
 }
+
+module.exports = roaring;

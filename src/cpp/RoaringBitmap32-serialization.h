@@ -7,6 +7,7 @@
 
 void RoaringBitmap32_serialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
+  v8::HandleScope scope(isolate);
 
   RoaringBitmapSerializer serializer;
   serializer.parseArguments(info);
@@ -93,12 +94,12 @@ void RoaringBitmap32_unsafeFrozenViewStatic(const v8::FunctionCallbackInfo<v8::V
           "You can use bufferAlignedAlloc, bufferAlignedAllocUnsafe or ensureBufferAligned exposed by the roaring library.");
       }
 
-      bitmap =
-        const_cast<roaring_bitmap_t *>(roaring_bitmap_frozen_view((const char *)frozenStorage.data, frozenStorage.length));
+      bitmap = const_cast<roaring_bitmap_t *>(
+        roaring_bitmap_frozen_view(reinterpret_cast<const char *>(frozenStorage.data), frozenStorage.length));
       break;
     }
     case FrozenViewFormat::unsafe_frozen_portable: {
-      bitmap = roaring_bitmap_portable_deserialize_frozen((const char *)frozenStorage.data);
+      bitmap = roaring_bitmap_portable_deserialize_frozen(reinterpret_cast<const char *>(frozenStorage.data));
       break;
     }
     default: {
@@ -173,7 +174,7 @@ void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & inf
 }
 
 void RoaringBitmap32_deserializeAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -193,7 +194,7 @@ void RoaringBitmap32_deserializeAsyncStatic(const v8::FunctionCallbackInfo<v8::V
 }
 
 void RoaringBitmap32_deserializeFileAsyncStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -213,8 +214,7 @@ void RoaringBitmap32_deserializeFileAsyncStatic(const v8::FunctionCallbackInfo<v
 }
 
 void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
-
+  v8::Isolate * isolate = info.GetIsolate();
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
@@ -277,7 +277,7 @@ void RoaringBitmap32_deserializeParallelStaticAsync(const v8::FunctionCallbackIn
 
 void RoaringBitmap32_getSerializationSizeInBytes(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
   if (self == nullptr) {
     return info.GetReturnValue().Set(0U);
   }

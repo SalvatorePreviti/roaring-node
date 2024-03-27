@@ -1,5 +1,5 @@
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 
 describe("RoaringBitmap32 comparisons", () => {
   describe("isSubset", () => {

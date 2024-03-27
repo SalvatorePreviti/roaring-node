@@ -1,38 +1,17 @@
 #!/usr/bin/env node
 
-const path = require("path");
-const { runMain } = require("./lib/utils");
+async function test() {
+  process.argv.push("--run");
+  return import("vitest/vitest.mjs");
+}
 
-require("ts-node").register({ transpileOnly: process.argv.includes("--notypecheck") });
-
-runMain(() => {
-  const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
-  if (nodeVersion < 14) {
-    const url = require("url");
-    if (!url.pathToFileURL) {
-      url.pathToFileURL = (filePath) => {
-        let pathName = path.resolve(filePath).replace(/\\/g, "/");
-        if (!pathName.startsWith("/")) {
-          pathName = `/${pathName}`;
-        }
-        return encodeURI(`file://${pathName}`).replace(/[?#]/g, encodeURIComponent);
-      };
+test()
+  .then(() => {
+    console.log("Test OK");
+  })
+  .catch((err) => {
+    console.error(err);
+    if (!process.exitCode) {
+      process.exitCode = 1;
     }
-
-    require("mocha/lib/nodejs/esm-utils.js").doImport = (v) => {
-      if (typeof v === "object") {
-        v = url.fileURLToPath(v);
-      }
-      return new Promise((resolve) => resolve(require(v)));
-    };
-  }
-
-  const { print: printSystemInfo } = require("./system-info.js");
-
-  process.argv.push("test/**/*.test.ts");
-  process.argv.push("test/*.test.ts");
-
-  printSystemInfo();
-
-  require("mocha/bin/mocha");
-}, "test");
+  });

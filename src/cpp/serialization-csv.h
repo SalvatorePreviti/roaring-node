@@ -53,7 +53,11 @@ struct CsvFileDescriptorSerializer final {
   char separator;
 
   CsvFileDescriptorSerializer(int fd, char separator) :
-    buf((char *)gcaware_aligned_malloc(32, BUFFER_SIZE)), bufPos(0), fd(fd), needsSeparator(false), separator(separator) {}
+    buf(reinterpret_cast<char *>(gcaware_aligned_malloc(32, BUFFER_SIZE))),
+    bufPos(0),
+    fd(fd),
+    needsSeparator(false),
+    separator(separator) {}
 
   ~CsvFileDescriptorSerializer() { gcaware_aligned_free(this->buf); }
 
@@ -103,7 +107,6 @@ struct CsvFileDescriptorSerializer final {
 
     char * str = this->buf + this->bufPos;
     int32_t i, j;
-    char c;
 
     /* uint to decimal  */
     i = 0;
@@ -117,7 +120,7 @@ struct CsvFileDescriptorSerializer final {
 
     /* reverse string */
     for (j = 0, i--; j < i; j++, i--) {
-      c = str[i];
+      char c = str[i];
       str[i] = str[j];
       str[j] = c;
     }
@@ -126,7 +129,7 @@ struct CsvFileDescriptorSerializer final {
   }
 
   static bool roaringIteratorFn(uint32_t value, void * param) {
-    return ((CsvFileDescriptorSerializer *)param)->appendValue(value);
+    return (reinterpret_cast<CsvFileDescriptorSerializer *>(param))->appendValue(value);
   }
 };
 
@@ -137,12 +140,12 @@ WorkerError deserializeRoaringCsvFile(
   char * buf;
   ssize_t readBytes;
   if (input == nullptr) {
-    buf = (char *)gcaware_aligned_malloc(32, BUFFER_SIZE);
+    buf = reinterpret_cast<char *>(gcaware_aligned_malloc(32, BUFFER_SIZE));
     if (!buf) {
       return WorkerError("Failed to allocate memory for text deserialization");
     }
   } else {
-    buf = (char *)input;
+    buf = const_cast<char *>(input);
     readBytes = (ssize_t)input_size;
     if (readBytes < 0) {
       return WorkerError("Input too big");
@@ -164,7 +167,9 @@ WorkerError deserializeRoaringCsvFile(
       if (readBytes <= 0) {
         if (readBytes < 0) {
           WorkerError err = WorkerError::from_errno("read", filePath);
-          gcaware_aligned_free(buf);
+          if (input == nullptr) {
+            gcaware_aligned_free(buf);
+          }
           return err;
         }
         break;

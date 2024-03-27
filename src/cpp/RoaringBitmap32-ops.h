@@ -48,7 +48,6 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
   }
 
   AddonData * addonData = self->addonData;
-
   v8::Local<v8::Value> argv[] = {arg};
   auto tMaybe = addonData->Uint32Array_from.Get(isolate)->Call(
     isolate->GetCurrentContext(), addonData->Uint32Array.Get(isolate), 1, argv);
@@ -88,7 +87,7 @@ void RoaringBitmap32_xorCardinality(const v8::FunctionCallbackInfo<v8::Value> & 
     return info.GetReturnValue().Set(0);
   }
   RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
-  info.GetReturnValue().Set(self && other ? (double)roaring_bitmap_xor_cardinality(self->roaring, other->roaring) : -1);
+  info.GetReturnValue().Set(other ? (double)roaring_bitmap_xor_cardinality(self->roaring, other->roaring) : -1);
 }
 
 void RoaringBitmap32_add(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -326,8 +325,10 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
 
     if (arg->IsUint32Array() || arg->IsInt32Array()) {
       const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
-      roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
-      self->invalidate();
+      if (typedArray.length != 0) {
+        roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
+        self->invalidate();
+      }
       done = true;
     } else {
       AddonData * addonData = self->addonData;
@@ -343,8 +344,10 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
         v8::Local<v8::Value> t;
         if (tMaybe.ToLocal(&t)) {
           const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, t);
-          roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
-          self->invalidate();
+          if (typedArray.length != 0) {
+            roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
+            self->invalidate();
+          }
           done = true;
         } else {
           RoaringBitmap32 tmp(addonData, 0U);
@@ -383,7 +386,8 @@ void RoaringBitmap32_andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
       return info.GetReturnValue().Set(info.Holder());
     }
 
-    RoaringBitmap32 tmp(self->addonData, 0U);
+    AddonData * addonData = self->addonData;
+    RoaringBitmap32 tmp(addonData, 0U);
     if (roaringAddMany(isolate, &tmp, arg)) {
       roaring_bitmap_and_inplace(self->roaring, tmp.roaring);
       self->invalidate();
@@ -412,7 +416,8 @@ void RoaringBitmap32_xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
       return info.GetReturnValue().Set(info.Holder());
     }
 
-    RoaringBitmap32 tmp(self->addonData, 0U);
+    AddonData * addonData = self->addonData;
+    RoaringBitmap32 tmp(addonData, 0U);
     roaringAddMany(info.GetIsolate(), &tmp, arg);
     roaring_bitmap_xor_inplace(self->roaring, tmp.roaring);
     self->invalidate();

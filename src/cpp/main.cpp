@@ -1,3 +1,4 @@
+#include "includes.h"
 #include "aligned-buffers.h"
 #include "RoaringBitmap32-main.h"
 #include "RoaringBitmap32BufferedIterator.h"
@@ -13,34 +14,29 @@ using namespace v8;
     registration(exports);                                                                             \
   }
 
-void AddonData_DeleteInstance(void * addonData) {
-  if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
-    thread_local_isolate = nullptr;
-  }
-
-  delete (AddonData *)addonData;
+void getRoaringUsedMemory(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  info.GetReturnValue().Set((double)gcaware_totalMem());
 }
 
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  thread_local_isolate = isolate;
-
   v8::HandleScope scope(isolate);
 
-  AddonData * addonData = new AddonData();
+  AddonData * addonData = new AddonData(isolate);
 
-  node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
+  v8::Local<v8::External> addonDataExternal = v8::External::New(isolate, addonData);
 
-  addonData->initialize(isolate);
+  ignoreMaybeResult(exports->Set(
+    isolate->GetCurrentContext(),
+    v8::String::NewFromUtf8Literal(isolate, "default", v8::NewStringType::kInternalized),
+    exports));
 
   AlignedBuffers_Init(exports, addonData);
-  RoaringBitmap32_Init(exports, addonData);
-  RoaringBitmap32BufferedIterator_Init(exports, addonData);
+  RoaringBitmap32_Init(exports, addonData, addonDataExternal);
+  RoaringBitmap32BufferedIterator_Init(exports, addonData, addonDataExternal);
 
-  AddonData_setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory, addonData);
-
-  v8utils::defineHiddenField(isolate, exports, "default", exports);
+  addonData->setStaticMethod(addonDataExternal, exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 }
 
 MODULE_WORKER_ENABLED(roaring, InitRoaringNode);

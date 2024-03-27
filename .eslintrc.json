@@ -1,6 +1,6 @@
 {
-  "extends": ["@balsamic"],
-  "plugins": ["node", "import"],
+  "extends": ["@balsamic", "plugin:vitest/recommended"],
+  "plugins": ["node", "import", "vitest"],
   "rules": {
     "global-require": 0
   },
