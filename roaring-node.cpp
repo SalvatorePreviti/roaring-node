@@ -2742,37 +2742,31 @@ namespace v8utils {
 
   bool v8ValueToUint32ArrayWithLimit(
     v8::Isolate * isolate, v8::MaybeLocal<v8::Value> value, size_t length, v8::Local<v8::Value> & result) {
+    v8::EscapableHandleScope scope(isolate);
+
     v8::Local<v8::Value> localValue;
     if (!value.ToLocal(&localValue)) {
-      return {};
+      return false;
     }
     if (localValue->IsUint32Array()) {
       auto array = localValue.As<v8::Uint32Array>();
       if (!array.IsEmpty()) {
         auto arrayLength = array->Length();
         if (arrayLength == length) {
-          result = array;
+          result = scope.Escape(array);
           return true;
         }
         if (arrayLength > length) {
-          result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+          result = scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
           return !result.IsEmpty();
         }
-      }
-      return false;
-    }
-    if (localValue->IsTypedArray()) {
-      auto array = localValue.As<v8::TypedArray>();
-      if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
-        return !result.IsEmpty();
       }
       return false;
     }
     if (localValue->IsArrayBufferView()) {
       auto array = localValue.As<v8::ArrayBufferView>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length);
+        result = scope.Escape(v8::Uint32Array::New(array->Buffer(), array->ByteOffset(), length));
         return !result.IsEmpty();
       }
       return false;
@@ -2780,7 +2774,7 @@ namespace v8utils {
     if (localValue->IsArrayBuffer()) {
       auto array = localValue.As<v8::ArrayBuffer>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array, 0, length);
+        result = scope.Escape(v8::Uint32Array::New(array, 0, length));
         return !result.IsEmpty();
       }
       return false;
@@ -2788,7 +2782,7 @@ namespace v8utils {
     if (localValue->IsSharedArrayBuffer()) {
       auto array = localValue.As<v8::SharedArrayBuffer>();
       if (array->ByteLength() >= length * sizeof(uint32_t)) {
-        result = v8::Uint32Array::New(array, 0, length);
+        result = scope.Escape(v8::Uint32Array::New(array, 0, length));
         return !result.IsEmpty();
       }
       return false;
@@ -2824,7 +2818,8 @@ namespace v8utils {
     }
 
     template <typename Q>
-    bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
+    inline bool set(v8::Isolate * isolate, const v8::MaybeLocal<Q> & from) {
+      v8::HandleScope scope(isolate);
       v8::Local<Q> local;
       if (from.ToLocal(&local)) {
         return this->set(isolate, local);
@@ -2835,6 +2830,7 @@ namespace v8utils {
 
     template <typename Q>
     bool set(v8::Isolate * isolate, const v8::Local<Q> & from) {
+      v8::HandleScope scope(isolate);
       this->reset();
 
       if (!from.IsEmpty()) {
@@ -3742,8 +3738,10 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
 
     if (arg->IsUint32Array() || arg->IsInt32Array()) {
       const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
-      roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
-      self->invalidate();
+      if (typedArray.length != 0) {
+        roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
+        self->invalidate();
+      }
       done = true;
     } else {
       AddonData * addonData = self->addonData;
@@ -3759,8 +3757,10 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
         v8::Local<v8::Value> t;
         if (tMaybe.ToLocal(&t)) {
           const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, t);
-          roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
-          self->invalidate();
+          if (typedArray.length != 0) {
+            roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
+            self->invalidate();
+          }
           done = true;
         } else {
           RoaringBitmap32 tmp(addonData, 0U);
@@ -5248,7 +5248,7 @@ class AsyncWorker {
 
       if (resolverMaybe.IsEmpty()) {
         v8utils::throwTypeError(isolate, "Failed to create Promise");
-        return returnValue;
+        return scope.Escape(returnValue);
       }
 
       v8::Local<v8::Promise::Resolver> resolver = resolverMaybe.ToLocalChecked();
@@ -6508,8 +6508,10 @@ void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & i
 
       bool arrayIsSmaller = typedArrayContent.length < size;
       if (arrayIsSmaller) {
-        roaring_bitmap_range_uint32_array(self->roaring, 0, typedArrayContent.length, typedArrayContent.data);
         size = typedArrayContent.length;
+        if (size != 0) {
+          roaring_bitmap_range_uint32_array(self->roaring, 0, size, typedArrayContent.data);
+        }
       }
 
       v8::Local<v8::Value> result;

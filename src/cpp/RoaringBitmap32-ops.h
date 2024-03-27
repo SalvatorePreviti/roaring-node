@@ -326,8 +326,10 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
 
     if (arg->IsUint32Array() || arg->IsInt32Array()) {
       const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, arg);
-      roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
-      self->invalidate();
+      if (typedArray.length != 0) {
+        roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
+        self->invalidate();
+      }
       done = true;
     } else {
       AddonData * addonData = self->addonData;
@@ -343,8 +345,10 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
         v8::Local<v8::Value> t;
         if (tMaybe.ToLocal(&t)) {
           const v8utils::TypedArrayContent<uint32_t> typedArray(isolate, t);
-          roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
-          self->invalidate();
+          if (typedArray.length != 0) {
+            roaring_bitmap_remove_many(self->roaring, typedArray.length, typedArray.data);
+            self->invalidate();
+          }
           done = true;
         } else {
           RoaringBitmap32 tmp(addonData, 0U);

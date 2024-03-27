@@ -153,8 +153,10 @@ void RoaringBitmap32_toUint32Array(const v8::FunctionCallbackInfo<v8::Value> & i
 
       bool arrayIsSmaller = typedArrayContent.length < size;
       if (arrayIsSmaller) {
-        roaring_bitmap_range_uint32_array(self->roaring, 0, typedArrayContent.length, typedArrayContent.data);
         size = typedArrayContent.length;
+        if (size != 0) {
+          roaring_bitmap_range_uint32_array(self->roaring, 0, size, typedArrayContent.data);
+        }
       }
 
       v8::Local<v8::Value> result;

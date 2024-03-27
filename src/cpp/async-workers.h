@@ -74,7 +74,7 @@ class AsyncWorker {
 
       if (resolverMaybe.IsEmpty()) {
         v8utils::throwTypeError(isolate, "Failed to create Promise");
-        return returnValue;
+        return scope.Escape(returnValue);
       }
 
       v8::Local<v8::Promise::Resolver> resolver = resolverMaybe.ToLocalChecked();
