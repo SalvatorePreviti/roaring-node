@@ -275,8 +275,8 @@ void roaringOpMany(
       }
 
       roaring_bitmap_t * r = op((TSize)arrayLength, x);
+      gcaware_free(x);
       if (r == nullptr) {
-        gcaware_free(x);
         return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
       }
 
@@ -320,8 +320,8 @@ void roaringOpMany(
     }
 
     roaring_bitmap_t * r = op((TSize)length, x);
+    gcaware_free(x);
     if (r == nullptr) {
-      gcaware_free(x);
       return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
     }
 
