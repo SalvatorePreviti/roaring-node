@@ -785,6 +785,31 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   ctorInstanceTemplate->SetInternalFieldCount(2);
 
+#if V8_MAJOR_VERSION >= 12 && V8_MINOR_VERSION >= 1 // after 12.1.0
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "isEmpty", v8::NewStringType::kInternalized),
+    RoaringBitmap32_isEmpty_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "size", v8::NewStringType::kInternalized),
+    RoaringBitmap32_size_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "isFrozen", v8::NewStringType::kInternalized),
+    RoaringBitmap32_isFrozen_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+#else
   ctorInstanceTemplate->SetAccessor(
     NEW_LITERAL_V8_STRING(isolate, "isEmpty", v8::NewStringType::kInternalized),
     RoaringBitmap32_isEmpty_getter,
@@ -808,6 +833,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     v8::Local<v8::Value>(),
     (v8::AccessControl)(v8::ALL_CAN_READ),
     (v8::PropertyAttribute)(v8::ReadOnly));
+#endif
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "add", RoaringBitmap32_add);
   NODE_SET_PROTOTYPE_METHOD(ctor, "addMany", RoaringBitmap32_addMany);

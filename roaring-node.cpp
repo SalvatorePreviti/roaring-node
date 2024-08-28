@@ -4135,6 +4135,17 @@ void roaringOpMany(
         return;
       }
 
+      auto resultMaybe = cons->NewInstance(context, 0, nullptr);
+      v8::Local<v8::Object> result;
+      if (!resultMaybe.ToLocal(&result)) {
+        return;
+      }
+
+      auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+      if (!self) {
+        return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+      }
+
       const auto ** x = (const roaring_bitmap_t **)gcaware_malloc(arrayLength * sizeof(roaring_bitmap_t *));
       if (x == nullptr) {
         return v8utils::throwTypeError(isolate, opName, " failed allocation");
@@ -4151,21 +4162,9 @@ void roaringOpMany(
         x[i] = p->roaring;
       }
 
-      auto resultMaybe = cons->NewInstance(context, 0, nullptr);
-      v8::Local<v8::Object> result;
-      if (!resultMaybe.ToLocal(&result)) {
-        gcaware_free(x);
-        return;
-      }
-
-      auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
-      if (!self) {
-        return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-      }
-
       roaring_bitmap_t * r = op((TSize)arrayLength, x);
+      gcaware_free(x);
       if (r == nullptr) {
-        gcaware_free(x);
         return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
       }
 
@@ -4182,6 +4181,17 @@ void roaringOpMany(
       }
     }
   } else {
+    v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+    v8::Local<v8::Object> result;
+    if (!resultMaybe.ToLocal(&result)) {
+      return;
+    }
+
+    auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+    if (!self) {
+      return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+    }
+
     const auto ** x = (const roaring_bitmap_t **)gcaware_malloc(length * sizeof(roaring_bitmap_t *));
     if (x == nullptr) {
       return v8utils::throwTypeError(isolate, opName, " failed allocation");
@@ -4196,21 +4206,9 @@ void roaringOpMany(
       x[i] = p->roaring;
     }
 
-    v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
-    v8::Local<v8::Object> result;
-    if (!resultMaybe.ToLocal(&result)) {
-      gcaware_free(x);
-      return;
-    }
-
-    auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
-    if (!self) {
-      return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-    }
-
     roaring_bitmap_t * r = op((TSize)length, x);
+    gcaware_free(x);
     if (r == nullptr) {
-      gcaware_free(x);
       return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
     }
 
@@ -7636,6 +7634,31 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   ctorInstanceTemplate->SetInternalFieldCount(2);
 
+#if V8_MAJOR_VERSION >= 12 && V8_MINOR_VERSION >= 1 // after 12.1.0
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "isEmpty", v8::NewStringType::kInternalized),
+    RoaringBitmap32_isEmpty_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "size", v8::NewStringType::kInternalized),
+    RoaringBitmap32_size_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "isFrozen", v8::NewStringType::kInternalized),
+    RoaringBitmap32_isFrozen_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+#else
   ctorInstanceTemplate->SetAccessor(
     NEW_LITERAL_V8_STRING(isolate, "isEmpty", v8::NewStringType::kInternalized),
     RoaringBitmap32_isEmpty_getter,
@@ -7659,6 +7682,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     v8::Local<v8::Value>(),
     (v8::AccessControl)(v8::ALL_CAN_READ),
     (v8::PropertyAttribute)(v8::ReadOnly));
+#endif
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "add", RoaringBitmap32_add);
   NODE_SET_PROTOTYPE_METHOD(ctor, "addMany", RoaringBitmap32_addMany);
