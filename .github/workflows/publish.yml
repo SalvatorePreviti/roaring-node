@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: "20.x"
       - uses: actions/checkout@v4
-      - run: npm ci --ignore-scripts --no-audit --no-save
+      - run: npm install --exact --ignore-scripts --no-audit --no-save
       - run: node ./node-pre-gyp.js --custom-rebuild
       - run: node ./scripts/test.js
       - run: node --expose-gc ./scripts/test-memory-leaks.js
@@ -32,9 +32,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v4
-      - run: npm install --ignore-scripts --no-audit --no-save
+      - run: npm install --exact --ignore-scripts --no-audit --no-save
       - run: node ./node-pre-gyp.js --custom-rebuild
-      - run: node ./scripts/test.js --notypecheck
+      - run: node ./scripts/test.js
       - name: Prebuild
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
@@ -52,7 +52,7 @@ jobs:
           node-version: "18.16.0"
       - uses: actions/checkout@v4
       - run: npm install
-      - run: node ./scripts/test.js --notypecheck
+      - run: node ./scripts/test.js
 
   docs:
     needs: [test, prebuild, post-test]
@@ -63,8 +63,8 @@ jobs:
         with:
           node-version: 18.x
 
-      - name: npm ci
-        run: npm ci --ignore-scripts
+      - name: npm install
+        run: npm install --exact --ignore-scripts --no-audit --no-save
 
       - name: npm run doc
         run: npm run doc

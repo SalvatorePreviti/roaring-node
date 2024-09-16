@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: "20.x"
       - uses: actions/checkout@v4
-      - run: npm ci --ignore-scripts --no-audit --no-save
+      - run: npm install --exact --ignore-scripts --no-audit --no-save
       - run: npx eslint --no-error-on-unmatched-pattern --max-warnings=0
       - run: npx prettier --loglevel=warn --check .
       - run: node ./node-pre-gyp.js --custom-rebuild
@@ -35,6 +35,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v4
-      - run: npm install --ignore-scripts --no-audit --no-save
+      - run: npm install --exact --ignore-scripts --no-audit --no-save
       - run: node ./node-pre-gyp.js --custom-rebuild
-      - run: node ./scripts/test.js --notypecheck
+      - run: node ./scripts/test.js
