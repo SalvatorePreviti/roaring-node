@@ -229,7 +229,7 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
       case FileSerializationFormat::tab_separated_values:
       case FileSerializationFormat::newline_separated_values:
       case FileSerializationFormat::json_array: {
-        int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
+        int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
         if (fd < 0) {
           return WorkerError::from_errno("open", this->filePath);
         }
@@ -246,7 +246,7 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
       return err;
     }
 
-    int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
+    int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
     if (fd < 0) {
       return WorkerError::from_errno("open", this->filePath);
     }
