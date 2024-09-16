@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         node-version: ["16.14.0", "18.1.0", "20.9.0", "21.1.0"]
-        os: [ubuntu-latest, macos-latest, windows-2019]
+        os: [ubuntu-latest, macos-latest, macos-latest-arm64, windows-2019]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-node@v4
