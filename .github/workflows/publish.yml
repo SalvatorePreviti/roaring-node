@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         node-version: ["16.14.0", "18.1.0", "20.9.0", "21.1.0"]
-        os: [ubuntu-20.04, windows-2019, macos-latest, macos-latest-arm64]
+        os: [ubuntu-20.04, windows-2019, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-node@v4
@@ -52,7 +52,7 @@ jobs:
     needs: [test, prebuild]
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-2019, macos-latest, macos-latest-arm64]
+        os: [ubuntu-latest, windows-2019, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-node@v4
