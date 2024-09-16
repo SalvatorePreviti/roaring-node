@@ -11,10 +11,10 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: npm ci --ignore-scripts --no-audit --no-save
       - run: node ./node-pre-gyp.js --custom-rebuild
       - run: node ./scripts/test.js
@@ -28,10 +28,10 @@ jobs:
         os: [ubuntu-20.04, windows-2019, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: npm install --ignore-scripts --no-audit --no-save
       - run: node ./node-pre-gyp.js --custom-rebuild
       - run: node ./scripts/test.js --notypecheck
@@ -47,10 +47,10 @@ jobs:
         os: [ubuntu-latest, windows-2019, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: "18.16.0"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: npm install
       - run: node ./scripts/test.js --notypecheck
 
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 18.x
 

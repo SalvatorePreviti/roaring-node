@@ -79,7 +79,7 @@ if (customRebuildIdx <= 0) {
     console.log("* packaging...");
     console.time("packaging");
     await forkAsync(__filename, ["package", "testpackage"]);
-    console.timeEnd("packaging\n");
+    console.timeEnd("packaging");
     console.log();
   };
 

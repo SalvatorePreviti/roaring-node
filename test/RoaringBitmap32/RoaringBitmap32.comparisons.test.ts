@@ -52,6 +52,56 @@ describe("RoaringBitmap32 comparisons", () => {
     });
   });
 
+  describe("isSuperset", () => {
+    it("returns false for invalid values", () => {
+      const bitmap = new RoaringBitmap32();
+      expect(bitmap.isSuperset(null as any)).eq(false);
+      expect(bitmap.isSuperset(undefined as any)).eq(false);
+      expect(bitmap.isSuperset(123 as any)).eq(false);
+      expect(bitmap.isSuperset([123] as any)).eq(false);
+    });
+
+    it("returns true with itself", () => {
+      const bitmap = new RoaringBitmap32();
+      expect(bitmap.isSuperset(bitmap)).eq(true);
+    });
+
+    it("returns true with another empty set", () => {
+      const a = new RoaringBitmap32();
+      const b = new RoaringBitmap32();
+      expect(a.isSuperset(b)).eq(true);
+    });
+
+    it("returns true with another non empty set", () => {
+      const a = new RoaringBitmap32([1, 2, 3]);
+      const b = new RoaringBitmap32();
+      expect(a.isSuperset(b)).eq(true);
+    });
+
+    it("returns true for bitmap1 > bitmap2", () => {
+      const a = new RoaringBitmap32([1, 2, 3]);
+      const b = new RoaringBitmap32([1, 2]);
+      expect(a.isSuperset(b)).eq(true);
+    });
+
+    it("returns true for bitmap1 == bitmap2", () => {
+      const a = new RoaringBitmap32([1, 2, 3]);
+      const b = new RoaringBitmap32([1, 2, 3]);
+      expect(a.isSuperset(b)).eq(true);
+    });
+
+    it("returns true for bitmap1 === bitmap1", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      expect(bitmap.isSuperset(bitmap)).eq(true);
+    });
+
+    it("returns false for bitmap1 < bitmap2", () => {
+      const a = new RoaringBitmap32([1, 2]);
+      const b = new RoaringBitmap32([1, 2, 3]);
+      expect(a.isSuperset(b)).eq(false);
+    });
+  });
+
   describe("isStrictSubset", () => {
     it("returns false for invalid values", () => {
       const bitmap = new RoaringBitmap32();
@@ -104,6 +154,67 @@ describe("RoaringBitmap32 comparisons", () => {
       const a = new RoaringBitmap32([1, 2, 3]);
       const b = new RoaringBitmap32([1, 2]);
       expect(a.isStrictSubset(b)).eq(false);
+    });
+  });
+
+  describe("isStrictSuperset", () => {
+    it("returns false for invalid values", () => {
+      const bitmap = new RoaringBitmap32();
+      expect(bitmap.isStrictSuperset(null as any)).eq(false);
+      expect(bitmap.isStrictSuperset(undefined as any)).eq(false);
+      expect(bitmap.isStrictSuperset(123 as any)).eq(false);
+      expect(bitmap.isStrictSuperset([123] as any)).eq(false);
+    });
+
+    it("returns false with itself (empty)", () => {
+      const bitmap = new RoaringBitmap32();
+      expect(bitmap.isStrictSuperset(bitmap)).eq(false);
+    });
+
+    it("returns false with itself (not empty)", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3]);
+      expect(bitmap.isStrictSuperset(bitmap)).eq(false);
+    });
+
+    it("returns false with another empty set", () => {
+      const a = new RoaringBitmap32();
+      const b = new RoaringBitmap32();
+      expect(a.isStrictSuperset(b)).eq(false);
+    });
+
+    it("returns true with another non empty set", () => {
+      const a = new RoaringBitmap32([1, 2, 3]);
+      const b = new RoaringBitmap32();
+      expect(a.isStrictSuperset(b)).eq(true);
+    });
+
+    it("returns true for bitmap1 > bitmap2", () => {
+      const a = new RoaringBitmap32([1, 2, 3]);
+      const b = new RoaringBitmap32([1, 2]);
+      expect(a.isStrictSuperset(b)).eq(true);
+    });
+
+    it("returns false for bitmap1 == bitmap2", () => {
+      const a = new RoaringBitmap32([1, 2, 3]);
+      const b = new RoaringBitmap32([1, 2, 3]);
+      expect(a.isStrictSuperset(b)).eq(false);
+    });
+
+    it("returns false for bitmap1 === bitmap1", () => {
+      const a = new RoaringBitmap32([1, 2, 3]);
+      expect(a.isStrictSuperset(a)).eq(false);
+    });
+
+    it("returns false for bitmap1 < bitmap2", () => {
+      const a = new RoaringBitmap32([1, 2]);
+      const b = new RoaringBitmap32([1, 2, 3]);
+      expect(a.isStrictSuperset(b)).eq(false);
+    });
+
+    it("returns false for bitmap1 < bitmap2", () => {
+      const a = new RoaringBitmap32([1, 2]);
+      const b = new RoaringBitmap32([1, 2, 3]);
+      expect(a.isStrictSuperset(b)).eq(false);
     });
   });
 
