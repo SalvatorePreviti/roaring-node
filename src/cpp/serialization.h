@@ -17,6 +17,10 @@ constexpr const unsigned char CROARING_SERIALIZATION_ARRAY_UINT32 = 1;
 constexpr const unsigned char CROARING_SERIALIZATION_CONTAINER = 2;
 #endif
 
+#ifndef O_BINARY
+#  define O_BINARY 0
+#endif
+
 class RoaringBitmapSerializerBase {
  private:
   bool serializeArray = false;
