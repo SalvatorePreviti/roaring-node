@@ -3,7 +3,7 @@
 const path = require("path");
 const { runMain } = require("./lib/utils");
 
-require("ts-node").register({ transpileOnly: process.argv.includes("--notypecheck") });
+require("tsx/cjs");
 
 runMain(() => {
   const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
