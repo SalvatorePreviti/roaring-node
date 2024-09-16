@@ -63,7 +63,7 @@ describe("RoaringBitmap32Iterator", () => {
 
     it("returns this", () => {
       const iter = new RoaringBitmap32Iterator();
-      expect(iter[Symbol.iterator]()).eq(iter);
+      expect((iter as any)[Symbol.iterator as any]()).eq(iter);
     });
 
     it("allows foreach (empty)", () => {
@@ -232,19 +232,19 @@ describe("RoaringBitmap32Iterator", () => {
   describe("RoaringBitmap32 iterable", () => {
     it("returns a RoaringBitmap32Iterator", () => {
       const bitmap = new RoaringBitmap32();
-      const iterator = bitmap[Symbol.iterator]();
+      const iterator = (bitmap as any)[Symbol.iterator as any]();
       expect(iterator).toBeInstanceOf(RoaringBitmap32Iterator);
       expect(typeof iterator.next).eq("function");
     });
 
     it("has both [Symbol.iterator] and iterator", () => {
       const bitmap = new RoaringBitmap32();
-      expect(bitmap.iterator).eq(bitmap[Symbol.iterator]);
+      expect(bitmap.iterator).eq((bitmap as any)[Symbol.iterator as any]);
     });
 
     it("returns an empty iterator for an empty bitmap", () => {
       const bitmap = new RoaringBitmap32();
-      const iterator = bitmap[Symbol.iterator]();
+      const iterator = (bitmap as any)[Symbol.iterator as any]();
       expect(iterator.next()).toEqual({
         done: true,
         value: undefined,
@@ -256,7 +256,7 @@ describe("RoaringBitmap32Iterator", () => {
     });
     it("iterates a non empty bitmap", () => {
       const bitmap = new RoaringBitmap32([0xffffffff, 3]);
-      const iterator = bitmap[Symbol.iterator]();
+      const iterator = (bitmap as any)[Symbol.iterator as any]();
       expect(iterator.next()).toEqual({
         done: false,
         value: 3,

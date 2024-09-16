@@ -715,6 +715,17 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   isSubset(other: ReadonlyRoaringBitmap32): boolean;
 
   /**
+   * Checks wether this set is a superset or the same as the given set.
+   *
+   * Returns false also if the given argument is not a ReadonlyRoaringBitmap32 instance.
+   *
+   * @param {ReadonlyRoaringBitmap32} other The other set.
+   * @returns {boolean} True if this set is a superset of the given ReadonlyRoaringBitmap32. False if not.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  isSuperset(other: ReadonlyRoaringBitmap32): boolean;
+
+  /**
    * Checks wether this set is a strict subset of the given set.
    *
    * Returns false if the sets are the same.
@@ -726,6 +737,19 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @memberof ReadonlyRoaringBitmap32
    */
   isStrictSubset(other: ReadonlyRoaringBitmap32): boolean;
+
+  /**
+   * Checks wether this set is a strict superset of the given set.
+   *
+   * Returns false if the sets are the same.
+   *
+   * Returns false also if the given argument is not a ReadonlyRoaringBitmap32 instance.
+   *
+   * @param {ReadonlyRoaringBitmap32} other The other ReadonlyRoaringBitmap32 instance.
+   * @returns {boolean} True if this set is a strict superset of the given ReadonlyRoaringBitmap32. False if not.
+   * @memberof ReadonlyRoaringBitmap32
+   */
+  isStrictSuperset(other: ReadonlyRoaringBitmap32): boolean;
 
   /**
    * Checks wether this set is equal to another set.
@@ -1195,6 +1219,47 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @memberof ReadonlyRoaringBitmap32
    */
   statistics(): RoaringBitmap32Statistics;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.or(bitmap).
+   *
+   * @returns a new Set containing all the elements in this Set and also all the elements in the argument.
+   */
+  union<U>(other: ReadonlySetLike<U> | ReadonlyRoaringBitmap32): Set<number | U>;
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.and(bitmap).
+   *
+   * @returns a new Set containing all the elements which are both in this Set and in the argument.
+   */
+  intersection<U>(other: ReadonlySetLike<U> | ReadonlyRoaringBitmap32): Set<number & U>;
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.andNot(bitmap).
+   *
+   * @returns a new Set containing all the elements in this Set which are not also in the argument.
+   */
+  difference<U>(other: ReadonlySetLike<U> | ReadonlyRoaringBitmap32): Set<number>;
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.xor(bitmap) instead.
+   *
+   * @returns a new Set containing all the elements which are in either this Set or in the argument, but not in both.
+   */
+  symmetricDifference<U>(other: ReadonlySetLike<U> | ReadonlyRoaringBitmap32): Set<number | U>;
+  /**
+   * @returns a boolean indicating whether all the elements in this Set are also in the argument.
+   */
+  isSubsetOf(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
+  /**
+   * @returns a boolean indicating whether all the elements in the argument are also in this Set.
+   */
+  isSupersetOf(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
+  /**
+   * @returns a boolean indicating whether this Set has no elements in common with the argument.
+   */
+  isDisjointFrom(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
 }
 
 export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
@@ -1586,6 +1651,71 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
    * @memberof ReadonlyRoaringBitmap32
    */
   has(value: unknown): boolean;
+
+  /**
+   * @returns a new RoaringBitmap32 containing all the elements in this Set and also all the elements in the argument.
+   */
+  union(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.or(bitmap).
+   *
+   * @returns a new Set containing all the elements in this Set and also all the elements in the argument.
+   */
+  union<U>(other: ReadonlySetLike<U>): Set<number | U>;
+
+  /**
+   * @returns a new RoaringBitmap32 containing all the elements which are both in this Set and in the argument.
+   */
+  intersection(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.and(bitmap).
+   *
+   * @returns a new Set containing all the elements which are both in this Set and in the argument.
+   */
+  intersection<U>(other: ReadonlySetLike<U>): Set<number & U>;
+
+  /**
+   * @returns a new RoaringBitmap32 containing all the elements in this Set which are not also in the argument.
+   */
+  difference<U>(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.andNot(bitmap).
+   *
+   * @returns a new Set containing all the elements in this Set which are not also in the argument.
+   */
+  difference<U>(other: ReadonlySetLike<U>): Set<number>;
+
+  /**
+   * @returns a new RoaringBitmap32 containing all the elements which are in either this Set or in the argument, but not in both.
+   */
+  symmetricDifference(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.xor(bitmap) instead.
+   *
+   * @returns a new Set containing all the elements which are in either this Set or in the argument, but not in both.
+   */
+  symmetricDifference<U>(other: ReadonlySetLike<U>): Set<number | U>;
+
+  /**
+   * @returns a boolean indicating whether all the elements in this Set are also in the argument.
+   */
+  isSubsetOf(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
+  /**
+   * @returns a boolean indicating whether all the elements in the argument are also in this Set.
+   */
+  isSupersetOf(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
+  /**
+   * @returns a boolean indicating whether this Set has no elements in common with the argument.
+   */
+  isDisjointFrom(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
 }
 
 /**
@@ -1603,34 +1733,34 @@ export class RoaringBitmap32 {
   // Allows: import RoaringBitmap32 from 'roaring/RoaringBitmap32'
   private static readonly default: typeof RoaringBitmap32;
 
-  public static readonly SerializationFormat: typeof SerializationFormat;
+  static readonly SerializationFormat: typeof SerializationFormat;
 
-  public readonly SerializationFormat: typeof SerializationFormat;
+  readonly SerializationFormat: typeof SerializationFormat;
 
-  public static readonly FileSerializationFormat: typeof FileSerializationFormat;
+  static readonly FileSerializationFormat: typeof FileSerializationFormat;
 
-  public readonly FileSerializationFormat: typeof FileSerializationFormat;
+  readonly FileSerializationFormat: typeof FileSerializationFormat;
 
-  public static readonly FileDeserializationFormat: typeof FileDeserializationFormat;
+  static readonly FileDeserializationFormat: typeof FileDeserializationFormat;
 
-  public readonly FileDeserializationFormat: typeof FileDeserializationFormat;
+  readonly FileDeserializationFormat: typeof FileDeserializationFormat;
 
-  public static readonly DeserializationFormat: typeof DeserializationFormat;
+  static readonly DeserializationFormat: typeof DeserializationFormat;
 
-  public readonly DeserializationFormat: typeof DeserializationFormat;
+  readonly DeserializationFormat: typeof DeserializationFormat;
 
-  public static readonly FrozenViewFormat: typeof FrozenViewFormat;
+  static readonly FrozenViewFormat: typeof FrozenViewFormat;
 
-  public readonly FrozenViewFormat: typeof FrozenViewFormat;
+  readonly FrozenViewFormat: typeof FrozenViewFormat;
 
   /** Gets the approximate memory allocated by the roaring bitmap library. Useful for debugging memory issues and GC. */
-  public static getRoaringUsedMemory(): number;
+  static getRoaringUsedMemory(): number;
 
   /**
    * Gets the total number of allocated RoaringBitmap32 globally, in all isolates and worker threads.
    * Useful for debugging memory issues and GC.
    */
-  public static getInstancesCount(): number;
+  static getInstancesCount(): number;
 
   /**
    * Creates a new buffer with the given size and alignment.
@@ -1645,7 +1775,7 @@ export class RoaringBitmap32 {
    * @param {number} [alignment=32] The alignment of the buffer to allocate.
    * @memberof RoaringBitmap32
    */
-  public static bufferAlignedAlloc(size: number, alignment?: number): Buffer;
+  static bufferAlignedAlloc(size: number, alignment?: number): Buffer;
 
   /**
    * Creates a new buffer not initialized with the given size and alignment.
@@ -1662,7 +1792,7 @@ export class RoaringBitmap32 {
    * @param {number} [alignment=32] The alignment of the buffer to allocate.
    * @memberof RoaringBitmap32
    */
-  public static bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
+  static bufferAlignedAllocUnsafe(size: number, alignment?: number): Buffer;
 
   /**
    * Creates a new buffer backed by a SharedArrayBuffer with the given size and alignment.
@@ -1675,7 +1805,7 @@ export class RoaringBitmap32 {
    * @param {number} size The size of the buffer to allocate.
    * @param {number} [alignment=32] The alignment of the buffer to allocate.
    */
-  public static bufferAlignedAllocShared(size: number, alignment?: number): Buffer;
+  static bufferAlignedAllocShared(size: number, alignment?: number): Buffer;
 
   /**
    * Creates a new buffer backed by a SharedArrayBuffer with the given size and alignment.
@@ -1690,7 +1820,7 @@ export class RoaringBitmap32 {
    * @param {number} size The size of the buffer to allocate.
    * @param {number} [alignment=32] The alignment of the buffer to allocate.
    */
-  public static bufferAlignedAllocSharedUnsafe(size: number, alignment?: number): Buffer;
+  static bufferAlignedAllocSharedUnsafe(size: number, alignment?: number): Buffer;
 
   /**
    * Ensures that the given buffer is aligned to the given alignment.
@@ -1704,7 +1834,7 @@ export class RoaringBitmap32 {
    * @returns {Buffer} The aligned buffer. Can be the same as the input buffer if it was already aligned. Can be a new buffer if the input buffer was not aligned.
    * @memberof RoaringBitmap32
    */
-  public static ensureBufferAligned(
+  static ensureBufferAligned(
     buffer: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer,
     alignment?: number,
   ): Buffer;
@@ -1716,7 +1846,7 @@ export class RoaringBitmap32 {
    * @param {TypedArray | Buffer | ArrayBuffer|SharedArrayBuffer | null | undefined} buffer The buffer to check.
    * @param {number} [alignment=32] The alignment to check.
    */
-  public static isBufferAligned(
+  static isBufferAligned(
     buffer: TypedArray | Buffer | ArrayBuffer | SharedArrayBuffer | null | undefined,
     alignment?: number,
   ): boolean;
@@ -1729,7 +1859,7 @@ export class RoaringBitmap32 {
    * @constant
    * @type {string} The version of the CRoaring libary as a string. Example: "0.2.42"
    */
-  public static get CRoaringVersion(): string;
+  static get CRoaringVersion(): string;
 
   /**
    * Property: The version of the roaring npm package as a string.
@@ -1739,7 +1869,7 @@ export class RoaringBitmap32 {
    * @constant
    * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
    */
-  public static get PackageVersion(): string;
+  static get PackageVersion(): string;
 
   /**
    * Creates an instance of RoaringBitmap32 with a given initial capacity.
@@ -1747,7 +1877,7 @@ export class RoaringBitmap32 {
    * @param {number} capacity The initial capacity of the bitmap.
    * @memberof RoaringBitmap32
    */
-  public constructor(capacity?: number | undefined);
+  constructor(capacity?: number | undefined);
 
   /**
    * Creates an instance of RoaringBitmap32, or copies the given bitmap.
@@ -1759,7 +1889,7 @@ export class RoaringBitmap32 {
    * @param {Iterable<number>} [values]
    * @memberof RoaringBitmap32
    */
-  public constructor(values: Iterable<number>);
+  constructor(values: Iterable<number>);
 
   /**
    * Creates a new frozen readonly view of the given bitmap.
@@ -1771,7 +1901,7 @@ export class RoaringBitmap32 {
    * @param {"frozen"} frozen Must be "frozen"
    * @memberof RoaringBitmap32Iterator
    */
-  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, frozen: "frozen");
+  constructor(roaringBitmap32: ReadonlyRoaringBitmap32, frozen: "frozen");
 
   /**
    * Creates an instance of RoaringBitmap32 from the given Iterable.
@@ -1785,7 +1915,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance filled with the given values.
    * @memberof RoaringBitmap32
    */
-  public static from(values: Iterable<number>): RoaringBitmap32;
+  static from(values: Iterable<number>): RoaringBitmap32;
 
   /**
    * The RoaringBitmap32.of() static method creates a new Array instance from a variable number of arguments, regardless of number or type of the arguments.
@@ -1795,7 +1925,7 @@ export class RoaringBitmap32 {
    * @param {...number[]} values A set of values to add to the new RoaringBitmap32 instance.
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    */
-  public static of(...values: (number | string | null | undefined)[]): RoaringBitmap32;
+  static of(...values: (number | string | null | undefined)[]): RoaringBitmap32;
 
   /**
    * Creates a new bitmap that contains all the values in the interval: [rangeStart, rangeEnd).
@@ -1808,7 +1938,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static fromRange(
+  static fromRange(
     rangeStart: number | undefined,
     rangeEnd?: number | undefined,
     step?: number | undefined,
@@ -1829,7 +1959,7 @@ export class RoaringBitmap32 {
    * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance filled with all the given values.
    * @memberof RoaringBitmap32
    */
-  public static fromArrayAsync(values: Iterable<number> | null | undefined): Promise<RoaringBitmap32>;
+  static fromArrayAsync(values: Iterable<number> | null | undefined): Promise<RoaringBitmap32>;
 
   /**
    *
@@ -1847,7 +1977,7 @@ export class RoaringBitmap32 {
    * @returns {void}
    * @memberof RoaringBitmap32
    */
-  public static fromArrayAsync(values: Iterable<number> | null | undefined, callback: RoaringBitmap32Callback): void;
+  static fromArrayAsync(values: Iterable<number> | null | undefined, callback: RoaringBitmap32Callback): void;
 
   /**
    * Deserializes the bitmap from an Uint8Array or a Buffer.
@@ -1866,7 +1996,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserialize(
+  static deserialize(
     serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined,
     format: DeserializationFormatType,
   ): RoaringBitmap32;
@@ -1887,7 +2017,7 @@ export class RoaringBitmap32 {
    * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserializeAsync(
+  static deserializeAsync(
     serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined,
     format: DeserializationFormatType,
   ): Promise<RoaringBitmap32>;
@@ -1909,7 +2039,7 @@ export class RoaringBitmap32 {
    * @returns {void}
    * @memberof RoaringBitmap32
    */
-  public static deserializeAsync(
+  static deserializeAsync(
     serialized: Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined,
     format: DeserializationFormatType,
     callback: RoaringBitmap32Callback,
@@ -1932,7 +2062,7 @@ export class RoaringBitmap32 {
    * @returns {Promise<RoaringBitmap32>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserializeFileAsync(filePath: string, format: FileDeserializationFormatType): Promise<RoaringBitmap32>;
+  static deserializeFileAsync(filePath: string, format: FileDeserializationFormatType): Promise<RoaringBitmap32>;
 
   /**
    *
@@ -1952,7 +2082,7 @@ export class RoaringBitmap32 {
    * @returns {Promise<RoaringBitmap32[]>} A promise that resolves to a new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static deserializeParallelAsync(
+  static deserializeParallelAsync(
     serialized: (Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer | null | undefined)[],
     format: DeserializationFormatType,
   ): Promise<RoaringBitmap32[]>;
@@ -1978,7 +2108,7 @@ export class RoaringBitmap32 {
    * @returns {void}
    * @memberof RoaringBitmap32
    */
-  public static deserializeParallelAsync(
+  static deserializeParallelAsync(
     serialized: readonly (Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer)[],
     format: DeserializationFormatType,
     callback: RoaringBitmap32ArrayCallback,
@@ -2010,7 +2140,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
    * @memberof RoaringBitmap32
    */
-  public static unsafeFrozenView(
+  static unsafeFrozenView(
     storage: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer,
     format: FrozenViewFormatType,
   ): RoaringBitmap32;
@@ -2023,7 +2153,7 @@ export class RoaringBitmap32 {
    * @param {RoaringBitmap32} b Second RoaringBitmap32 instance to swap
    * @memberof RoaringBitmap32
    */
-  public static swap(a: RoaringBitmap32, b: RoaringBitmap32): void;
+  static swap(a: RoaringBitmap32, b: RoaringBitmap32): void;
 
   /**
    * addOffset adds the value 'offset' to each and every value in a bitmap, generating a new bitmap in the process.
@@ -2033,7 +2163,7 @@ export class RoaringBitmap32 {
    * @param {number} offset The offset to add to each element. Can be positive or negative.
    * @returns {RoaringBitmap32} A new bitmap with the offset added to each element.
    */
-  public static addOffset(input: ReadonlyRoaringBitmap32, offset: number): RoaringBitmap32;
+  static addOffset(input: ReadonlyRoaringBitmap32, offset: number): RoaringBitmap32;
 
   /**
    * Returns a new RoaringBitmap32 with the intersection (and) between the given two bitmaps.
@@ -2046,7 +2176,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the intersection a AND b
    * @memberof RoaringBitmap32
    */
-  public static and(a: ReadonlyRoaringBitmap32, b: ReadonlyRoaringBitmap32): RoaringBitmap32;
+  static and(a: ReadonlyRoaringBitmap32, b: ReadonlyRoaringBitmap32): RoaringBitmap32;
 
   /**
    * Returns a new RoaringBitmap32 with the union (or) of the two given bitmaps.
@@ -2059,7 +2189,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32}
    * @memberof RoaringBitmap32 A new RoaringBitmap32 that contains the union a OR b
    */
-  public static or(a: ReadonlyRoaringBitmap32, b: ReadonlyRoaringBitmap32): RoaringBitmap32;
+  static or(a: ReadonlyRoaringBitmap32, b: ReadonlyRoaringBitmap32): RoaringBitmap32;
 
   /**
    * Returns a new RoaringBitmap32 with the symmetric union (xor) between the two given bitmaps.
@@ -2072,7 +2202,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32}
    * @memberof RoaringBitmap32 A new RoaringBitmap32 that contains a XOR b
    */
-  public static xor(a: ReadonlyRoaringBitmap32, b: ReadonlyRoaringBitmap32): RoaringBitmap32;
+  static xor(a: ReadonlyRoaringBitmap32, b: ReadonlyRoaringBitmap32): RoaringBitmap32;
 
   /**
    * Returns a new RoaringBitmap32 with the difference (and not) between the two given bitmaps.
@@ -2085,7 +2215,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32}
    * @memberof RoaringBitmap32 A new bitmap, a AND NOT b
    */
-  public static andNot(a: ReadonlyRoaringBitmap32, b: ReadonlyRoaringBitmap32): RoaringBitmap32;
+  static andNot(a: ReadonlyRoaringBitmap32, b: ReadonlyRoaringBitmap32): RoaringBitmap32;
 
   /**
    * Performs a union between all the given array of RoaringBitmap32 instances.
@@ -2097,7 +2227,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the union of all the given bitmaps.
    * @memberof RoaringBitmap32
    */
-  public static orMany(bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+  static orMany(bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
 
   /**
    * Performs a union between all the given RoaringBitmap32 instances.
@@ -2109,7 +2239,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the union of all the given bitmaps.
    * @memberof RoaringBitmap32
    */
-  public static orMany(...bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+  static orMany(...bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
 
   /**
    * Performs a xor between all the given array of RoaringBitmap32 instances.
@@ -2121,7 +2251,7 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the xor of all the given bitmaps.
    * @memberof RoaringBitmap32
    */
-  public static xorMany(bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+  static xorMany(bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
 
   /**
    * Performs a xor between all the given RoaringBitmap32 instances.
@@ -2133,7 +2263,72 @@ export class RoaringBitmap32 {
    * @returns {RoaringBitmap32} A new RoaringBitmap32 that contains the xor of all the given bitmaps.
    * @memberof RoaringBitmap32
    */
-  public static xorMany(...bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+  static xorMany(...bitmaps: readonly ReadonlyRoaringBitmap32[]): RoaringBitmap32;
+
+  /**
+   * @returns a new RoaringBitmap32 containing all the elements in this Set and also all the elements in the argument.
+   */
+  union(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.or(bitmap).
+   *
+   * @returns a new Set containing all the elements in this Set and also all the elements in the argument.
+   */
+  union<U>(other: ReadonlySetLike<U>): Set<number | U>;
+
+  /**
+   * @returns a new RoaringBitmap32 containing all the elements which are both in this Set and in the argument.
+   */
+  intersection(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.and(bitmap).
+   *
+   * @returns a new Set containing all the elements which are both in this Set and in the argument.
+   */
+  intersection<U>(other: ReadonlySetLike<U>): Set<number & U>;
+
+  /**
+   * @returns a new RoaringBitmap32 containing all the elements in this Set which are not also in the argument.
+   */
+  difference<U>(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.andNot(bitmap).
+   *
+   * @returns a new Set containing all the elements in this Set which are not also in the argument.
+   */
+  difference<U>(other: ReadonlySetLike<U>): Set<number>;
+
+  /**
+   * @returns a new RoaringBitmap32 containing all the elements which are in either this Set or in the argument, but not in both.
+   */
+  symmetricDifference(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+
+  /**
+   * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
+   * Yoo should use this.xor(bitmap) instead.
+   *
+   * @returns a new Set containing all the elements which are in either this Set or in the argument, but not in both.
+   */
+  symmetricDifference<U>(other: ReadonlySetLike<U>): Set<number | U>;
+
+  /**
+   * @returns a boolean indicating whether all the elements in this Set are also in the argument.
+   */
+  isSubsetOf(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
+  /**
+   * @returns a boolean indicating whether all the elements in the argument are also in this Set.
+   */
+  isSupersetOf(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
+  /**
+   * @returns a boolean indicating whether this Set has no elements in common with the argument.
+   */
+  isDisjointFrom(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
 }
 
 /**
@@ -2158,7 +2353,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @param {RoaringBitmap32} [roaringBitmap32] The roaring bitmap to iterate. If null or undefined, an empty iterator is created.
    * @memberof RoaringBitmap32Iterator
    */
-  public constructor(roaringBitmap32?: ReadonlyRoaringBitmap32, reverse?: boolean);
+  constructor(roaringBitmap32?: ReadonlyRoaringBitmap32, reverse?: boolean);
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
@@ -2169,7 +2364,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @param {number} bufferSize Buffer size to allocate, must be an integer greater than 0
    * @memberof RoaringBitmap32Iterator
    */
-  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, bufferSize: number);
+  constructor(roaringBitmap32: ReadonlyRoaringBitmap32, bufferSize: number);
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32 using the given temporary buffer.
@@ -2178,7 +2373,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @param {Uint32Array} buffer The roaring bitmap to iterate
    * @memberof RoaringBitmap32Iterator The reusable temporary buffer. Length must be greater than 0.
    */
-  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, buffer: Uint32Array);
+  constructor(roaringBitmap32: ReadonlyRoaringBitmap32, buffer: Uint32Array);
 
   /**
    * Returns this.
@@ -2186,7 +2381,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @returns {this} The same instance.
    * @memberof RoaringBitmap32Iterator
    */
-  public [Symbol.iterator](): this;
+  [Symbol.iterator](): this;
 
   /**
    * Returns the next element in the iterator.
@@ -2196,7 +2391,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @returns {IteratorResult<number>} The next result.
    * @memberof RoaringBitmap32Iterator
    */
-  public next(): IteratorResult<number>;
+  next(): IteratorResult<number>;
 }
 
 /**
@@ -2219,7 +2414,7 @@ export class RoaringBitmap32ReverseIterator implements IterableIterator<number> 
    * @param {RoaringBitmap32} [roaringBitmap32] The roaring bitmap to iterate. If null or undefined, an empty iterator is created.
    * @memberof RoaringBitmap32ReverseIterator
    */
-  public constructor(roaringBitmap32?: ReadonlyRoaringBitmap32);
+  constructor(roaringBitmap32?: ReadonlyRoaringBitmap32);
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
@@ -2230,7 +2425,7 @@ export class RoaringBitmap32ReverseIterator implements IterableIterator<number> 
    * @param {number} bufferSize Buffer size to allocate, must be an integer greater than 0
    * @memberof RoaringBitmap32ReverseIterator
    */
-  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, bufferSize: number);
+  constructor(roaringBitmap32: ReadonlyRoaringBitmap32, bufferSize: number);
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32 using the given temporary buffer.
@@ -2239,7 +2434,7 @@ export class RoaringBitmap32ReverseIterator implements IterableIterator<number> 
    * @param {Uint32Array} buffer The roaring bitmap to iterate
    * @memberof RoaringBitmap32ReverseIterator The reusable temporary buffer. Length must be greater than 0.
    */
-  public constructor(roaringBitmap32: ReadonlyRoaringBitmap32, buffer: Uint32Array);
+  constructor(roaringBitmap32: ReadonlyRoaringBitmap32, buffer: Uint32Array);
 
   /**
    * Returns this.
@@ -2247,7 +2442,7 @@ export class RoaringBitmap32ReverseIterator implements IterableIterator<number> 
    * @returns {this} The same instance.
    * @memberof RoaringBitmap32ReverseIterator
    */
-  public [Symbol.iterator](): this;
+  [Symbol.iterator](): this;
 
   /**
    * Returns the next element in the iterator.
@@ -2257,7 +2452,7 @@ export class RoaringBitmap32ReverseIterator implements IterableIterator<number> 
    * @returns {IteratorResult<number>} The next result.
    * @memberof RoaringBitmap32ReverseIterator
    */
-  public next(): IteratorResult<number>;
+  next(): IteratorResult<number>;
 }
 
 /**
@@ -2338,12 +2533,6 @@ export interface RoaringBitmap32Statistics {
    * @type {number}
    */
   minValue: number;
-
-  /**
-   * The sum of all values
-   * @type {number}
-   */
-  sumOfAllValues: number;
 
   /**
    * Total number of values stored in the bitmap

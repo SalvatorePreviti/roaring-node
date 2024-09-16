@@ -102,7 +102,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
                 expect(bitmap!.size).eq(0);
                 resolve();
               } catch (e) {
-                reject(e);
+                reject(e as Error);
               }
             }),
           ).toBe(undefined);
@@ -123,7 +123,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
                 expect(bitmap!.size).eq(0);
                 resolve();
               } catch (e) {
-                reject(e);
+                reject(e as Error);
               }
             }),
           ).toBe(undefined);
@@ -146,7 +146,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
                 expect(bitmap!.size).eq(0);
                 resolve();
               } catch (e) {
-                reject(e);
+                reject(e as Error);
               }
             }),
           ).toBe(undefined);
@@ -167,7 +167,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
                 expect(bitmap!.size).eq(0);
                 resolve();
               } catch (e) {
-                reject(e);
+                reject(e as Error);
               }
             }),
           ).toBe(undefined);
@@ -193,7 +193,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
               expect(bitmap!.toArray()).toEqual(values);
               resolve();
             } catch (e) {
-              reject(e);
+              reject(e as Error);
             }
           }),
         ).toBe(undefined);
@@ -210,7 +210,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
               expect(error!.message).eq("RoaringBitmap32 deserialization - invalid portable header byte");
               resolve();
             } catch (e) {
-              reject(e);
+              reject(e as Error);
             }
           }),
         ).toBe(undefined);

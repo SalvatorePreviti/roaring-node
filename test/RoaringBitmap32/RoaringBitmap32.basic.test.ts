@@ -604,7 +604,6 @@ describe("RoaringBitmap32 basic", () => {
         bytesInBitsetContainers: 0,
         maxValue: 0,
         minValue: 4294967295,
-        sumOfAllValues: 0,
         size: 0,
         isFrozen: false,
       });
@@ -627,7 +626,6 @@ describe("RoaringBitmap32 basic", () => {
         bytesInBitsetContainers: 0,
         maxValue: 999997,
         minValue: 1,
-        sumOfAllValues: 5999986,
         size: 12,
         isFrozen: false,
       });
@@ -646,7 +644,6 @@ describe("RoaringBitmap32 basic", () => {
         bytesInBitsetContainers: 0,
         maxValue: 999997,
         minValue: 1,
-        sumOfAllValues: 5999986,
         size: 12,
         isFrozen: false,
       };
@@ -721,6 +718,14 @@ describe("RoaringBitmap32 basic", () => {
       expect(rb1.size).eq(7);
       expect(rb1.has(1)).eq(true);
       expect(rb1.has(3)).eq(true);
+
+      expect(rb1.has("1")).eq(false);
+      expect(rb1.has("3")).eq(false);
+      expect(rb1.has(0.2)).eq(false);
+      expect(rb1.has(0.8)).eq(false);
+      expect(rb1.has(0.9)).eq(false);
+      expect(rb1.has(2.8)).eq(false);
+      expect(rb1.has(3.1)).eq(false);
 
       expect(rb1.contentToString()).eq("[1,2,3,4,5,100,1000]");
 
@@ -864,7 +869,7 @@ describe("RoaringBitmap32 basic", () => {
     it("throws when calling on the wrong native object", () => {
       const bitmap = new RoaringBitmap32();
       expect(() => {
-        bitmap.add.call(bitmap[Symbol.iterator](), 123);
+        bitmap.add.call((bitmap as any)[Symbol.iterator as any](), 123);
       }).toThrowError();
     });
 
@@ -998,7 +1003,7 @@ describe("RoaringBitmap32 basic", () => {
     it("filters a bitmap with a context", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
       const filtered = bitmap.filter(function (this: number, x) {
-        return x % 2 === this;
+        return x % 2 === +this;
       }, 1);
       expect(filtered).toEqual([1, 3, 5]);
     });

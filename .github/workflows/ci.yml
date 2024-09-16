@@ -16,18 +16,22 @@ jobs:
         with:
           node-version: "20.x"
       - uses: actions/checkout@v4
-      - run: npm ci --ignore-scripts --no-audit --no-save
+      - run: npm install --exact --no-audit --no-save
+        env:
+          ROARING_NODE_PRE_GYP: "false"
       - run: npx eslint --no-error-on-unmatched-pattern --max-warnings=0
       - run: npx prettier --loglevel=warn --check .
-      - run: node ./node-pre-gyp.js --custom-rebuild
-      - run: npx vitest --reporter verbose --no-file-parallelism --run
+      - run: node ./node-pre-gyp.js
+        env:
+          ROARING_NODE_PRE_GYP: "custom-rebuild"
+      - run: node ./scripts/test.js
       - run: node --expose-gc ./scripts/test-memory-leaks.js
 
   ci:
     needs: test
     strategy:
       matrix:
-        node-version: ["18.19.1", "20.11.1", "21.7.1"]
+        node-version: ["16.14.0", "18.1.0", "20.9.0", "21.1.0", "22.8.0"]
         os: [ubuntu-latest, macos-latest, windows-2019]
     runs-on: ${{ matrix.os }}
     steps:
@@ -35,6 +39,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v4
-      - run: npm install --ignore-scripts --no-audit --no-save
-      - run: node ./node-pre-gyp.js --custom-rebuild
-      - run: npx vitest --reporter verbose --no-file-parallelism --run
+      - run: npm install --exact --no-audit --no-save
+        env:
+          ROARING_NODE_PRE_GYP: "false"
+      - run: node ./node-pre-gyp.js
+        env:
+          ROARING_NODE_PRE_GYP: "custom-rebuild"
+      - run: node ./scripts/test.js

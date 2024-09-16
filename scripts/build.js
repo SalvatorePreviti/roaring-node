@@ -90,11 +90,12 @@ async function build() {
   });
 
   if (!process.argv.includes("--no-compile")) {
-    const options = [`--custom-rebuild`];
-    if (isDebug) {
-      options.push("--debug");
-    }
-    await forkAsync(path.resolve(ROOT_FOLDER, "node-pre-gyp.js"), options);
+    await forkAsync(path.resolve(ROOT_FOLDER, "node-pre-gyp.js"), [], {
+      env: {
+        ...process.env,
+        ROARING_NODE_PRE_GYP: "custom-rebuild",
+      },
+    });
     await forkAsync(require.resolve("./test.js"));
   }
 }

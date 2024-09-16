@@ -63,7 +63,7 @@ describe("RoaringBitmap32ReverseIterator", () => {
 
     it("returns this", () => {
       const iter = new RoaringBitmap32ReverseIterator();
-      expect(iter[Symbol.iterator]()).eq(iter);
+      expect((iter as any)[Symbol.iterator as any]()).eq(iter);
     });
 
     it("allows foreach (empty)", () => {

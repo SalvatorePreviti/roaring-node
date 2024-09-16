@@ -482,10 +482,6 @@ void RoaringBitmap32_statistics(const v8::FunctionCallbackInfo<v8::Value> & info
     v8::Uint32::NewFromUnsigned(isolate, stats.min_value)));
   ignoreMaybeResult(result->Set(
     context,
-    v8::String::NewFromUtf8Literal(isolate, "sumOfAllValues", v8::NewStringType::kInternalized),
-    v8::Number::New(isolate, (double)stats.sum_value)));
-  ignoreMaybeResult(result->Set(
-    context,
     v8::String::NewFromUtf8Literal(isolate, "size", v8::NewStringType::kInternalized),
     v8::Number::New(isolate, (double)stats.cardinality)));
   ignoreMaybeResult(result->Set(
@@ -501,10 +497,22 @@ void RoaringBitmap32_isSubset(const v8::FunctionCallbackInfo<v8::Value> & info) 
   info.GetReturnValue().Set(self == other || (self && other && roaring_bitmap_is_subset(self->roaring, other->roaring)));
 }
 
+void RoaringBitmap32_isSuperset(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
+  info.GetReturnValue().Set(self == other || (self && other && roaring_bitmap_is_subset(other->roaring, self->roaring)));
+}
+
 void RoaringBitmap32_isStrictSubset(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
   RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self && other && roaring_bitmap_is_strict_subset(self->roaring, other->roaring));
+}
+
+void RoaringBitmap32_isStrictSuperset(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
+  info.GetReturnValue().Set(self && other && roaring_bitmap_is_strict_subset(other->roaring, self->roaring));
 }
 
 void RoaringBitmap32_isEqual(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -784,6 +792,31 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData, 
 
   ctorInstanceTemplate->SetInternalFieldCount(2);
 
+#if V8_MAJOR_VERSION >= 12 && V8_MINOR_VERSION >= 1  // after 12.1.0
+  ctorInstanceTemplate->SetNativeDataProperty(
+    v8::String::NewFromUtf8Literal(isolate, "isEmpty", v8::NewStringType::kInternalized),
+    RoaringBitmap32_isEmpty_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+
+  ctorInstanceTemplate->SetNativeDataProperty(
+    v8::String::NewFromUtf8Literal(isolate, "size", v8::NewStringType::kInternalized),
+    RoaringBitmap32_size_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+
+  ctorInstanceTemplate->SetNativeDataProperty(
+    v8::String::NewFromUtf8Literal(isolate, "isFrozen", v8::NewStringType::kInternalized),
+    RoaringBitmap32_isFrozen_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+#else
   ctorInstanceTemplate->SetAccessor(
     v8::String::NewFromUtf8Literal(isolate, "isEmpty", v8::NewStringType::kInternalized),
     RoaringBitmap32_isEmpty_getter,
@@ -807,6 +840,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData, 
     v8::Local<v8::Value>(),
     (v8::AccessControl)(v8::ALL_CAN_READ),
     (v8::PropertyAttribute)(v8::ReadOnly));
+#endif
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "add", RoaringBitmap32_add);
   NODE_SET_PROTOTYPE_METHOD(ctor, "addMany", RoaringBitmap32_addMany);
@@ -836,7 +870,9 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData, 
   NODE_SET_PROTOTYPE_METHOD(ctor, "intersectsWithRange", RoaringBitmap32_intersectsWithRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isEqual", RoaringBitmap32_isEqual);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSubset", RoaringBitmap32_isStrictSubset);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSuperset", RoaringBitmap32_isStrictSuperset);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isSubset", RoaringBitmap32_isSubset);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isSuperset", RoaringBitmap32_isSuperset);
   NODE_SET_PROTOTYPE_METHOD(ctor, "jaccardIndex", RoaringBitmap32_jaccardIndex);
   NODE_SET_PROTOTYPE_METHOD(ctor, "join", RoaringBitmap32_join);
   NODE_SET_PROTOTYPE_METHOD(ctor, "lastIndexOf", RoaringBitmap32_lastIndexOf);

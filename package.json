@@ -54,6 +54,7 @@
     "install": "node ./node-pre-gyp.js install --fallback-to-build",
     "compile": "node ./node-pre-gyp.js rebuild",
     "build": "node ./scripts/build.js",
+    "update-roaring": "./scripts/update-roaring.sh",
     "build-dev": "node ./scripts/build.js --dev",
     "test": "vitest",
     "lint": "eslint .",
@@ -70,7 +71,7 @@
     "@mapbox/node-pre-gyp": "^1.0.11"
   },
   "peerDependencies": {
-    "node-gyp": "^10.0.1"
+    "node-gyp": "^10.2.0"
   },
   "peerDependenciesMeta": {
     "node-gyp": {
@@ -78,33 +79,33 @@
     }
   },
   "optionalDependencies": {
-    "node-gyp": "^10.0.1"
+    "node-gyp": "^10.2.0"
   },
   "devDependencies": {
     "@balsamic/eslint-config": "^0.7.0",
-    "@octokit/rest": "^20.0.2",
-    "@types/node": "^20.11.30",
-    "@typescript-eslint/eslint-plugin": "^7.3.1",
-    "@typescript-eslint/parser": "^7.3.1",
-    "ansis": "^2.3.0",
+    "@octokit/rest": "^21.0.2",
+    "@types/node": "^22.5.5",
+    "@typescript-eslint/eslint-plugin": "^8.6.0",
+    "@typescript-eslint/parser": "^8.6.0",
+    "ansis": "^3.3.2",
     "benchmark": "^2.1.4",
-    "eslint": "^8.57.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-json": "^3.1.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-json": "^4.0.1",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-vitest": "^0.3.26",
+    "eslint-plugin-vitest": "^0.5.4",
     "fastbitset": "^0.4.1",
-    "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
     "node-fetch": "^3.3.2",
     "physical-cpu-count": "^2.0.0",
-    "prettier": "^3.2.5",
-    "tslib": "^2.6.2",
-    "tsx": "^4.7.1",
-    "typedoc": "^0.25.12",
-    "typescript": "5.4.3",
-    "vitest": "^1.4.0"
+    "prettier": "^3.3.3",
+    "tslib": "^2.7.0",
+    "tsx": "^4.19.1",
+    "typedoc": "^0.26.7",
+    "typescript": "5.6.2",
+    "vitest": "^2.1.1"
   },
   "gypfile": true,
-  "roaring_version": "3.0.0"
+  "roaring_version": "4.1.2"
 }

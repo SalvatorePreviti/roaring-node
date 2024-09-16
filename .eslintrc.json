@@ -1,8 +1,14 @@
 {
-  "extends": ["@balsamic", "plugin:vitest/recommended"],
   "plugins": ["node", "import", "vitest"],
+  "extends": ["@balsamic"],
   "rules": {
-    "global-require": 0
+    "global-require": 0,
+    "@typescript-eslint/lines-between-class-members": 0,
+    "@typescript-eslint/member-delimiter-style": 0,
+    "@typescript-eslint/type-annotation-spacing": 0,
+    "@typescript-eslint/no-throw-literal": 0,
+    "@typescript-eslint/no-require-imports": 0,
+    "@typescript-eslint/no-empty-object-type": 0
   },
   "overrides": [
     {
