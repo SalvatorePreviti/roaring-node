@@ -6,6 +6,9 @@ const fs = require("fs");
 const path = require("path");
 
 const ROARING_NODE_PRE_GYP = process.env.ROARING_NODE_PRE_GYP;
+if (ROARING_NODE_PRE_GYP) {
+  process.env.ROARING_NODE_PRE_GYP = "";
+}
 
 function roaring32NodePreGyp() {
   console.time("node-pre-gyp");
