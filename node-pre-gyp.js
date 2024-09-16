@@ -5,6 +5,8 @@ const { fork } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
+const ROARING_NODE_PRE_GYP = process.env.ROARING_NODE_PRE_GYP;
+
 function roaring32NodePreGyp() {
   console.time("node-pre-gyp");
   process.on("exit", () => {
@@ -13,9 +15,7 @@ function roaring32NodePreGyp() {
 
   process.chdir(__dirname);
 
-  const argv = process.argv;
-  const customRebuildIdx = argv.indexOf("--custom-rebuild", 2);
-  if (customRebuildIdx <= 0) {
+  if (ROARING_NODE_PRE_GYP !== "custom-rebuild") {
     try {
       process.env.npm_config_node_gyp = require.resolve("node-gyp/bin/node-gyp.js");
     } catch (_e) {}
@@ -93,6 +93,6 @@ function roaring32NodePreGyp() {
   }
 }
 
-if (process.env.NO_ROARING_NODE_PRE_GYP !== "true") {
+if (ROARING_NODE_PRE_GYP !== "false") {
   roaring32NodePreGyp();
 }
