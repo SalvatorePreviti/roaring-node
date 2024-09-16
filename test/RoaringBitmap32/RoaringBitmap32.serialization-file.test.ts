@@ -85,7 +85,7 @@ describe("RoaringBitmap32 file serialization", () => {
       "json_array",
     ];
     for (const format of formats) {
-      const tmpFilePath = path.resolve(tmpDir, `test-ϴϮ-${format}.bin`);
+      const tmpFilePath = path.resolve(tmpDir, `test-ϴ-${format}.bin`);
       await new RoaringBitmap32().serializeFileAsync(tmpFilePath, format);
       expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).to.deep.equal([]);
     }
@@ -93,7 +93,7 @@ describe("RoaringBitmap32 file serialization", () => {
 
   it("serialize and deserialize in various formats", async () => {
     for (const format of ["portable", "croaring", "unsafe_frozen_croaring", "uint32_array"] as const) {
-      const tmpFilePath = path.resolve(tmpDir, `test-ϴϮ-${format}.bin`);
+      const tmpFilePath = path.resolve(tmpDir, `test-1-${format}.bin`);
       const data = [1, 2, 3, 100, 0xfffff, 0xffffffff];
       await new RoaringBitmap32(data).serializeFileAsync(tmpFilePath, format);
       expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).to.deep.equal(data);

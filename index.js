@@ -193,7 +193,7 @@ if (!roaring[initializedSym]) {
     }
   };
 
-  roaringBitmap32_proto.forEach = function (fn, self) {
+  roaringBitmap32_proto.forEach = function forEach(fn, self) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -207,7 +207,7 @@ if (!roaring[initializedSym]) {
     return this;
   };
 
-  roaringBitmap32_proto.map = function (fn, self, output = []) {
+  roaringBitmap32_proto.map = function map(fn, self, output = []) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -221,7 +221,7 @@ if (!roaring[initializedSym]) {
     return output;
   };
 
-  roaringBitmap32_proto.every = function (fn, self) {
+  roaringBitmap32_proto.every = function every(fn, self) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -237,7 +237,7 @@ if (!roaring[initializedSym]) {
     return true;
   };
 
-  roaringBitmap32_proto.some = function (fn, self) {
+  roaringBitmap32_proto.some = function some(fn, self) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -253,7 +253,7 @@ if (!roaring[initializedSym]) {
     return false;
   };
 
-  roaringBitmap32_proto.reduce = function (fn, initialValue = 0) {
+  roaringBitmap32_proto.reduce = function reduce(fn, initialValue = 0) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -265,7 +265,7 @@ if (!roaring[initializedSym]) {
     return accumulator;
   };
 
-  roaringBitmap32_proto.reduceRight = function (fn, initialValue = 0) {
+  roaringBitmap32_proto.reduceRight = function reduceRight(fn, initialValue = 0) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -277,7 +277,7 @@ if (!roaring[initializedSym]) {
     return accumulator;
   };
 
-  roaringBitmap32_proto.find = function (fn, self) {
+  roaringBitmap32_proto.find = function find(fn, self) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -293,7 +293,7 @@ if (!roaring[initializedSym]) {
     return undefined;
   };
 
-  roaringBitmap32_proto.findIndex = function (fn, self) {
+  roaringBitmap32_proto.findIndex = function findIndex(fn, self) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -310,7 +310,7 @@ if (!roaring[initializedSym]) {
     return -1;
   };
 
-  roaringBitmap32_proto.filter = function (fn, self, output = []) {
+  roaringBitmap32_proto.filter = function filter(fn, self, output = []) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -326,7 +326,125 @@ if (!roaring[initializedSym]) {
     return output;
   };
 
-  roaringBitmap32_proto.toSorted = function (cmp) {
+  roaringBitmap32_proto.union = function union(other) {
+    if (other instanceof RoaringBitmap32) {
+      return RoaringBitmap32.or(this, other);
+    }
+    const set = this.toSet();
+    if (other) {
+      for (const v of other.keys()) {
+        set.add(v);
+      }
+    }
+    return set;
+  };
+
+  roaringBitmap32_proto.intersection = function intersection(other) {
+    if (other instanceof RoaringBitmap32) {
+      return RoaringBitmap32.and(this, other);
+    }
+    let smaller;
+    let larger;
+    if (this.size <= other.size) {
+      smaller = this;
+      larger = other;
+    } else {
+      smaller = other.keys();
+      larger = this;
+    }
+    const result = new Set();
+    for (const elem of smaller) {
+      if (larger.has(elem)) {
+        result.add(elem);
+      }
+    }
+    return result;
+  };
+
+  roaringBitmap32_proto.difference = function difference(other) {
+    if (other instanceof RoaringBitmap32) {
+      return RoaringBitmap32.andNot(this, other);
+    }
+
+    if (this.size <= other.size) {
+      const result = this.toSet();
+      for (const elem of this) {
+        if (other.has(elem)) {
+          result.delete(elem);
+        }
+      }
+      return result;
+    }
+
+    const result = new Set();
+    for (const v of this) {
+      if (!other.has(v)) {
+        result.add(v);
+      }
+    }
+    return result;
+  };
+
+  roaringBitmap32_proto.symmetricDifference = function symmetricDifference(other) {
+    if (other instanceof RoaringBitmap32) {
+      return RoaringBitmap32.xor(this, other);
+    }
+    const result = this.toSet();
+    for (const elem of other.keys()) {
+      if (this.has(elem)) {
+        result.delete(elem);
+      } else {
+        result.add(elem);
+      }
+    }
+    return result;
+  };
+
+  roaringBitmap32_proto.isSupersetOf = function isSupersetOf(other) {
+    if (other instanceof RoaringBitmap32) {
+      return this.isSuperset(other);
+    }
+    for (const v of other.keys()) {
+      if (!this.has(v)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  roaringBitmap32_proto.isSubsetOf = function isSubsetOf(other) {
+    if (other instanceof RoaringBitmap32) {
+      return this.isSubset(other);
+    }
+    for (const v of this) {
+      if (!other.has(v)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  roaringBitmap32_proto.isDisjointFrom = function isDisjointFrom(other) {
+    if (other instanceof RoaringBitmap32) {
+      return this.andCardinality(other) === 0;
+    }
+    if (this.size <= other.size) {
+      for (const elem of this) {
+        if (other.has(elem)) {
+          return false;
+        }
+      }
+    } else {
+      for (const elem of other.keys()) {
+        if (this.has(elem)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  roaringBitmap32_proto.toSorted = function toSorted(cmp) {
     if (cmp && typeof cmp !== "function") {
       throw new TypeError(`${cmp} is not a function`);
     }
@@ -334,11 +452,11 @@ if (!roaring[initializedSym]) {
     return cmp ? result.sort(cmp) : result;
   };
 
-  roaringBitmap32_proto.toReversed = function () {
+  roaringBitmap32_proto.toReversed = function toReversed() {
     return this.toArray().reverse();
   };
 
-  roaringBitmap32_proto.toJSON = function () {
+  roaringBitmap32_proto.toJSON = function toJSON() {
     return this.toArray();
   };
 

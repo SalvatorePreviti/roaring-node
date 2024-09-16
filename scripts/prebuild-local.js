@@ -118,7 +118,6 @@ async function main() {
 
   console.log(colors.blueBright("- building"));
   console.time("building");
-  let nodeVersionIndex = 0;
   for (const nodeVersion of NODE_VERSIONS) {
     console.log(colors.blueBright(`\n- building for node ${nodeVersion}\n`));
     const args = ["run", nodeVersion, path.resolve(ROOT_FOLDER, "node-pre-gyp.js"), "rebuild"];
@@ -129,9 +128,6 @@ async function main() {
 
     console.log(colors.blueBright("- testing"));
     const testArgs = ["run", nodeVersion, require.resolve("./test.js")];
-    if (nodeVersionIndex > 0) {
-      testArgs.push("--notypecheck");
-    }
     await spawnAsync(N_EXECUTABLE_PATH, testArgs);
 
     if (isDeploy) {
@@ -143,8 +139,6 @@ async function main() {
       // Move stage folder to a temporary folder so it does not get clean by node-gyp
       await mergeDirs(STAGE_DIR, STAGE_TMP_DIR);
     }
-
-    ++nodeVersionIndex;
   }
   console.timeEnd("building");
 
