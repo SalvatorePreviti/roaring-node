@@ -54,10 +54,10 @@ async function main() {
   const command = process.argv[2];
 
   if (process.argv.includes("--dev")) {
-    throw new Error("Invalida argument --dev");
+    throw new Error("Invalid argument --dev");
   }
   if (process.argv.includes("--no-compile")) {
-    throw new Error("Invalida argument --no-compile");
+    throw new Error("Invalid argument --no-compile");
   }
 
   console.log(colors.magentaBright("command: ", colors.italic(command) || ""));
