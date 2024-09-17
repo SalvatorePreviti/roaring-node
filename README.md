@@ -18,7 +18,7 @@ If you want to contribute and submit a pull request, use the master branch.
 
 ## Supported node versions
 
-Node 18.16+, 20+, 21 are currently supported.
+Node 18+, 20+, 21, and 22 are currently supported.
 
 Node 16 support was dropped in release 2.4
 
