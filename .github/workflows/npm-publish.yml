@@ -3,10 +3,20 @@ name: Publish to NPM
 # Only allows manual triggering
 on:
   workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Are you sure you want to publish to NPM?"
+        required: true
+        default: "no"
+        type: choice
+        options:
+          - yes
+          - no
 
 jobs:
   npm-publish:
-    name: publish to npm
+    name: npm-publish
+    if: github.event.inputs.confirmation == 'yes'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -14,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: publish # Ensures we're checking out the "publish" branch
+          ref: publish
       - uses: actions/setup-node@v4
         with:
           node-version: "22.x"
