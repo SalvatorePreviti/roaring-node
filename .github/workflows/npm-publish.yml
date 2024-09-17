@@ -1,0 +1,27 @@
+name: Publish to NPM
+
+# Only allows manual triggering
+on:
+  workflow_dispatch:
+
+jobs:
+  npm-publish:
+    name: publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: publish # Ensures we're checking out the "publish" branch
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm install --exact --no-audit --no-save
+      - run: node ./scripts/test.js
+      - run: node --expose-gc ./scripts/test-memory-leaks.js
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
