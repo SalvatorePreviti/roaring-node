@@ -3,20 +3,10 @@ name: Publish to NPM
 # Only allows manual triggering
 on:
   workflow_dispatch:
-    inputs:
-      confirmation:
-        description: "Are you sure you want to publish to NPM?"
-        required: true
-        default: "no"
-        type: choice
-        options:
-          - yes
-          - no
 
 jobs:
   npm-publish:
     name: npm-publish
-    if: github.event.inputs.confirmation == 'yes'
     runs-on: ubuntu-latest
     permissions:
       contents: read
