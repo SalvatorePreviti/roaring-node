@@ -110,7 +110,7 @@ async function startPublishAssets() {
       auth: getGithubKey(),
       headers: { "user-agent": packageJson.name },
       request: {
-        fetch: typeof fetch !== "undefined" ? fetch : require("node-fetch-cjs"),
+        fetch: typeof fetch !== "undefined" ? fetch : require("node-fetch-cjs").default,
       },
     });
 
