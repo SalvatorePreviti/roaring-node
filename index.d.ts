@@ -23,6 +23,21 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 
 import roaring = require("./");
 
+export interface ReadonlySetLike<T> {
+  /**
+   * Despite its name, returns an iterator of the values in the set-like.
+   */
+  keys(): Iterator<T>;
+  /**
+   * @returns a boolean indicating whether an element with the specified value exists in the set-like or not.
+   */
+  has(value: T): boolean;
+  /**
+   * @returns the number of (unique) elements in the set-like.
+   */
+  readonly size: number;
+}
+
 /** Gets the approximate memory allocated by the roaring bitmap library. */
 export function getRoaringUsedMemory(): number;
 
@@ -339,7 +354,8 @@ export enum FrozenViewFormat {
 
 export type FrozenViewFormatType = FrozenViewFormat | "unsafe_frozen_croaring" | "unsafe_frozen_portable";
 
-export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
+export interface ReadonlyRoaringBitmap32
+  extends Omit<ReadonlySet<number>, "forEach" | "keys" | "values" | "entries" | typeof Symbol.iterator> {
   /**
    * Property. Gets the number of items in the set (cardinality).
    *
@@ -442,7 +458,7 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
    * @returns {RoaringBitmap32Iterator} A new iterator
    * @memberof ReadonlyRoaringBitmap32
    */
-  entries(): IterableIterator<[number, number]>;
+  entries(): ReturnType<Set<number>["entries"]>;
 
   /**
    * Executes a function for each value in the set, in ascending order.
@@ -1262,14 +1278,14 @@ export interface ReadonlyRoaringBitmap32 extends ReadonlySet<number> {
   isDisjointFrom(other: ReadonlySetLike<unknown> | ReadonlyRoaringBitmap32): boolean;
 }
 
-export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
+export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32 {
   /**
-   * Property: The version of the CRoaring libary as a string.
+   * Property: The version of the CRoaring library as a string.
    * Example: "0.9.2"
    *
    * @export
    * @constant
-   * @type {string} The version of the CRoaring libary as a string. Example: "0.9.2"
+   * @type {string} The version of the CRoaring library as a string. Example: "0.9.2"
    * @memberof RoaringBitmap32
    */
   get CRoaringVersion(): string;
@@ -1681,7 +1697,7 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32, Set<number> {
   /**
    * @returns a new RoaringBitmap32 containing all the elements in this Set which are not also in the argument.
    */
-  difference<U>(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+  difference(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
 
   /**
    * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
@@ -1849,12 +1865,12 @@ export class RoaringBitmap32 {
   ): boolean;
 
   /**
-   * Property: The version of the CRoaring libary as a string.
+   * Property: The version of the CRoaring library as a string.
    * Example: "0.4.0"
    *
    * @export
    * @constant
-   * @type {string} The version of the CRoaring libary as a string. Example: "0.2.42"
+   * @type {string} The version of the CRoaring library as a string. Example: "0.2.42"
    */
   static get CRoaringVersion(): string;
 
@@ -2291,7 +2307,7 @@ export class RoaringBitmap32 {
   /**
    * @returns a new RoaringBitmap32 containing all the elements in this Set which are not also in the argument.
    */
-  difference<U>(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
+  difference(other: ReadonlyRoaringBitmap32): RoaringBitmap32;
 
   /**
    * Warning: this method is just for compatibility with Set and returns a Set, so it can be very slow for big bitmaps.
@@ -2545,12 +2561,12 @@ export interface RoaringBitmap32Statistics {
 }
 
 /**
- * Property: The version of the CRoaring libary as a string.
+ * Property: The version of the CRoaring library as a string.
  * Example: "0.4.0"
  *
  * @export
  * @constant
- * @type {string} The version of the CRoaring libary as a string. Example: "0.2.42"
+ * @type {string} The version of the CRoaring library as a string. Example: "0.2.42"
  * @memberof RoaringModule
  */
 export const CRoaringVersion: string;

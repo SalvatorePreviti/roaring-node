@@ -30,6 +30,7 @@ jobs:
           node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
       - run: npm install --exact --no-audit --no-save
+      - run: npx tsc --noEmit
       - run: node ./scripts/test.js
       - run: node --expose-gc ./scripts/test-memory-leaks.js
       - run: npm publish --provenance --access public

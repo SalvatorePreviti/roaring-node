@@ -66,6 +66,7 @@
   "eslint.validate": [],
   "javascript.format.semicolons": "insert",
   "typescript.format.semicolons": "insert",
+  "typescript.tsdk": "node_modules/typescript/lib",
   "files.eol": "\n",
   "search.exclude": {
     "roaring-node.cpp": true,

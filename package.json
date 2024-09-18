@@ -57,8 +57,8 @@
     "update-roaring": "./scripts/update-roaring.sh",
     "build-dev": "node ./scripts/build.js --dev",
     "test": "node ./scripts/test.js",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix && prettier --write .",
+    "lint": "eslint . && tsc",
+    "lint:fix": "eslint . --fix && prettier --write . && tsc",
     "doc": "typedoc ./index.d.ts",
     "benchmarks": "node --expose-gc ./scripts/benchmarks.js"
   },

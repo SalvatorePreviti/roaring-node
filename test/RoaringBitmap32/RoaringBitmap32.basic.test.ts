@@ -906,7 +906,7 @@ describe("RoaringBitmap32 basic", () => {
   });
 
   it("implements Set<> interface properly", () => {
-    const x: Set<number> = new RoaringBitmap32([1, 3]);
+    const x = new RoaringBitmap32([1, 3]);
     x.add(2);
     expect(x.has(2)).eq(true);
     expect(Array.from(x.entries())).to.deep.equal([
