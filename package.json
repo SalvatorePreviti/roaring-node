@@ -103,7 +103,7 @@
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
     "mocha": "^10.7.3",
-    "node-fetch": "^3.3.2",
+    "node-fetch-cjs": "^3.3.2",
     "physical-cpu-count": "^2.0.0",
     "prettier": "^3.3.3",
     "tslib": "^2.7.0",
