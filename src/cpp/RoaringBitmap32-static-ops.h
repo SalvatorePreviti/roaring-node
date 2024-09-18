@@ -246,6 +246,17 @@ void roaringOpMany(
         return;
       }
 
+      auto resultMaybe = cons->NewInstance(context, 0, nullptr);
+      v8::Local<v8::Object> result;
+      if (!resultMaybe.ToLocal(&result)) {
+        return;
+      }
+
+      auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+      if (!self) {
+        return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+      }
+
       const auto ** x = (const roaring_bitmap_t **)gcaware_malloc(arrayLength * sizeof(roaring_bitmap_t *));
       if (x == nullptr) {
         return v8utils::throwTypeError(isolate, opName, " failed allocation");
@@ -262,21 +273,9 @@ void roaringOpMany(
         x[i] = p->roaring;
       }
 
-      auto resultMaybe = cons->NewInstance(context, 0, nullptr);
-      v8::Local<v8::Object> result;
-      if (!resultMaybe.ToLocal(&result)) {
-        gcaware_free(x);
-        return;
-      }
-
-      auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
-      if (!self) {
-        return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-      }
-
       roaring_bitmap_t * r = op((TSize)arrayLength, x);
+      gcaware_free(x);
       if (r == nullptr) {
-        gcaware_free(x);
         return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
       }
 
@@ -293,6 +292,17 @@ void roaringOpMany(
       }
     }
   } else {
+    v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+    v8::Local<v8::Object> result;
+    if (!resultMaybe.ToLocal(&result)) {
+      return;
+    }
+
+    auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+    if (!self) {
+      return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+    }
+
     const auto ** x = (const roaring_bitmap_t **)gcaware_malloc(length * sizeof(roaring_bitmap_t *));
     if (x == nullptr) {
       return v8utils::throwTypeError(isolate, opName, " failed allocation");
@@ -307,21 +317,9 @@ void roaringOpMany(
       x[i] = p->roaring;
     }
 
-    v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
-    v8::Local<v8::Object> result;
-    if (!resultMaybe.ToLocal(&result)) {
-      gcaware_free(x);
-      return;
-    }
-
-    auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
-    if (!self) {
-      return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-    }
-
     roaring_bitmap_t * r = op((TSize)length, x);
+    gcaware_free(x);
     if (r == nullptr) {
-      gcaware_free(x);
       return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
     }
 

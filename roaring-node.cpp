@@ -223,135 +223,6 @@ void getRoaringUsedMemory(const v8::FunctionCallbackInfo<v8::Value> & info) {
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-namespace roaring {
-namespace api {
-#endif
-
-/**
- * When building .c files as C++, there's added compile-time checking if the
- * container types are derived from a `container_t` base class.  So long as
- * such a base class is empty, the struct will behave compatibly with C structs
- * despite the derivation.  This is due to the Empty Base Class Optimization:
- *
- * https://en.cppreference.com/w/cpp/language/ebo
- *
- * But since C isn't namespaced, taking `container_t` globally might collide
- * with other projects.  So roaring.h uses ROARING_CONTAINER_T, while internal
- * code #undefs that after declaring `typedef ROARING_CONTAINER_T container_t;`
- */
-#if defined(__cplusplus)
-extern "C++" {
-struct container_s {};
-}
-#define ROARING_CONTAINER_T ::roaring::api::container_s
-#else
-#define ROARING_CONTAINER_T void  // no compile-time checking
-#endif
-
-#define ROARING_FLAG_COW UINT8_C(0x1)
-#define ROARING_FLAG_FROZEN UINT8_C(0x2)
-
-/**
- * Roaring arrays are array-based key-value pairs having containers as values
- * and 16-bit integer keys. A roaring bitmap  might be implemented as such.
- */
-
-// parallel arrays.  Element sizes quite different.
-// Alternative is array
-// of structs.  Which would have better
-// cache performance through binary searches?
-
-typedef struct roaring_array_s {
-    int32_t size;
-    int32_t allocation_size;
-    ROARING_CONTAINER_T **containers;  // Use container_t in non-API files!
-    uint16_t *keys;
-    uint8_t *typecodes;
-    uint8_t flags;
-} roaring_array_t;
-
-typedef bool (*roaring_iterator)(uint32_t value, void *param);
-typedef bool (*roaring_iterator64)(uint64_t value, void *param);
-
-/**
- *  (For advanced users.)
- * The roaring_statistics_t can be used to collect detailed statistics about
- * the composition of a roaring bitmap.
- */
-typedef struct roaring_statistics_s {
-    uint32_t n_containers; /* number of containers */
-
-    uint32_t n_array_containers;  /* number of array containers */
-    uint32_t n_run_containers;    /* number of run containers */
-    uint32_t n_bitset_containers; /* number of bitmap containers */
-
-    uint32_t
-        n_values_array_containers;    /* number of values in array containers */
-    uint32_t n_values_run_containers; /* number of values in run containers */
-    uint32_t
-        n_values_bitset_containers; /* number of values in  bitmap containers */
-
-    uint32_t n_bytes_array_containers;  /* number of allocated bytes in array
-                                           containers */
-    uint32_t n_bytes_run_containers;    /* number of allocated bytes in run
-                                           containers */
-    uint32_t n_bytes_bitset_containers; /* number of allocated bytes in  bitmap
-                                           containers */
-
-    uint32_t
-        max_value; /* the maximal value, undefined if cardinality is zero */
-    uint32_t
-        min_value; /* the minimal value, undefined if cardinality is zero */
-    uint64_t sum_value; /* the sum of all values (could be used to compute
-                           average) */
-
-    uint64_t cardinality; /* total number of values stored in the bitmap */
-
-    // and n_values_arrays, n_values_rle, n_values_bitmap
-} roaring_statistics_t;
-
-/**
- * Roaring-internal type used to iterate within a roaring container.
- */
-typedef struct roaring_container_iterator_s {
-    // For bitset and array containers this is the index of the bit / entry.
-    // For run containers this points at the run.
-    int32_t index;
-} roaring_container_iterator_t;
-
-#ifdef __cplusplus
-}
-}
-}  // extern "C" { namespace roaring { namespace api {
-#endif
-
-#endif /* ROARING_TYPES_H */
-
-
-// Include other headers after roaring_types.h
-
-// #include <roaring/bitset/bitset.h>
-
-#ifndef CBITSET_BITSET_H
-#define CBITSET_BITSET_H
-
-// For compatibility with MSVC with the use of `restrict`
-#if (__STDC_VERSION__ >= 199901L) || \
-    (defined(__GNUC__) && defined(__STDC_VERSION__))
-#define CBITSET_RESTRICT restrict
-#else
-#define CBITSET_RESTRICT
-#endif  // (__STDC_VERSION__ >= 199901L) || (defined(__GNUC__) &&
-        // defined(__STDC_VERSION__ ))
-
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 
 // #include <roaring/portability.h>
 
@@ -370,8 +241,8 @@ typedef struct roaring_container_iterator_s {
  * to ever interact with.
  */
 
-#ifndef INCLUDE_PORTABILITY_H_
-#define INCLUDE_PORTABILITY_H_
+#ifndef CROARING_INCLUDE_PORTABILITY_H_
+#define CROARING_INCLUDE_PORTABILITY_H_
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
@@ -794,9 +665,16 @@ static inline int roaring_hamming(uint64_t x) {
 #define croaring_htobe64(x) OSSwapInt64(x)
 
 #elif defined(__has_include) && \
-    __has_include(<byteswap.h>)  // CROARING_IS_BIG_ENDIAN
+    __has_include(              \
+        <byteswap.h>)  && (defined(__linux__) || defined(__FreeBSD__))  // CROARING_IS_BIG_ENDIAN
 #include <byteswap.h>
-#define croaring_htobe64(x) __bswap_64(x)
+#if defined(__linux__)
+#define croaring_htobe64(x) bswap_64(x)
+#elif defined(__FreeBSD__)
+#define croaring_htobe64(x) bswap64(x)
+#else
+#warning "Unknown platform, report as an error"
+#endif
 
 #else  // CROARING_IS_BIG_ENDIAN
 // Gets compiled to bswap or equivalent on most compilers.
@@ -935,9 +813,21 @@ static inline uint32_t croaring_refcount_get(const croaring_refcount_t *val) {
 
 #if defined(__GNUC__) || defined(__clang__)
 #define CROARING_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define CROARING_DEPRECATED __declspec(deprecated)
 #else
 #define CROARING_DEPRECATED
 #endif  // defined(__GNUC__) || defined(__clang__)
+
+// We want to initialize structs to zero portably (C and C++), without
+// warnings. We can do mystruct s = CROARING_ZERO_INITIALIZER;
+#if __cplusplus
+#define CROARING_ZERO_INITIALIZER \
+    {}
+#else
+#define CROARING_ZERO_INITIALIZER \
+    { 0 }
+#endif
 
 // We need portability.h to be included first,
 // but we also always want isadetection.h to be
@@ -1001,8 +891,174 @@ namespace roaring {
 namespace api {
 #endif
 
+/**
+ * When building .c files as C++, there's added compile-time checking if the
+ * container types are derived from a `container_t` base class.  So long as
+ * such a base class is empty, the struct will behave compatibly with C structs
+ * despite the derivation.  This is due to the Empty Base Class Optimization:
+ *
+ * https://en.cppreference.com/w/cpp/language/ebo
+ *
+ * But since C isn't namespaced, taking `container_t` globally might collide
+ * with other projects.  So roaring.h uses ROARING_CONTAINER_T, while internal
+ * code #undefs that after declaring `typedef ROARING_CONTAINER_T container_t;`
+ */
+#if defined(__cplusplus)
+extern "C++" {
+struct container_s {};
+}
+#define ROARING_CONTAINER_T ::roaring::api::container_s
+#else
+#define ROARING_CONTAINER_T void  // no compile-time checking
+#endif
+
+#define ROARING_FLAG_COW UINT8_C(0x1)
+#define ROARING_FLAG_FROZEN UINT8_C(0x2)
+
+/**
+ * Roaring arrays are array-based key-value pairs having containers as values
+ * and 16-bit integer keys. A roaring bitmap  might be implemented as such.
+ */
+
+// parallel arrays.  Element sizes quite different.
+// Alternative is array
+// of structs.  Which would have better
+// cache performance through binary searches?
+
+typedef struct roaring_array_s {
+    int32_t size;
+    int32_t allocation_size;
+    ROARING_CONTAINER_T **containers;  // Use container_t in non-API files!
+    uint16_t *keys;
+    uint8_t *typecodes;
+    uint8_t flags;
+} roaring_array_t;
+
+typedef bool (*roaring_iterator)(uint32_t value, void *param);
+typedef bool (*roaring_iterator64)(uint64_t value, void *param);
+
+/**
+ *  (For advanced users.)
+ * The roaring_statistics_t can be used to collect detailed statistics about
+ * the composition of a roaring bitmap.
+ */
+typedef struct roaring_statistics_s {
+    uint32_t n_containers; /* number of containers */
+
+    uint32_t n_array_containers;  /* number of array containers */
+    uint32_t n_run_containers;    /* number of run containers */
+    uint32_t n_bitset_containers; /* number of bitmap containers */
+
+    uint32_t
+        n_values_array_containers;    /* number of values in array containers */
+    uint32_t n_values_run_containers; /* number of values in run containers */
+    uint32_t
+        n_values_bitset_containers; /* number of values in  bitmap containers */
+
+    uint32_t n_bytes_array_containers;  /* number of allocated bytes in array
+                                           containers */
+    uint32_t n_bytes_run_containers;    /* number of allocated bytes in run
+                                           containers */
+    uint32_t n_bytes_bitset_containers; /* number of allocated bytes in  bitmap
+                                           containers */
+
+    uint32_t
+        max_value; /* the maximal value, undefined if cardinality is zero */
+    uint32_t
+        min_value; /* the minimal value, undefined if cardinality is zero */
+
+    CROARING_DEPRECATED
+    uint64_t sum_value; /* deprecated always zero */
+
+    uint64_t cardinality; /* total number of values stored in the bitmap */
+
+    // and n_values_arrays, n_values_rle, n_values_bitmap
+} roaring_statistics_t;
+
+/**
+ *  (For advanced users.)
+ * The roaring64_statistics_t can be used to collect detailed statistics about
+ * the composition of a roaring64 bitmap.
+ */
+typedef struct roaring64_statistics_s {
+    uint64_t n_containers; /* number of containers */
+
+    uint64_t n_array_containers;  /* number of array containers */
+    uint64_t n_run_containers;    /* number of run containers */
+    uint64_t n_bitset_containers; /* number of bitmap containers */
+
+    uint64_t
+        n_values_array_containers;    /* number of values in array containers */
+    uint64_t n_values_run_containers; /* number of values in run containers */
+    uint64_t
+        n_values_bitset_containers; /* number of values in  bitmap containers */
+
+    uint64_t n_bytes_array_containers;  /* number of allocated bytes in array
+                                           containers */
+    uint64_t n_bytes_run_containers;    /* number of allocated bytes in run
+                                           containers */
+    uint64_t n_bytes_bitset_containers; /* number of allocated bytes in  bitmap
+                                           containers */
+
+    uint64_t
+        max_value; /* the maximal value, undefined if cardinality is zero */
+    uint64_t
+        min_value; /* the minimal value, undefined if cardinality is zero */
+
+    uint64_t cardinality; /* total number of values stored in the bitmap */
+
+    // and n_values_arrays, n_values_rle, n_values_bitmap
+} roaring64_statistics_t;
+
+/**
+ * Roaring-internal type used to iterate within a roaring container.
+ */
+typedef struct roaring_container_iterator_s {
+    // For bitset and array containers this is the index of the bit / entry.
+    // For run containers this points at the run.
+    int32_t index;
+} roaring_container_iterator_t;
+
+#ifdef __cplusplus
+}
+}
+}  // extern "C" { namespace roaring { namespace api {
+#endif
+
+#endif /* ROARING_TYPES_H */
+
+
+// Include other headers after roaring_types.h
+
+// #include <roaring/bitset/bitset.h>
+
+#ifndef CROARING_CBITSET_BITSET_H
+#define CROARING_CBITSET_BITSET_H
+
+// For compatibility with MSVC with the use of `restrict`
+#if (__STDC_VERSION__ >= 199901L) || \
+    (defined(__GNUC__) && defined(__STDC_VERSION__))
+#define CROARING_CBITSET_RESTRICT restrict
+#else
+#define CROARING_CBITSET_RESTRICT
+#endif  // (__STDC_VERSION__ >= 199901L) || (defined(__GNUC__) &&
+        // defined(__STDC_VERSION__ ))
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+#ifdef __cplusplus
+extern "C" {
+namespace roaring {
+namespace api {
+#endif
+
 struct bitset_s {
-    uint64_t *CBITSET_RESTRICT array;
+    uint64_t *CROARING_CBITSET_RESTRICT array;
     /* For simplicity and performance, we prefer to have a size and a capacity
      * that is a multiple of 64 bits. Thus we only track the size and the
      * capacity in terms of 64-bit words allocated */
@@ -1116,51 +1172,53 @@ size_t bitset_maximum(const bitset_t *bitset);
 
 /* compute the union in-place (to b1), returns true if successful, to generate a
  * new bitset first call bitset_copy */
-bool bitset_inplace_union(bitset_t *CBITSET_RESTRICT b1,
-                          const bitset_t *CBITSET_RESTRICT b2);
+bool bitset_inplace_union(bitset_t *CROARING_CBITSET_RESTRICT b1,
+                          const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* report the size of the union (without materializing it) */
-size_t bitset_union_count(const bitset_t *CBITSET_RESTRICT b1,
-                          const bitset_t *CBITSET_RESTRICT b2);
+size_t bitset_union_count(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                          const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* compute the intersection in-place (to b1), to generate a new bitset first
  * call bitset_copy */
-void bitset_inplace_intersection(bitset_t *CBITSET_RESTRICT b1,
-                                 const bitset_t *CBITSET_RESTRICT b2);
+void bitset_inplace_intersection(bitset_t *CROARING_CBITSET_RESTRICT b1,
+                                 const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* report the size of the intersection (without materializing it) */
-size_t bitset_intersection_count(const bitset_t *CBITSET_RESTRICT b1,
-                                 const bitset_t *CBITSET_RESTRICT b2);
+size_t bitset_intersection_count(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                                 const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* returns true if the bitsets contain no common elements */
-bool bitsets_disjoint(const bitset_t *CBITSET_RESTRICT b1,
-                      const bitset_t *CBITSET_RESTRICT b2);
+bool bitsets_disjoint(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                      const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* returns true if the bitsets contain any common elements */
-bool bitsets_intersect(const bitset_t *CBITSET_RESTRICT b1,
-                       const bitset_t *CBITSET_RESTRICT b2);
+bool bitsets_intersect(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                       const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* returns true if b1 contains all of the set bits of b2 */
-bool bitset_contains_all(const bitset_t *CBITSET_RESTRICT b1,
-                         const bitset_t *CBITSET_RESTRICT b2);
+bool bitset_contains_all(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                         const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* compute the difference in-place (to b1), to generate a new bitset first call
  * bitset_copy */
-void bitset_inplace_difference(bitset_t *CBITSET_RESTRICT b1,
-                               const bitset_t *CBITSET_RESTRICT b2);
+void bitset_inplace_difference(bitset_t *CROARING_CBITSET_RESTRICT b1,
+                               const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* compute the size of the difference */
-size_t bitset_difference_count(const bitset_t *CBITSET_RESTRICT b1,
-                               const bitset_t *CBITSET_RESTRICT b2);
+size_t bitset_difference_count(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                               const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* compute the symmetric difference in-place (to b1), return true if successful,
  * to generate a new bitset first call bitset_copy */
-bool bitset_inplace_symmetric_difference(bitset_t *CBITSET_RESTRICT b1,
-                                         const bitset_t *CBITSET_RESTRICT b2);
+bool bitset_inplace_symmetric_difference(
+    bitset_t *CROARING_CBITSET_RESTRICT b1,
+    const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* compute the size of the symmetric difference  */
-size_t bitset_symmetric_difference_count(const bitset_t *CBITSET_RESTRICT b1,
-                                         const bitset_t *CBITSET_RESTRICT b2);
+size_t bitset_symmetric_difference_count(
+    const bitset_t *CROARING_CBITSET_RESTRICT b1,
+    const bitset_t *CROARING_CBITSET_RESTRICT b2);
 
 /* iterate over the set bits
  like so :
@@ -1274,11 +1332,11 @@ inline void bitset_print(const bitset_t *b) {
 #ifndef INCLUDE_ROARING_MEMORY_H_
 #define INCLUDE_ROARING_MEMORY_H_
 
+#include <stddef.h>  // for size_t
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stddef.h>  // for size_t
 
 typedef void* (*roaring_malloc_p)(size_t);
 typedef void* (*roaring_realloc_p)(void*, size_t);
@@ -1314,18 +1372,18 @@ void roaring_aligned_free(void*);
 
 // #include <roaring/roaring_version.h>
 
-// /include/roaring/roaring_version.h automatically generated by release.py, do
-// not change by hand
+// clang-format off
+// /include/roaring/roaring_version.h automatically generated by release.py, do not change by hand
 #ifndef ROARING_INCLUDE_ROARING_VERSION
 #define ROARING_INCLUDE_ROARING_VERSION
-#define ROARING_VERSION "3.0.0"
+#define ROARING_VERSION "4.1.2"
 enum {
-    ROARING_VERSION_MAJOR = 3,
-    ROARING_VERSION_MINOR = 0,
-    ROARING_VERSION_REVISION = 0
+    ROARING_VERSION_MAJOR = 4,
+    ROARING_VERSION_MINOR = 1,
+    ROARING_VERSION_REVISION = 2
 };
-#endif  // ROARING_INCLUDE_ROARING_VERSION
-
+#endif // ROARING_INCLUDE_ROARING_VERSION
+// clang-format on
 
 #ifdef __cplusplus
 extern "C" {
@@ -4135,6 +4193,17 @@ void roaringOpMany(
         return;
       }
 
+      auto resultMaybe = cons->NewInstance(context, 0, nullptr);
+      v8::Local<v8::Object> result;
+      if (!resultMaybe.ToLocal(&result)) {
+        return;
+      }
+
+      auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+      if (!self) {
+        return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+      }
+
       const auto ** x = (const roaring_bitmap_t **)gcaware_malloc(arrayLength * sizeof(roaring_bitmap_t *));
       if (x == nullptr) {
         return v8utils::throwTypeError(isolate, opName, " failed allocation");
@@ -4151,21 +4220,9 @@ void roaringOpMany(
         x[i] = p->roaring;
       }
 
-      auto resultMaybe = cons->NewInstance(context, 0, nullptr);
-      v8::Local<v8::Object> result;
-      if (!resultMaybe.ToLocal(&result)) {
-        gcaware_free(x);
-        return;
-      }
-
-      auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
-      if (!self) {
-        return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-      }
-
       roaring_bitmap_t * r = op((TSize)arrayLength, x);
+      gcaware_free(x);
       if (r == nullptr) {
-        gcaware_free(x);
         return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
       }
 
@@ -4182,6 +4239,17 @@ void roaringOpMany(
       }
     }
   } else {
+    v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+    v8::Local<v8::Object> result;
+    if (!resultMaybe.ToLocal(&result)) {
+      return;
+    }
+
+    auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+    if (!self) {
+      return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+    }
+
     const auto ** x = (const roaring_bitmap_t **)gcaware_malloc(length * sizeof(roaring_bitmap_t *));
     if (x == nullptr) {
       return v8utils::throwTypeError(isolate, opName, " failed allocation");
@@ -4196,21 +4264,9 @@ void roaringOpMany(
       x[i] = p->roaring;
     }
 
-    v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
-    v8::Local<v8::Object> result;
-    if (!resultMaybe.ToLocal(&result)) {
-      gcaware_free(x);
-      return;
-    }
-
-    auto self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
-    if (!self) {
-      return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
-    }
-
     roaring_bitmap_t * r = op((TSize)length, x);
+    gcaware_free(x);
     if (r == nullptr) {
-      gcaware_free(x);
       return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
     }
 
@@ -4573,6 +4629,10 @@ constexpr const unsigned char CROARING_SERIALIZATION_ARRAY_UINT32 = 1;
 constexpr const unsigned char CROARING_SERIALIZATION_CONTAINER = 2;
 #endif
 
+#ifndef O_BINARY
+#  define O_BINARY 0
+#endif
+
 class RoaringBitmapSerializerBase {
  private:
   bool serializeArray = false;
@@ -4785,7 +4845,7 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
       case FileSerializationFormat::tab_separated_values:
       case FileSerializationFormat::newline_separated_values:
       case FileSerializationFormat::json_array: {
-        int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
+        int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
         if (fd < 0) {
           return WorkerError::from_errno("open", this->filePath);
         }
@@ -4802,7 +4862,7 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
       return err;
     }
 
-    int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
+    int fd = open(this->filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
     if (fd < 0) {
       return WorkerError::from_errno("open", this->filePath);
     }
@@ -7335,10 +7395,6 @@ void RoaringBitmap32_statistics(const v8::FunctionCallbackInfo<v8::Value> & info
     v8::Uint32::NewFromUnsigned(isolate, stats.min_value)));
   ignoreMaybeResult(result->Set(
     context,
-    NEW_LITERAL_V8_STRING(isolate, "sumOfAllValues", v8::NewStringType::kInternalized),
-    v8::Number::New(isolate, (double)stats.sum_value)));
-  ignoreMaybeResult(result->Set(
-    context,
     NEW_LITERAL_V8_STRING(isolate, "size", v8::NewStringType::kInternalized),
     v8::Number::New(isolate, (double)stats.cardinality)));
   ignoreMaybeResult(result->Set(
@@ -7354,10 +7410,22 @@ void RoaringBitmap32_isSubset(const v8::FunctionCallbackInfo<v8::Value> & info) 
   info.GetReturnValue().Set(self == other || (self && other && roaring_bitmap_is_subset(self->roaring, other->roaring)));
 }
 
+void RoaringBitmap32_isSuperset(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
+  info.GetReturnValue().Set(self == other || (self && other && roaring_bitmap_is_subset(other->roaring, self->roaring)));
+}
+
 void RoaringBitmap32_isStrictSubset(const v8::FunctionCallbackInfo<v8::Value> & info) {
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
   RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self && other && roaring_bitmap_is_strict_subset(self->roaring, other->roaring));
+}
+
+void RoaringBitmap32_isStrictSuperset(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
+  info.GetReturnValue().Set(self && other && roaring_bitmap_is_strict_subset(other->roaring, self->roaring));
 }
 
 void RoaringBitmap32_isEqual(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -7636,6 +7704,31 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   ctorInstanceTemplate->SetInternalFieldCount(2);
 
+#if V8_MAJOR_VERSION >= 12 && V8_MINOR_VERSION >= 1  // after 12.1.0
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "isEmpty", v8::NewStringType::kInternalized),
+    RoaringBitmap32_isEmpty_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "size", v8::NewStringType::kInternalized),
+    RoaringBitmap32_size_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+
+  ctorInstanceTemplate->SetNativeDataProperty(
+    NEW_LITERAL_V8_STRING(isolate, "isFrozen", v8::NewStringType::kInternalized),
+    RoaringBitmap32_isFrozen_getter,
+    nullptr,
+    v8::Local<v8::Value>(),
+    (v8::PropertyAttribute)(v8::ReadOnly),
+    v8::SideEffectType::kHasNoSideEffect);
+#else
   ctorInstanceTemplate->SetAccessor(
     NEW_LITERAL_V8_STRING(isolate, "isEmpty", v8::NewStringType::kInternalized),
     RoaringBitmap32_isEmpty_getter,
@@ -7659,6 +7752,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
     v8::Local<v8::Value>(),
     (v8::AccessControl)(v8::ALL_CAN_READ),
     (v8::PropertyAttribute)(v8::ReadOnly));
+#endif
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "add", RoaringBitmap32_add);
   NODE_SET_PROTOTYPE_METHOD(ctor, "addMany", RoaringBitmap32_addMany);
@@ -7688,7 +7782,9 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   NODE_SET_PROTOTYPE_METHOD(ctor, "intersectsWithRange", RoaringBitmap32_intersectsWithRange);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isEqual", RoaringBitmap32_isEqual);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSubset", RoaringBitmap32_isStrictSubset);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isStrictSuperset", RoaringBitmap32_isStrictSuperset);
   NODE_SET_PROTOTYPE_METHOD(ctor, "isSubset", RoaringBitmap32_isSubset);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "isSuperset", RoaringBitmap32_isSuperset);
   NODE_SET_PROTOTYPE_METHOD(ctor, "jaccardIndex", RoaringBitmap32_jaccardIndex);
   NODE_SET_PROTOTYPE_METHOD(ctor, "join", RoaringBitmap32_join);
   NODE_SET_PROTOTYPE_METHOD(ctor, "lastIndexOf", RoaringBitmap32_lastIndexOf);
@@ -8093,15 +8189,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #include <stdlib.h>
 
-// Binaries produced by Visual Studio with solely AVX2 routines
+// Binaries produced by Visual Studio 19.38 with solely AVX2 routines
 // can compile to AVX-512 thus causing crashes on non-AVX-512 systems.
 // This appears to affect VS 17.8 and 17.9. We disable AVX-512 and AVX2
 // on these systems. It seems that ClangCL is not affected.
 // https://github.com/RoaringBitmap/CRoaring/pull/603
 #ifndef __clang__
-#if _MSC_VER >= 1938
+#if _MSC_VER == 1938
 #define ROARING_DISABLE_AVX 1
-#endif  // _MSC_VER >= 1938
+#endif  // _MSC_VER == 1938
 #endif  // __clang__
 
 // We need portability.h to be included first, see
@@ -8394,8 +8490,8 @@ int croaring_hardware_support(void) {
 
 // #include <roaring/array_util.h>
 
-#ifndef ARRAY_UTIL_H
-#define ARRAY_UTIL_H
+#ifndef CROARING_ARRAY_UTIL_H
+#define CROARING_ARRAY_UTIL_H
 
 #include <stddef.h>  // for size_t
 #include <stdint.h>
@@ -10925,8 +11021,8 @@ CROARING_UNTARGET_AVX512
 
 // #include <roaring/bitset_util.h>
 
-#ifndef BITSET_UTIL_H
-#define BITSET_UTIL_H
+#ifndef CROARING_BITSET_UTIL_H
+#define CROARING_BITSET_UTIL_H
 
 #include <stdint.h>
 
@@ -11308,7 +11404,7 @@ inline static uint64_t avx2_harley_seal_popcount256(const __m256i *data,
 }
 CROARING_UNTARGET_AVX2
 
-#define AVXPOPCNTFNC(opname, avx_intrinsic)                                    \
+#define CROARING_AVXPOPCNTFNC(opname, avx_intrinsic)                           \
     static inline uint64_t avx2_harley_seal_popcount256_##opname(              \
         const __m256i *data1, const __m256i *data2, const uint64_t size) {     \
         __m256i total = _mm256_setzero_si256();                                \
@@ -11489,27 +11585,27 @@ CROARING_UNTARGET_AVX2
     }
 
 CROARING_TARGET_AVX2
-AVXPOPCNTFNC(or, _mm256_or_si256)
+CROARING_AVXPOPCNTFNC(or, _mm256_or_si256)
 CROARING_UNTARGET_AVX2
 
 CROARING_TARGET_AVX2
-AVXPOPCNTFNC(union, _mm256_or_si256)
+CROARING_AVXPOPCNTFNC(union, _mm256_or_si256)
 CROARING_UNTARGET_AVX2
 
 CROARING_TARGET_AVX2
-AVXPOPCNTFNC(and, _mm256_and_si256)
+CROARING_AVXPOPCNTFNC(and, _mm256_and_si256)
 CROARING_UNTARGET_AVX2
 
 CROARING_TARGET_AVX2
-AVXPOPCNTFNC(intersection, _mm256_and_si256)
+CROARING_AVXPOPCNTFNC(intersection, _mm256_and_si256)
 CROARING_UNTARGET_AVX2
 
 CROARING_TARGET_AVX2
-AVXPOPCNTFNC(xor, _mm256_xor_si256)
+CROARING_AVXPOPCNTFNC(xor, _mm256_xor_si256)
 CROARING_UNTARGET_AVX2
 
 CROARING_TARGET_AVX2
-AVXPOPCNTFNC(andnot, _mm256_andnot_si256)
+CROARING_AVXPOPCNTFNC(andnot, _mm256_andnot_si256)
 CROARING_UNTARGET_AVX2
 
 #define VPOPCNT_AND_ADD(ptr, i, accu)                                  \
@@ -11556,7 +11652,7 @@ static inline uint64_t avx512_vpopcount(const __m512i *data,
 CROARING_UNTARGET_AVX512
 #endif
 
-#define AVXPOPCNTFNC512(opname, avx_intrinsic)                                \
+#define CROARING_AVXPOPCNTFNC512(opname, avx_intrinsic)                       \
     static inline uint64_t avx512_harley_seal_popcount512_##opname(           \
         const __m512i *data1, const __m512i *data2, const uint64_t size) {    \
         __m512i total = _mm512_setzero_si512();                               \
@@ -11618,12 +11714,12 @@ CROARING_UNTARGET_AVX512
 
 #if CROARING_COMPILER_SUPPORTS_AVX512
 CROARING_TARGET_AVX512
-AVXPOPCNTFNC512(or, _mm512_or_si512)
-AVXPOPCNTFNC512(union, _mm512_or_si512)
-AVXPOPCNTFNC512(and, _mm512_and_si512)
-AVXPOPCNTFNC512(intersection, _mm512_and_si512)
-AVXPOPCNTFNC512(xor, _mm512_xor_si512)
-AVXPOPCNTFNC512(andnot, _mm512_andnot_si512)
+CROARING_AVXPOPCNTFNC512(or, _mm512_or_si512)
+CROARING_AVXPOPCNTFNC512(union, _mm512_or_si512)
+CROARING_AVXPOPCNTFNC512(and, _mm512_and_si512)
+CROARING_AVXPOPCNTFNC512(intersection, _mm512_and_si512)
+CROARING_AVXPOPCNTFNC512(xor, _mm512_xor_si512)
+CROARING_AVXPOPCNTFNC512(andnot, _mm512_andnot_si512)
 CROARING_UNTARGET_AVX512
 #endif
 /***
@@ -12250,16 +12346,13 @@ size_t bitset_extract_setbits_avx512(const uint64_t *words, size_t length,
     for (; (i < length) && (out < safeout); ++i) {
         uint64_t w = words[i];
         while ((w != 0) && (out < safeout)) {
-            uint64_t t =
-                w & (~w + 1);  // on x64, should compile to BLSI (careful: the
-                               // Intel compiler seems to fail)
             int r =
                 roaring_trailing_zeroes(w);  // on x64, should compile to TZCNT
             uint32_t val = r + base;
             memcpy(out, &val,
                    sizeof(uint32_t));  // should be compiled as a MOV on x64
             out++;
-            w ^= t;
+            w &= (w - 1);
         }
         base += 64;
     }
@@ -12304,15 +12397,12 @@ size_t bitset_extract_setbits_avx512_uint16(const uint64_t *array,
     for (; (i < length) && (out < safeout); ++i) {
         uint64_t w = array[i];
         while ((w != 0) && (out < safeout)) {
-            uint64_t t =
-                w & (~w + 1);  // on x64, should compile to BLSI (careful: the
-                               // Intel compiler seems to fail)
             int r =
                 roaring_trailing_zeroes(w);  // on x64, should compile to TZCNT
             uint32_t val = r + base;
             memcpy(out, &val, sizeof(uint16_t));
             out++;
-            w ^= t;
+            w &= (w - 1);
         }
         base += 64;
     }
@@ -12362,16 +12452,13 @@ size_t bitset_extract_setbits_avx2(const uint64_t *words, size_t length,
     for (; (i < length) && (out < safeout); ++i) {
         uint64_t w = words[i];
         while ((w != 0) && (out < safeout)) {
-            uint64_t t =
-                w & (~w + 1);  // on x64, should compile to BLSI (careful: the
-                               // Intel compiler seems to fail)
             int r =
                 roaring_trailing_zeroes(w);  // on x64, should compile to TZCNT
             uint32_t val = r + base;
             memcpy(out, &val,
                    sizeof(uint32_t));  // should be compiled as a MOV on x64
             out++;
-            w ^= t;
+            w &= (w - 1);
         }
         base += 64;
     }
@@ -12386,16 +12473,13 @@ size_t bitset_extract_setbits(const uint64_t *words, size_t length,
     for (size_t i = 0; i < length; ++i) {
         uint64_t w = words[i];
         while (w != 0) {
-            uint64_t t =
-                w & (~w + 1);  // on x64, should compile to BLSI (careful: the
-                               // Intel compiler seems to fail)
             int r =
                 roaring_trailing_zeroes(w);  // on x64, should compile to TZCNT
             uint32_t val = r + base;
             memcpy(out + outpos, &val,
                    sizeof(uint32_t));  // should be compiled as a MOV on x64
             outpos++;
-            w ^= t;
+            w &= (w - 1);
         }
         base += 64;
     }
@@ -12409,10 +12493,9 @@ size_t bitset_extract_intersection_setbits_uint16(
     for (size_t i = 0; i < length; ++i) {
         uint64_t w = words1[i] & words2[i];
         while (w != 0) {
-            uint64_t t = w & (~w + 1);
             int r = roaring_trailing_zeroes(w);
             out[outpos++] = (uint16_t)(r + base);
-            w ^= t;
+            w &= (w - 1);
         }
         base += 64;
     }
@@ -12473,11 +12556,10 @@ size_t bitset_extract_setbits_sse_uint16(const uint64_t *words, size_t length,
     for (; (i < length) && (out < safeout); ++i) {
         uint64_t w = words[i];
         while ((w != 0) && (out < safeout)) {
-            uint64_t t = w & (~w + 1);
             int r = roaring_trailing_zeroes(w);
             *out = (uint16_t)(r + base);
             out++;
-            w ^= t;
+            w &= (w - 1);
         }
         base += 64;
     }
@@ -12501,10 +12583,9 @@ size_t bitset_extract_setbits_uint16(const uint64_t *words, size_t length,
     for (size_t i = 0; i < length; ++i) {
         uint64_t w = words[i];
         while (w != 0) {
-            uint64_t t = w & (~w + 1);
             int r = roaring_trailing_zeroes(w);
             out[outpos++] = (uint16_t)(r + base);
-            w ^= t;
+            w &= (w - 1);
         }
         base += 64;
     }
@@ -12797,6 +12878,7 @@ void bitset_flip_list(uint64_t *words, const uint16_t *list, uint64_t length) {
 #pragma GCC diagnostic pop
 #endif
 
+
 // #include "../../submodules/CRoaring/src/bitset.c"
 
 #include <limits.h>
@@ -12998,8 +13080,8 @@ size_t bitset_count(const bitset_t *bitset) {
     return card;
 }
 
-bool bitset_inplace_union(bitset_t *CBITSET_RESTRICT b1,
-                          const bitset_t *CBITSET_RESTRICT b2) {
+bool bitset_inplace_union(bitset_t *CROARING_CBITSET_RESTRICT b1,
+                          const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
     for (size_t k = 0; k < minlength; ++k) {
@@ -13065,8 +13147,8 @@ size_t bitset_maximum(const bitset_t *bitset) {
 /* Returns true if bitsets share no common elements, false otherwise.
  *
  * Performs early-out if common element found. */
-bool bitsets_disjoint(const bitset_t *CBITSET_RESTRICT b1,
-                      const bitset_t *CBITSET_RESTRICT b2) {
+bool bitsets_disjoint(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                      const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
 
@@ -13080,8 +13162,8 @@ bool bitsets_disjoint(const bitset_t *CBITSET_RESTRICT b1,
  * disjoint.
  *
  * Performs early-out if common element found. */
-bool bitsets_intersect(const bitset_t *CBITSET_RESTRICT b1,
-                       const bitset_t *CBITSET_RESTRICT b2) {
+bool bitsets_intersect(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                       const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
 
@@ -13105,8 +13187,8 @@ static bool any_bits_set(const bitset_t *b, size_t starting_loc) {
 /* Returns true if b1 has all of b2's bits set.
  *
  * Performs early out if a bit is found in b2 that is not found in b1. */
-bool bitset_contains_all(const bitset_t *CBITSET_RESTRICT b1,
-                         const bitset_t *CBITSET_RESTRICT b2) {
+bool bitset_contains_all(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                         const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t min_size = b1->arraysize;
     if (b1->arraysize > b2->arraysize) {
         min_size = b2->arraysize;
@@ -13123,8 +13205,8 @@ bool bitset_contains_all(const bitset_t *CBITSET_RESTRICT b1,
     return true;
 }
 
-size_t bitset_union_count(const bitset_t *CBITSET_RESTRICT b1,
-                          const bitset_t *CBITSET_RESTRICT b2) {
+size_t bitset_union_count(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                          const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t answer = 0;
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
@@ -13164,8 +13246,8 @@ size_t bitset_union_count(const bitset_t *CBITSET_RESTRICT b1,
     return answer;
 }
 
-void bitset_inplace_intersection(bitset_t *CBITSET_RESTRICT b1,
-                                 const bitset_t *CBITSET_RESTRICT b2) {
+void bitset_inplace_intersection(bitset_t *CROARING_CBITSET_RESTRICT b1,
+                                 const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
     size_t k = 0;
@@ -13177,8 +13259,8 @@ void bitset_inplace_intersection(bitset_t *CBITSET_RESTRICT b1,
     }
 }
 
-size_t bitset_intersection_count(const bitset_t *CBITSET_RESTRICT b1,
-                                 const bitset_t *CBITSET_RESTRICT b2) {
+size_t bitset_intersection_count(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                                 const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t answer = 0;
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
@@ -13188,8 +13270,8 @@ size_t bitset_intersection_count(const bitset_t *CBITSET_RESTRICT b1,
     return answer;
 }
 
-void bitset_inplace_difference(bitset_t *CBITSET_RESTRICT b1,
-                               const bitset_t *CBITSET_RESTRICT b2) {
+void bitset_inplace_difference(bitset_t *CROARING_CBITSET_RESTRICT b1,
+                               const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
     size_t k = 0;
@@ -13198,8 +13280,8 @@ void bitset_inplace_difference(bitset_t *CBITSET_RESTRICT b1,
     }
 }
 
-size_t bitset_difference_count(const bitset_t *CBITSET_RESTRICT b1,
-                               const bitset_t *CBITSET_RESTRICT b2) {
+size_t bitset_difference_count(const bitset_t *CROARING_CBITSET_RESTRICT b1,
+                               const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
     size_t k = 0;
@@ -13213,8 +13295,9 @@ size_t bitset_difference_count(const bitset_t *CBITSET_RESTRICT b1,
     return answer;
 }
 
-bool bitset_inplace_symmetric_difference(bitset_t *CBITSET_RESTRICT b1,
-                                         const bitset_t *CBITSET_RESTRICT b2) {
+bool bitset_inplace_symmetric_difference(
+    bitset_t *CROARING_CBITSET_RESTRICT b1,
+    const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
     size_t k = 0;
@@ -13230,8 +13313,9 @@ bool bitset_inplace_symmetric_difference(bitset_t *CBITSET_RESTRICT b1,
     return true;
 }
 
-size_t bitset_symmetric_difference_count(const bitset_t *CBITSET_RESTRICT b1,
-                                         const bitset_t *CBITSET_RESTRICT b2) {
+size_t bitset_symmetric_difference_count(
+    const bitset_t *CROARING_CBITSET_RESTRICT b1,
+    const bitset_t *CROARING_CBITSET_RESTRICT b2) {
     size_t minlength =
         b1->arraysize < b2->arraysize ? b1->arraysize : b2->arraysize;
     size_t k = 0;
@@ -14102,11 +14186,8 @@ int array_container_shrink_to_fit(array_container_t *src) {
 
 /* Free memory. */
 void array_container_free(array_container_t *arr) {
-    if (arr->array !=
-        NULL) {  // Jon Strabala reports that some tools complain otherwise
-        roaring_free(arr->array);
-        arr->array = NULL;  // pedantic
-    }
+    if (arr == NULL) return;
+    roaring_free(arr->array);
     roaring_free(arr);
 }
 
@@ -14134,10 +14215,7 @@ void array_container_grow(array_container_t *container, int32_t min,
             (uint16_t *)roaring_realloc(array, new_capacity * sizeof(uint16_t));
         if (container->array == NULL) roaring_free(array);
     } else {
-        // Jon Strabala reports that some tools complain otherwise
-        if (array != NULL) {
-            roaring_free(array);
-        }
+        roaring_free(array);
         container->array =
             (uint16_t *)roaring_malloc(new_capacity * sizeof(uint16_t));
     }
@@ -15173,11 +15251,8 @@ void bitset_container_add_from_range(bitset_container_t *bitset, uint32_t min,
 
 /* Free memory. */
 void bitset_container_free(bitset_container_t *bitset) {
-    if (bitset->words !=
-        NULL) {  // Jon Strabala reports that some tools complain otherwise
-        roaring_aligned_free(bitset->words);
-        bitset->words = NULL;  // pedantic
-    }
+    if (bitset == NULL) return;
+    roaring_aligned_free(bitset->words);
     roaring_free(bitset);
 }
 
@@ -15295,8 +15370,8 @@ bool bitset_container_intersect(const bitset_container_t *src_1,
 }
 
 #if CROARING_IS_X64
-#ifndef WORDS_IN_AVX2_REG
-#define WORDS_IN_AVX2_REG sizeof(__m256i) / sizeof(uint64_t)
+#ifndef CROARING_WORDS_IN_AVX2_REG
+#define CROARING_WORDS_IN_AVX2_REG sizeof(__m256i) / sizeof(uint64_t)
 #endif
 #ifndef WORDS_IN_AVX512_REG
 #define WORDS_IN_AVX512_REG sizeof(__m512i) / sizeof(uint64_t)
@@ -15327,7 +15402,7 @@ int bitset_container_compute_cardinality(const bitset_container_t *bitset) {
         if (support & ROARING_SUPPORTS_AVX2) {
             return (int)avx2_harley_seal_popcount256(
                 (const __m256i *)bitset->words,
-                BITSET_CONTAINER_SIZE_IN_WORDS / (WORDS_IN_AVX2_REG));
+                BITSET_CONTAINER_SIZE_IN_WORDS / (CROARING_WORDS_IN_AVX2_REG));
         } else {
             return _scalar_bitset_container_compute_cardinality(bitset);
         }
@@ -15376,7 +15451,7 @@ int bitset_container_compute_cardinality(const bitset_container_t *bitset) {
 
 #if CROARING_IS_X64
 
-#define BITSET_CONTAINER_FN_REPEAT 8
+#define CROARING_BITSET_CONTAINER_FN_REPEAT 8
 #ifndef WORDS_IN_AVX512_REG
 #define WORDS_IN_AVX512_REG sizeof(__m512i) / sizeof(uint64_t)
 #endif  // WORDS_IN_AVX512_REG
@@ -15384,7 +15459,7 @@ int bitset_container_compute_cardinality(const bitset_container_t *bitset) {
 /* Computes a binary operation (eg union) on bitset1 and bitset2 and write the
    result to bitsetout */
 // clang-format off
-#define AVX512_BITSET_CONTAINER_FN1(before, opname, opsymbol, avx_intrinsic,   \
+#define CROARING_AVX512_BITSET_CONTAINER_FN1(before, opname, opsymbol, avx_intrinsic,   \
                                 neon_intrinsic, after)                         \
   static inline int _avx512_bitset_container_##opname##_nocard(                \
       const bitset_container_t *src_1, const bitset_container_t *src_2,        \
@@ -15438,7 +15513,7 @@ int bitset_container_compute_cardinality(const bitset_container_t *bitset) {
     return dst->cardinality;                                            \
   }
 
-#define AVX512_BITSET_CONTAINER_FN2(before, opname, opsymbol, avx_intrinsic,           \
+#define CROARING_AVX512_BITSET_CONTAINER_FN2(before, opname, opsymbol, avx_intrinsic,           \
                                 neon_intrinsic, after)                                 \
   /* next, a version that updates cardinality*/                                        \
   static inline int _avx512_bitset_container_##opname(const bitset_container_t *src_1, \
@@ -15452,7 +15527,7 @@ int bitset_container_compute_cardinality(const bitset_container_t *bitset) {
     return dst->cardinality;                                                            \
   }
 
-#define AVX512_BITSET_CONTAINER_FN3(before, opname, opsymbol, avx_intrinsic,            \
+#define CROARING_AVX512_BITSET_CONTAINER_FN3(before, opname, opsymbol, avx_intrinsic,            \
                                 neon_intrinsic, after)                                  \
   /* next, a version that just computes the cardinality*/                               \
   static inline int _avx512_bitset_container_##opname##_justcard(                       \
@@ -15467,85 +15542,85 @@ int bitset_container_compute_cardinality(const bitset_container_t *bitset) {
 // we duplicate the function because other containers use the "or" term, makes API more consistent
 #if CROARING_COMPILER_SUPPORTS_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, or,    |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, or,    |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, union, |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, union, |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 
 // we duplicate the function because other containers use the "intersection" term, makes API more consistent
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, and,          &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, and,          &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, intersection, &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, intersection, &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, xor,    ^,  _mm512_xor_si512,    veorq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, xor,    ^,  _mm512_xor_si512,    veorq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, andnot, &~, _mm512_andnot_si512, vbicq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX512, andnot, &~, _mm512_andnot_si512, vbicq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 
 // we duplicate the function because other containers use the "or" term, makes API more consistent
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, or,    |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, or,    |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, union, |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, union, |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 
 // we duplicate the function because other containers use the "intersection" term, makes API more consistent
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, and,          &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, and,          &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, intersection, &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, intersection, &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, xor,    ^,  _mm512_xor_si512,    veorq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, xor,    ^,  _mm512_xor_si512,    veorq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, andnot, &~, _mm512_andnot_si512, vbicq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX512, andnot, &~, _mm512_andnot_si512, vbicq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 
 // we duplicate the function because other containers use the "or" term, makes API more consistent
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, or,    |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, or,    |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, union, |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, union, |, _mm512_or_si512, vorrq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 
 // we duplicate the function because other containers use the "intersection" term, makes API more consistent
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, and,          &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, and,          &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, intersection, &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, intersection, &, _mm512_and_si512, vandq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, xor,    ^,  _mm512_xor_si512,    veorq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, xor,    ^,  _mm512_xor_si512,    veorq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 CROARING_TARGET_AVX512
-AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, andnot, &~, _mm512_andnot_si512, vbicq_u64, CROARING_UNTARGET_AVX512)
+CROARING_AVX512_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX512, andnot, &~, _mm512_andnot_si512, vbicq_u64, CROARING_UNTARGET_AVX512)
 CROARING_UNTARGET_AVX512
 #endif // CROARING_COMPILER_SUPPORTS_AVX512
 
-#ifndef WORDS_IN_AVX2_REG
-#define WORDS_IN_AVX2_REG sizeof(__m256i) / sizeof(uint64_t)
-#endif // WORDS_IN_AVX2_REG
-#define LOOP_SIZE                    \
+#ifndef CROARING_WORDS_IN_AVX2_REG
+#define CROARING_WORDS_IN_AVX2_REG sizeof(__m256i) / sizeof(uint64_t)
+#endif // CROARING_WORDS_IN_AVX2_REG
+#define CROARING_LOOP_SIZE                    \
     BITSET_CONTAINER_SIZE_IN_WORDS / \
-        ((WORDS_IN_AVX2_REG)*BITSET_CONTAINER_FN_REPEAT)
+        ((CROARING_WORDS_IN_AVX2_REG)*CROARING_BITSET_CONTAINER_FN_REPEAT)
 
 /* Computes a binary operation (eg union) on bitset1 and bitset2 and write the
    result to bitsetout */
 // clang-format off
-#define AVX_BITSET_CONTAINER_FN1(before, opname, opsymbol, avx_intrinsic,               \
+#define CROARING_AVX_BITSET_CONTAINER_FN1(before, opname, opsymbol, avx_intrinsic,               \
                                 neon_intrinsic, after)                                \
   static inline int _avx2_bitset_container_##opname##_nocard(                                \
       const bitset_container_t *src_1, const bitset_container_t *src_2,        \
@@ -15556,7 +15631,7 @@ CROARING_UNTARGET_AVX512
     uint8_t *out = (uint8_t *)dst->words;                                      \
     const int innerloop = 8;                                                   \
     for (size_t i = 0;                                                         \
-         i < BITSET_CONTAINER_SIZE_IN_WORDS / (WORDS_IN_AVX2_REG);             \
+         i < BITSET_CONTAINER_SIZE_IN_WORDS / (CROARING_WORDS_IN_AVX2_REG);             \
          i += innerloop) {                                                     \
       __m256i A1, A2, AO;                                                      \
       A1 = _mm256_lddqu_si256((const __m256i *)(words_1));                     \
@@ -15599,7 +15674,7 @@ CROARING_UNTARGET_AVX512
     return dst->cardinality;                                                   \
   }
 
-#define AVX_BITSET_CONTAINER_FN2(before, opname, opsymbol, avx_intrinsic,               \
+#define CROARING_AVX_BITSET_CONTAINER_FN2(before, opname, opsymbol, avx_intrinsic,               \
                                 neon_intrinsic, after)                                \
   /* next, a version that updates cardinality*/                                \
   static inline int _avx2_bitset_container_##opname(const bitset_container_t *src_1,         \
@@ -15610,11 +15685,11 @@ CROARING_UNTARGET_AVX512
     __m256i *out = (__m256i *)dst->words;                                      \
     dst->cardinality = (int32_t)avx2_harley_seal_popcount256andstore_##opname( \
         words_2, words_1, out,                                                 \
-        BITSET_CONTAINER_SIZE_IN_WORDS / (WORDS_IN_AVX2_REG));                 \
+        BITSET_CONTAINER_SIZE_IN_WORDS / (CROARING_WORDS_IN_AVX2_REG));                 \
     return dst->cardinality;                                                   \
   }                                                                            \
 
-#define AVX_BITSET_CONTAINER_FN3(before, opname, opsymbol, avx_intrinsic,               \
+#define CROARING_AVX_BITSET_CONTAINER_FN3(before, opname, opsymbol, avx_intrinsic,               \
                                 neon_intrinsic, after)                                \
   /* next, a version that just computes the cardinality*/                      \
   static inline int _avx2_bitset_container_##opname##_justcard(                              \
@@ -15622,77 +15697,77 @@ CROARING_UNTARGET_AVX512
     const __m256i *__restrict__ data1 = (const __m256i *)src_1->words;         \
     const __m256i *__restrict__ data2 = (const __m256i *)src_2->words;         \
     return (int)avx2_harley_seal_popcount256_##opname(                         \
-        data2, data1, BITSET_CONTAINER_SIZE_IN_WORDS / (WORDS_IN_AVX2_REG));   \
+        data2, data1, BITSET_CONTAINER_SIZE_IN_WORDS / (CROARING_WORDS_IN_AVX2_REG));   \
   }
 
 
 // we duplicate the function because other containers use the "or" term, makes API more consistent
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, or,    |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, or,    |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, union, |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, union, |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 // we duplicate the function because other containers use the "intersection" term, makes API more consistent
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, and,          &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, and,          &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, intersection, &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, intersection, &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, xor,    ^,  _mm256_xor_si256,    veorq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, xor,    ^,  _mm256_xor_si256,    veorq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, andnot, &~, _mm256_andnot_si256, vbicq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN1(CROARING_TARGET_AVX2, andnot, &~, _mm256_andnot_si256, vbicq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 // we duplicate the function because other containers use the "or" term, makes API more consistent
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, or,    |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, or,    |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, union, |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, union, |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 // we duplicate the function because other containers use the "intersection" term, makes API more consistent
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, and,          &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, and,          &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, intersection, &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, intersection, &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, xor,    ^,  _mm256_xor_si256,    veorq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, xor,    ^,  _mm256_xor_si256,    veorq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, andnot, &~, _mm256_andnot_si256, vbicq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN2(CROARING_TARGET_AVX2, andnot, &~, _mm256_andnot_si256, vbicq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 // we duplicate the function because other containers use the "or" term, makes API more consistent
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, or,    |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, or,    |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, union, |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, union, |, _mm256_or_si256, vorrq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 // we duplicate the function because other containers use the "intersection" term, makes API more consistent
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, and,          &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, and,          &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, intersection, &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, intersection, &, _mm256_and_si256, vandq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, xor,    ^,  _mm256_xor_si256,    veorq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, xor,    ^,  _mm256_xor_si256,    veorq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 CROARING_TARGET_AVX2
-AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, andnot, &~, _mm256_andnot_si256, vbicq_u64, CROARING_UNTARGET_AVX2)
+CROARING_AVX_BITSET_CONTAINER_FN3(CROARING_TARGET_AVX2, andnot, &~, _mm256_andnot_si256, vbicq_u64, CROARING_UNTARGET_AVX2)
 CROARING_UNTARGET_AVX2
 
 
@@ -15754,7 +15829,7 @@ SCALAR_BITSET_CONTAINER_FN(xor,    ^,  _mm256_xor_si256,    veorq_u64)
 SCALAR_BITSET_CONTAINER_FN(andnot, &~, _mm256_andnot_si256, vbicq_u64)
 
 #if CROARING_COMPILER_SUPPORTS_AVX512
-#define BITSET_CONTAINER_FN(opname, opsymbol, avx_intrinsic, neon_intrinsic)   \
+#define CROARING_BITSET_CONTAINER_FN(opname, opsymbol, avx_intrinsic, neon_intrinsic)   \
   int bitset_container_##opname(const bitset_container_t *src_1,               \
                                 const bitset_container_t *src_2,               \
                                 bitset_container_t *dst) {                     \
@@ -15797,7 +15872,7 @@ SCALAR_BITSET_CONTAINER_FN(andnot, &~, _mm256_andnot_si256, vbicq_u64)
 #else // CROARING_COMPILER_SUPPORTS_AVX512
 
 
-#define BITSET_CONTAINER_FN(opname, opsymbol, avx_intrinsic, neon_intrinsic)   \
+#define CROARING_BITSET_CONTAINER_FN(opname, opsymbol, avx_intrinsic, neon_intrinsic)   \
   int bitset_container_##opname(const bitset_container_t *src_1,               \
                                 const bitset_container_t *src_2,               \
                                 bitset_container_t *dst) {                     \
@@ -15829,7 +15904,7 @@ SCALAR_BITSET_CONTAINER_FN(andnot, &~, _mm256_andnot_si256, vbicq_u64)
 
 #elif defined(CROARING_USENEON)
 
-#define BITSET_CONTAINER_FN(opname, opsymbol, avx_intrinsic, neon_intrinsic)  \
+#define CROARING_BITSET_CONTAINER_FN(opname, opsymbol, avx_intrinsic, neon_intrinsic)  \
 int bitset_container_##opname(const bitset_container_t *src_1,                \
                               const bitset_container_t *src_2,                \
                               bitset_container_t *dst) {                      \
@@ -15917,7 +15992,7 @@ int bitset_container_##opname##_justcard(const bitset_container_t *src_1,     \
 
 #else
 
-#define BITSET_CONTAINER_FN(opname, opsymbol, avx_intrinsic, neon_intrinsic)  \
+#define CROARING_BITSET_CONTAINER_FN(opname, opsymbol, avx_intrinsic, neon_intrinsic)  \
 int bitset_container_##opname(const bitset_container_t *src_1,            \
                               const bitset_container_t *src_2,            \
                               bitset_container_t *dst) {                  \
@@ -15965,15 +16040,15 @@ int bitset_container_##opname##_justcard(const bitset_container_t *src_1, \
 #endif // CROARING_IS_X64
 
 // we duplicate the function because other containers use the "or" term, makes API more consistent
-BITSET_CONTAINER_FN(or,    |, _mm256_or_si256, vorrq_u64)
-BITSET_CONTAINER_FN(union, |, _mm256_or_si256, vorrq_u64)
+CROARING_BITSET_CONTAINER_FN(or,    |, _mm256_or_si256, vorrq_u64)
+CROARING_BITSET_CONTAINER_FN(union, |, _mm256_or_si256, vorrq_u64)
 
 // we duplicate the function because other containers use the "intersection" term, makes API more consistent
-BITSET_CONTAINER_FN(and,          &, _mm256_and_si256, vandq_u64)
-BITSET_CONTAINER_FN(intersection, &, _mm256_and_si256, vandq_u64)
+CROARING_BITSET_CONTAINER_FN(and,          &, _mm256_and_si256, vandq_u64)
+CROARING_BITSET_CONTAINER_FN(intersection, &, _mm256_and_si256, vandq_u64)
 
-BITSET_CONTAINER_FN(xor,    ^,  _mm256_xor_si256,    veorq_u64)
-BITSET_CONTAINER_FN(andnot, &~, _mm256_andnot_si256, vbicq_u64)
+CROARING_BITSET_CONTAINER_FN(xor,    ^,  _mm256_xor_si256,    veorq_u64)
+CROARING_BITSET_CONTAINER_FN(andnot, &~, _mm256_andnot_si256, vbicq_u64)
 // clang-format On
 
 
@@ -16421,10 +16496,10 @@ struct rle16_s {
 typedef struct rle16_s rle16_t;
 
 #ifdef __cplusplus
-#define MAKE_RLE16(val, len) \
+#define CROARING_MAKE_RLE16(val, len) \
     { (uint16_t)(val), (uint16_t)(len) }  // no tagged structs until c++20
 #else
-#define MAKE_RLE16(val, len) \
+#define CROARING_MAKE_RLE16(val, len) \
     (rle16_t) { .value = (uint16_t)(val), .length = (uint16_t)(len) }
 #endif
 
@@ -16736,7 +16811,7 @@ static inline void run_container_append_value(run_container_t *run,
                                               rle16_t *previousrl) {
     const uint32_t previousend = previousrl->value + previousrl->length;
     if (val > previousend + 1) {  // we add a new one
-        *previousrl = MAKE_RLE16(val, 0);
+        *previousrl = CROARING_MAKE_RLE16(val, 0);
         run->runs[run->n_runs] = *previousrl;
         run->n_runs++;
     } else if (val == previousend + 1) {  // we merge
@@ -16751,7 +16826,7 @@ static inline void run_container_append_value(run_container_t *run,
  */
 static inline rle16_t run_container_append_value_first(run_container_t *run,
                                                        uint16_t val) {
-    rle16_t newrle = MAKE_RLE16(val, 0);
+    rle16_t newrle = CROARING_MAKE_RLE16(val, 0);
     run->runs[run->n_runs] = newrle;
     run->n_runs++;
     return newrle;
@@ -22797,7 +22872,7 @@ int run_container_negation_range_inplace(run_container_t *src,
     }
 
     // as with Java implementation, use locals to give self a buffer of depth 1
-    rle16_t buffered = MAKE_RLE16(0, 0);
+    rle16_t buffered = CROARING_MAKE_RLE16(0, 0);
     rle16_t next = buffered;
     if (k < my_nbr_runs) buffered = src->runs[k];
 
@@ -23509,7 +23584,7 @@ int run_array_container_andnot(const run_container_t *src_1,
             if (end <= xstart) {
                 // output the first run
                 answer->runs[answer->n_runs++] =
-                    MAKE_RLE16(start, end - start - 1);
+                    CROARING_MAKE_RLE16(start, end - start - 1);
                 rlepos++;
                 if (rlepos < src_1->n_runs) {
                     start = src_1->runs[rlepos].value;
@@ -23524,7 +23599,7 @@ int run_array_container_andnot(const run_container_t *src_1,
             } else {
                 if (start < xstart) {
                     answer->runs[answer->n_runs++] =
-                        MAKE_RLE16(start, xstart - start - 1);
+                        CROARING_MAKE_RLE16(start, xstart - start - 1);
                 }
                 if (xstart + 1 < end) {
                     start = xstart + 1;
@@ -23538,7 +23613,8 @@ int run_array_container_andnot(const run_container_t *src_1,
             }
         }
         if (rlepos < src_1->n_runs) {
-            answer->runs[answer->n_runs++] = MAKE_RLE16(start, end - start - 1);
+            answer->runs[answer->n_runs++] =
+                CROARING_MAKE_RLE16(start, end - start - 1);
             rlepos++;
             if (rlepos < src_1->n_runs) {
                 memcpy(answer->runs + answer->n_runs, src_1->runs + rlepos,
@@ -23918,11 +23994,8 @@ void run_container_offset(const run_container_t *c, container_t **loc,
 
 /* Free memory. */
 void run_container_free(run_container_t *run) {
-    if (run->runs !=
-        NULL) {  // Jon Strabala reports that some tools complain otherwise
-        roaring_free(run->runs);
-        run->runs = NULL;  // pedantic
-    }
+    if (run == NULL) return;
+    roaring_free(run->runs);
     roaring_free(run);
 }
 
@@ -23940,10 +24013,7 @@ void run_container_grow(run_container_t *run, int32_t min, bool copy) {
                                                run->capacity * sizeof(rle16_t));
         if (run->runs == NULL) roaring_free(oldruns);
     } else {
-        // Jon Strabala reports that some tools complain otherwise
-        if (run->runs != NULL) {
-            roaring_free(run->runs);
-        }
+        roaring_free(run->runs);
         run->runs = (rle16_t *)roaring_malloc(run->capacity * sizeof(rle16_t));
     }
     // We may have run->runs == NULL.
@@ -24324,7 +24394,8 @@ void run_container_andnot(const run_container_t *src_1,
     while ((rlepos1 < src_1->n_runs) && (rlepos2 < src_2->n_runs)) {
         if (end <= start2) {
             // output the first run
-            dst->runs[dst->n_runs++] = MAKE_RLE16(start, end - start - 1);
+            dst->runs[dst->n_runs++] =
+                CROARING_MAKE_RLE16(start, end - start - 1);
             rlepos1++;
             if (rlepos1 < src_1->n_runs) {
                 start = src_1->runs[rlepos1].value;
@@ -24340,7 +24411,7 @@ void run_container_andnot(const run_container_t *src_1,
         } else {
             if (start < start2) {
                 dst->runs[dst->n_runs++] =
-                    MAKE_RLE16(start, start2 - start - 1);
+                    CROARING_MAKE_RLE16(start, start2 - start - 1);
             }
             if (end2 < end) {
                 start = end2;
@@ -24354,7 +24425,7 @@ void run_container_andnot(const run_container_t *src_1,
         }
     }
     if (rlepos1 < src_1->n_runs) {
-        dst->runs[dst->n_runs++] = MAKE_RLE16(start, end - start - 1);
+        dst->runs[dst->n_runs++] = CROARING_MAKE_RLE16(start, end - start - 1);
         rlepos1++;
         if (rlepos1 < src_1->n_runs) {
             memcpy(dst->runs + dst->n_runs, src_1->runs + rlepos1,
@@ -24362,24 +24433,6 @@ void run_container_andnot(const run_container_t *src_1,
             dst->n_runs += src_1->n_runs - rlepos1;
         }
     }
-}
-
-ALLOW_UNALIGNED
-int run_container_to_uint32_array(void *vout, const run_container_t *cont,
-                                  uint32_t base) {
-    int outpos = 0;
-    uint32_t *out = (uint32_t *)vout;
-    for (int i = 0; i < cont->n_runs; ++i) {
-        uint32_t run_start = base + cont->runs[i].value;
-        uint16_t le = cont->runs[i].length;
-        for (int j = 0; j <= le; ++j) {
-            uint32_t val = run_start + j;
-            memcpy(out + outpos, &val,
-                   sizeof(uint32_t));  // should be compiled as a MOV on x64
-            outpos++;
-        }
-    }
-    return outpos;
 }
 
 /*
@@ -24556,7 +24609,7 @@ void run_container_smart_append_exclusive(run_container_t *src,
 
     if (!src->n_runs ||
         (start > (old_end = last_run->value + last_run->length + 1))) {
-        *appended_last_run = MAKE_RLE16(start, length);
+        *appended_last_run = CROARING_MAKE_RLE16(start, length);
         src->n_runs++;
         return;
     }
@@ -24570,10 +24623,10 @@ void run_container_smart_append_exclusive(run_container_t *src,
     if (start == last_run->value) {
         // wipe out previous
         if (new_end < old_end) {
-            *last_run = MAKE_RLE16(new_end, old_end - new_end - 1);
+            *last_run = CROARING_MAKE_RLE16(new_end, old_end - new_end - 1);
             return;
         } else if (new_end > old_end) {
-            *last_run = MAKE_RLE16(old_end, new_end - old_end - 1);
+            *last_run = CROARING_MAKE_RLE16(old_end, new_end - old_end - 1);
             return;
         } else {
             src->n_runs--;
@@ -24582,10 +24635,12 @@ void run_container_smart_append_exclusive(run_container_t *src,
     }
     last_run->length = start - last_run->value - 1;
     if (new_end < old_end) {
-        *appended_last_run = MAKE_RLE16(new_end, old_end - new_end - 1);
+        *appended_last_run =
+            CROARING_MAKE_RLE16(new_end, old_end - new_end - 1);
         src->n_runs++;
     } else if (new_end > old_end) {
-        *appended_last_run = MAKE_RLE16(old_end, new_end - old_end - 1);
+        *appended_last_run =
+            CROARING_MAKE_RLE16(old_end, new_end - old_end - 1);
         src->n_runs++;
     }
 }
@@ -24752,6 +24807,47 @@ static inline int _avx2_run_container_cardinality(const run_container_t *run) {
     return sum;
 }
 
+ALLOW_UNALIGNED
+int _avx2_run_container_to_uint32_array(void *vout, const run_container_t *cont,
+                                        uint32_t base) {
+    int outpos = 0;
+    uint32_t *out = (uint32_t *)vout;
+
+    for (int i = 0; i < cont->n_runs; ++i) {
+        uint32_t run_start = base + cont->runs[i].value;
+        uint16_t le = cont->runs[i].length;
+        if (le < 8) {
+            for (int j = 0; j <= le; ++j) {
+                uint32_t val = run_start + j;
+                memcpy(out + outpos, &val,
+                       sizeof(uint32_t));  // should be compiled as a MOV on x64
+                outpos++;
+            }
+        } else {
+            int j = 0;
+            __m256i run_start_v = _mm256_set1_epi32(run_start);
+            // [8,8,8,8....]
+            __m256i inc = _mm256_set1_epi32(8);
+            // used for generate sequence:
+            // [0, 1, 2, 3...], [8, 9, 10,...]
+            __m256i delta = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+            for (j = 0; j + 8 <= le; j += 8) {
+                __m256i val_v = _mm256_add_epi32(run_start_v, delta);
+                _mm256_storeu_si256((__m256i *)(out + outpos), val_v);
+                delta = _mm256_add_epi32(inc, delta);
+                outpos += 8;
+            }
+            for (; j <= le; ++j) {
+                uint32_t val = run_start + j;
+                memcpy(out + outpos, &val,
+                       sizeof(uint32_t));  // should be compiled as a MOV on x64
+                outpos++;
+            }
+        }
+    }
+    return outpos;
+}
+
 CROARING_UNTARGET_AVX2
 
 /* Get the cardinality of `run'. Requires an actual computation. */
@@ -24781,6 +24877,34 @@ int run_container_cardinality(const run_container_t *run) {
         return _scalar_run_container_cardinality(run);
     }
 }
+
+int _scalar_run_container_to_uint32_array(void *vout,
+                                          const run_container_t *cont,
+                                          uint32_t base) {
+    int outpos = 0;
+    uint32_t *out = (uint32_t *)vout;
+    for (int i = 0; i < cont->n_runs; ++i) {
+        uint32_t run_start = base + cont->runs[i].value;
+        uint16_t le = cont->runs[i].length;
+        for (int j = 0; j <= le; ++j) {
+            uint32_t val = run_start + j;
+            memcpy(out + outpos, &val,
+                   sizeof(uint32_t));  // should be compiled as a MOV on x64
+            outpos++;
+        }
+    }
+    return outpos;
+}
+
+int run_container_to_uint32_array(void *vout, const run_container_t *cont,
+                                  uint32_t base) {
+    if (croaring_hardware_support() & ROARING_SUPPORTS_AVX2) {
+        return _avx2_run_container_to_uint32_array(vout, cont, base);
+    } else {
+        return _scalar_run_container_to_uint32_array(vout, cont, base);
+    }
+}
+
 #else
 
 /* Get the cardinality of `run'. Requires an actual computation. */
@@ -24797,6 +24921,25 @@ int run_container_cardinality(const run_container_t *run) {
 
     return sum;
 }
+
+ALLOW_UNALIGNED
+int run_container_to_uint32_array(void *vout, const run_container_t *cont,
+                                  uint32_t base) {
+    int outpos = 0;
+    uint32_t *out = (uint32_t *)vout;
+    for (int i = 0; i < cont->n_runs; ++i) {
+        uint32_t run_start = base + cont->runs[i].value;
+        uint16_t le = cont->runs[i].length;
+        for (int j = 0; j <= le; ++j) {
+            uint32_t val = run_start + j;
+            memcpy(out + outpos, &val,
+                   sizeof(uint32_t));  // should be compiled as a MOV on x64
+            outpos++;
+        }
+    }
+    return outpos;
+}
+
 #endif
 
 #ifdef __cplusplus
@@ -25380,7 +25523,7 @@ roaring_bitmap_t *roaring_bitmap_of(size_t n_args, ...) {
     // todo: could be greatly optimized but we do not expect this call to ever
     // include long lists
     roaring_bitmap_t *answer = roaring_bitmap_create();
-    roaring_bulk_context_t context = {0};
+    roaring_bulk_context_t context = CROARING_ZERO_INITIALIZER;
     va_list ap;
     va_start(ap, n_args);
     for (size_t i = 0; i < n_args; i++) {
@@ -25552,20 +25695,6 @@ void roaring_bitmap_printf_describe(const roaring_bitmap_t *r) {
     printf("}");
 }
 
-typedef struct min_max_sum_s {
-    uint32_t min;
-    uint32_t max;
-    uint64_t sum;
-} min_max_sum_t;
-
-static bool min_max_sum_fnc(uint32_t value, void *param) {
-    min_max_sum_t *mms = (min_max_sum_t *)param;
-    if (value > mms->max) mms->max = value;
-    if (value < mms->min) mms->min = value;
-    mms->sum += value;
-    return true;  // we always process all data points
-}
-
 /**
  *  (For advanced users.)
  * Collect statistics about the bitmap
@@ -25576,15 +25705,8 @@ void roaring_bitmap_statistics(const roaring_bitmap_t *r,
 
     memset(stat, 0, sizeof(*stat));
     stat->n_containers = ra->size;
-    stat->cardinality = roaring_bitmap_get_cardinality(r);
-    min_max_sum_t mms;
-    mms.min = UINT32_C(0xFFFFFFFF);
-    mms.max = UINT32_C(0);
-    mms.sum = 0;
-    roaring_iterate(r, &min_max_sum_fnc, &mms);
-    stat->min_value = mms.min;
-    stat->max_value = mms.max;
-    stat->sum_value = mms.sum;
+    stat->min_value = roaring_bitmap_minimum(r);
+    stat->max_value = roaring_bitmap_maximum(r);
 
     for (int i = 0; i < ra->size; ++i) {
         uint8_t truetype =
@@ -25593,6 +25715,7 @@ void roaring_bitmap_statistics(const roaring_bitmap_t *r,
             container_get_cardinality(ra->containers[i], ra->typecodes[i]);
         uint32_t sbytes =
             container_size_in_bytes(ra->containers[i], ra->typecodes[i]);
+        stat->cardinality += card;
         switch (truetype) {
             case BITSET_CONTAINER_TYPE:
                 stat->n_bitset_containers++;
@@ -26742,7 +26865,7 @@ roaring_bitmap_t *roaring_bitmap_deserialize(const void *buf) {
         if (bitmap == NULL) {
             return NULL;
         }
-        roaring_bulk_context_t context = {0};
+        roaring_bulk_context_t context = CROARING_ZERO_INITIALIZER;
         for (uint32_t i = 0; i < card; i++) {
             // elems may not be aligned, read with memcpy
             uint32_t elem;
@@ -26785,7 +26908,7 @@ roaring_bitmap_t *roaring_bitmap_deserialize_safe(const void *buf,
         if (bitmap == NULL) {
             return NULL;
         }
-        roaring_bulk_context_t context = {0};
+        roaring_bulk_context_t context = CROARING_ZERO_INITIALIZER;
         for (uint32_t i = 0; i < card; i++) {
             // elems may not be aligned, read with memcpy
             uint32_t elem;

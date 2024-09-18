@@ -14,7 +14,7 @@ const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, forkAsync } = require("./li
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
 
-const NODE_VERSIONS = ["16.14.0", "18.1.0", "20.9.0", "21.1.0"];
+const NODE_VERSIONS = ["16.14.0", "18.1.0", "20.9.0", "21.1.0", "22.8.0"];
 
 const NATIVE_DIR = path.resolve(ROOT_FOLDER, "native");
 const STAGE_DIR = path.resolve(ROOT_FOLDER, "build/stage");
@@ -54,10 +54,10 @@ async function main() {
   const command = process.argv[2];
 
   if (process.argv.includes("--dev")) {
-    throw new Error("Invalida argument --dev");
+    throw new Error("Invalid argument --dev");
   }
   if (process.argv.includes("--no-compile")) {
-    throw new Error("Invalida argument --no-compile");
+    throw new Error("Invalid argument --no-compile");
   }
 
   console.log(colors.magentaBright("command: ", colors.italic(command) || ""));
@@ -118,7 +118,6 @@ async function main() {
 
   console.log(colors.blueBright("- building"));
   console.time("building");
-  let nodeVersionIndex = 0;
   for (const nodeVersion of NODE_VERSIONS) {
     console.log(colors.blueBright(`\n- building for node ${nodeVersion}\n`));
     const args = ["run", nodeVersion, path.resolve(ROOT_FOLDER, "node-pre-gyp.js"), "rebuild"];
@@ -129,9 +128,6 @@ async function main() {
 
     console.log(colors.blueBright("- testing"));
     const testArgs = ["run", nodeVersion, require.resolve("./test.js")];
-    if (nodeVersionIndex > 0) {
-      testArgs.push("--notypecheck");
-    }
     await spawnAsync(N_EXECUTABLE_PATH, testArgs);
 
     if (isDeploy) {
@@ -143,8 +139,6 @@ async function main() {
       // Move stage folder to a temporary folder so it does not get clean by node-gyp
       await mergeDirs(STAGE_DIR, STAGE_TMP_DIR);
     }
-
-    ++nodeVersionIndex;
   }
   console.timeEnd("building");
 
