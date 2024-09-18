@@ -83,7 +83,7 @@
   },
   "devDependencies": {
     "@balsamic/eslint-config": "^0.7.0",
-    "@octokit/rest": "^21.0.2",
+    "@octokit/rest": "20.1.1",
     "@types/chai": "^4.3.19",
     "@types/chai-as-promised": "^7.1.8",
     "@types/mocha": "^10.0.8",
