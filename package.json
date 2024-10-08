@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -86,17 +86,17 @@
     "@octokit/rest": "20.1.1",
     "@types/chai": "^4.3.19",
     "@types/chai-as-promised": "^7.1.8",
-    "@types/mocha": "^10.0.8",
-    "@types/node": "^22.5.5",
+    "@types/mocha": "^10.0.9",
+    "@types/node": "^22.7.5",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "benchmark": "^2.1.4",
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.2",
-    "esbuild": "^0.23.1",
+    "esbuild": "^0.24.0",
     "eslint": "^8.57.1",
     "eslint-plugin-chai-expect": "^3.1.0",
-    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-json": "^4.0.1",
     "eslint-plugin-node": "^11.1.0",
     "fastbitset": "^0.4.1",
@@ -108,9 +108,9 @@
     "prettier": "^3.3.3",
     "tslib": "^2.7.0",
     "tsx": "^4.19.1",
-    "typedoc": "^0.26.7",
+    "typedoc": "^0.26.8",
     "typescript": "5.6.2"
   },
   "gypfile": true,
-  "roaring_version": "4.1.2"
+  "roaring_version": "4.2.1"
 }
