@@ -237,7 +237,7 @@ namespace v8utils {
    public:
     size_t length;
     T * data;
-    v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
+    v8::Global<v8::Value> bufferPersistent;
     std::shared_ptr<v8::BackingStore> backingStore;
 
     inline TypedArrayContent() : length(0), data(nullptr) {}

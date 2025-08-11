@@ -15,8 +15,8 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
   int64_t bitmapVersion;
   v8utils::TypedArrayContent<uint32_t> bufferContent;
 
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> bitmap;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+  v8::Global<v8::Object> bitmap;
+  v8::Global<v8::Object> persistent;
 
   explicit RoaringBitmap32BufferedIterator(AddonData * addonData, bool reversed) :
     ObjectWrap(addonData), reversed(reversed), bitmapInstance(nullptr) {

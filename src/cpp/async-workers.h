@@ -135,8 +135,8 @@ class AsyncWorker {
   WorkerError _error;
   bool _started;
   volatile bool _completed;
-  v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> _callback;
-  v8::Persistent<v8::Promise::Resolver, v8::CopyablePersistentTraits<v8::Promise::Resolver>> _resolver;
+  v8::Global<v8::Function> _callback;
+  v8::Global<v8::Promise::Resolver> _resolver;
 
   virtual bool _start() {
     this->_started = true;
@@ -422,7 +422,7 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
 class ToUint32ArrayAsyncWorker final : public AsyncWorker {
  public:
   const v8::FunctionCallbackInfo<v8::Value> & info;
-  v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bitmapPersistent;
+  v8::Global<v8::Value> bitmapPersistent;
   RoaringBitmap32 * bitmap = nullptr;
   v8utils::TypedArrayContent<uint32_t> inputContent;
   uint32_t * volatile allocatedBuffer = nullptr;
@@ -568,7 +568,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
 class SerializeWorker final : public AsyncWorker {
  public:
   const v8::FunctionCallbackInfo<v8::Value> & info;
-  v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bitmapPersistent;
+  v8::Global<v8::Value> bitmapPersistent;
   RoaringBitmapSerializer serializer;
 
   explicit SerializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
@@ -609,7 +609,7 @@ class SerializeWorker final : public AsyncWorker {
 class SerializeFileWorker final : public AsyncWorker {
  public:
   const v8::FunctionCallbackInfo<v8::Value> & info;
-  v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bitmapPersistent;
+  v8::Global<v8::Value> bitmapPersistent;
   RoaringBitmapFileSerializer serializer;
 
   explicit SerializeFileWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
@@ -740,7 +740,7 @@ class DeserializeFileWorker final : public AsyncWorker {
 
 class DeserializeParallelWorker : public ParallelAsyncWorker {
  public:
-  v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> bufferPersistent;
+  v8::Global<v8::Value> bufferPersistent;
 
   RoaringBitmapDeserializer * items;
 
@@ -799,7 +799,7 @@ class DeserializeParallelWorker : public ParallelAsyncWorker {
 
 class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
  public:
-  v8::Persistent<v8::Value, v8::CopyablePersistentTraits<v8::Value>> argPersistent;
+  v8::Global<v8::Value> argPersistent;
   v8utils::TypedArrayContent<uint32_t> buffer;
 
   explicit FromArrayAsyncWorker(v8::Isolate * isolate, AddonData * addonData) :
