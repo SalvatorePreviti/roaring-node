@@ -7207,19 +7207,19 @@ void RoaringBitmap32_asReadonlyView(const v8::FunctionCallbackInfo<v8::Value> & 
   info.GetReturnValue().Set(vlocal);
 }
 
-void RoaringBitmap32_size_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_size_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
   const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<const RoaringBitmap32>(info.This(), info.GetIsolate());
   auto size = self != nullptr ? self->getSize() : 0U;
   return size <= 0xFFFFFFFF ? info.GetReturnValue().Set((uint32_t)size) : info.GetReturnValue().Set((double)size);
 }
 
-void RoaringBitmap32_isEmpty_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_isEmpty_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
   const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<const RoaringBitmap32>(info.This(), info.GetIsolate());
   auto result = self == nullptr || self->isEmpty();
   return info.GetReturnValue().Set(result);
 }
 
-void RoaringBitmap32_isFrozen_getter(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
+void RoaringBitmap32_isFrozen_getter(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> & info) {
   const RoaringBitmap32 * self = ObjectWrap::TryUnwrap<const RoaringBitmap32>(info.This(), info.GetIsolate());
   info.GetReturnValue().Set(self == nullptr || self->isFrozen());
 }
