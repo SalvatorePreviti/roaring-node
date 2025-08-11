@@ -1,4 +1,4 @@
-import { resolve as pathResolve } from "path";
+const { resolve: pathResolve } = require("path");
 
 // Check that node is 12 or higher
 const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
