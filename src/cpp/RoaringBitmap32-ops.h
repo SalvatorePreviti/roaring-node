@@ -65,25 +65,25 @@ inline bool roaringAddMany(v8::Isolate * isolate, RoaringBitmap32 * self, v8::Lo
 }
 
 void RoaringBitmap32_andCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), info.GetIsolate());
   RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self && other ? (double)roaring_bitmap_and_cardinality(self->roaring, other->roaring) : -1);
 }
 
 void RoaringBitmap32_orCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), info.GetIsolate());
   RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self && other ? (double)roaring_bitmap_or_cardinality(self->roaring, other->roaring) : -1);
 }
 
 void RoaringBitmap32_andNotCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), info.GetIsolate());
   RoaringBitmap32 * other = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, 0);
   info.GetReturnValue().Set(self && other ? (double)roaring_bitmap_andnot_cardinality(self->roaring, other->roaring) : -1);
 }
 
 void RoaringBitmap32_xorCardinality(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), info.GetIsolate());
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), info.GetIsolate());
   if (self == nullptr) {
     return info.GetReturnValue().Set(0);
   }
@@ -94,7 +94,7 @@ void RoaringBitmap32_xorCardinality(const v8::FunctionCallbackInfo<v8::Value> & 
 void RoaringBitmap32_add(const v8::FunctionCallbackInfo<v8::Value> & info) {
   auto isolate = info.GetIsolate();
 
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -102,7 +102,7 @@ void RoaringBitmap32_add(const v8::FunctionCallbackInfo<v8::Value> & info) {
     return v8utils::throwError(isolate, ERROR_FROZEN);
   }
 
-  info.GetReturnValue().Set(info.Holder());
+  info.GetReturnValue().Set(info.This());
 
   bool changed = false;
   auto roaring = self->roaring;
@@ -144,7 +144,7 @@ void RoaringBitmap32_add(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -192,7 +192,7 @@ void RoaringBitmap32_tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_remove(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -239,7 +239,7 @@ void RoaringBitmap32_remove(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_addMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
   auto isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -249,7 +249,7 @@ void RoaringBitmap32_addMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() > 0) {
     self->invalidate();
     if (roaringAddMany(isolate, self, info[0])) {
-      return info.GetReturnValue().Set(info.Holder());
+      return info.GetReturnValue().Set(info.This());
     }
   }
   v8utils::throwTypeError(isolate, "Uint32Array, RoaringBitmap32 or Iterable<number> expected");
@@ -257,7 +257,7 @@ void RoaringBitmap32_addMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_pop(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -274,7 +274,7 @@ void RoaringBitmap32_pop(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_shift(const v8::FunctionCallbackInfo<v8::Value> & info) {
   auto isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -291,7 +291,7 @@ void RoaringBitmap32_shift(const v8::FunctionCallbackInfo<v8::Value> & info) {
 
 void RoaringBitmap32_clear(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return info.GetReturnValue().Set(false);
   }
@@ -313,7 +313,7 @@ void RoaringBitmap32_clear(const v8::FunctionCallbackInfo<v8::Value> & info) {
 void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info) {
   bool done = false;
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -359,7 +359,7 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
   }
 
   if (done) {
-    info.GetReturnValue().Set(info.Holder());
+    info.GetReturnValue().Set(info.This());
   } else {
     v8utils::throwTypeError(isolate, "Uint32Array, RoaringBitmap32 or Iterable<number> expected");
   }
@@ -367,7 +367,7 @@ void RoaringBitmap32_removeMany(const v8::FunctionCallbackInfo<v8::Value> & info
 
 void RoaringBitmap32_andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -380,14 +380,14 @@ void RoaringBitmap32_andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
     if (other != nullptr) {
       roaring_bitmap_and_inplace(self->roaring, other->roaring);
       self->invalidate();
-      return info.GetReturnValue().Set(info.Holder());
+      return info.GetReturnValue().Set(info.This());
     }
 
     RoaringBitmap32 tmp(self->addonData, 0U);
     if (roaringAddMany(isolate, &tmp, arg)) {
       roaring_bitmap_and_inplace(self->roaring, tmp.roaring);
       self->invalidate();
-      return info.GetReturnValue().Set(info.Holder());
+      return info.GetReturnValue().Set(info.This());
     }
   }
 
@@ -396,7 +396,7 @@ void RoaringBitmap32_andInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
 
 void RoaringBitmap32_xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
-  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
   if (!self) {
     return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
   }
@@ -409,14 +409,14 @@ void RoaringBitmap32_xorInPlace(const v8::FunctionCallbackInfo<v8::Value> & info
     if (other != nullptr) {
       roaring_bitmap_xor_inplace(self->roaring, other->roaring);
       self->invalidate();
-      return info.GetReturnValue().Set(info.Holder());
+      return info.GetReturnValue().Set(info.This());
     }
 
     RoaringBitmap32 tmp(self->addonData, 0U);
     roaringAddMany(info.GetIsolate(), &tmp, arg);
     roaring_bitmap_xor_inplace(self->roaring, tmp.roaring);
     self->invalidate();
-    return info.GetReturnValue().Set(info.Holder());
+    return info.GetReturnValue().Set(info.This());
   }
 
   return v8utils::throwTypeError(isolate, "Uint32Array, RoaringBitmap32 or Iterable<number> expected");

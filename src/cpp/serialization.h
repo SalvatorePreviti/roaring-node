@@ -120,7 +120,7 @@ class RoaringBitmapSerializer final : public RoaringBitmapSerializerBase {
     int formatArgIndex = 0;
     int bufferArgIndex = -1;
 
-    RoaringBitmap32 * bitmap = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+    RoaringBitmap32 * bitmap = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
     if (bitmap == nullptr) {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization on invalid object");
     }
@@ -206,7 +206,7 @@ class RoaringBitmapFileSerializer final : public RoaringBitmapSerializerBase {
     v8::Isolate * isolate = info.GetIsolate();
     v8::HandleScope scope(isolate);
 
-    RoaringBitmap32 * bitmap = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+    RoaringBitmap32 * bitmap = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
     if (bitmap == nullptr) {
       return v8utils::throwError(isolate, "RoaringBitmap32 serialization on invalid object");
     }
@@ -484,7 +484,7 @@ class RoaringBitmapDeserializer final : public RoaringBitmapDeserializerBase {
     v8::HandleScope scope(isolate);
 
     if (isInstanceMethod) {
-      this->targetBitmap = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+      this->targetBitmap = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
       if (this->targetBitmap == nullptr) {
         return WorkerError("RoaringBitmap32 deserialization on invalid object");
       }

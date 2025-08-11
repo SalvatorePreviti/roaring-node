@@ -64,7 +64,7 @@ void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Val
   v8::Isolate * isolate = info.GetIsolate();
 
   RoaringBitmap32BufferedIterator * instance =
-    ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.Holder(), isolate);
+    ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.This(), isolate);
 
   RoaringBitmap32 * bitmapInstance = instance ? instance->bitmapInstance : nullptr;
 
@@ -94,7 +94,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs to be called with new");
   }
 
-  auto holder = info.Holder();
+  auto holder = info.This();
 
   if (info.Length() < 2) {
     return v8utils::throwTypeError(isolate, "RoaringBitmap32BufferedIterator::ctor - needs 2 or 3 arguments");

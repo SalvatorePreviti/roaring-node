@@ -447,7 +447,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
   void before() final {
     v8::Isolate * isolate = info.GetIsolate();
 
-    RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.Holder(), isolate);
+    RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
     if (self == nullptr) {
       return this->setError(WorkerError(ERROR_INVALID_OBJECT));
     }
@@ -586,7 +586,7 @@ class SerializeWorker final : public AsyncWorker {
       if (this->maybeAddonData == nullptr) {
         this->maybeAddonData = this->serializer.self->addonData;
       }
-      this->bitmapPersistent.Reset(isolate, this->info.Holder());
+      this->bitmapPersistent.Reset(isolate, this->info.This());
       this->serializer.self->beginFreeze();
     }
   }
@@ -627,7 +627,7 @@ class SerializeFileWorker final : public AsyncWorker {
       if (this->maybeAddonData == nullptr) {
         this->maybeAddonData = this->serializer.self->addonData;
       }
-      this->bitmapPersistent.Reset(isolate, this->info.Holder());
+      this->bitmapPersistent.Reset(isolate, this->info.This());
       this->serializer.self->beginFreeze();
     }
   }
