@@ -45,7 +45,7 @@ jobs:
       - run: node ./scripts/test.js
       - name: Prebuild
         env:
-          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.PREBUILD_GITHUB_TOKEN }}
+          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node ./scripts/node-pre-gyp-publish.js
 
   post-test:
