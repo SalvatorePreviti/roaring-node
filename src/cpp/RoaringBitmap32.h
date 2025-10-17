@@ -24,8 +24,8 @@ class RoaringBitmap32 final : public ObjectWrap {
   int64_t _version;
   int64_t frozenCounter;
   RoaringBitmap32 * const readonlyViewOf;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> readonlyViewPersistent;
-  v8::Persistent<v8::Object, v8::CopyablePersistentTraits<v8::Object>> persistent;
+  v8::Global<v8::Object> readonlyViewPersistent;
+  v8::Global<v8::Object> persistent;
   v8utils::TypedArrayContent<uint8_t> frozenStorage;
 
   inline bool isEmpty() const {
