@@ -300,8 +300,8 @@ class ParallelAsyncWorker : public AsyncWorker {
 
  private:
   uv_work_t * _tasks;
-  volatile int32_t _pendingTasks;
-  volatile uint32_t _currentIndex;
+  std::atomic<int32_t> _pendingTasks;
+  std::atomic<uint32_t> _currentIndex;
 
   bool _start() override {
     if (concurrency == 0) {
@@ -337,10 +337,10 @@ class ParallelAsyncWorker : public AsyncWorker {
         setError(WorkerError("Error starting async parallel task"));
         break;
       }
-      ++_pendingTasks;
+      _pendingTasks.fetch_add(1, std::memory_order_relaxed);
     }
 
-    return _pendingTasks > 0;
+    return _pendingTasks.load(std::memory_order_acquire) > 0;
   }
 
   static void _parallelWork(uv_work_t * request) {
@@ -351,8 +351,8 @@ class ParallelAsyncWorker : public AsyncWorker {
       thread_local_isolate = worker->isolate;
       uint32_t loopCount = worker->loopCount;
       while (!worker->hasError() && !worker->_completed) {
-        const uint32_t prevIndex = worker->_currentIndex;
-        const uint32_t index = atomicIncrement32(&worker->_currentIndex) - 1;
+        const uint32_t prevIndex = worker->_currentIndex.load(std::memory_order_relaxed);
+        const uint32_t index = worker->_currentIndex.fetch_add(1, std::memory_order_relaxed);
         if (index >= loopCount || index < prevIndex) {
           break;
         }
@@ -370,7 +370,8 @@ class ParallelAsyncWorker : public AsyncWorker {
       return;
     }
 
-    if (--worker->_pendingTasks <= 0) {
+    int32_t remaining = worker->_pendingTasks.fetch_sub(1, std::memory_order_acq_rel) - 1;
+    if (remaining <= 0) {
       _complete(worker);
       return;
     }
