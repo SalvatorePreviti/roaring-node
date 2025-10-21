@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -23,7 +23,7 @@
     "url": "git+https://github.com/SalvatorePreviti/roaring-node.git"
   },
   "engines": {
-    "node": ">=16.14.0"
+    "node": ">=18.20.8"
   },
   "main": "index.js",
   "types": "index.d.ts",
@@ -83,7 +83,7 @@
   },
   "devDependencies": {
     "@balsamic/eslint-config": "^0.7.0",
-    "@octokit/rest": "22.0.0",
+    "@octokit/rest": "21.1.1",
     "@types/chai": "^5.2.3",
     "@types/chai-as-promised": "^8.0.2",
     "@types/mocha": "^10.0.10",
