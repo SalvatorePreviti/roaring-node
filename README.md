@@ -11,7 +11,7 @@ For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10
 
 ## Supported node versions
 
-Node 16.14+, 18+, 20+, 21, 22, and 24 are currently supported.
+Node 16.14+, 18+, 20+, 22, 24, 25 are currently supported.
 
 Node 8 and 10 support was dropped in release 2.0
 
@@ -296,5 +296,4 @@ To release a new version:
 - Locally, run `npm run build` and `npm run doc` to generate the final C source and generate the doc
 - Be sure `master` contains all the changes, and all is pushed.
 - Merge `master` into `publish` with a pull request, this will create a new release and prebuild and publish all the binaries for the new release. This will also update the docs.
-- Run manually the github action `publish to npm` via the Button in the actions page only if all the previous steps were successful 
-
+- Run manually the github action `publish to npm` via the Button in the actions page only if all the previous steps were successful
