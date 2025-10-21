@@ -30,6 +30,9 @@ jobs:
       matrix:
         node-version: ["18.20.8", "18.1.0", "20.9.0", "22.8.0", "24.5.0", "25.0.0"]
         os: [ubuntu-22.04, windows-2022, macos-13, macos-latest]
+        exclude:
+          - node-version: "25.0.0"
+            os: macos-13
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-node@v4
