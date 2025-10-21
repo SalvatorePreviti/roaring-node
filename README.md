@@ -20,6 +20,7 @@ If you want to contribute and submit a pull request, use the master branch.
 
 To release a new version:
 
+- To update to the latest version of CRoaring run `./scripts/update-roaring.sh`, this will pull the CRoaring as submodule to its latest version from CRoaring dev branch.
 - Ensure the version is manually increased in `package.json`
 - Locally, run `npm run build` and `npm run doc` to generate the final C source and generate the doc
 - Be sure `master` contains all the changes, and all is pushed.
