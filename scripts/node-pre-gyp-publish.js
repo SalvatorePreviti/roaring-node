@@ -236,15 +236,30 @@ async function startPublishAssets() {
     });
   };
 
+  // Ensure the release exists (initialize) and return the boolean result.
+  const ensureRelease = async () => {
+    if (!initializePromise) {
+      initializePromise = initialize();
+    }
+    return initializePromise;
+  };
+
   return {
     checkGithubKey,
     upload,
+    ensureRelease,
   };
 }
 
 if (require.main === module) {
   runMain(async () => {
-    const { upload } = await startPublishAssets();
-    await upload();
+    const publisher = await startPublishAssets();
+
+    const ensureVersion = process.argv.includes("--ensure-version") || process.argv.includes("ensure-version");
+    if (ensureVersion) {
+      return publisher.ensureRelease();
+    }
+
+    return publisher.upload();
   }, "node-pre-gyp-publish");
 }

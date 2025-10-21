@@ -69,11 +69,13 @@ async function main() {
   }
 
   const isDeploy = command === "deploy";
+  const ensureVersionFlag = process.argv.includes("--ensure-version");
+  const isEnsureCommand = command === "ensure-version";
   const isPackage = isDeploy || command === "package" || command === "pack";
 
   const publisher = isDeploy ? await startPublishAssets() : undefined;
 
-  if (isDeploy) {
+  if (isDeploy || isEnsureCommand) {
     publisher.checkGithubKey();
   }
 
@@ -148,6 +150,30 @@ async function main() {
     if (fs.existsSync(STAGE_TMP_DIR)) {
       await rmdir(STAGE_TMP_DIR, { recursive: true });
     }
+  }
+
+  // If invoked only to ensure the release/tag exists, do it now and exit.
+  if (ensureVersionFlag || isEnsureCommand) {
+    if (!publisher) {
+      console.log(
+        colors.yellow(
+          "No publisher available to ensure version. Are you running with 'deploy' or 'ensure-version' command?",
+        ),
+      );
+      process.exitCode = 1;
+      return;
+    }
+    const ok = await publisher.ensureRelease();
+    if (ok) {
+      console.log(colors.greenBright(`Release ${require("../package.json").version} exists or was created.`));
+      return;
+    }
+    console.log(
+      colors.yellowBright(
+        `Release ${require("../package.json").version} could not be ensured (branch or authentication?).`,
+      ),
+    );
+    process.exitCode = 1;
   }
 }
 
