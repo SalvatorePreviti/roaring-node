@@ -14,7 +14,7 @@ const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, forkAsync } = require("./li
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
 
-const NODE_VERSIONS = ["18.20.8", "18.1.0", "20.9.0", "22.8.0", "24.5.0", "25.0.0"];
+const NODE_VERSIONS = ["18.20.8", "20.9.0", "22.8.0", "24.5.0", "25.0.0"];
 
 const NATIVE_DIR = path.resolve(ROOT_FOLDER, "native");
 const STAGE_DIR = path.resolve(ROOT_FOLDER, "build/stage");
