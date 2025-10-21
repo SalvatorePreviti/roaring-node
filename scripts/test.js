@@ -1,31 +1,17 @@
 #!/usr/bin/env node
 
-const path = require("path");
 const { runMain } = require("./lib/utils");
 
 require("tsx/cjs");
 
 runMain(() => {
-  const nodeVersion = parseInt(process.versions.node.split(".")[0], 10);
-  if (nodeVersion < 14) {
-    const url = require("url");
-    if (!url.pathToFileURL) {
-      url.pathToFileURL = (filePath) => {
-        let pathName = path.resolve(filePath).replace(/\\/g, "/");
-        if (!pathName.startsWith("/")) {
-          pathName = `/${pathName}`;
-        }
-        return encodeURI(`file://${pathName}`).replace(/[?#]/g, encodeURIComponent);
-      };
+  const url = require("url");
+  require("mocha/lib/nodejs/esm-utils.js").doImport = (v) => {
+    if (typeof v === "object") {
+      v = url.fileURLToPath(v);
     }
-
-    require("mocha/lib/nodejs/esm-utils.js").doImport = (v) => {
-      if (typeof v === "object") {
-        v = url.fileURLToPath(v);
-      }
-      return new Promise((resolve) => resolve(require(v)));
-    };
-  }
+    return new Promise((resolve) => resolve(require(v)));
+  };
 
   const { print: printSystemInfo } = require("./system-info.js");
 
