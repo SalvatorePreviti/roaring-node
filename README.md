@@ -17,6 +17,8 @@ Node 8 and 10 support was dropped in release 2.0
 
 Node 12 and 14 support was dropped in release 2.3
 
+Node 16 and 21 support was dropped in release 2.6
+
 ## Worker thread support
 
 Directly transferring an instance without copy between worker threads is not currently supported, but you can create a frozen view on a SharedArrayBuffer using bufferAlignedAllocShared and pass it to the worker thread.
