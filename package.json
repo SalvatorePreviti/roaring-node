@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
