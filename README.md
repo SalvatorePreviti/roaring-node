@@ -9,13 +9,6 @@ Roaring bitmaps are compressed bitmaps. They can be hundreds of times faster.
 
 For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10.0, use [roaring-aws](https://www.npmjs.com/package/roaring-aws).
 
-## Branches
-
-Branch `publish` contains the latest published stable version.
-
-Branch `master` is the development branch that may contain code not yet published or ready for production.
-If you want to contribute and submit a pull request, use the master branch.
-
 ## Supported node versions
 
 Node 16.14+, 18+, 20+, 21, 22, and 24 are currently supported.
@@ -286,3 +279,22 @@ NodeJS   : v16.13.1 - V8 v9.4.146.24-node.14
 * completed: 27.170s```
 
 ````
+
+## Branches
+
+Branch `publish` contains the latest published stable version.
+
+Branch `master` is the development branch that may contain code not yet published or ready for production.
+If you want to contribute and submit a pull request, use the master branch.
+
+## For collaborators
+
+To release a new version:
+
+- To update to the latest version of CRoaring run `./scripts/update-roaring.sh`, this will pull the CRoaring as submodule to its latest version from CRoaring dev branch.
+- Ensure the version is manually increased in `package.json`
+- Locally, run `npm run build` and `npm run doc` to generate the final C source and generate the doc
+- Be sure `master` contains all the changes, and all is pushed.
+- Merge `master` into `publish` with a pull request, this will create a new release and prebuild and publish all the binaries for the new release. This will also update the docs.
+- Run manually the github action `publish to npm` via the Button in the actions page only if all the previous steps were successful 
+
