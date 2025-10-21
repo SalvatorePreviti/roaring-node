@@ -8,6 +8,7 @@
     "Roaring",
     "bitmaps"
   ],
+  "type": "commonjs",
   "license": "Apache-2.0",
   "author": "Salvatore Previti",
   "homepage": "https://github.com/SalvatorePreviti/roaring-node#readme",
