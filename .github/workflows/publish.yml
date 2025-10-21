@@ -60,6 +60,10 @@ jobs:
         with:
           node-version: "24.x"
       - uses: actions/checkout@v4
+      - name: npm install
+        run: npm install --exact --no-audit --no-save
+        env:
+          ROARING_NODE_PRE_GYP: "false"
       - name: Ensure release exists
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
