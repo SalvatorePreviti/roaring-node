@@ -121,11 +121,11 @@ export type TypedArray =
  * Checks if the given buffer is memory aligned.
  * If alignment is not specified, the default alignment of 32 is used.
  *
- * @param {TypedArray | Buffer | ArrayBuffer | SharedArrayBuffer | null | undefined} buffer The buffer to check.
+ * @param buffer The buffer to check.
  * @param {number} [alignment=32] The alignment to check.
  */
 export function isBufferAligned(
-  buffer: TypedArray | Buffer | ArrayBuffer | SharedArrayBuffer | null | undefined,
+  buffer: Buffer | TypedArray | ArrayBuffer | SharedArrayBuffer | null | undefined,
   alignment?: number,
 ): boolean;
 
@@ -141,7 +141,7 @@ export function isBufferAligned(
  * @memberof RoaringBitmap32
  */
 export function ensureBufferAligned(
-  buffer: Buffer | Uint8Array | Uint8ClampedArray | SharedArrayBuffer | Int8Array | ArrayBuffer,
+  buffer: Buffer | Uint8Array | Uint8ClampedArray | SharedArrayBuffer | TypedArray | ArrayBuffer,
   alignment?: number,
 ): Buffer;
 
@@ -2154,7 +2154,7 @@ export class RoaringBitmap32 {
    * @memberof RoaringBitmap32
    */
   static unsafeFrozenView(
-    storage: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | SharedArrayBuffer,
+    storage: Buffer | Uint8Array | Uint8ClampedArray | Int8Array | ArrayBuffer | TypedArray | SharedArrayBuffer,
     format: FrozenViewFormatType,
   ): RoaringBitmap32;
 
