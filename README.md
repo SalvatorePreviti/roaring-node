@@ -11,7 +11,7 @@ For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10
 
 ## Supported node versions
 
-Node 18+, 20+, 22, 24, 25 are currently supported.
+Node 18, 20, 22, 24, 25 are currently supported.
 
 Node 8 and 10 support was dropped in release 2.0
 
