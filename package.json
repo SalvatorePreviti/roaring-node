@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -23,7 +23,7 @@
     "url": "git+https://github.com/SalvatorePreviti/roaring-node.git"
   },
   "engines": {
-    "node": ">=16.14.0"
+    "node": ">=18.20.8"
   },
   "main": "index.js",
   "types": "index.d.ts",
@@ -68,10 +68,10 @@
     }
   },
   "dependencies": {
-    "@mapbox/node-pre-gyp": "^1.0.11"
+    "@mapbox/node-pre-gyp": "^2.0.0"
   },
   "peerDependencies": {
-    "node-gyp": "^10.2.0"
+    "node-gyp": "^11.5.0"
   },
   "peerDependenciesMeta": {
     "node-gyp": {
@@ -79,37 +79,37 @@
     }
   },
   "optionalDependencies": {
-    "node-gyp": "^10.2.0"
+    "node-gyp": "^11.5.0"
   },
   "devDependencies": {
     "@balsamic/eslint-config": "^0.7.0",
-    "@octokit/rest": "20.1.1",
-    "@types/chai": "^4.3.19",
-    "@types/chai-as-promised": "^7.1.8",
-    "@types/mocha": "^10.0.9",
-    "@types/node": "^22.7.5",
+    "@octokit/rest": "21.1.1",
+    "@types/chai": "^5.2.3",
+    "@types/chai-as-promised": "^8.0.2",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.9.1",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "benchmark": "^2.1.4",
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.2",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.11",
     "eslint": "^8.57.1",
     "eslint-plugin-chai-expect": "^3.1.0",
-    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-json": "^4.0.1",
     "eslint-plugin-node": "^11.1.0",
     "fastbitset": "^0.4.1",
-    "husky": "^9.1.6",
-    "lint-staged": "^15.2.10",
-    "mocha": "^10.7.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "mocha": "^10.8.2",
     "node-fetch-cjs": "^3.3.2",
     "physical-cpu-count": "^2.0.0",
-    "prettier": "^3.3.3",
-    "tslib": "^2.7.0",
-    "tsx": "^4.19.1",
-    "typedoc": "^0.26.8",
-    "typescript": "5.6.2"
+    "prettier": "^3.6.2",
+    "tslib": "^2.8.1",
+    "tsx": "^4.20.6",
+    "typedoc": "^0.28.14",
+    "typescript": "5.9.3"
   },
   "gypfile": true,
   "roaring_version": "4.4.2"
