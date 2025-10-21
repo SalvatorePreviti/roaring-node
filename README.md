@@ -16,6 +16,16 @@ Branch `publish` contains the latest published stable version.
 Branch `master` is the development branch that may contain code not yet published or ready for production.
 If you want to contribute and submit a pull request, use the master branch.
 
+## For collaborators
+
+To release a new version:
+
+- Ensure the version is manually increased in `package.json`
+- Locally, run `npm run build` and `npm run doc` to generate the final C source and generate the doc
+- Be sure `master` contains all the changes, and all is pushed.
+- Merge `master` into `publish` with a pull request, this will create a new release and prebuild and publish all the binaries for the new release. This will also update the docs.
+- Run manually the github action `publish to npm` via the Button in the actions page
+
 ## Supported node versions
 
 Node 16.14+, 18+, 20+, 21, 22, and 24 are currently supported.
