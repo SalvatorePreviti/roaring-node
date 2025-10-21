@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "24.x"
       - uses: actions/checkout@v4
       - run: npm install --exact --no-audit --no-save
         env:
@@ -60,7 +60,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: "18.16.0"
+          node-version: "24.x"
       - uses: actions/checkout@v4
       - run: npm install
       - run: node ./scripts/test.js
@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 24.x
 
       - name: npm install
         run: npm install --exact --no-audit --no-save
