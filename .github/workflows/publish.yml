@@ -49,7 +49,7 @@ jobs:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node ./scripts/node-pre-gyp-publish.js --ensure-version
 
-  prebuild:
+  build-and-upload:
     needs: ensure-release
     strategy:
       matrix:
@@ -115,7 +115,7 @@ jobs:
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
       - run: node ./scripts/test.js
-      - name: Prebuild
+      - name: Upload artifact
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -123,7 +123,7 @@ jobs:
           node ./scripts/node-pre-gyp-publish.js --overwrite
 
   post-test:
-    needs: prebuild
+    needs: build-and-upload
     strategy:
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-latest]
@@ -137,7 +137,7 @@ jobs:
       - run: node ./scripts/test.js
 
   publish-release:
-    needs: [prebuild, post-test]
+    needs: post-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
