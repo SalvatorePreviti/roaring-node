@@ -65,9 +65,6 @@ function roaring32NodePreGyp() {
 
       console.time("rebuild");
       const rebuildArgs = ["rebuild"];
-      if (glibc) {
-        rebuildArgs.push(`--target_libc=${glibc}`);
-      }
       await forkAsync(__filename, rebuildArgs);
       console.log();
       console.timeEnd("rebuild");
@@ -93,9 +90,6 @@ function roaring32NodePreGyp() {
       console.log("* packaging...");
       console.time("packaging");
       const packageArgs = ["package", "testpackage"];
-      if (glibc) {
-        packageArgs.push(`--target_libc=${glibc}`);
-      }
       await forkAsync(__filename, packageArgs);
       console.timeEnd("packaging");
       console.log();

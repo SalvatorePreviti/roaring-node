@@ -7,38 +7,86 @@ on:
       - publish
 
 jobs:
-  test:
-    name: test
+  ensure-release:
+    name: ensure-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
       - uses: actions/checkout@v4
-      - run: npm install --exact --no-audit --no-save
+      - name: npm install
+        run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
-      - run: node ./node-pre-gyp.js
+      - name: test
+        run: node ./scripts/test.js
+      - name: test memory leaks
+        run: node --expose-gc ./scripts/test-memory-leaks.js
+      - name: Ensure release exists
         env:
-          ROARING_NODE_PRE_GYP: "custom-rebuild"
-      - run: node ./scripts/test.js
-      - run: node --expose-gc ./scripts/test-memory-leaks.js
+          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node ./scripts/node-pre-gyp-publish.js --ensure-version
 
   prebuild:
-    needs: [test, ensure-release]
+    needs: ensure-release
     strategy:
       matrix:
-        node-version: ["18.20.8", "20.9.0", "22.8.0", "24.5.0", "25.0.0"]
-        os: [ubuntu-22.04, windows-2022, macos-13, macos-latest]
-        exclude:
+        include:
+          #
+          # Linux jobs with exact Node version in container - to match glibc versions
+          #
+          - node-version: "18.20.8"
+            os: ubuntu-latest
+            container: "node:18.20.8-bullseye"
+          - node-version: "20.9.0"
+            os: ubuntu-latest
+            container: "node:20.9.0-bullseye"
+          - node-version: "22.8.0"
+            os: ubuntu-latest
+            container: "node:22.8.0-bullseye"
+          - node-version: "24.10.0"
+            os: ubuntu-latest
+            container: "node:24.10.0-bullseye"
+          - node-version: "25.0.0"
+            os: ubuntu-latest
+            container: "node:25.0.0-bullseye"
+          #
+          # Windows jobs
+          #
+          - node-version: "18.20.8"
+            os: windows-2022
+          - node-version: "20.9.0"
+            os: windows-2022
+          - node-version: "22.8.0"
+            os: windows-2022
+          - node-version: "24.10.0"
+            os: windows-2022
+          - node-version: "25.0.0"
+            os: windows-2022
+          #
+          # macOS jobs
+          #
+          - node-version: "18.20.8"
+            os: macos-13
+          - node-version: "20.9.0"
+            os: macos-13
+          - node-version: "22.8.0"
+            os: macos-13
+          - node-version: "24.10.0"
+            os: macos-13
           - node-version: "25.0.0"
             os: macos-13
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      # Only use setup-node for Windows/macOS
+      - name: Setup Node (non-Linux)
+        if: runner.os != 'Linux'
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: actions/checkout@v4
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
@@ -51,26 +99,8 @@ jobs:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node ./scripts/node-pre-gyp-publish.js
 
-  ensure-release:
-    name: ensure-release
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24.x"
-      - uses: actions/checkout@v4
-      - name: npm install
-        run: npm install --exact --no-audit --no-save
-        env:
-          ROARING_NODE_PRE_GYP: "false"
-      - name: Ensure release exists
-        env:
-          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./scripts/node-pre-gyp-publish.js --ensure-version
-
   post-test:
-    needs: [test, prebuild]
+    needs: prebuild
     strategy:
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-latest]
@@ -84,7 +114,7 @@ jobs:
       - run: node ./scripts/test.js
 
   docs:
-    needs: [test, prebuild, post-test]
+    needs: [prebuild, post-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
