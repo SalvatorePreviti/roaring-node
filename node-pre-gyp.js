@@ -51,6 +51,12 @@ function roaring32NodePreGyp() {
         glibc = header.glibcVersionRuntime;
       } catch {}
 
+      if (typeof glibc !== "string" || !glibc || glibc === "unknown") {
+        glibc = null;
+      } else {
+        glibc = glibc.trim();
+      }
+
       console.log("versions:", {
         node: process.version,
         v8: process.versions.v8,
@@ -58,7 +64,11 @@ function roaring32NodePreGyp() {
       });
 
       console.time("rebuild");
-      await forkAsync(__filename, ["rebuild"]);
+      const rebuildArgs = ["rebuild"];
+      if (glibc) {
+        rebuildArgs.push(`--target_libc=${glibc}`);
+      }
+      await forkAsync(__filename, rebuildArgs);
       console.log();
       console.timeEnd("rebuild");
       console.log();
@@ -82,7 +92,11 @@ function roaring32NodePreGyp() {
       console.log();
       console.log("* packaging...");
       console.time("packaging");
-      await forkAsync(__filename, ["package", "testpackage"]);
+      const packageArgs = ["package", "testpackage"];
+      if (glibc) {
+        packageArgs.push(`--target_libc=${glibc}`);
+      }
+      await forkAsync(__filename, packageArgs);
       console.timeEnd("packaging");
       console.log();
     };
