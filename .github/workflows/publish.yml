@@ -120,7 +120,7 @@ jobs:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
-          node ./scripts/node-pre-gyp-publish.js
+          node ./scripts/node-pre-gyp-publish.js --overwrite
 
   post-test:
     needs: prebuild
