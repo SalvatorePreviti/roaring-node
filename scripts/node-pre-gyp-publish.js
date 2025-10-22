@@ -141,9 +141,7 @@ async function startPublishAssets() {
       console.log();
       console.warn(
         colors.yellowBright(
-          `⚠️ ${colors.underline("WARNING")}: Release ${
-            packageJson.version
-          } is a draft release, YOU MUST MANUALLY PUBLISH THIS DRAFT IN GITHUB.`,
+          `⚠️ ${colors.underline("WARNING")}: Release ${packageJson.version} is a draft release not yet published.`,
         ),
       );
       console.log();

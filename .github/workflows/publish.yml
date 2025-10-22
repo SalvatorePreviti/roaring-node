@@ -11,10 +11,6 @@ jobs:
     name: ensure-release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24.x"
       - name: Check triggering actor is a collaborator
         uses: actions/github-script@v6
         with:
@@ -27,15 +23,28 @@ jobs:
             } catch (err) {
               core.setFailed(`User ${username} is not a repository collaborator. Only collaborators can run this workflow.`);
             }
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      - name: Mark git workspace safe
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
       - name: npm install
         run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
+
       - name: test
         run: node ./scripts/test.js
+
       - name: test memory leaks
         run: node --expose-gc ./scripts/test-memory-leaks.js
-      - name: Ensure release exists
+
+      - name: Ensure release exists (pre-install)
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node ./scripts/node-pre-gyp-publish.js --ensure-version
@@ -62,7 +71,7 @@ jobs:
             container: "node:24.10.0-bullseye"
           - node-version: "25.0.0"
             os: ubuntu-latest
-            container: "node:25.0.0-bullseye"
+            container: "node:25.0.0-bookworm"
           #
           # Windows jobs
           #
@@ -93,8 +102,8 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v4
-      # Only use setup-node for Windows/macOS
       - name: Setup Node (non-Linux)
+        # Only use setup-node for Windows/macOS
         if: runner.os != 'Linux'
         uses: actions/setup-node@v4
         with:
@@ -109,7 +118,9 @@ jobs:
       - name: Prebuild
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./scripts/node-pre-gyp-publish.js
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          node ./scripts/node-pre-gyp-publish.js
 
   post-test:
     needs: prebuild
