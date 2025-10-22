@@ -299,5 +299,5 @@ To release a new version:
 - Be sure `master` contains all the changes, and all is pushed.
 - Merge `master` into `publish` with a pull request, this will create a new release and prebuild and publish all the binaries for the new release. This will also update the docs.
 - Verify that the github action `Publish` went well and is completed. This action is triggered by any change in `publish` branch.
-- Go to https://github.com/SalvatorePreviti/roaring-node/releases and publish the release just created as draft
+- Go to https://github.com/SalvatorePreviti/roaring-node/releases and verify the release is present and published
 - Run manually the github action `publish to npm` via the Button in the actions page only if all the previous steps were successful

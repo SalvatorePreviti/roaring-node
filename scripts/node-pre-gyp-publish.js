@@ -288,14 +288,14 @@ if (require.main === module) {
 
     const ensureVersion = process.argv.includes("--ensure-version") || process.argv.includes("ensure-version");
     if (ensureVersion) {
-      return publisher.ensureRelease();
+      await publisher.ensureRelease();
     }
+
+    await publisher.upload();
 
     const publishVersion = process.argv.includes("--publish-version") || process.argv.includes("publish-version");
     if (publishVersion) {
-      return publisher.publishVersion();
+      await publisher.publishVersion();
     }
-
-    return publisher.upload();
   }, "node-pre-gyp-publish");
 }
