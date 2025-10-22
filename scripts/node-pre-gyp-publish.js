@@ -196,7 +196,8 @@ async function startPublishAssets() {
       }
 
       if (!release.draft) {
-        if (process.argv.includes("--overwrite")) {
+        const canOverwrite = process.argv.includes("--overwrite");
+        if (canOverwrite) {
           console.log();
           console.warn(
             colors.yellowBright(`⚠️ WARNING: Overwriting uploaded asset ${name} in release ${packageJson.version}`),
@@ -210,9 +211,11 @@ async function startPublishAssets() {
           console.log();
           return;
         }
-        throw new Error(
-          `${packageJson.version} in release ${packageJson.version} was already published, aborting. Run with the argument "--overwrite" or "--no-overwrite".`,
-        );
+        if (!canOverwrite) {
+          throw new Error(
+            `${packageJson.version} in release ${packageJson.version} was already published, aborting. Run with the argument "--overwrite" or "--no-overwrite".`,
+          );
+        }
       }
 
       console.log(colors.yellow(`Deleting asset ${foundAsset.name} id:${foundAsset.id} to replace it`));
