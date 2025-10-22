@@ -287,13 +287,16 @@ if (require.main === module) {
     const publisher = await startPublishAssets();
 
     const ensureVersion = process.argv.includes("--ensure-version") || process.argv.includes("ensure-version");
+    const publishVersion = process.argv.includes("--publish-version") || process.argv.includes("publish-version");
+
     if (ensureVersion) {
       await publisher.ensureRelease();
     }
 
-    await publisher.upload();
+    if (!ensureVersion && !publishVersion) {
+      await publisher.upload();
+    }
 
-    const publishVersion = process.argv.includes("--publish-version") || process.argv.includes("publish-version");
     if (publishVersion) {
       await publisher.publishVersion();
     }

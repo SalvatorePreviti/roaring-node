@@ -133,11 +133,21 @@ jobs:
         with:
           node-version: "24.x"
       - uses: actions/checkout@v4
-      - run: npm install
+      - run: npm install --exact --no-audit --no-save
+      - run: node ./scripts/test.js
+
+  post-test-node24-slim:
+    name: post-test-node24-slim
+    needs: build-and-upload
+    runs-on: ubuntu-latest
+    container: node:24.10.0-bullseye-slim
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install --exact --no-audit --no-save
       - run: node ./scripts/test.js
 
   publish-release:
-    needs: post-test
+    needs: [post-test, post-test-node24-slim]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
