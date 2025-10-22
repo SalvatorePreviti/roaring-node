@@ -11,14 +11,26 @@ jobs:
     name: ensure-release
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
-      - uses: actions/checkout@v4
+      - name: Check triggering actor is a collaborator
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const username = context.actor;
+            try {
+              await github.rest.repos.checkCollaborator({ owner, repo, username });
+              core.info(`User ${username} is a collaborator`);
+            } catch (err) {
+              core.setFailed(`User ${username} is not a repository collaborator. Only collaborators can run this workflow.`);
+            }
       - name: npm install
         run: npm install --exact --no-audit --no-save
         env:
-          ROARING_NODE_PRE_GYP: "false"
+          ROARING_NODE_PRE_GYP: "custom-rebuild"
       - name: test
         run: node ./scripts/test.js
       - name: test memory leaks
@@ -113,7 +125,7 @@ jobs:
       - run: npm install
       - run: node ./scripts/test.js
 
-  docs:
+  publish-release:
     needs: [prebuild, post-test]
     runs-on: ubuntu-latest
     steps:
@@ -135,3 +147,8 @@ jobs:
         with:
           branch: gh-pages
           folder: docs
+
+      - name: Publish release (convert draft -> published)
+        env:
+          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node ./scripts/node-pre-gyp-publish.js --publish-version

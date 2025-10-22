@@ -244,10 +244,40 @@ async function startPublishAssets() {
     return initializePromise;
   };
 
+  const publishVersion = async () => {
+    if (!initializePromise) {
+      initializePromise = initialize();
+    }
+    if (!(await initializePromise)) {
+      return;
+    }
+
+    if (!release) {
+      throw new Error("Release not found after initialize");
+    }
+
+    if (!release.draft) {
+      console.log(colors.yellow(`Release ${release.tag_name} is already published`));
+      return;
+    }
+
+    console.log(colors.cyanBright(`Publishing release ${release.tag_name} ...`));
+    const updated = await octokit.rest.repos.updateRelease({
+      owner,
+      repo,
+      release_id: release.id,
+      draft: false,
+    });
+
+    release = updated.data;
+    console.log(colors.green(`Release ${release.tag_name} published`));
+  };
+
   return {
     checkGithubKey,
     upload,
     ensureRelease,
+    publishVersion,
   };
 }
 
@@ -258,6 +288,11 @@ if (require.main === module) {
     const ensureVersion = process.argv.includes("--ensure-version") || process.argv.includes("ensure-version");
     if (ensureVersion) {
       return publisher.ensureRelease();
+    }
+
+    const publishVersion = process.argv.includes("--publish-version") || process.argv.includes("publish-version");
+    if (publishVersion) {
+      return publisher.publishVersion();
     }
 
     return publisher.upload();
