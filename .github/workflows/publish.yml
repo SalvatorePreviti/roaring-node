@@ -89,15 +89,15 @@ jobs:
           # macOS jobs
           #
           - node-version: "18.20.8"
-            os: macos-13
+            os: macos-latest
           - node-version: "20.9.0"
-            os: macos-13
+            os: macos-latest
           - node-version: "22.8.0"
-            os: macos-13
+            os: macos-latest
           - node-version: "24.10.0"
-            os: macos-13
+            os: macos-latest
           - node-version: "25.0.0"
-            os: macos-13
+            os: macos-latest
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     steps:
