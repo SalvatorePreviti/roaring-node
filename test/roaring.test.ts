@@ -1,5 +1,5 @@
-import roaring from "..";
 import { expect } from "chai";
+import roaring from "..";
 
 import RoaringBitmap32 from "../RoaringBitmap32";
 import RoaringBitmap32Iterator from "../RoaringBitmap32Iterator";

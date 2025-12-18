@@ -19,9 +19,7 @@ jobs:
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
-      - run: npx tsc --noEmit
-      - run: npx eslint --no-error-on-unmatched-pattern --max-warnings=0
-      - run: npx prettier --loglevel=warn --check .
+      - run: npm run lint
       - run: node ./node-pre-gyp.js
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"

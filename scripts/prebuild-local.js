@@ -7,8 +7,8 @@
 
 const colors = require("ansis");
 const { print: printSystemInfo } = require("./system-info");
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, forkAsync } = require("./lib/utils");
 

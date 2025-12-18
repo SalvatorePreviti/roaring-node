@@ -1,5 +1,5 @@
+import { use as chaiUse, expect } from "chai";
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect, use as chaiUse } from "chai";
 
 chaiUse(require("chai-as-promised"));
 
@@ -920,7 +920,9 @@ describe("RoaringBitmap32 basic", () => {
     it("does nothing for an empty roaring bitmap", () => {
       let invoked = false;
       const bitmap = new RoaringBitmap32();
-      bitmap.forEach(() => (invoked = true));
+      bitmap.forEach(() => {
+        invoked = true;
+      });
       expect(invoked).to.equal(false);
     });
 
@@ -938,7 +940,9 @@ describe("RoaringBitmap32 basic", () => {
       const invoked: any[] = [];
       const bitmap = new RoaringBitmap32([2, 5, 1, 7, 6]);
 
-      bitmap.forEach((...args) => invoked.push(args));
+      bitmap.forEach((...args) => {
+        invoked.push(args);
+      });
       expect(invoked).to.deep.equal([
         [1, 0, bitmap],
         [2, 1, bitmap],
@@ -1085,11 +1089,11 @@ describe("RoaringBitmap32 basic", () => {
   describe("findIndex", () => {
     it("finds the index of an item", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
-      expect(bitmap.findIndex((x) => x === 4)).eq(3);
+      expect(bitmap.indexOf(4)).eq(3);
     });
     it("returns -1 if the item is not found", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
-      expect(bitmap.findIndex((x) => x === 7)).eq(-1);
+      expect(bitmap.indexOf(7)).eq(-1);
     });
   });
 

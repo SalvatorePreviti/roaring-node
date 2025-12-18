@@ -1,5 +1,5 @@
 const colors = require("ansis");
-const readline = require("readline");
+const readline = require("node:readline");
 
 const spinner = {
   interval: null,

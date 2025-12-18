@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const colors = require("ansis");
-const os = require("os");
+const os = require("node:os");
 
 function getSystemInfo() {
   const cpus = os.cpus();
@@ -9,7 +9,7 @@ function getSystemInfo() {
 
   try {
     physicalCpuCount = require("physical-cpu-count");
-  } catch (e) {
+  } catch (_e) {
     // Ignore error
   }
   if (!physicalCpuCount) {

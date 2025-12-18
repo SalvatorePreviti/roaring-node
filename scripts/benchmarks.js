@@ -3,9 +3,9 @@
 const systemInfo = require("./system-info");
 const promiseMap = require("./benchmarks/promiseMap");
 const colors = require("ansis");
-const path = require("path");
-const fs = require("fs");
-const { fork } = require("child_process");
+const path = require("node:path");
+const fs = require("node:fs");
+const { fork } = require("node:child_process");
 const benchReport = require("./benchmarks/benchReport");
 const spinner = require("./benchmarks/spinner");
 const { runMain } = require("./lib/utils");

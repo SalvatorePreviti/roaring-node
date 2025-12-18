@@ -1,5 +1,5 @@
-import RoaringBitmap32 from "../../RoaringBitmap32";
 import { expect } from "chai";
+import RoaringBitmap32 from "../../RoaringBitmap32";
 
 interface ReadonlySetLike<T> {
   /**

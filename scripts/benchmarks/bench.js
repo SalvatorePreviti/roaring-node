@@ -130,7 +130,7 @@ async function runSuite(suiteDeclaration) {
       error,
       hasErrors: benchSuite.hasErrors,
       benchs: benchSuite.results,
-      fastest: fastest && fastest.name,
+      fastest: fastest?.name,
     });
   }
 }

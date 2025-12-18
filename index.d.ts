@@ -1747,7 +1747,7 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32 {
  */
 export class RoaringBitmap32 {
   // Allows: import RoaringBitmap32 from 'roaring/RoaringBitmap32'
-  private static readonly default: typeof RoaringBitmap32;
+  static readonly default: typeof RoaringBitmap32;
 
   static readonly SerializationFormat: typeof SerializationFormat;
 
@@ -1872,7 +1872,7 @@ export class RoaringBitmap32 {
    * @constant
    * @type {string} The version of the CRoaring library as a string. Example: "0.2.42"
    */
-  static get CRoaringVersion(): string;
+  static readonly CRoaringVersion: string;
 
   /**
    * Property: The version of the roaring npm package as a string.
@@ -1882,7 +1882,7 @@ export class RoaringBitmap32 {
    * @constant
    * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
    */
-  static get PackageVersion(): string;
+  static readonly PackageVersion: string;
 
   /**
    * Creates an instance of RoaringBitmap32 with a given initial capacity.
@@ -2355,10 +2355,10 @@ export class RoaringBitmap32 {
  * @implements {IterableIterator<number>}
  */
 export class RoaringBitmap32Iterator implements IterableIterator<number> {
-  get isReverseIterator(): boolean;
+  readonly isReverseIterator: boolean;
 
   // Allows: import RoaringBitmap32Iterator from 'roaring/RoaringBitmap32Iterator'
-  private static readonly default: typeof RoaringBitmap32Iterator;
+  static readonly default: typeof RoaringBitmap32Iterator;
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
@@ -2419,7 +2419,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
  */
 export class RoaringBitmap32ReverseIterator implements IterableIterator<number> {
   // Allows: import RoaringBitmap32ReverseIterator from 'roaring/RoaringBitmap32ReverseIterator'
-  private static readonly default: typeof RoaringBitmap32ReverseIterator;
+  static readonly default: typeof RoaringBitmap32ReverseIterator;
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
@@ -2569,7 +2569,7 @@ export interface RoaringBitmap32Statistics {
  * @type {string} The version of the CRoaring library as a string. Example: "0.2.42"
  * @memberof RoaringModule
  */
-export const CRoaringVersion: string;
+export declare const CRoaringVersion: string;
 
 /**
  * Property: The version of the roaring npm package as a string.
@@ -2580,7 +2580,7 @@ export const CRoaringVersion: string;
  * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
  * @memberof RoaringModule
  */
-export const PackageVersion: string;
+export declare const PackageVersion: string;
 
 export default roaring;
 

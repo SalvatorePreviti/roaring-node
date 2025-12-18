@@ -1,8 +1,8 @@
 const colors = require("ansis");
-const util = require("util");
-const fs = require("fs");
-const path = require("path");
-const { spawn, fork } = require("child_process");
+const util = require("node:util");
+const fs = require("node:fs");
+const path = require("node:path");
+const { spawn, fork } = require("node:child_process");
 
 const ROOT_FOLDER = path.resolve(__dirname, "../../");
 const CPP_SRC_FOLDER_PATH = path.resolve(ROOT_FOLDER, "src/cpp");

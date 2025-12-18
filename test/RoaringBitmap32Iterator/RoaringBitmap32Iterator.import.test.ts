@@ -1,5 +1,5 @@
-import RoaringBitmap32Iterator from "../../RoaringBitmap32Iterator";
 import { expect } from "chai";
+import RoaringBitmap32Iterator from "../../RoaringBitmap32Iterator";
 
 describe("RoaringBitmap32Iterator import", () => {
   it('exports itself with a "default" property', () => {

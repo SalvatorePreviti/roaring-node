@@ -1,9 +1,9 @@
-import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect, use as chaiUse } from "chai";
-import path from "path";
-import fs from "fs";
+import fs from "node:fs";
+import path from "node:path";
+import { use as chaiUse, expect } from "chai";
 import type { FileSerializationDeserializationFormatType } from "../..";
 import { FileDeserializationFormat, FileSerializationFormat } from "../..";
+import RoaringBitmap32 from "../../RoaringBitmap32";
 
 const tmpDir = path.resolve(__dirname, "..", "..", ".tmp", "tests");
 

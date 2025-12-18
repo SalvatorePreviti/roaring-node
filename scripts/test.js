@@ -5,7 +5,7 @@ const { runMain } = require("./lib/utils");
 require("tsx/cjs");
 
 runMain(() => {
-  const url = require("url");
+  const url = require("node:url");
   require("mocha/lib/nodejs/esm-utils.js").doImport = (v) => {
     if (typeof v === "object") {
       v = url.fileURLToPath(v);

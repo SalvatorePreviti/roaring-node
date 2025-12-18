@@ -1,5 +1,5 @@
+import { use as chaiUse, expect } from "chai";
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect, use as chaiUse } from "chai";
 
 chaiUse(require("chai-as-promised"));
 

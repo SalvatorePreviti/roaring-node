@@ -1,5 +1,5 @@
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
-const { parentPort } = require("worker_threads");
+const { parentPort } = require("node:worker_threads");
 const { expect } = require("chai");
 
 process.on("uncaughtException", (err) => {

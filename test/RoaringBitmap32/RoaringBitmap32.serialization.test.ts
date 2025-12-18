@@ -1,6 +1,6 @@
-import RoaringBitmap32 from "../../RoaringBitmap32";
-import { DeserializationFormat, SerializationFormat } from "../..";
 import { expect } from "chai";
+import { DeserializationFormat, SerializationFormat } from "../..";
+import RoaringBitmap32 from "../../RoaringBitmap32";
 
 describe("RoaringBitmap32 serialization", () => {
   const data = [1, 2, 3, 4, 5, 6, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff];

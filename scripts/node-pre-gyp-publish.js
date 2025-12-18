@@ -27,16 +27,16 @@ SOFTWARE.
 
 */
 
-const path = require("path");
-const fs = require("fs");
+const path = require("node:path");
+const fs = require("node:fs");
 const colors = require("ansis");
 
 const { Octokit } = require("@octokit/rest");
 
 const packageJson = require("../package.json");
 const { runMain } = require("./lib/utils");
-const crypto = require("crypto");
-const { execSync } = require("child_process");
+const crypto = require("node:crypto");
+const { execSync } = require("node:child_process");
 
 module.exports = {
   startPublishAssets,
@@ -68,7 +68,7 @@ async function startPublishAssets() {
           .replace("\n", "")
           .replace("\r", "")
           .trim();
-      } catch (e) {}
+      } catch (_e) {}
     }
 
     if (!NODE_PRE_GYP_GITHUB_TOKEN) {
@@ -147,7 +147,7 @@ async function startPublishAssets() {
       console.log();
     }
 
-    for (const asset of (release && release.assets) || []) {
+    for (const asset of release?.assets || []) {
       assetsByName.set(asset.name, asset);
     }
 

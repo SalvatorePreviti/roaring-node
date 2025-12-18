@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 const colors = require("ansis");
-const path = require("path");
-const fs = require("fs");
+const path = require("node:path");
+const fs = require("node:fs");
 const { runMain, forkAsync } = require("./lib/utils");
 
 const { CPP_UNITY_FILE_PATH, ROOT_FOLDER, getBinaryOutputFilePath } = require("./lib/utils");

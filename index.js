@@ -23,8 +23,8 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 
 */
 
-const path = require("path");
-const util = require("util");
+const path = require("node:path");
+const util = require("node:util");
 
 const roaring = (() => {
   try {
@@ -472,7 +472,12 @@ if (!roaring[initializedSym]) {
   let packageVersion = null;
 
   defineProp("PackageVersion", {
-    get: () => (packageVersion !== null ? packageVersion : (packageVersion = require("./package.json").version)),
+    get: () => {
+      if (packageVersion === null) {
+        packageVersion = require("./package.json").version;
+      }
+      return packageVersion;
+    },
     configurable: false,
     enumerable: true,
   });

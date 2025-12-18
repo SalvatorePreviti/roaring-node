@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const { execSync } = require("child_process");
-const fs = require("fs");
+const { execSync } = require("node:child_process");
+const fs = require("node:fs");
 
 const { CPP_UNITY_FILE_PATH, runMain } = require("./lib/utils");
 const { unity } = require("./lib/unity");
