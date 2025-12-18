@@ -1,6 +1,6 @@
 {
   "name": "roaring",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "private": false,
   "description": "CRoaring official port for NodeJS",
   "keywords": [
@@ -47,7 +47,8 @@
   ],
   "binary": {
     "module_name": "roaring",
-    "module_path": "./native/roaring-{node_abi}-{platform}-{arch}",
+    "module_path": "./native/roaring-{node_abi}-{platform}-{arch}-{libc}",
+    "package_name": "roaring-v{version}-{node_abi}-{platform}-{arch}-{libc}.tar.gz",
     "host": "https://github.com/SalvatorePreviti/roaring-node/releases/download/",
     "remote_path": "{version}"
   },
@@ -57,11 +58,11 @@
     "build": "node ./scripts/build.js",
     "update-roaring": "./scripts/update-roaring.sh",
     "build-dev": "node ./scripts/build.js --dev",
-    "test": "node ./scripts/test.js",
-    "lint": "eslint . && tsc",
-    "lint:fix": "eslint . --fix && prettier --write . && tsc",
+    "test": "vitest run",
+    "lint": "biome check --diagnostic-level=error --files-ignore-unknown=true . && tsc --noEmit",
+    "lint:fix": "biome check --write --files-ignore-unknown=true . && tsc --noEmit",
     "doc": "typedoc ./index.d.ts",
-    "benchmarks": "node --expose-gc ./scripts/benchmarks.js"
+    "benchmarks": "vitest bench --run"
   },
   "husky": {
     "hooks": {
@@ -69,10 +70,10 @@
     }
   },
   "dependencies": {
-    "@mapbox/node-pre-gyp": "^2.0.0"
+    "@mapbox/node-pre-gyp": "^2.0.3"
   },
   "peerDependencies": {
-    "node-gyp": "^11.5.0"
+    "node-gyp": "^12.1.0"
   },
   "peerDependenciesMeta": {
     "node-gyp": {
@@ -80,38 +81,25 @@
     }
   },
   "optionalDependencies": {
-    "node-gyp": "^11.5.0"
+    "node-gyp": "^12.1.0"
   },
   "devDependencies": {
-    "@balsamic/eslint-config": "^0.7.0",
-    "@octokit/rest": "20.1.2",
-    "@types/chai": "^5.2.3",
-    "@types/chai-as-promised": "^8.0.2",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^24.9.1",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "benchmark": "^2.1.4",
-    "chai": "^4.5.0",
-    "chai-as-promised": "^7.1.2",
-    "esbuild": "^0.25.11",
-    "eslint": "^8.57.1",
-    "eslint-plugin-chai-expect": "^3.1.0",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-json": "^4.0.1",
-    "eslint-plugin-node": "^11.1.0",
+    "@biomejs/biome": "^2.3.10",
+    "@octokit/rest": "^22.0.1",
+    "@types/fastbitset": "^0.2.2",
+    "@types/node": "^25.0.3",
+    "ansis": "^4.2.0",
+    "esbuild": "^0.27.2",
     "fastbitset": "^0.4.1",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.2",
-    "mocha": "^10.8.2",
-    "node-fetch-cjs": "^3.3.2",
+    "lint-staged": "^16.2.7",
     "physical-cpu-count": "^2.0.0",
-    "prettier": "^3.6.2",
     "tslib": "^2.8.1",
-    "tsx": "^4.20.6",
-    "typedoc": "^0.28.14",
-    "typescript": "5.9.3"
+    "tsx": "^4.21.0",
+    "typedoc": "^0.28.15",
+    "typescript": "5.9.3",
+    "vitest": "^4.0.16"
   },
   "gypfile": true,
-  "roaring_version": "4.4.2"
+  "roaring_version": "4.5.0"
 }

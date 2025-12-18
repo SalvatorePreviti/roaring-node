@@ -107,31 +107,12 @@ void RoaringBitmap32_add(const v8::FunctionCallbackInfo<v8::Value> & info) {
   bool changed = false;
   auto roaring = self->roaring;
   int len = info.Length();
-
+  auto context = isolate->GetCurrentContext();
   uint32_t v = 0;
   for (int i = 0; i < len; ++i) {
     auto arg = info[i];
-    if (arg->IsInt32()) {
-      int32_t n = arg->Int32Value(isolate->GetCurrentContext()).FromJust();
-      if (n < 0) {
-        continue;
-      }
-      v = (uint32_t)n;
-    } else if (arg->IsUint32()) {
-      v = arg->Uint32Value(isolate->GetCurrentContext()).FromJust();
-    } else {
-      double d;
-      if (arg->IsNull() || arg->IsUndefined()) {
-        continue;
-      }
-      if (!arg->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
-        continue;
-      }
-      int64_t n = (int64_t)d;
-      if (n < 0 || n > UINT32_MAX) {
-        continue;
-      }
-      v = (uint32_t)n;
+    if (!v8utils::v8ValueToUint32Fast(context, arg, v)) {
+      continue;
     }
     if (roaring_bitmap_add_checked(roaring, v)) {
       changed = true;
@@ -156,29 +137,11 @@ void RoaringBitmap32_tryAdd(const v8::FunctionCallbackInfo<v8::Value> & info) {
   auto roaring = self->roaring;
   uint32_t v = 0;
   int len = info.Length();
+  auto context = isolate->GetCurrentContext();
   for (int i = 0; i < len; ++i) {
     auto arg = info[i];
-    if (arg->IsInt32()) {
-      int32_t n = arg->Int32Value(isolate->GetCurrentContext()).FromJust();
-      if (n < 0) {
-        continue;
-      }
-      v = (uint32_t)n;
-    } else if (arg->IsUint32()) {
-      v = arg->Uint32Value(isolate->GetCurrentContext()).FromJust();
-    } else {
-      double d;
-      if (arg->IsNull() || arg->IsUndefined()) {
-        continue;
-      }
-      if (!arg->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
-        continue;
-      }
-      int64_t n = (int64_t)d;
-      if (n < 0 || n > UINT32_MAX) {
-        continue;
-      }
-      v = (uint32_t)n;
+    if (!v8utils::v8ValueToUint32Fast(context, arg, v)) {
+      continue;
     }
     if (roaring_bitmap_add_checked(roaring, v)) {
       changed = true;
@@ -203,29 +166,11 @@ void RoaringBitmap32_remove(const v8::FunctionCallbackInfo<v8::Value> & info) {
   auto roaring = self->roaring;
   uint32_t v = 0;
   int len = info.Length();
+  auto context = isolate->GetCurrentContext();
   for (int i = 0; i < len; ++i) {
     auto arg = info[i];
-    if (arg->IsInt32()) {
-      int32_t n = arg->Int32Value(isolate->GetCurrentContext()).FromJust();
-      if (n < 0) {
-        continue;
-      }
-      v = (uint32_t)n;
-    } else if (arg->IsUint32()) {
-      v = arg->Uint32Value(isolate->GetCurrentContext()).FromJust();
-    } else {
-      double d;
-      if (arg->IsNull() || arg->IsUndefined()) {
-        continue;
-      }
-      if (!arg->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
-        continue;
-      }
-      int64_t n = (int64_t)d;
-      if (n < 0 || n > UINT32_MAX) {
-        continue;
-      }
-      v = (uint32_t)n;
+    if (!v8utils::v8ValueToUint32Fast(context, arg, v)) {
+      continue;
     }
     if (roaring_bitmap_remove_checked(roaring, v)) {
       changed = true;

@@ -1,9 +1,7 @@
 {
   "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
+    "biomejs.biome",
     "pflannery.vscode-versionlens",
-    "visualstudioexptteam.vscodeintellicode",
     "donjayamanne.githistory",
     "eamodio.gitlens",
     "ms-vscode.cpptools",

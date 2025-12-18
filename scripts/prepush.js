@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-const { execSync } = require("child_process");
-const fs = require("fs");
+const { execSync } = require("node:child_process");
+const fs = require("node:fs");
 
 const { CPP_UNITY_FILE_PATH, runMain } = require("./lib/utils");
 const { unity } = require("./lib/unity");
+const colors = require("ansis");
 
 runMain(() => {
   const roaringNodeCpp = fs.readFileSync(CPP_UNITY_FILE_PATH, "utf8");
@@ -19,10 +20,9 @@ runMain(() => {
   console.log();
 
   if (unityResult.outputText !== roaringNodeCpp) {
-    const chalk = require("chalk");
     console.error(
-      chalk.redBright(
-        `${chalk.underline.bold(
+      colors.redBright(
+        `${colors.underline.bold(
           "ERROR",
         )}: ${CPP_UNITY_FILE_PATH} is outdated or not a production version. Run \`npm run build\` before committing and pushing.`,
       ),
@@ -34,10 +34,9 @@ runMain(() => {
   try {
     require("../");
   } catch {
-    const chalk = require("chalk");
     console.error(
-      chalk.redBright(
-        `${chalk.underline.bold(
+      colors.redBright(
+        `${colors.underline.bold(
           "ERROR",
         )}: library could not be loaded. Run \`npm run build\` before committing and pushing.`,
       ),

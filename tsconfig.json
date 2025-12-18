@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "allowJs": false,
+    "allowJs": true,
     "checkJs": false,
     "noEmit": true,
     "stripInternal": true,
@@ -15,8 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "importHelpers": false,
     "lib": ["esnext"],
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "newLine": "LF",
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -25,8 +25,6 @@
     "noStrictGenericChecks": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "outDir": ".",
-    "pretty": true,
     "removeComments": false,
     "strict": true,
     "skipLibCheck": false,
@@ -37,10 +35,7 @@
     "target": "ES2022",
     "isolatedModules": true
   },
-  "exclude": ["node_modules", "node_modules/**/*", ".eslintcache/**/*", "temp/**/*", "build/**/*"],
-  "typeAcquisition": {
-    "enable": true
-  },
+  "exclude": ["node_modules", "node_modules/**/*", "temp/**/*", "build/**/*"],
   "typedocOptions": {
     "out": "docs",
     "entryPoints": "src/index.ts",

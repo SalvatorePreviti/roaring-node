@@ -12,7 +12,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: publish
       - uses: actions/setup-node@v4
@@ -21,7 +21,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: npm install --exact --no-audit --no-save
       - run: npx tsc --noEmit
-      - run: node ./scripts/test.js
+      - run: npm run test
       - run: node --expose-gc ./scripts/test-memory-leaks.js
       - run: npm publish --provenance --access public
         env:

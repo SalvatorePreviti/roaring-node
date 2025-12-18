@@ -1,7 +1,5 @@
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect, use as chaiUse } from "chai";
-
-chaiUse(require("chai-as-promised"));
 
 describe("RoaringBitmap32 basic", () => {
   describe("minimum", () => {
@@ -261,10 +259,10 @@ describe("RoaringBitmap32 basic", () => {
 
     it("throws if the output argument is invalid", async () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
-      await expect(bitmap.toUint32ArrayAsync(null as any)).to.be.rejectedWith(Error);
-      await expect(bitmap.toUint32ArrayAsync({} as any)).to.be.rejectedWith(Error);
-      await expect(bitmap.toUint32ArrayAsync([] as any)).to.be.rejectedWith(Error);
-      await expect(bitmap.toUint32ArrayAsync(new Int8Array(1) as any)).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync(null as any)).rejects.toThrow(Error);
+      await expect(bitmap.toUint32ArrayAsync({} as any)).rejects.toThrow(Error);
+      await expect(bitmap.toUint32ArrayAsync([] as any)).rejects.toThrow(Error);
+      await expect(bitmap.toUint32ArrayAsync(new Int8Array(1) as any)).rejects.toThrow(Error);
     });
 
     it("writes the bitmap to the output array", async () => {
@@ -920,7 +918,9 @@ describe("RoaringBitmap32 basic", () => {
     it("does nothing for an empty roaring bitmap", () => {
       let invoked = false;
       const bitmap = new RoaringBitmap32();
-      bitmap.forEach(() => (invoked = true));
+      bitmap.forEach(() => {
+        invoked = true;
+      });
       expect(invoked).to.equal(false);
     });
 
@@ -938,7 +938,9 @@ describe("RoaringBitmap32 basic", () => {
       const invoked: any[] = [];
       const bitmap = new RoaringBitmap32([2, 5, 1, 7, 6]);
 
-      bitmap.forEach((...args) => invoked.push(args));
+      bitmap.forEach((...args) => {
+        invoked.push(args);
+      });
       expect(invoked).to.deep.equal([
         [1, 0, bitmap],
         [2, 1, bitmap],
@@ -1085,11 +1087,11 @@ describe("RoaringBitmap32 basic", () => {
   describe("findIndex", () => {
     it("finds the index of an item", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
-      expect(bitmap.findIndex((x) => x === 4)).eq(3);
+      expect(bitmap.indexOf(4)).eq(3);
     });
     it("returns -1 if the item is not found", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
-      expect(bitmap.findIndex((x) => x === 7)).eq(-1);
+      expect(bitmap.indexOf(7)).eq(-1);
     });
   });
 
@@ -1152,6 +1154,22 @@ describe("RoaringBitmap32 basic", () => {
     it("returns a reversed array", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
       expect(bitmap.toReversed()).deep.equal([6, 5, 4, 3, 2, 1]);
+    });
+
+    it("accepts limit and skip arguments", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.toReversed(3)).deep.equal([6, 5, 4]);
+      expect(bitmap.toReversed(3, 1)).deep.equal([5, 4, 3]);
+      expect(bitmap.toReversed(10, 10)).deep.equal([]);
+    });
+
+    it("can fill an existing array with offset and skip", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      const target: number[] = [100];
+      bitmap.toReversed(target, 2, 1);
+      expect(target).deep.equal([100, 6, 5]);
+      bitmap.toReversed(target, 2, 3, 2);
+      expect(target).deep.equal([100, 6, 5, 4, 3]);
     });
   });
 });

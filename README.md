@@ -11,13 +11,15 @@ For a precompiled binary of this package compatible with AWS Lambda NodeJS v8.10
 
 ## Supported node versions
 
-Node 18, 20, 22, 24, 25 are currently supported.
+Node 20, 22, 24, 25 are currently supported.
 
 Node 8 and 10 support was dropped in release 2.0
 
 Node 12 and 14 support was dropped in release 2.3
 
 Node 16 and 21 support was dropped in release 2.6
+
+Node 18 support was dropped in release 2.7
 
 ## Worker thread support
 
@@ -28,6 +30,10 @@ Directly transferring an instance without copy between worker threads is not cur
 ```sh
 npm install --save roaring
 ```
+
+### Linux libc variants
+
+Prebuilt binaries are now published separately for `glibc` and `musl` targets. When running on Alpine or any other musl-based distribution the installer will request the `-musl` artifact; on other Linux distributions it will request the `-glibc` build. If a matching build is not available `npm install` falls back to compiling from source, so ensure the usual build toolchain is present.
 
 ## References
 
@@ -89,7 +95,10 @@ console.log("iterated:", iterated);
 
 const serialized = bitmap3.serialize(false);
 console.log("serialized:", serialized.toString("base64"));
-console.log("deserialized:", RoaringBitmap32.deserialize(serialized, false).toArray());
+console.log(
+  "deserialized:",
+  RoaringBitmap32.deserialize(serialized, false).toArray()
+);
 ```
 
 # Other

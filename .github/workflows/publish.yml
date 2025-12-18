@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check triggering actor is a collaborator
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -24,10 +24,15 @@ jobs:
               core.setFailed(`User ${username} is not a repository collaborator. Only collaborators can run this workflow.`);
             }
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
 
       - name: Mark git workspace safe
         run: |
@@ -39,7 +44,7 @@ jobs:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
 
       - name: test
-        run: node ./scripts/test.js
+        run: npm run test
 
       - name: test memory leaks
         run: node --expose-gc ./scripts/test-memory-leaks.js
@@ -57,26 +62,44 @@ jobs:
           #
           # Linux jobs with exact Node version in container - to match glibc versions
           #
-          - node-version: "18.20.8"
-            os: ubuntu-latest
-            container: "node:18.20.8-bullseye"
           - node-version: "20.9.0"
             os: ubuntu-latest
             container: "node:20.9.0-bullseye"
+            libc: glibc
           - node-version: "22.8.0"
             os: ubuntu-latest
             container: "node:22.8.0-bullseye"
+            libc: glibc
           - node-version: "24.10.0"
             os: ubuntu-latest
             container: "node:24.10.0-bullseye"
+            libc: glibc
           - node-version: "25.0.0"
             os: ubuntu-latest
             container: "node:25.0.0-bookworm"
+            libc: glibc
+          #
+          # Linux jobs targeting musl via Alpine containers
+          #
+          - node-version: "20.9.0"
+            os: ubuntu-latest
+            container: "node:20.9.0-alpine"
+            libc: musl
+          - node-version: "22.8.0"
+            os: ubuntu-latest
+            container: "node:22.8.0-alpine"
+            libc: musl
+          - node-version: "24.10.0"
+            os: ubuntu-latest
+            container: "node:24.10.0-alpine"
+            libc: musl
+          - node-version: "25.0.0"
+            os: ubuntu-latest
+            container: "node:25.0.0-alpine"
+            libc: musl
           #
           # Windows jobs
           #
-          - node-version: "18.20.8"
-            os: windows-2022
           - node-version: "20.9.0"
             os: windows-2022
           - node-version: "22.8.0"
@@ -88,8 +111,6 @@ jobs:
           #
           # macOS arm64 jobs
           #
-          - node-version: "18.20.8"
-            os: macos-latest
           - node-version: "20.9.0"
             os: macos-latest
           - node-version: "22.8.0"
@@ -101,8 +122,6 @@ jobs:
           #
           # macOS intel jobs
           #
-          - node-version: "18.20.8"
-            os: macos-13
           - node-version: "20.9.0"
             os: macos-13
           - node-version: "22.8.0"
@@ -112,20 +131,43 @@ jobs:
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Prepare Alpine base image
+        if: matrix.libc == 'musl'
+        run: apk add --no-cache python3 py3-setuptools make g++ git bash
+      - name: Install Debian build deps
+        if: runner.os == 'Linux' && matrix.libc != 'musl'
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y python3 python3-distutils make g++ git
+      - uses: actions/checkout@v6
       - name: Setup Node (non-Linux)
         # Only use setup-node for Windows/macOS
         if: runner.os != 'Linux'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Setup Python (non-Linux)
+        if: runner.os != 'Linux'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp (non-Linux)
+        if: runner.os != 'Linux'
+        run: node ./scripts/ensure-python-env.js
+      - name: Configure python for node-gyp (glibc)
+        if: runner.os == 'Linux' && matrix.libc != 'musl'
+        run: node ./scripts/ensure-python-env.js python3
+      - name: Configure python for node-gyp (musl)
+        if: matrix.libc == 'musl'
+        run: node ./scripts/ensure-python-env.js /usr/bin/python3
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
       - run: node ./node-pre-gyp.js
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
-      - run: node ./scripts/test.js
+      - run: npm run test
       - name: Upload artifact
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -143,9 +185,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
       - run: npm install --exact --no-audit --no-save
-      - run: node ./scripts/test.js
+      - run: npm run test
 
   post-test-node24-slim:
     name: post-test-node24-slim
@@ -153,18 +200,44 @@ jobs:
     runs-on: ubuntu-latest
     container: node:24.10.0-bullseye-slim
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - name: Install Debian build deps
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y python3 python3-distutils
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js python3
       - run: npm install --exact --no-audit --no-save
-      - run: node ./scripts/test.js
+      - run: npm run test
+
+  post-test-node24-alpine:
+    name: post-test-node24-alpine
+    needs: build-and-upload
+    runs-on: ubuntu-latest
+    container: node:24.10.0-alpine
+    steps:
+      - name: Install Alpine build deps
+        run: apk add --no-cache python3 py3-setuptools make g++ git bash
+      - uses: actions/checkout@v6
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js /usr/bin/python3
+      - run: npm install --exact --no-audit --no-save
+      - run: npm run test
 
   publish-release:
-    needs: [post-test, post-test-node24-slim]
+    needs: [post-test, post-test-node24-slim, post-test-node24-alpine]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 24.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
 
       - name: npm install
         run: npm install --exact --no-audit --no-save
@@ -175,7 +248,7 @@ jobs:
         run: npm run doc
 
       - name: Deploy documentation 🚀
-        uses: JamesIves/github-pages-deploy-action@4.1.4
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: docs

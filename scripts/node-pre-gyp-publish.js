@@ -27,16 +27,14 @@ SOFTWARE.
 
 */
 
-const path = require("path");
-const fs = require("fs");
-const colors = require("chalk");
-
-const { Octokit } = require("@octokit/rest");
+const path = require("node:path");
+const fs = require("node:fs");
+const colors = require("ansis");
 
 const packageJson = require("../package.json");
 const { runMain } = require("./lib/utils");
-const crypto = require("crypto");
-const { execSync } = require("child_process");
+const crypto = require("node:crypto");
+const { execSync } = require("node:child_process");
 
 module.exports = {
   startPublishAssets,
@@ -44,9 +42,27 @@ module.exports = {
 
 const ALLOWED_BRANCHES = ["publish"];
 
+let octokitCtorPromise = null;
+
+/**
+ * Lazily import the ESM-only @octokit/rest package so this CommonJS script keeps working.
+ * @returns {Promise<typeof import("@octokit/rest").Octokit>}
+ */
+async function getOctokitConstructor() {
+  if (!octokitCtorPromise) {
+    octokitCtorPromise = import("@octokit/rest").then((mod) => {
+      if (!mod || !mod.Octokit) {
+        throw new Error("Failed to load Octokit from @octokit/rest");
+      }
+      return mod.Octokit;
+    });
+  }
+  return octokitCtorPromise;
+}
+
 async function startPublishAssets() {
   const assetsByName = new Map();
-  /** @type {Octokit} */
+  /** @type {import("@octokit/rest").Octokit} */
   let octokit;
   let owner;
   let repo;
@@ -68,7 +84,7 @@ async function startPublishAssets() {
           .replace("\n", "")
           .replace("\r", "")
           .trim();
-      } catch (e) {}
+      } catch (_e) {}
     }
 
     if (!NODE_PRE_GYP_GITHUB_TOKEN) {
@@ -105,12 +121,14 @@ async function startPublishAssets() {
     const host = `api.${ownerRepo[1]}`;
     [owner, repo] = ownerRepo[2].split("/");
 
+    const Octokit = await getOctokitConstructor();
+
     octokit = new Octokit({
       baseUrl: `https://${host}`,
       auth: getGithubKey(),
       headers: { "user-agent": packageJson.name },
       request: {
-        fetch: typeof fetch !== "undefined" ? fetch : require("node-fetch-cjs").default,
+        fetch,
       },
     });
 
@@ -147,7 +165,7 @@ async function startPublishAssets() {
       console.log();
     }
 
-    for (const asset of (release && release.assets) || []) {
+    for (const asset of release?.assets || []) {
       assetsByName.set(asset.name, asset);
     }
 

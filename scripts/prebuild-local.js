@@ -5,16 +5,16 @@
  * Of course, it does not work on Windows.
  */
 
-const colors = require("chalk");
-const { print: printSystemInfo } = require("./system-info");
-const fs = require("fs");
-const path = require("path");
+const colors = require("ansis");
+const { printSystemInfo } = require("./system-info");
+const fs = require("node:fs");
+const path = require("node:path");
 
-const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, forkAsync } = require("./lib/utils");
+const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, forkAsync, NPM_COMMAND } = require("./lib/utils");
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
 
-const NODE_VERSIONS = ["18.20.8", "20.9.0", "22.8.0", "24.5.0", "25.0.0"];
+const NODE_VERSIONS = ["20.9.0", "22.8.0", "24.5.0", "25.0.0"];
 
 const NATIVE_DIR = path.resolve(ROOT_FOLDER, "native");
 const STAGE_DIR = path.resolve(ROOT_FOLDER, "build/stage");
@@ -129,7 +129,7 @@ async function main() {
     await spawnAsync(N_EXECUTABLE_PATH, args);
 
     console.log(colors.blueBright("- testing"));
-    const testArgs = ["run", nodeVersion, require.resolve("./test.js")];
+    const testArgs = ["run", nodeVersion, NPM_COMMAND, "run", "test"];
     await spawnAsync(N_EXECUTABLE_PATH, testArgs);
 
     if (isDeploy) {

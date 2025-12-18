@@ -1,45 +1,34 @@
 {
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "editor.quickSuggestions": {
-      "comments": true,
-      "other": true,
-      "strings": true
-    }
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "editor.quickSuggestions": {
-      "comments": true,
-      "other": true,
-      "strings": true
-    }
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
   },
   "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",
     "editor.formatOnSave": true
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",
     "editor.formatOnSave": true
   },
   "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",
     "editor.formatOnSave": true
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",
     "editor.formatOnSave": true
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",
     "editor.formatOnSave": true
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll": "explicit"
   },
   "[c]": {
     "editor.defaultFormatter": "xaver.clang-format"
@@ -60,10 +49,6 @@
   "editor.formatOnSave": true,
   "editor.lineNumbers": "on",
   "editor.tabSize": 2,
-  "eslint.codeActionsOnSave.mode": "all",
-  "eslint.format.enable": true,
-  "eslint.lintTask.enable": true,
-  "eslint.validate": [],
   "javascript.format.semicolons": "insert",
   "typescript.format.semicolons": "insert",
   "typescript.tsdk": "node_modules/typescript/lib",
@@ -74,29 +59,5 @@
     "**/bower_components": true,
     "**/*.code-search": true
   },
-  "cmake.configureOnOpen": false,
-  "files.associations": {
-    "__bit_reference": "cpp",
-    "__node_handle": "cpp",
-    "atomic": "cpp",
-    "bitset": "cpp",
-    "deque": "cpp",
-    "__memory": "cpp",
-    "limits": "cpp",
-    "locale": "cpp",
-    "optional": "cpp",
-    "ratio": "cpp",
-    "system_error": "cpp",
-    "tuple": "cpp",
-    "type_traits": "cpp",
-    "vector": "cpp",
-    "chrono": "cpp",
-    "cstddef": "cpp",
-    "filesystem": "cpp",
-    "random": "cpp",
-    "__locale": "cpp",
-    "regex": "cpp",
-    "string": "cpp",
-    "string_view": "cpp"
-  }
+  "cmake.configureOnOpen": false
 }

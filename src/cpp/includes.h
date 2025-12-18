@@ -14,6 +14,8 @@
 #include <limits>
 #include <string>
 #include <mutex>
+#include <unordered_map>
+#include <memory>
 
 #if defined(__APPLE__)
 #  include <malloc/malloc.h>
@@ -31,11 +33,7 @@
 
 #include "croaring.h"
 
-#if NODE_MAJOR_VERSION > 14
-#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8Literal(isolate, str, type)
-#else
-#  define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8(isolate, str, type).ToLocalChecked()
-#endif
+#define NEW_LITERAL_V8_STRING(isolate, str, type) v8::String::NewFromUtf8Literal(isolate, str, type)
 
 typedef const char * const_char_ptr_t;
 

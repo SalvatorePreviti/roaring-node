@@ -1,14 +1,14 @@
+import { describe, expect, it } from "vitest";
 import {
   asBuffer,
-  RoaringBitmap32,
   bufferAlignedAlloc,
-  bufferAlignedAllocUnsafe,
-  isBufferAligned,
-  ensureBufferAligned,
   bufferAlignedAllocShared,
   bufferAlignedAllocSharedUnsafe,
-} from "..";
-import { expect } from "chai";
+  bufferAlignedAllocUnsafe,
+  ensureBufferAligned,
+  isBufferAligned,
+  RoaringBitmap32,
+} from "./helpers/roaring";
 
 describe("asBuffer", () => {
   it("returns a buffer", () => {

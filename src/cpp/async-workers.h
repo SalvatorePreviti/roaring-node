@@ -134,7 +134,7 @@ class AsyncWorker {
   uv_work_t _task{};
   WorkerError _error;
   bool _started;
-  volatile bool _completed;
+  std::atomic<bool> _completed;
   v8::Global<v8::Function> _callback;
   v8::Global<v8::Promise::Resolver> _resolver;
 
@@ -150,11 +150,11 @@ class AsyncWorker {
   }
 
   static void _resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error) {
-    if (worker->_completed) {
+    if (worker->_completed.load(std::memory_order_acquire)) {
       return;
     }
 
-    worker->_completed = true;
+    worker->_completed.store(true, std::memory_order_release);
 
     v8::Isolate * isolate = worker->isolate;
     v8::HandleScope scope(isolate);
@@ -226,12 +226,8 @@ class AsyncWorker {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (worker && !worker->hasError()) {
-      auto oldIsolate = thread_local_isolate;
-      thread_local_isolate = worker->isolate;
-
       worker->work();
 
-      thread_local_isolate = oldIsolate;
       std::atomic_thread_fence(std::memory_order_seq_cst);
     }
   }
@@ -240,15 +236,10 @@ class AsyncWorker {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
 
-    auto oldIsolate = thread_local_isolate;
-    thread_local_isolate = worker->isolate;
-
     if (status != 0) {
       worker->setError(WorkerError("Error executing async thread"));
     }
     _complete(worker);
-
-    thread_local_isolate = oldIsolate;
   }
 
   v8::Local<v8::Value> _makeError(v8::Local<v8::Value> error) {
@@ -291,7 +282,7 @@ class ParallelAsyncWorker : public AsyncWorker {
  protected:
   void work() override {
     const uint32_t c = loopCount;
-    for (uint32_t i = 0; i != c && !hasError() && !_completed; ++i) {
+    for (uint32_t i = 0; i != c && !hasError() && !_completed.load(std::memory_order_acquire); ++i) {
       parallelWork(i);
     }
   }
@@ -347,10 +338,8 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker) {
-      auto oldIsolate = thread_local_isolate;
-      thread_local_isolate = worker->isolate;
       uint32_t loopCount = worker->loopCount;
-      while (!worker->hasError() && !worker->_completed) {
+      while (!worker->hasError() && !worker->_completed.load(std::memory_order_acquire)) {
         const uint32_t prevIndex = worker->_currentIndex.load(std::memory_order_relaxed);
         const uint32_t index = worker->_currentIndex.fetch_add(1, std::memory_order_relaxed);
         if (index >= loopCount || index < prevIndex) {
@@ -358,14 +347,13 @@ class ParallelAsyncWorker : public AsyncWorker {
         }
         worker->parallelWork(index);
       }
-      thread_local_isolate = oldIsolate;
     }
   }
 
   static void _parallelDone(uv_work_t * request, int status) {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
-    if (worker->_completed) {
+    if (worker->_completed.load(std::memory_order_acquire)) {
       worker->isolate->PerformMicrotaskCheckpoint();
       return;
     }
@@ -384,21 +372,22 @@ class ParallelAsyncWorker : public AsyncWorker {
 
 class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
  public:
-  volatile roaring_bitmap_t_ptr bitmap;
+  std::atomic<roaring_bitmap_t_ptr> bitmap;
 
   explicit RoaringBitmap32FactoryAsyncWorker(v8::Isolate * isolate, AddonData * addonData) :
     AsyncWorker(isolate, addonData), bitmap(nullptr) {}
 
   virtual ~RoaringBitmap32FactoryAsyncWorker() {
-    if (this->bitmap != nullptr) {
-      roaring_bitmap_free(this->bitmap);
-      this->bitmap = nullptr;
+    roaring_bitmap_t_ptr ptr = this->bitmap.exchange(nullptr, std::memory_order_acq_rel);
+    if (ptr != nullptr) {
+      roaring_bitmap_free(ptr);
     }
   }
 
  protected:
   void done(v8::Local<v8::Value> & result) override {
-    if (this->bitmap == nullptr) {
+    roaring_bitmap_t_ptr bitmapPtr = this->bitmap.exchange(nullptr, std::memory_order_acq_rel);
+    if (bitmapPtr == nullptr) {
       return this->setError(WorkerError("Error deserializing roaring bitmap"));
     }
 
@@ -415,8 +404,7 @@ class RoaringBitmap32FactoryAsyncWorker : public AsyncWorker {
       return this->setError(WorkerError(ERROR_INVALID_OBJECT));
     }
 
-    unwrapped->replaceBitmapInstance(this->isolate, this->bitmap);
-    this->bitmap = nullptr;
+    unwrapped->replaceBitmapInstance(this->isolate, bitmapPtr);
   }
 };
 
@@ -426,8 +414,8 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
   v8::Global<v8::Value> bitmapPersistent;
   RoaringBitmap32 * bitmap = nullptr;
   v8utils::TypedArrayContent<uint32_t> inputContent;
-  uint32_t * volatile allocatedBuffer = nullptr;
-  size_t volatile outputSize = 0;
+  std::atomic<uint32_t *> allocatedBuffer{nullptr};
+  std::atomic<size_t> outputSize{0};
   size_t maxSize = std::numeric_limits<size_t>::max();
   bool hasInput = false;
 
@@ -437,8 +425,9 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
   }
 
   ~ToUint32ArrayAsyncWorker() {
-    if (this->allocatedBuffer) {
-      bare_aligned_free(this->allocatedBuffer);
+    uint32_t * buffer = this->allocatedBuffer.exchange(nullptr, std::memory_order_acq_rel);
+    if (buffer) {
+      bare_aligned_free(buffer);
     }
     gcaware_removeAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
   }
@@ -463,7 +452,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
           return v8utils::throwError(
             isolate, "RoaringBitmap32::toUint32ArrayAsync - argument must be a valid integer number");
         }
-        this->maxSize = maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : (size_t)maxSizeDouble);
+        this->maxSize = maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : static_cast<size_t>(maxSizeDouble));
       } else {
         if (!argumentIsValidUint32ArrayOutput(info[0]) || !this->inputContent.set(isolate, info[0])) {
           return v8utils::throwError(
@@ -485,10 +474,11 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
 
     if (this->hasInput) {
       if (size > this->inputContent.length) {
-        this->outputSize = this->inputContent.length;
-        roaring_bitmap_range_uint32_array(this->bitmap->roaring, 0, this->outputSize, this->inputContent.data);
+        size_t limitedSize = this->inputContent.length;
+        this->outputSize.store(limitedSize, std::memory_order_release);
+        roaring_bitmap_range_uint32_array(this->bitmap->roaring, 0, limitedSize, this->inputContent.data);
       } else {
-        this->outputSize = size;
+        this->outputSize.store(size, std::memory_order_release);
         roaring_bitmap_to_uint32_array(this->bitmap->roaring, this->inputContent.data);
       }
       return;
@@ -500,18 +490,19 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     }
 
     // Allocate a new buffer
-    this->allocatedBuffer = (uint32_t *)bare_aligned_malloc(32, size * sizeof(uint32_t));
-    if (!this->allocatedBuffer) {
+    uint32_t * buffer = static_cast<uint32_t *>(bare_aligned_malloc(32, size * sizeof(uint32_t)));
+    if (!buffer) {
       return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to allocate memory"));
     }
+    this->allocatedBuffer.store(buffer, std::memory_order_release);
 
     if (maxSize < size) {
-      roaring_bitmap_range_uint32_array(this->bitmap->roaring, 0, maxSize, this->allocatedBuffer);
+      roaring_bitmap_range_uint32_array(this->bitmap->roaring, 0, maxSize, buffer);
     } else {
-      roaring_bitmap_to_uint32_array(this->bitmap->roaring, this->allocatedBuffer);
+      roaring_bitmap_to_uint32_array(this->bitmap->roaring, buffer);
     }
 
-    this->outputSize = maxSize;
+    this->outputSize.store(maxSize, std::memory_order_release);
   }
 
   void finally() final {
@@ -521,22 +512,27 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
   }
 
   void done(v8::Local<v8::Value> & result) final {
-    uint32_t * allocatedBuffer = this->allocatedBuffer;
+    uint32_t * allocatedBuffer = this->allocatedBuffer.load(std::memory_order_acquire);
+    size_t outputSize = this->outputSize.load(std::memory_order_acquire);
 
     if (this->hasInput) {
       if (!v8utils::v8ValueToUint32ArrayWithLimit(
-            isolate, this->inputContent.bufferPersistent.Get(isolate), this->outputSize, result)) {
+            isolate, this->inputContent.bufferPersistent.Get(isolate), outputSize, result)) {
         return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create a UInt32Array range"));
       }
       return;
     }
 
-    if (allocatedBuffer && this->outputSize != 0) {
+    if (allocatedBuffer && outputSize != 0) {
       // Create a new buffer using the allocated memory
       v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate, (char *)allocatedBuffer, this->outputSize * sizeof(uint32_t), bare_aligned_free_callback, nullptr);
+        isolate,
+        reinterpret_cast<char *>(allocatedBuffer),
+        outputSize * sizeof(uint32_t),
+        bare_aligned_free_callback,
+        nullptr);
       if (!nodeBufferMaybeLocal.IsEmpty()) {
-        this->allocatedBuffer = nullptr;
+        this->allocatedBuffer.store(nullptr, std::memory_order_release);
       }
 
       v8::Local<v8::Object> nodeBufferObject;
@@ -548,7 +544,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
       if (nodeBuffer.IsEmpty()) {
         return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create a new buffer"));
       }
-      result = v8::Uint32Array::New(nodeBuffer->Buffer(), 0, this->outputSize);
+      result = v8::Uint32Array::New(nodeBuffer->Buffer(), 0, outputSize);
       if (result.IsEmpty()) {
         return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to create a new buffer"));
       }
@@ -812,14 +808,15 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
 
  protected:
   void work() final {
-    bitmap = roaring_bitmap_create_with_capacity(buffer.length);
-    if (bitmap == nullptr) {
+    roaring_bitmap_t_ptr newBitmap = roaring_bitmap_create_with_capacity(buffer.length);
+    if (newBitmap == nullptr) {
       this->setError(WorkerError("Failed to allocate roaring bitmap"));
       return;
     }
-    roaring_bitmap_add_many(bitmap, buffer.length, buffer.data);
-    roaring_bitmap_run_optimize(bitmap);
-    roaring_bitmap_shrink_to_fit(bitmap);
+    this->bitmap.store(newBitmap, std::memory_order_release);
+    roaring_bitmap_add_many(newBitmap, buffer.length, buffer.data);
+    roaring_bitmap_run_optimize(newBitmap);
+    roaring_bitmap_shrink_to_fit(newBitmap);
   }
 };
 

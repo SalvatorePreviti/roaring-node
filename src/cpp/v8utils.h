@@ -14,6 +14,42 @@ bool argumentIsValidUint32ArrayOutput(const v8::Local<v8::Value> & value) {
 
 namespace v8utils {
 
+  inline bool v8ValueToUint32Fast(v8::Local<v8::Context> context, v8::Local<v8::Value> value, uint32_t & result) {
+    if (value.IsEmpty()) {
+      return false;
+    }
+    if (value->IsUint32()) {
+      result = value.As<v8::Uint32>()->Value();
+      return true;
+    }
+    if (value->IsInt32()) {
+      const int32_t n = value.As<v8::Int32>()->Value();
+      if (n < 0) {
+        return false;
+      }
+      result = static_cast<uint32_t>(n);
+      return true;
+    }
+    if (value->IsNullOrUndefined()) {
+      return false;
+    }
+    double d;
+    if (value->IsNumber()) {
+      d = value.As<v8::Number>()->Value();
+    } else if (!value->NumberValue(context).To(&d)) {
+      return false;
+    }
+    if (std::isnan(d)) {
+      return false;
+    }
+    const int64_t n = static_cast<int64_t>(d);
+    if (n < 0 || n > static_cast<int64_t>(UINT32_MAX)) {
+      return false;
+    }
+    result = static_cast<uint32_t>(n);
+    return true;
+  }
+
   template <int N>
   inline void throwError(v8::Isolate * isolate, const char (&message)[N]) {
     isolate->ThrowException(v8::Exception::Error(NEW_LITERAL_V8_STRING(isolate, message, v8::NewStringType::kInternalized)));

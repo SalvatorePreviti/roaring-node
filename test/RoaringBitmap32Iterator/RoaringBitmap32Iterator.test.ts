@@ -1,6 +1,6 @@
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
 import RoaringBitmap32Iterator from "../../RoaringBitmap32Iterator";
-import { expect } from "chai";
 
 describe("RoaringBitmap32Iterator", () => {
   describe("constructor", () => {

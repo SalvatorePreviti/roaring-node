@@ -55,21 +55,116 @@ inline size_t bare_aligned_malloc_size(const void * ptr) {
 
 std::atomic<int64_t> gcaware_totalMemCounter{0};
 
-int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
+int64_t gcaware_totalMem() { return gcaware_totalMemCounter.load(std::memory_order_relaxed); }
 
-thread_local v8::Isolate * thread_local_isolate = nullptr;
+struct IsolateMemoryTracker {
+  std::atomic<int64_t> reported{0};
+};
+
+inline std::unordered_map<v8::Isolate *, std::shared_ptr<IsolateMemoryTracker>> & gcaware_isolate_trackers() {
+  static std::unordered_map<v8::Isolate *, std::shared_ptr<IsolateMemoryTracker>> trackers;
+  return trackers;
+}
+
+inline std::mutex & gcaware_isolate_trackers_mutex() {
+  static std::mutex trackersMutex;
+  return trackersMutex;
+}
+
+inline std::shared_ptr<IsolateMemoryTracker> gcaware_ensure_isolate_tracker(v8::Isolate * isolate) {
+  if (isolate == nullptr) {
+    return {};
+  }
+  std::lock_guard<std::mutex> lock(gcaware_isolate_trackers_mutex());
+  auto & trackers = gcaware_isolate_trackers();
+  auto & entry = trackers[isolate];
+  if (!entry) {
+    entry = std::make_shared<IsolateMemoryTracker>();
+  }
+  return entry;
+}
+
+inline void gcaware_release_isolate_tracker(v8::Isolate * isolate) {
+  if (isolate == nullptr) {
+    return;
+  }
+  std::lock_guard<std::mutex> lock(gcaware_isolate_trackers_mutex());
+  auto & trackers = gcaware_isolate_trackers();
+  trackers.erase(isolate);
+}
+
+struct ThreadIsolateContext {
+  v8::Isolate * isolate = nullptr;
+  std::shared_ptr<IsolateMemoryTracker> tracker;
+};
+
+thread_local ThreadIsolateContext thread_local_isolate_context{};
+
+inline void registerThreadLocalIsolate(v8::Isolate * isolate) {
+  thread_local_isolate_context.isolate = isolate;
+  thread_local_isolate_context.tracker = gcaware_ensure_isolate_tracker(isolate);
+}
+
+inline void unregisterThreadLocalIsolate(v8::Isolate * isolate) {
+  if (thread_local_isolate_context.isolate == isolate) {
+    thread_local_isolate_context.isolate = nullptr;
+    thread_local_isolate_context.tracker.reset();
+  }
+  gcaware_release_isolate_tracker(isolate);
+}
+
+inline std::shared_ptr<IsolateMemoryTracker> resolveIsolateTracker(v8::Isolate *& isolate) {
+  isolate = v8::Isolate::GetCurrent();
+  if (isolate == nullptr) {
+    isolate = thread_local_isolate_context.isolate;
+  }
+  if (isolate == nullptr) {
+    return {};
+  }
+  if (thread_local_isolate_context.isolate != isolate || !thread_local_isolate_context.tracker) {
+    thread_local_isolate_context.isolate = isolate;
+    thread_local_isolate_context.tracker = gcaware_ensure_isolate_tracker(isolate);
+  }
+  return thread_local_isolate_context.tracker;
+}
 
 inline void _gcaware_adjustAllocatedMemory(int64_t size) {
-  if (size != 0) {
-    v8::Isolate * isolate = v8::Isolate::GetCurrent();
-    if (isolate == nullptr) {
-      isolate = thread_local_isolate;
-    }
-    if (isolate != nullptr) {
-      isolate->AdjustAmountOfExternalAllocatedMemory(size);
-    }
-    gcaware_totalMemCounter += size;
+  if (size == 0) {
+    return;
   }
+
+  v8::Isolate * isolate = nullptr;
+  std::shared_ptr<IsolateMemoryTracker> tracker = resolveIsolateTracker(isolate);
+
+  if (isolate != nullptr && tracker) {
+    int64_t applied = 0;
+    if (size > 0) {
+      tracker->reported.fetch_add(size, std::memory_order_relaxed);
+      applied = size;
+    } else {
+      int64_t toRemove = -size;
+      int64_t removed = 0;
+      while (toRemove > 0) {
+        int64_t current = tracker->reported.load(std::memory_order_relaxed);
+        if (current <= 0) {
+          break;
+        }
+        int64_t allowed = current < toRemove ? current : toRemove;
+        if (tracker->reported.compare_exchange_weak(
+              current, current - allowed, std::memory_order_relaxed, std::memory_order_relaxed)) {
+          removed = allowed;
+          break;
+        }
+      }
+      applied = removed == 0 ? 0 : -removed;
+    }
+
+    if (applied != 0) {
+      isolate->AdjustAmountOfExternalAllocatedMemory(applied);
+    }
+  }
+
+  gcaware_totalMemCounter.fetch_add(size, std::memory_order_relaxed);
 }
 
 inline void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
@@ -88,8 +183,10 @@ void * gcaware_realloc(void * memory, size_t size) {
   size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
   memory = realloc(memory, size);
   if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(oldSize);
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+    size_t newSize = bare_malloc_size(memory);
+    if (newSize != oldSize) {
+      _gcaware_adjustAllocatedMemory((int64_t)newSize - (int64_t)oldSize);
+    }
   }
   return memory;
 }

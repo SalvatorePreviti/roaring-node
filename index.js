@@ -23,8 +23,8 @@ Roaring Bitmap 32 documentation at: https://salvatorepreviti.github.io/roaring-n
 
 */
 
-const path = require("path");
-const util = require("util");
+const path = require("node:path");
+const util = require("node:util");
 
 const roaring = (() => {
   try {
@@ -47,14 +47,79 @@ defineProperty(roaring, "__esModule", { value: true, configurable: true });
 
 const { RoaringBitmap32, RoaringBitmap32BufferedIterator } = roaring;
 
-function RoaringBitmap32IteratorResult() {
-  this.value = undefined;
-  this.done = true;
+class RoaringBitmap32IteratorResult {
+  constructor() {
+    this.value = undefined;
+    this.done = true;
+  }
 }
 
 const _iteratorBufferPoolMax = 32;
-const _iteratorBufferPoolDefaultLen = 512;
-const _iteratorBufferPool = [];
+const _iteratorBufferPoolDefaultLen = 2048;
+const _iteratorBufferPool = new Array(_iteratorBufferPoolMax);
+let _iteratorBufferPoolLen = 0;
+const _symbolDispose = typeof Symbol.dispose === "symbol" ? Symbol.dispose : undefined;
+
+function normalizeIteratorChunkLength(length) {
+  const n = Number(length);
+  if (!Number.isFinite(n) || n <= 0) {
+    return _iteratorBufferPoolDefaultLen;
+  }
+  if (n > 16777216) {
+    return 16777216;
+  }
+  const normalized = Math.floor(n);
+  return normalized > 0 ? normalized : 1;
+}
+
+function acquireIteratorBuffer(length) {
+  if (length === _iteratorBufferPoolDefaultLen && _iteratorBufferPoolLen) {
+    return _iteratorBufferPool[--_iteratorBufferPoolLen];
+  }
+  return new Uint32Array(length);
+}
+
+function releaseIteratorBuffer(buffer) {
+  if (_iteratorBufferPoolLen < _iteratorBufferPoolMax) {
+    _iteratorBufferPool[_iteratorBufferPoolLen++] = buffer;
+  }
+}
+
+function normalizeIteratorInputs(bitmap, buffer) {
+  let done = false;
+  if (bitmap instanceof RoaringBitmap32) {
+    done = false;
+  } else if (bitmap === undefined || bitmap === null) {
+    bitmap = undefined;
+    done = true;
+  } else {
+    throw new TypeError("RoaringBitmap32Iterator constructor expects a RoaringBitmap32 instance");
+  }
+
+  let chunk = null;
+  let bufferLength = 0;
+  let bufferReusable = false;
+  if (!done) {
+    if (typeof buffer === "number") {
+      bufferLength = normalizeIteratorChunkLength(buffer);
+      bufferReusable = bufferLength === _iteratorBufferPoolDefaultLen;
+    } else if (buffer instanceof Uint32Array) {
+      if (buffer.length === 0) {
+        throw new TypeError("RoaringBitmap32Iterator buffer must have a positive length");
+      }
+      chunk = buffer;
+      bufferLength = buffer.length;
+      bufferReusable = false;
+    } else if (buffer === undefined) {
+      bufferLength = _iteratorBufferPoolDefaultLen;
+      bufferReusable = true;
+    } else {
+      throw new TypeError("RoaringBitmap32Iterator buffer must be a number or a Uint32Array");
+    }
+  }
+
+  return { bitmap, chunk, bufferLength, bufferReusable, done };
+}
 
 function defineRoaringBitmap32Iterator(reverse, name) {
   function Iterator(bitmap, buffer = _iteratorBufferPoolDefaultLen) {
@@ -62,53 +127,83 @@ function defineRoaringBitmap32Iterator(reverse, name) {
       return new Iterator(bitmap, buffer);
     }
 
-    const r = new RoaringBitmap32IteratorResult();
-    let t;
-    let i = 0;
-    let n = 0;
+    var result = null;
+    var reader = null;
+    var chunk = null;
+    var bufferReusable = false;
+    var bufferLength = 0;
+    var bufferIndex = 0;
+    var bufferCount = 0;
+    var done = false;
 
-    if (!(bitmap instanceof RoaringBitmap32)) {
-      if (bitmap === undefined || bitmap === null) {
-        t = null;
-      } else {
-        throw new TypeError("RoaringBitmap32Iterator constructor expects a RoaringBitmap32 instance");
-      }
-    }
+    ({ bitmap, chunk, bufferLength, bufferReusable, done } = normalizeIteratorInputs(bitmap, buffer));
 
-    this.next = () => {
-      if (i < n) {
-        r.value = buffer[i++];
-      } else if (t !== null) {
-        if (t === undefined) {
-          if (typeof buffer === "number") {
-            buffer = (buffer === _iteratorBufferPoolDefaultLen && _iteratorBufferPool.pop()) || new Uint32Array(buffer);
+    this.next = function next() {
+      if (done) {
+        result ||= new RoaringBitmap32IteratorResult();
+        result.value = undefined;
+        result.done = true;
+        return result;
+      }
+
+      while (bufferIndex >= bufferCount) {
+        if (reader === null) {
+          if (!chunk) {
+            chunk = acquireIteratorBuffer(bufferLength);
           }
-          t = new RoaringBitmap32BufferedIterator(bitmap, buffer, reverse);
-          n = t.n;
-          r.done = false;
+          reader = new RoaringBitmap32BufferedIterator(bitmap, chunk, reverse);
+          bufferCount = reader.n;
+          bitmap = null;
         } else {
-          n = t.fill();
+          bufferCount = reader.fill();
         }
-        if (n === 0) {
-          t = null;
-          if (
-            buffer &&
-            _iteratorBufferPool.length < _iteratorBufferPoolMax &&
-            buffer.length === _iteratorBufferPoolDefaultLen
-          ) {
-            _iteratorBufferPool.push(buffer);
+        bufferIndex = 0;
+        if (bufferCount <= 0) {
+          if (reader) {
+            reader.close();
+            reader = null;
           }
-          buffer = undefined;
-          bitmap = undefined;
-          r.value = undefined;
-          r.done = true;
-        } else {
-          i = 1;
-          r.value = buffer[0];
+          if (bufferReusable && chunk) {
+            releaseIteratorBuffer(chunk);
+          }
+          bitmap = null;
+          chunk = null;
+          bufferReusable = false;
+          done = true;
+          result ||= new RoaringBitmap32IteratorResult();
+          result.value = undefined;
+          result.done = true;
+          return result;
         }
       }
-      return r;
+
+      result = result || new RoaringBitmap32IteratorResult();
+      result.value = chunk[bufferIndex++];
+      result.done = false;
+      return result;
     };
+
+    const iteratorReturn = function iteratorReturn(value) {
+      result ||= new RoaringBitmap32IteratorResult();
+      if (!done) {
+        done = true;
+        bitmap = null;
+        if (reader) {
+          reader.close();
+          reader = null;
+        }
+        if (bufferReusable && chunk) {
+          releaseIteratorBuffer(chunk);
+        }
+        chunk = null;
+        bufferReusable = false;
+      }
+      result.value = value;
+      result.done = true;
+      return result;
+    };
+
+    this.return = iteratorReturn;
   }
 
   defineProperty(Iterator, "name", { value: name, configurable: true, enumerable: false, writable: false });
@@ -116,6 +211,14 @@ function defineRoaringBitmap32Iterator(reverse, name) {
   Iterator.prototype[Symbol.iterator] = function () {
     return this;
   };
+
+  Iterator.prototype.dispose = function dispose(value) {
+    return this.return(value);
+  };
+
+  if (_symbolDispose) {
+    Iterator.prototype[_symbolDispose] = Iterator.prototype.dispose;
+  }
 
   defineProperty(Iterator, "default", {
     value: Iterator,
@@ -193,30 +296,57 @@ if (!roaring[initializedSym]) {
     }
   };
 
+  roaringBitmap32_proto.dispose = function dispose() {
+    this.clear();
+  };
+
+  if (_symbolDispose) {
+    roaringBitmap32_proto[_symbolDispose] = roaringBitmap32_proto.dispose;
+  }
+
   roaringBitmap32_proto.forEach = function forEach(fn, self) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
-    if (self !== undefined) {
-      fn = fn.bind(self);
-    }
     let index = 0;
-    for (const v of this) {
-      fn(v, index++, this);
+    if (self === undefined) {
+      for (const v of this) {
+        fn(v, index++, this);
+      }
+    } else {
+      for (const v of this) {
+        fn.call(self, v, index++, this);
+      }
     }
     return this;
   };
 
-  roaringBitmap32_proto.map = function map(fn, self, output = []) {
+  roaringBitmap32_proto.map = function map(fn, self, output) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
-    if (self !== undefined) {
-      fn = fn.bind(self);
-    }
     let index = 0;
-    for (const v of this) {
-      output.push(fn(v, index++, this));
+    if (!output) {
+      output = new Array(this.size);
+      if (self === undefined) {
+        for (const v of this) {
+          output[index] = fn(v, index++, this);
+        }
+      } else {
+        for (const v of this) {
+          output[index] = fn.call(self, v, index++, this);
+        }
+      }
+      return output;
+    }
+    if (self === undefined) {
+      for (const v of this) {
+        output.push(fn(v, index++, this));
+      }
+    } else {
+      for (const v of this) {
+        output.push(fn.call(self, v, index++, this));
+      }
     }
     return output;
   };
@@ -225,13 +355,18 @@ if (!roaring[initializedSym]) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
-    if (self !== undefined) {
-      fn = fn.bind(self);
-    }
     let index = 0;
-    for (const v of this) {
-      if (!fn(v, index++, this)) {
-        return false;
+    if (self === undefined) {
+      for (const v of this) {
+        if (!fn(v, index++, this)) {
+          return false;
+        }
+      }
+    } else {
+      for (const v of this) {
+        if (!fn.call(self, v, index++, this)) {
+          return false;
+        }
       }
     }
     return true;
@@ -241,13 +376,18 @@ if (!roaring[initializedSym]) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
-    if (self !== undefined) {
-      fn = fn.bind(self);
-    }
     let index = 0;
-    for (const v of this) {
-      if (fn(v, index++, this)) {
-        return true;
+    if (self === undefined) {
+      for (const v of this) {
+        if (fn(v, index++, this)) {
+          return true;
+        }
+      }
+    } else {
+      for (const v of this) {
+        if (fn.call(self, v, index++, this)) {
+          return true;
+        }
       }
     }
     return false;
@@ -281,13 +421,18 @@ if (!roaring[initializedSym]) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
-    if (self !== undefined) {
-      fn = fn.bind(self);
-    }
     let index = 0;
-    for (const v of this) {
-      if (fn(v, index++, this)) {
-        return v;
+    if (self === undefined) {
+      for (const v of this) {
+        if (fn(v, index++, this)) {
+          return v;
+        }
+      }
+    } else {
+      for (const v of this) {
+        if (fn.call(self, v, index++, this)) {
+          return v;
+        }
       }
     }
     return undefined;
@@ -297,15 +442,21 @@ if (!roaring[initializedSym]) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
-    if (self !== undefined) {
-      fn = fn.bind(self);
-    }
     let index = 0;
-    for (const v of this) {
-      if (fn(v, index, this)) {
-        return index;
+    if (self === undefined) {
+      for (const v of this) {
+        if (fn(v, index, this)) {
+          return index;
+        }
+        ++index;
       }
-      ++index;
+    } else {
+      for (const v of this) {
+        if (fn.call(self, v, index, this)) {
+          return index;
+        }
+        ++index;
+      }
     }
     return -1;
   };
@@ -314,13 +465,18 @@ if (!roaring[initializedSym]) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
-    if (self !== undefined) {
-      fn = fn.bind(self);
-    }
     let index = 0;
-    for (const v of this) {
-      if (fn(v, index++, this)) {
-        output.push(v);
+    if (self === undefined) {
+      for (const v of this) {
+        if (fn(v, index++, this)) {
+          output.push(v);
+        }
+      }
+    } else {
+      for (const v of this) {
+        if (fn.call(self, v, index++, this)) {
+          output.push(v);
+        }
       }
     }
     return output;
@@ -452,10 +608,6 @@ if (!roaring[initializedSym]) {
     return cmp ? result.sort(cmp) : result;
   };
 
-  roaringBitmap32_proto.toReversed = function toReversed() {
-    return this.toArray().reverse();
-  };
-
   roaringBitmap32_proto.toJSON = function toJSON() {
     return this.toArray();
   };
@@ -472,7 +624,12 @@ if (!roaring[initializedSym]) {
   let packageVersion = null;
 
   defineProp("PackageVersion", {
-    get: () => (packageVersion !== null ? packageVersion : (packageVersion = require("./package.json").version)),
+    get: () => {
+      if (packageVersion === null) {
+        packageVersion = require("./package.json").version;
+      }
+      return packageVersion;
+    },
     configurable: false,
     enumerable: true,
   });
