@@ -31,6 +31,8 @@
 #include <limits>
 #include <string>
 #include <mutex>
+#include <unordered_map>
+#include <memory>
 
 #if defined(__APPLE__)
 #  include <malloc/malloc.h>
