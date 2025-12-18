@@ -1,5 +1,5 @@
 import { bench, describe } from "vitest";
-import roaringModule from "../../index.js";
+import roaringModule from "../index.js";
 
 const { RoaringBitmap32 } = roaringModule;
 const N = 65535;

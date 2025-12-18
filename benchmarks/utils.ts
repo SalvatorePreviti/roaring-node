@@ -1,5 +1,3 @@
-let __benchSink: unknown;
-
 export function consume<T>(value: T): void {
   consume.value = value;
 }
