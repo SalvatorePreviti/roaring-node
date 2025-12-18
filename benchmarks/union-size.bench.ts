@@ -1,7 +1,7 @@
 import FastBitSet from "fastbitset";
 import { bench, describe } from "vitest";
 import roaringModule from "../index.js";
-import { consume } from "./utils";
+import { consume } from "./utils.js";
 
 const { RoaringBitmap32 } = roaringModule;
 const N = 512 * 512;
