@@ -1355,6 +1355,16 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32 {
   clear(): boolean;
 
   /**
+   * Disposes this bitmap, releasing its native resources. Equivalent to calling clear().
+   */
+  dispose(): void;
+
+  /**
+   * Resource-management hook so RoaringBitmap32 can participate in the Symbol.dispose protocol.
+   */
+  [Symbol.dispose](): void;
+
+  /**
    * Executes a function for each value in the set, in ascending order.
    * The callback has 3 arguments, the value, the value and this (this set). This is to match the Set<number> interface.
    *
@@ -2418,6 +2428,21 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @memberof RoaringBitmap32Iterator
    */
   next(): IteratorResult<number>;
+
+  /**
+   * Stops the iteration early and releases the underlying buffer.
+   */
+  return(value?: number): IteratorResult<number>;
+
+  /**
+   * Disposes this iterator so it can be used with the Symbol.dispose protocol.
+   */
+  dispose(value?: number): IteratorResult<number>;
+
+  /**
+   * Resource-management hook so RoaringBitmap32Iterator participates in the Symbol.dispose protocol.
+   */
+  [Symbol.dispose](): IteratorResult<number>;
 }
 
 /**
@@ -2479,6 +2504,21 @@ export class RoaringBitmap32ReverseIterator implements IterableIterator<number> 
    * @memberof RoaringBitmap32ReverseIterator
    */
   next(): IteratorResult<number>;
+
+  /**
+   * Stops the iteration early and releases the underlying buffer.
+   */
+  return(value?: number): IteratorResult<number>;
+
+  /**
+   * Disposes this iterator so it can be used with the Symbol.dispose protocol.
+   */
+  dispose(value?: number): IteratorResult<number>;
+
+  /**
+   * Resource-management hook so RoaringBitmap32ReverseIterator participates in the Symbol.dispose protocol.
+   */
+  [Symbol.dispose](): IteratorResult<number>;
 }
 
 /**

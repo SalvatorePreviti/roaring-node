@@ -15714,6 +15714,14 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
     return n;
   }
 
+  inline void close() {
+    this->bitmapInstance = nullptr;
+    this->bitmapVersion = 0;
+    this->bufferContent.reset();
+    this->bitmap.Reset();
+    this->it.has_value = false;
+  }
+
  private:
   void destroy() {
     this->bitmap.Reset();
@@ -15741,6 +15749,15 @@ void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Val
   }
 
   return info.GetReturnValue().Set(instance->_fill());
+}
+
+void RoaringBitmap32BufferedIterator_close(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  RoaringBitmap32BufferedIterator * instance =
+    ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.This(), info.GetIsolate());
+  if (instance == nullptr) {
+    return;
+  }
+  instance->close();
 }
 
 void RoaringBitmap32BufferedIterator_WeakCallback(v8::WeakCallbackInfo<RoaringBitmap32BufferedIterator> const & info) {
@@ -15851,6 +15868,7 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
   addonData->RoaringBitmap32BufferedIterator_constructorTemplate.Set(isolate, ctor);
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "fill", RoaringBitmap32BufferedIterator_fill);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "close", RoaringBitmap32BufferedIterator_close);
 
   auto ctorFunctionMaybe = ctor->GetFunction(isolate->GetCurrentContext());
   v8::Local<v8::Function> ctorFunction;
