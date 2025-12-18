@@ -47,3 +47,23 @@ jobs:
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
       - run: node ./scripts/test.js
+
+  ci-musl:
+    needs: test
+    strategy:
+      matrix:
+        node-version: ["18.20.8", "20.9.0", "22.8.0", "24.10.0", "25.0.0"]
+    runs-on: ubuntu-latest
+    container: node:${{ matrix.node-version }}-alpine
+    steps:
+      - name: Install Alpine build deps
+        run: apk add --no-cache python3 make g++ git bash
+      - uses: actions/checkout@v4
+      - run: npm config set python /usr/bin/python3
+      - run: npm install --exact --no-audit --no-save
+        env:
+          ROARING_NODE_PRE_GYP: "false"
+      - run: node ./node-pre-gyp.js
+        env:
+          ROARING_NODE_PRE_GYP: "custom-rebuild"
+      - run: node ./scripts/test.js

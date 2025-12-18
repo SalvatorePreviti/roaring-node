@@ -2,7 +2,7 @@
 
 const systemInfo = require("./system-info");
 const promiseMap = require("./benchmarks/promiseMap");
-const colors = require("chalk");
+const colors = require("ansis");
 const path = require("path");
 const fs = require("fs");
 const { fork } = require("child_process");
@@ -33,7 +33,7 @@ function listBenchFiles() {
 function runBenchFileAsync(benchFile) {
   return new Promise((resolve, reject) => {
     let hasErrors = false;
-    const forked = fork(benchFile, [benchReport.colorFlags], {
+    const forked = fork(benchFile, [], {
       env: { NODE_BENCHMARK_FORKED: 1 },
     });
 

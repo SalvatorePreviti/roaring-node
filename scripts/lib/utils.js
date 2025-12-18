@@ -1,4 +1,4 @@
-const colors = require("chalk");
+const colors = require("ansis");
 const util = require("util");
 const fs = require("fs");
 const path = require("path");
@@ -19,6 +19,7 @@ function getBinaryOutputFilePath() {
       BINARY_OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "build", "Release", "roaring.node");
     }
   }
+  return BINARY_OUTPUT_FILE_PATH;
 }
 
 module.exports = {

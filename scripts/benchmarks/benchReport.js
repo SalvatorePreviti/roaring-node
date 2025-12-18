@@ -1,12 +1,10 @@
-const colors = require("chalk");
-
-const hasIcons = colors.supportsColor.has256;
+const colors = require("ansis");
 
 const icons = {
-  success: colors.green(hasIcons ? "✔" : "√"),
-  error: hasIcons ? "✖" : "×",
-  arrow: hasIcons ? "➔" : "-",
-  bullet: hasIcons ? "•" : "*",
+  success: colors.green("✔"),
+  error: "✖",
+  arrow: "➔",
+  bullet: "•",
 };
 
 function printBenchError(suiteName, bench, error) {
@@ -87,9 +85,5 @@ module.exports = {
     } else {
       console.log(colors.gray(`  ${icons.arrow} No benchmarks\n`));
     }
-  },
-
-  get colorFlags() {
-    return colors.supportsColor.hasBasic ? (colors.supportsColor.has256 ? "--color=256" : "--colors") : "";
   },
 };

@@ -1,18 +1,16 @@
-const colors = require("chalk");
+const colors = require("ansis");
 const readline = require("readline");
 
 const spinner = {
   interval: null,
   printed: false,
   start() {
-    if (!spinner.interval && colors.supportsColor.hasBasic && !process.env.CI) {
+    if (!spinner.interval && !process.env.CI) {
       const dot = colors.gray(".");
-      spinner.interval =
-        colors.supportsColor.hasBasic &&
-        setInterval(() => {
-          spinner.printed = true;
-          process.stderr.write(dot);
-        }, 1000);
+      spinner.interval = setInterval(() => {
+        spinner.printed = true;
+        process.stderr.write(dot);
+      }, 1000);
     }
   },
   clear() {

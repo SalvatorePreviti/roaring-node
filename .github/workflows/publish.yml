@@ -60,18 +60,46 @@ jobs:
           - node-version: "18.20.8"
             os: ubuntu-latest
             container: "node:18.20.8-bullseye"
+            libc: glibc
           - node-version: "20.9.0"
             os: ubuntu-latest
             container: "node:20.9.0-bullseye"
+            libc: glibc
           - node-version: "22.8.0"
             os: ubuntu-latest
             container: "node:22.8.0-bullseye"
+            libc: glibc
           - node-version: "24.10.0"
             os: ubuntu-latest
             container: "node:24.10.0-bullseye"
+            libc: glibc
           - node-version: "25.0.0"
             os: ubuntu-latest
             container: "node:25.0.0-bookworm"
+            libc: glibc
+          #
+          # Linux jobs targeting musl via Alpine containers
+          #
+          - node-version: "18.20.8"
+            os: ubuntu-latest
+            container: "node:18.20.8-alpine"
+            libc: musl
+          - node-version: "20.9.0"
+            os: ubuntu-latest
+            container: "node:20.9.0-alpine"
+            libc: musl
+          - node-version: "22.8.0"
+            os: ubuntu-latest
+            container: "node:22.8.0-alpine"
+            libc: musl
+          - node-version: "24.10.0"
+            os: ubuntu-latest
+            container: "node:24.10.0-alpine"
+            libc: musl
+          - node-version: "25.0.0"
+            os: ubuntu-latest
+            container: "node:25.0.0-alpine"
+            libc: musl
           #
           # Windows jobs
           #
@@ -112,6 +140,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     steps:
+      - name: Prepare Alpine base image
+        if: matrix.libc == 'musl'
+        run: apk add --no-cache python3 make g++ git bash
       - uses: actions/checkout@v4
       - name: Setup Node (non-Linux)
         # Only use setup-node for Windows/macOS
@@ -119,6 +150,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Configure npm for Python3
+        if: matrix.libc == 'musl'
+        run: npm config set python /usr/bin/python3
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
@@ -157,8 +191,21 @@ jobs:
       - run: npm install --exact --no-audit --no-save
       - run: node ./scripts/test.js
 
+  post-test-node24-alpine:
+    name: post-test-node24-alpine
+    needs: build-and-upload
+    runs-on: ubuntu-latest
+    container: node:24.10.0-alpine
+    steps:
+      - name: Install Alpine build deps
+        run: apk add --no-cache python3 make g++ git bash
+      - uses: actions/checkout@v4
+      - run: npm config set python /usr/bin/python3
+      - run: npm install --exact --no-audit --no-save
+      - run: node ./scripts/test.js
+
   publish-release:
-    needs: [post-test, post-test-node24-slim]
+    needs: [post-test, post-test-node24-slim, post-test-node24-alpine]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

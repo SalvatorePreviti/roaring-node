@@ -29,6 +29,10 @@ Directly transferring an instance without copy between worker threads is not cur
 npm install --save roaring
 ```
 
+### Linux libc variants
+
+Prebuilt binaries are now published separately for `glibc` and `musl` targets. When running on Alpine or any other musl-based distribution the installer will request the `-musl` artifact; on other Linux distributions it will request the `-glibc` build. If a matching build is not available `npm install` falls back to compiling from source, so ensure the usual build toolchain is present.
+
 ## References
 
 - This package - <https://www.npmjs.com/package/roaring>
