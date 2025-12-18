@@ -36,9 +36,6 @@
     "isolatedModules": true
   },
   "exclude": ["node_modules", "node_modules/**/*", "temp/**/*", "build/**/*"],
-  "typeAcquisition": {
-    "enable": true
-  },
   "typedocOptions": {
     "out": "docs",
     "entryPoints": "src/index.ts",
