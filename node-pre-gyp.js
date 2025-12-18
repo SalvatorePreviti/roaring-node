@@ -5,6 +5,47 @@ const { fork } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
+function resolveNodeGypPath() {
+  const fs = require("node:fs");
+  const path = require("node:path");
+
+  const seen = new Set();
+  const addCandidates = (list) => {
+    for (const item of list) {
+      if (item && !seen.has(item)) {
+        seen.add(path.resolve(item));
+      }
+    }
+  };
+
+  try {
+    addCandidates([require.resolve("node-gyp/bin/node-gyp.js")]);
+  } catch {}
+
+  const cwd = process.cwd();
+  addCandidates([
+    path.join(cwd, "node_modules", "node-gyp", "bin", "node-gyp.js"),
+    path.join(cwd, "node_modules", "npm", "node_modules", "node-gyp", "bin", "node-gyp.js"),
+  ]);
+
+  const execDir = path.dirname(process.execPath);
+  const roots = [
+    path.join(execDir, "..", "lib", "node_modules", "npm"),
+    path.join(execDir, "..", "node_modules", "npm"),
+    path.join(execDir, "node_modules", "npm"),
+  ];
+  for (const root of roots) {
+    addCandidates([path.join(root, "node_modules", "node-gyp", "bin", "node-gyp.js")]);
+  }
+
+  for (const candidate of seen) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 const ROARING_NODE_PRE_GYP = process.env.ROARING_NODE_PRE_GYP;
 if (ROARING_NODE_PRE_GYP) {
   process.env.ROARING_NODE_PRE_GYP = "";
@@ -19,9 +60,10 @@ function roaring32NodePreGyp() {
   process.chdir(__dirname);
 
   if (ROARING_NODE_PRE_GYP !== "custom-rebuild") {
-    try {
-      process.env.npm_config_node_gyp = require.resolve("node-gyp/bin/node-gyp.js");
-    } catch (_e) {}
+    const nodeGypPath = resolveNodeGypPath();
+    if (nodeGypPath) {
+      process.env.npm_config_node_gyp = nodeGypPath;
+    }
 
     require("@mapbox/node-pre-gyp/lib/main");
   } else {
