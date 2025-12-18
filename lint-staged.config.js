@@ -8,6 +8,6 @@ module.exports = {
       return [];
     }
     const args = quoteFiles(files).join(" ");
-    return `biome check --write --files-ignore-unknown=true ${args}`;
+    return [`biome check --write --files-ignore-unknown=true ${args}`, "tsc --noEmit"];
   },
 };
