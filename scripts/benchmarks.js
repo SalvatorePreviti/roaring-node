@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const systemInfo = require("./system-info");
+const { getSystemInfo, printSystemInfo } = require("./system-info");
 const promiseMap = require("./benchmarks/promiseMap");
 const colors = require("ansis");
 const path = require("node:path");
@@ -63,7 +63,7 @@ function runBenchFileAsync(benchFile) {
 }
 
 async function benchmarks() {
-  systemInfo.print();
+  printSystemInfo();
   spinner.start();
   let hasErrors = false;
   try {
@@ -82,7 +82,7 @@ async function benchmarks() {
           hasErrors = true;
         }
       },
-      Math.max(1, systemInfo.physicalCpuCount - 1),
+      Math.max(1, getSystemInfo().physicalCpuCount - 1),
     );
     if (hasErrors) {
       const error = new Error("Benchmarks failed");

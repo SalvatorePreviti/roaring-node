@@ -3,10 +3,17 @@
 const colors = require("ansis");
 const path = require("node:path");
 const fs = require("node:fs");
-const { runMain, forkAsync } = require("./lib/utils");
-
-const { CPP_UNITY_FILE_PATH, ROOT_FOLDER, getBinaryOutputFilePath } = require("./lib/utils");
+const {
+  runMain,
+  forkAsync,
+  spawnAsync,
+  CPP_UNITY_FILE_PATH,
+  ROOT_FOLDER,
+  getBinaryOutputFilePath,
+} = require("./lib/utils");
 const { unity } = require("./lib/unity");
+
+const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 async function development() {
   console.log();
@@ -96,7 +103,9 @@ async function build() {
         ROARING_NODE_PRE_GYP: "custom-rebuild",
       },
     });
-    await forkAsync(require.resolve("./test.js"));
+    await spawnAsync(npmCommand, ["run", "test"], {
+      env: process.env,
+    });
   }
 }
 

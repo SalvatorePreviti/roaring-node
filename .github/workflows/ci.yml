@@ -23,14 +23,14 @@ jobs:
       - run: node ./node-pre-gyp.js
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
-      - run: node ./scripts/test.js
+      - run: npm run test
       - run: node --expose-gc ./scripts/test-memory-leaks.js
 
   ci:
     needs: test
     strategy:
       matrix:
-        node-version: ["18.20.8", "20.9.0", "22.8.0", "24.5.0", "25.0.0"]
+        node-version: ["20.9.0", "22.8.0", "24.5.0", "25.0.0"]
         os: [ubuntu-latest, macos-latest, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
@@ -44,13 +44,13 @@ jobs:
       - run: node ./node-pre-gyp.js
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
-      - run: node ./scripts/test.js
+      - run: npm run test
 
   ci-musl:
     needs: test
     strategy:
       matrix:
-        node-version: ["18.20.8", "20.9.0", "22.8.0", "24.10.0", "25.0.0"]
+        node-version: ["20.9.0", "22.8.0", "24.10.0", "25.0.0"]
     runs-on: ubuntu-latest
     container: node:${{ matrix.node-version }}-alpine
     steps:
@@ -64,4 +64,4 @@ jobs:
       - run: node ./node-pre-gyp.js
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
-      - run: node ./scripts/test.js
+      - run: npm run test

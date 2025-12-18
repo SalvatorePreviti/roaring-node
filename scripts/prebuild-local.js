@@ -6,7 +6,7 @@
  */
 
 const colors = require("ansis");
-const { print: printSystemInfo } = require("./system-info");
+const { printSystemInfo } = require("./system-info");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -14,13 +14,14 @@ const { spawnAsync, mergeDirs, runMain, ROOT_FOLDER, forkAsync } = require("./li
 
 const { startPublishAssets } = require("./node-pre-gyp-publish");
 
-const NODE_VERSIONS = ["18.20.8", "20.9.0", "22.8.0", "24.5.0", "25.0.0"];
+const NODE_VERSIONS = ["20.9.0", "22.8.0", "24.5.0", "25.0.0"];
 
 const NATIVE_DIR = path.resolve(ROOT_FOLDER, "native");
 const STAGE_DIR = path.resolve(ROOT_FOLDER, "build/stage");
 const STAGE_TMP_DIR = path.resolve(ROOT_FOLDER, ".tmp/stage");
 const TOOLS_DIR = path.resolve(ROOT_FOLDER, ".tmp/tools");
 const N_EXECUTABLE_PATH = path.resolve(TOOLS_DIR, "node_modules/.bin/n");
+const NPM_COMMAND = process.platform === "win32" ? "npm.cmd" : "npm";
 
 const rmdir = fs.promises.rm || fs.promises.rmdir;
 
@@ -129,7 +130,7 @@ async function main() {
     await spawnAsync(N_EXECUTABLE_PATH, args);
 
     console.log(colors.blueBright("- testing"));
-    const testArgs = ["run", nodeVersion, require.resolve("./test.js")];
+    const testArgs = ["run", nodeVersion, NPM_COMMAND, "run", "test"];
     await spawnAsync(N_EXECUTABLE_PATH, testArgs);
 
     if (isDeploy) {

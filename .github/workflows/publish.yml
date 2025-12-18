@@ -39,7 +39,7 @@ jobs:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
 
       - name: test
-        run: node ./scripts/test.js
+        run: npm run test
 
       - name: test memory leaks
         run: node --expose-gc ./scripts/test-memory-leaks.js
@@ -57,10 +57,6 @@ jobs:
           #
           # Linux jobs with exact Node version in container - to match glibc versions
           #
-          - node-version: "18.20.8"
-            os: ubuntu-latest
-            container: "node:18.20.8-bullseye"
-            libc: glibc
           - node-version: "20.9.0"
             os: ubuntu-latest
             container: "node:20.9.0-bullseye"
@@ -80,10 +76,6 @@ jobs:
           #
           # Linux jobs targeting musl via Alpine containers
           #
-          - node-version: "18.20.8"
-            os: ubuntu-latest
-            container: "node:18.20.8-alpine"
-            libc: musl
           - node-version: "20.9.0"
             os: ubuntu-latest
             container: "node:20.9.0-alpine"
@@ -103,8 +95,6 @@ jobs:
           #
           # Windows jobs
           #
-          - node-version: "18.20.8"
-            os: windows-2022
           - node-version: "20.9.0"
             os: windows-2022
           - node-version: "22.8.0"
@@ -116,8 +106,6 @@ jobs:
           #
           # macOS arm64 jobs
           #
-          - node-version: "18.20.8"
-            os: macos-latest
           - node-version: "20.9.0"
             os: macos-latest
           - node-version: "22.8.0"
@@ -129,8 +117,6 @@ jobs:
           #
           # macOS intel jobs
           #
-          - node-version: "18.20.8"
-            os: macos-13
           - node-version: "20.9.0"
             os: macos-13
           - node-version: "22.8.0"
@@ -159,7 +145,7 @@ jobs:
       - run: node ./node-pre-gyp.js
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
-      - run: node ./scripts/test.js
+      - run: npm run test
       - name: Upload artifact
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -179,7 +165,7 @@ jobs:
           node-version: "24.x"
       - uses: actions/checkout@v4
       - run: npm install --exact --no-audit --no-save
-      - run: node ./scripts/test.js
+      - run: npm run test
 
   post-test-node24-slim:
     name: post-test-node24-slim
@@ -189,7 +175,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm install --exact --no-audit --no-save
-      - run: node ./scripts/test.js
+      - run: npm run test
 
   post-test-node24-alpine:
     name: post-test-node24-alpine
@@ -202,7 +188,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm config set python /usr/bin/python3
       - run: npm install --exact --no-audit --no-save
-      - run: node ./scripts/test.js
+      - run: npm run test
 
   publish-release:
     needs: [post-test, post-test-node24-slim, post-test-node24-alpine]
