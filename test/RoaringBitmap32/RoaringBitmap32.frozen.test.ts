@@ -1,6 +1,6 @@
-import { FrozenViewFormat } from "../..";
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect } from "chai";
+import { FrozenViewFormat } from "../helpers/roaring";
 
 const ERROR_FROZEN = "This bitmap is frozen and cannot be modified";
 

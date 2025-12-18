@@ -1,16 +1,13 @@
 // lint-staged.config.js
-const { ESLint } = require("eslint");
 
-const removeIgnoredFiles = async (files) => {
-  const eslint = new ESLint();
-  const ignoredFiles = await Promise.all(files.map((file) => eslint.isPathIgnored(file)));
-  const filteredFiles = files.filter((_, i) => !ignoredFiles[i]);
-  return filteredFiles.join(" ");
-};
+const quoteFiles = (files) => files.map((file) => JSON.stringify(file));
 
 module.exports = {
-  "*.{js,jsx,ts,tsx}": async (files) => {
-    const filesToLint = await removeIgnoredFiles(files);
-    return [`eslint --max-warnings=0 ${filesToLint}`, `prettier --write ${filesToLint}`];
+  "*": (files) => {
+    if (!files.length) {
+      return [];
+    }
+    const args = quoteFiles(files).join(" ");
+    return [`biome check --write --files-ignore-unknown=true ${args}`, "tsc --noEmit"];
   },
 };

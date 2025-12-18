@@ -1,5 +1,5 @@
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect } from "chai";
 
 describe("RoaringBitmap32 deserializeAsync", () => {
   describe("async/await", () => {
@@ -99,7 +99,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
               try {
                 expect(error).to.be.null;
                 expect(bitmap).to.be.instanceOf(RoaringBitmap32);
-                expect(bitmap!.size).eq(0);
+                expect(bitmap?.size).eq(0);
                 resolve();
               } catch (e) {
                 reject(e);
@@ -120,7 +120,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
               try {
                 expect(error).to.be.null;
                 expect(bitmap).to.be.instanceOf(RoaringBitmap32);
-                expect(bitmap!.size).eq(0);
+                expect(bitmap?.size).eq(0);
                 resolve();
               } catch (e) {
                 reject(e);
@@ -143,7 +143,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
               try {
                 expect(error).to.be.null;
                 expect(bitmap).to.be.instanceOf(RoaringBitmap32);
-                expect(bitmap!.size).eq(0);
+                expect(bitmap?.size).eq(0);
                 resolve();
               } catch (e) {
                 reject(e);
@@ -164,7 +164,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
               try {
                 expect(error).to.be.null;
                 expect(bitmap).to.be.instanceOf(RoaringBitmap32);
-                expect(bitmap!.size).eq(0);
+                expect(bitmap?.size).eq(0);
                 resolve();
               } catch (e) {
                 reject(e);
@@ -190,7 +190,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
             try {
               expect(error).to.be.null;
               expect(bitmap).to.be.instanceOf(RoaringBitmap32);
-              expect(bitmap!.toArray()).deep.equal(values);
+              expect(bitmap?.toArray()).deep.equal(values);
               resolve();
             } catch (e) {
               reject(e);
@@ -207,7 +207,7 @@ describe("RoaringBitmap32 deserializeAsync", () => {
           RoaringBitmap32.deserializeAsync(wrongBuffer, false, (error, bitmap) => {
             try {
               expect(bitmap).to.be.undefined;
-              expect(error!.message).eq("RoaringBitmap32 deserialization - invalid portable header byte");
+              expect(error?.message).eq("RoaringBitmap32 deserialization - invalid portable header byte");
               resolve();
             } catch (e) {
               reject(e);

@@ -1,16 +1,14 @@
+import fs from "node:fs";
+import path from "node:path";
+import { beforeAll, describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
-import { expect, use as chaiUse } from "chai";
-import path from "path";
-import fs from "fs";
-import type { FileSerializationDeserializationFormatType } from "../..";
-import { FileDeserializationFormat, FileSerializationFormat } from "../..";
+import type { FileSerializationDeserializationFormatType } from "../helpers/roaring";
+import { FileDeserializationFormat, FileSerializationFormat } from "../helpers/roaring";
 
 const tmpDir = path.resolve(__dirname, "..", "..", ".tmp", "tests");
 
-chaiUse(require("chai-as-promised"));
-
 describe("RoaringBitmap32 file serialization", () => {
-  before(() => {
+  beforeAll(() => {
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir, { recursive: true });
     }

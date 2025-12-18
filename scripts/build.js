@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 
-const colors = require("chalk");
-const path = require("path");
-const fs = require("fs");
-const { runMain, forkAsync } = require("./lib/utils");
-
-const { CPP_UNITY_FILE_PATH, ROOT_FOLDER, getBinaryOutputFilePath } = require("./lib/utils");
+const colors = require("ansis");
+const path = require("node:path");
+const fs = require("node:fs");
+const {
+  runMain,
+  forkAsync,
+  spawnAsync,
+  CPP_UNITY_FILE_PATH,
+  ROOT_FOLDER,
+  getBinaryOutputFilePath,
+  NPM_COMMAND,
+} = require("./lib/utils");
 const { unity } = require("./lib/unity");
 
 async function development() {
@@ -96,7 +102,9 @@ async function build() {
         ROARING_NODE_PRE_GYP: "custom-rebuild",
       },
     });
-    await forkAsync(require.resolve("./test.js"));
+    await spawnAsync(NPM_COMMAND, ["run", "test"], {
+      env: process.env,
+    });
   }
 }
 

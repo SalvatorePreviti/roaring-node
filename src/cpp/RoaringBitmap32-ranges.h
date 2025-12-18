@@ -402,6 +402,123 @@ void RoaringBitmap32_toArray(const v8::FunctionCallbackInfo<v8::Value> & info) {
   }
 }
 
+void RoaringBitmap32_toReversed(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);
+  const size_t cardinality = self ? self->getSize() : 0;
+
+  const size_t maxJsLength = 0xFFFFFFFFull;
+  size_t limit = cardinality;
+  size_t skip = 0;
+  uint32_t writeIndex = 0;
+  bool arrayProvided = false;
+  v8::Local<v8::Array> jsArray;
+
+  auto clampSize = [&](v8::Local<v8::Value> value, size_t maxValue) -> size_t {
+    if (value.IsEmpty() || value->IsUndefined() || value->IsNull()) {
+      return 0;
+    }
+    double d;
+    if (!value->NumberValue(context).To(&d) || std::isnan(d)) {
+      return 0;
+    }
+    if (d <= 0) {
+      return 0;
+    }
+    double limitDouble = static_cast<double>(maxValue);
+    if (d >= limitDouble) {
+      return maxValue;
+    }
+    return static_cast<size_t>(d);
+  };
+
+  if (info.Length() >= 1 && !info[0]->IsUndefined()) {
+    if (info[0]->IsNumber()) {
+      limit = clampSize(info[0], cardinality);
+      if (limit > maxJsLength) {
+        limit = maxJsLength;
+      }
+      if (info.Length() >= 2 && !info[1]->IsUndefined()) {
+        skip = clampSize(info[1], cardinality);
+      }
+    } else {
+      v8::Local<v8::Object> obj;
+      if (!info[0]->ToObject(context).ToLocal(&obj) || !obj->IsArray()) {
+        return v8utils::throwTypeError(isolate, "RoaringBitmap32::toReversed - argument must be an array");
+      }
+      jsArray = v8::Local<v8::Array>::Cast(obj);
+      arrayProvided = true;
+
+      if (info.Length() >= 2 && !info[1]->IsUndefined()) {
+        limit = clampSize(info[1], cardinality);
+        if (limit > maxJsLength) {
+          limit = maxJsLength;
+        }
+      }
+
+      if (info.Length() >= 3 && !info[2]->IsUndefined()) {
+        size_t offset = clampSize(info[2], maxJsLength);
+        writeIndex = static_cast<uint32_t>(offset);
+      } else {
+        writeIndex = jsArray->Length();
+      }
+
+      if (info.Length() >= 4 && !info[3]->IsUndefined()) {
+        skip = clampSize(info[3], cardinality);
+      }
+    }
+  }
+
+  if (limit > maxJsLength) {
+    limit = maxJsLength;
+  }
+
+  size_t writeCapacity = maxJsLength - writeIndex;
+  if (limit > writeCapacity) {
+    limit = writeCapacity;
+  }
+
+  size_t available = cardinality > skip ? cardinality - skip : 0;
+  if (limit > available) {
+    limit = available;
+  }
+
+  if (!arrayProvided) {
+    jsArray = v8::Array::New(isolate, static_cast<uint32_t>(limit));
+  }
+
+  info.GetReturnValue().Set(jsArray);
+
+  if (self == nullptr || jsArray.IsEmpty() || limit == 0) {
+    return;
+  }
+
+  size_t startOffset = cardinality - skip - limit;
+  constexpr size_t kChunkSize = 1024;
+  uint32_t buffer[kChunkSize];
+  size_t processed = 0;
+
+  while (processed < limit) {
+    size_t chunk = limit - processed;
+    if (chunk > kChunkSize) {
+      chunk = kChunkSize;
+    }
+    if (!roaring_bitmap_range_uint32_array(self->roaring, startOffset + processed, chunk, buffer)) {
+      return v8utils::throwError(isolate, "RoaringBitmap32::toReversed - failed to build the range");
+    }
+    for (size_t i = 0; i < chunk; ++i) {
+      bool ok = false;
+      uint32_t targetIndex = writeIndex + static_cast<uint32_t>(limit - 1 - (processed + i));
+      if (!jsArray->Set(context, targetIndex, v8::Uint32::NewFromUnsigned(isolate, buffer[i])).To(&ok) || !ok) {
+        return;
+      }
+    }
+    processed += chunk;
+  }
+}
+
 void RoaringBitmap32_toSet(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(info.This(), isolate);

@@ -1,12 +1,13 @@
-const colors = require("chalk");
-const util = require("util");
-const fs = require("fs");
-const path = require("path");
-const { spawn, fork } = require("child_process");
+const colors = require("ansis");
+const util = require("node:util");
+const fs = require("node:fs");
+const path = require("node:path");
+const { spawn, fork } = require("node:child_process");
 
 const ROOT_FOLDER = path.resolve(__dirname, "../../");
 const CPP_SRC_FOLDER_PATH = path.resolve(ROOT_FOLDER, "src/cpp");
 const CPP_UNITY_FILE_PATH = path.resolve(ROOT_FOLDER, "roaring-node.cpp");
+const NPM_COMMAND = process.platform === "win32" ? "npm.cmd" : "npm";
 
 let BINARY_OUTPUT_FILE_PATH;
 
@@ -19,6 +20,7 @@ function getBinaryOutputFilePath() {
       BINARY_OUTPUT_FILE_PATH = path.resolve(ROOT_FOLDER, "build", "Release", "roaring.node");
     }
   }
+  return BINARY_OUTPUT_FILE_PATH;
 }
 
 module.exports = {
@@ -32,6 +34,7 @@ module.exports = {
   spawnAsync,
   forkAsync,
   mergeDirs,
+  NPM_COMMAND,
 };
 
 function runMain(fn, title) {

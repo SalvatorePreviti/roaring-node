@@ -1,7 +1,7 @@
-const colors = require("chalk");
-const path = require("path");
+const colors = require("ansis");
+const path = require("node:path");
 
-const fs = require("fs");
+const fs = require("node:fs");
 
 const { CPP_SRC_FOLDER_PATH } = require("./utils");
 

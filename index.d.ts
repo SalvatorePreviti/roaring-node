@@ -630,12 +630,25 @@ export interface ReadonlyRoaringBitmap32
   toSorted(cmp?: (a: number, b: number) => number): number[];
 
   /**
-   * It behaves like array.toReversed.
-   * Returns a new array that is this set sorted in reverse order.
+   * It behaves like array.toReversed but allows extracting descending ranges without extra allocations.
+   * Returns a new array (or fills the provided one) with the values of this set in descending order.
    * WARNING: The returned array may be very big, up to 4 billion elements.
-   * @returns An array containing the elements of this set in reverse order (descending).
+   *
+   * Overloads:
+   *  - `toReversed()`
+   *  - `toReversed(limit, skipFromEnd?)`
+   *  - `toReversed(output, limit?, offset?, skipFromEnd?)`
+   *
+   * When an `output` array is provided, the method writes the descending values into it starting at `offset`
+   * (default: append at the current length). Otherwise a fresh array is allocated and returned.
+   * `limit` bounds how many elements are produced (defaults to the bitmap cardinality) and `skipFromEnd`
+   * skips that many of the largest values before collecting the range.
+   *
+   * @returns An array containing the selected elements in reverse order (descending).
    */
   toReversed(): number[];
+  toReversed(limit: number, skipFromEnd?: number): number[];
+  toReversed(output: number[], limit?: number, offset?: number, skipFromEnd?: number): number[];
 
   /**
    * Gets the minimum value in the set.
@@ -1342,6 +1355,16 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32 {
   clear(): boolean;
 
   /**
+   * Disposes this bitmap, releasing its native resources. Equivalent to calling clear().
+   */
+  dispose(): void;
+
+  /**
+   * Resource-management hook so RoaringBitmap32 can participate in the Symbol.dispose protocol.
+   */
+  [Symbol.dispose](): void;
+
+  /**
    * Executes a function for each value in the set, in ascending order.
    * The callback has 3 arguments, the value, the value and this (this set). This is to match the Set<number> interface.
    *
@@ -1747,7 +1770,7 @@ export interface RoaringBitmap32 extends ReadonlyRoaringBitmap32 {
  */
 export class RoaringBitmap32 {
   // Allows: import RoaringBitmap32 from 'roaring/RoaringBitmap32'
-  private static readonly default: typeof RoaringBitmap32;
+  static readonly default: typeof RoaringBitmap32;
 
   static readonly SerializationFormat: typeof SerializationFormat;
 
@@ -1872,7 +1895,7 @@ export class RoaringBitmap32 {
    * @constant
    * @type {string} The version of the CRoaring library as a string. Example: "0.2.42"
    */
-  static get CRoaringVersion(): string;
+  static readonly CRoaringVersion: string;
 
   /**
    * Property: The version of the roaring npm package as a string.
@@ -1882,7 +1905,7 @@ export class RoaringBitmap32 {
    * @constant
    * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
    */
-  static get PackageVersion(): string;
+  static readonly PackageVersion: string;
 
   /**
    * Creates an instance of RoaringBitmap32 with a given initial capacity.
@@ -2355,10 +2378,10 @@ export class RoaringBitmap32 {
  * @implements {IterableIterator<number>}
  */
 export class RoaringBitmap32Iterator implements IterableIterator<number> {
-  get isReverseIterator(): boolean;
+  readonly isReverseIterator: boolean;
 
   // Allows: import RoaringBitmap32Iterator from 'roaring/RoaringBitmap32Iterator'
-  private static readonly default: typeof RoaringBitmap32Iterator;
+  static readonly default: typeof RoaringBitmap32Iterator;
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
@@ -2405,6 +2428,21 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
    * @memberof RoaringBitmap32Iterator
    */
   next(): IteratorResult<number>;
+
+  /**
+   * Stops the iteration early and releases the underlying buffer.
+   */
+  return(value?: number): IteratorResult<number>;
+
+  /**
+   * Disposes this iterator so it can be used with the Symbol.dispose protocol.
+   */
+  dispose(value?: number): IteratorResult<number>;
+
+  /**
+   * Resource-management hook so RoaringBitmap32Iterator participates in the Symbol.dispose protocol.
+   */
+  [Symbol.dispose](): IteratorResult<number>;
 }
 
 /**
@@ -2419,7 +2457,7 @@ export class RoaringBitmap32Iterator implements IterableIterator<number> {
  */
 export class RoaringBitmap32ReverseIterator implements IterableIterator<number> {
   // Allows: import RoaringBitmap32ReverseIterator from 'roaring/RoaringBitmap32ReverseIterator'
-  private static readonly default: typeof RoaringBitmap32ReverseIterator;
+  static readonly default: typeof RoaringBitmap32ReverseIterator;
 
   /**
    * Creates a new iterator able to iterate a RoaringBitmap32.
@@ -2466,6 +2504,21 @@ export class RoaringBitmap32ReverseIterator implements IterableIterator<number> 
    * @memberof RoaringBitmap32ReverseIterator
    */
   next(): IteratorResult<number>;
+
+  /**
+   * Stops the iteration early and releases the underlying buffer.
+   */
+  return(value?: number): IteratorResult<number>;
+
+  /**
+   * Disposes this iterator so it can be used with the Symbol.dispose protocol.
+   */
+  dispose(value?: number): IteratorResult<number>;
+
+  /**
+   * Resource-management hook so RoaringBitmap32ReverseIterator participates in the Symbol.dispose protocol.
+   */
+  [Symbol.dispose](): IteratorResult<number>;
 }
 
 /**
@@ -2569,7 +2622,7 @@ export interface RoaringBitmap32Statistics {
  * @type {string} The version of the CRoaring library as a string. Example: "0.2.42"
  * @memberof RoaringModule
  */
-export const CRoaringVersion: string;
+export declare const CRoaringVersion: string;
 
 /**
  * Property: The version of the roaring npm package as a string.
@@ -2580,7 +2633,7 @@ export const CRoaringVersion: string;
  * @type {string} The version of the roaring npm package as a string. Example: "0.2.42"
  * @memberof RoaringModule
  */
-export const PackageVersion: string;
+export declare const PackageVersion: string;
 
 export default roaring;
 

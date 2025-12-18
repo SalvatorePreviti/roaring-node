@@ -15,35 +15,64 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
-      - run: npx tsc --noEmit
-      - run: npx eslint --no-error-on-unmatched-pattern --max-warnings=0
-      - run: npx prettier --loglevel=warn --check .
+      - run: npm run lint
       - run: node ./node-pre-gyp.js
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
-      - run: node ./scripts/test.js
+      - run: npm run test
       - run: node --expose-gc ./scripts/test-memory-leaks.js
 
   ci:
     needs: test
     strategy:
       matrix:
-        node-version: ["18.20.8", "20.9.0", "22.8.0", "24.5.0", "25.0.0"]
+        node-version: ["20.9.0", "22.8.0", "24.5.0", "25.0.0"]
         os: [ubuntu-latest, macos-latest, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
       - run: node ./node-pre-gyp.js
         env:
           ROARING_NODE_PRE_GYP: "custom-rebuild"
-      - run: node ./scripts/test.js
+      - run: npm run test
+
+  ci-musl:
+    needs: test
+    strategy:
+      matrix:
+        node-version: ["20.9.0", "22.8.0", "24.10.0", "25.0.0"]
+    runs-on: ubuntu-latest
+    container: node:${{ matrix.node-version }}-alpine
+    steps:
+      - name: Install Alpine build deps
+        run: apk add --no-cache python3 py3-setuptools make g++ git bash
+      - uses: actions/checkout@v6
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js /usr/bin/python3
+      - run: npm install --exact --no-audit --no-save
+        env:
+          ROARING_NODE_PRE_GYP: "false"
+      - run: node ./node-pre-gyp.js
+        env:
+          ROARING_NODE_PRE_GYP: "custom-rebuild"
+      - run: npm run test
