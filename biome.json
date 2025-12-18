@@ -12,7 +12,10 @@
       "!**/node_modules/**/*",
       "!**/submodules/**/*",
       "!**/package-lock.json",
-      "!**/.clang-tidy"
+      "!**/.clang-tidy",
+      "!**/*.h",
+      "!**/*.c",
+      "!**/*.cpp"
     ],
     "ignoreUnknown": true
   },
