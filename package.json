@@ -62,7 +62,7 @@
     "lint": "biome check --diagnostic-level=error --files-ignore-unknown=true . && tsc --noEmit",
     "lint:fix": "biome check --write --files-ignore-unknown=true . && tsc --noEmit",
     "doc": "typedoc ./index.d.ts",
-    "benchmarks": "node --expose-gc ./scripts/benchmarks.js"
+    "benchmarks": "vitest bench --run"
   },
   "husky": {
     "hooks": {
@@ -70,7 +70,8 @@
     }
   },
   "dependencies": {
-    "@mapbox/node-pre-gyp": "^2.0.3"
+    "@mapbox/node-pre-gyp": "^2.0.3",
+    "@types/fastbitset": "^0.2.2"
   },
   "peerDependencies": {
     "node-gyp": "^12.1.0"
@@ -88,7 +89,6 @@
     "@octokit/rest": "20.1.2",
     "@types/node": "^25.0.3",
     "ansis": "^4.2.0",
-    "benchmark": "^2.1.4",
     "esbuild": "^0.27.2",
     "fastbitset": "^0.4.1",
     "husky": "^9.1.7",

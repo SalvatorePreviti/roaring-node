@@ -8,5 +8,8 @@ export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
     environment: "node",
+    benchmark: {
+      include: ["benchmarks/vitest/**/*.vitest.bench.ts"],
+    },
   },
 });
