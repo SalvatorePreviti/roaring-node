@@ -1,6 +1,6 @@
-import { expect } from "chai";
-import { DeserializationFormat, SerializationFormat } from "../..";
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
+import { DeserializationFormat, SerializationFormat } from "../helpers/roaring";
 
 describe("RoaringBitmap32 serialization", () => {
   const data = [1, 2, 3, 4, 5, 6, 100, 101, 105, 109, 0x7fffffff, 0xfffffffe, 0xffffffff];
@@ -331,22 +331,22 @@ describe("RoaringBitmap32 serialization", () => {
 
     it("throws if buffer is not a valid buffer", async () => {
       const bitmap = new RoaringBitmap32(data);
-      await expect(bitmap.serializeAsync(false, {} as any)).to.be.rejected;
-      await expect(bitmap.serializeAsync(false, 1 as any)).to.be.rejected;
-      await expect(bitmap.serializeAsync(false, "test" as any)).to.be.rejected;
-      await expect(bitmap.serializeAsync(false, [1, 2, 3] as any)).to.be.rejected;
+      await expect(bitmap.serializeAsync(false, {} as any)).rejects.toThrow(Error);
+      await expect(bitmap.serializeAsync(false, 1 as any)).rejects.toThrow(Error);
+      await expect(bitmap.serializeAsync(false, "test" as any)).rejects.toThrow(Error);
+      await expect(bitmap.serializeAsync(false, [1, 2, 3] as any)).rejects.toThrow(Error);
     });
 
     it("throws if buffer is too small", async () => {
       const bitmap = new RoaringBitmap32(data);
       const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(false) - 1);
-      await expect(bitmap.serializeAsync(false, buffer)).to.be.rejected;
+      await expect(bitmap.serializeAsync(false, buffer)).rejects.toThrow(Error);
     });
 
     it("throws if buffer is too small (portable)", async () => {
       const bitmap = new RoaringBitmap32(data);
       const buffer = Buffer.alloc(bitmap.getSerializationSizeInBytes(true) - 1);
-      await expect(bitmap.serializeAsync(true, buffer)).to.be.rejected;
+      await expect(bitmap.serializeAsync(true, buffer)).rejects.toThrow(Error);
     });
 
     it("serializes to buffer (non portable)", async () => {

@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
 
 describe("RoaringBitmap32 deserializeAsync", () => {

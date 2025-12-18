@@ -1,7 +1,5 @@
-import { use as chaiUse, expect } from "chai";
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
-
-chaiUse(require("chai-as-promised"));
 
 describe("RoaringBitmap32 deserializeParallelAsync", () => {
   describe("async/await", () => {

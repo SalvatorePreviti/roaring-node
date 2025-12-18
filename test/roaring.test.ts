@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, expect, it } from "vitest";
 import roaring from "..";
 
 import RoaringBitmap32 from "../RoaringBitmap32";

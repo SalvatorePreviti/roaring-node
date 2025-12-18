@@ -85,26 +85,21 @@
   },
   "devDependencies": {
     "@octokit/rest": "20.1.2",
-    "@types/chai": "^5.2.3",
-    "@types/chai-as-promised": "^8.0.2",
-    "@types/mocha": "^10.0.10",
     "@types/node": "^25.0.3",
     "@biomejs/biome": "^2.3.10",
     "ansis": "^4.2.0",
     "benchmark": "^2.1.4",
-    "chai": "^4.5.0",
-    "chai-as-promised": "^7.1.2",
     "esbuild": "^0.27.2",
     "fastbitset": "^0.4.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
-    "mocha": "^10.8.2",
     "node-fetch-cjs": "^3.3.2",
     "physical-cpu-count": "^2.0.0",
     "tslib": "^2.8.1",
     "tsx": "^4.21.0",
     "typedoc": "^0.28.15",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.0.16"
   },
   "gypfile": true,
   "roaring_version": "4.5.0"

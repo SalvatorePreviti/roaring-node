@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32ReverseIterator from "../../RoaringBitmap32ReverseIterator";
 
 describe("RoaringBitmap32ReverseIterator import", () => {

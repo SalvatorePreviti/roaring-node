@@ -1,7 +1,5 @@
-import { use as chaiUse, expect } from "chai";
+import { describe, expect, it } from "vitest";
 import RoaringBitmap32 from "../../RoaringBitmap32";
-
-chaiUse(require("chai-as-promised"));
 
 describe("RoaringBitmap32 basic", () => {
   describe("minimum", () => {
@@ -261,10 +259,10 @@ describe("RoaringBitmap32 basic", () => {
 
     it("throws if the output argument is invalid", async () => {
       const bitmap = new RoaringBitmap32([1, 2, 10, 30, 0x7fffffff, 0xffffffff]);
-      await expect(bitmap.toUint32ArrayAsync(null as any)).to.be.rejectedWith(Error);
-      await expect(bitmap.toUint32ArrayAsync({} as any)).to.be.rejectedWith(Error);
-      await expect(bitmap.toUint32ArrayAsync([] as any)).to.be.rejectedWith(Error);
-      await expect(bitmap.toUint32ArrayAsync(new Int8Array(1) as any)).to.be.rejectedWith(Error);
+      await expect(bitmap.toUint32ArrayAsync(null as any)).rejects.toThrow(Error);
+      await expect(bitmap.toUint32ArrayAsync({} as any)).rejects.toThrow(Error);
+      await expect(bitmap.toUint32ArrayAsync([] as any)).rejects.toThrow(Error);
+      await expect(bitmap.toUint32ArrayAsync(new Int8Array(1) as any)).rejects.toThrow(Error);
     });
 
     it("writes the bitmap to the output array", async () => {

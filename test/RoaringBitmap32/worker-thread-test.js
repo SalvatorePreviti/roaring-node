@@ -1,6 +1,6 @@
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 const { parentPort } = require("node:worker_threads");
-const { expect } = require("chai");
+const assert = require("node:assert/strict");
 
 process.on("uncaughtException", (err) => {
   // eslint-disable-next-line no-console
@@ -22,18 +22,21 @@ async function main() {
   bitmap.addRange(105, 109);
   bitmap.addMany([0x7fffffff, 0xfffffffe, 0xffffffff]);
 
-  expect(bitmap.toArray()).deep.equal([1, 2, 100, 101, 105, 106, 107, 108, 0x7fffffff, 0xfffffffe, 0xffffffff]);
+  assert.deepStrictEqual(bitmap.toArray(), [1, 2, 100, 101, 105, 106, 107, 108, 0x7fffffff, 0xfffffffe, 0xffffffff]);
 
   const serialized = await bitmap.serializeAsync("portable");
 
   const bitmap2 = await RoaringBitmap32.deserializeAsync(serialized, "portable");
-  expect(bitmap2.toArray()).deep.equal([1, 2, 100, 101, 105, 106, 107, 108, 0x7fffffff, 0xfffffffe, 0xffffffff]);
+  assert.deepStrictEqual(bitmap2.toArray(), [1, 2, 100, 101, 105, 106, 107, 108, 0x7fffffff, 0xfffffffe, 0xffffffff]);
 
   bitmap2.add(121);
 
   const bitmap3 = RoaringBitmap32.orMany([bitmap, bitmap2]);
 
-  expect(Array.from(bitmap3)).deep.equal([1, 2, 100, 101, 105, 106, 107, 108, 121, 0x7fffffff, 0xfffffffe, 0xffffffff]);
+  assert.deepStrictEqual(
+    Array.from(bitmap3),
+    [1, 2, 100, 101, 105, 106, 107, 108, 121, 0x7fffffff, 0xfffffffe, 0xffffffff],
+  );
 }
 
 main()

@@ -1,3 +1,5 @@
+import { describe, it } from "vitest";
+
 const { resolve: pathResolve } = require("node:path");
 
 // Check that node is 12 or higher
