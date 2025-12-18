@@ -10,10 +10,9 @@ const {
   CPP_UNITY_FILE_PATH,
   ROOT_FOLDER,
   getBinaryOutputFilePath,
+  NPM_COMMAND,
 } = require("./lib/utils");
 const { unity } = require("./lib/unity");
-
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 async function development() {
   console.log();
@@ -103,7 +102,7 @@ async function build() {
         ROARING_NODE_PRE_GYP: "custom-rebuild",
       },
     });
-    await spawnAsync(npmCommand, ["run", "test"], {
+    await spawnAsync(NPM_COMMAND, ["run", "test"], {
       env: process.env,
     });
   }

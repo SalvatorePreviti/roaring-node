@@ -11,7 +11,8 @@
       "!**/native/**/*",
       "!**/node_modules/**/*",
       "!**/submodules/**/*",
-      "!**/package-lock.json"
+      "!**/package-lock.json",
+      "!**/.clang-tidy"
     ],
     "ignoreUnknown": true
   },
