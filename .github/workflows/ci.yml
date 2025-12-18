@@ -65,7 +65,7 @@ jobs:
     container: node:${{ matrix.node-version }}-alpine
     steps:
       - name: Install Alpine build deps
-        run: apk add --no-cache python3 py3-distutils make g++ git bash
+        run: apk add --no-cache python3 py3-setuptools make g++ git bash
       - uses: actions/checkout@v6
       - name: Configure python for node-gyp
         run: node ./scripts/ensure-python-env.js /usr/bin/python3

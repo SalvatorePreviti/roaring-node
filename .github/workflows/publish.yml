@@ -133,7 +133,7 @@ jobs:
     steps:
       - name: Prepare Alpine base image
         if: matrix.libc == 'musl'
-        run: apk add --no-cache python3 py3-distutils make g++ git bash
+        run: apk add --no-cache python3 py3-setuptools make g++ git bash
       - name: Install Debian build deps
         if: runner.os == 'Linux' && matrix.libc != 'musl'
         run: |
@@ -218,7 +218,7 @@ jobs:
     container: node:24.10.0-alpine
     steps:
       - name: Install Alpine build deps
-        run: apk add --no-cache python3 py3-distutils make g++ git bash
+        run: apk add --no-cache python3 py3-setuptools make g++ git bash
       - uses: actions/checkout@v6
       - name: Configure python for node-gyp
         run: node ./scripts/ensure-python-env.js /usr/bin/python3
