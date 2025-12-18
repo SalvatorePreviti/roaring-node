@@ -207,7 +207,7 @@ if (!roaring[initializedSym]) {
     return this;
   };
 
-  roaringBitmap32_proto.map = function map(fn, self, output = []) {
+  roaringBitmap32_proto.map = function map(fn, self, output) {
     if (typeof fn !== "function") {
       throw new TypeError(`${fn} is not a function`);
     }
@@ -215,6 +215,13 @@ if (!roaring[initializedSym]) {
       fn = fn.bind(self);
     }
     let index = 0;
+    if (!output) {
+      output = new Array(this.size);
+      for (const v of this) {
+        output[index] = fn(v, index++, this);
+      }
+      return output;
+    }
     for (const v of this) {
       output.push(fn(v, index++, this));
     }
@@ -450,10 +457,6 @@ if (!roaring[initializedSym]) {
     }
     const result = this.toArray();
     return cmp ? result.sort(cmp) : result;
-  };
-
-  roaringBitmap32_proto.toReversed = function toReversed() {
-    return this.toArray().reverse();
   };
 
   roaringBitmap32_proto.toJSON = function toJSON() {

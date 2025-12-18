@@ -1155,5 +1155,21 @@ describe("RoaringBitmap32 basic", () => {
       const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
       expect(bitmap.toReversed()).deep.equal([6, 5, 4, 3, 2, 1]);
     });
+
+    it("accepts limit and skip arguments", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      expect(bitmap.toReversed(3)).deep.equal([6, 5, 4]);
+      expect(bitmap.toReversed(3, 1)).deep.equal([5, 4, 3]);
+      expect(bitmap.toReversed(10, 10)).deep.equal([]);
+    });
+
+    it("can fill an existing array with offset and skip", () => {
+      const bitmap = new RoaringBitmap32([1, 2, 3, 4, 5, 6]);
+      const target: number[] = [100];
+      bitmap.toReversed(target, 2, 1);
+      expect(target).deep.equal([100, 6, 5]);
+      bitmap.toReversed(target, 2, 3, 2);
+      expect(target).deep.equal([100, 6, 5, 4, 3]);
+    });
   });
 });

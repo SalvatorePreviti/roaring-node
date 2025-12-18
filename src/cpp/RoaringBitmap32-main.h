@@ -164,29 +164,8 @@ void RoaringBitmap32_ofStatic(const v8::FunctionCallbackInfo<v8::Value> & info) 
   uint32_t v = 0;
   for (int i = 0; i < len; ++i) {
     auto arg = info[i];
-    if (arg->IsUint32()) {
-      if (!arg->Uint32Value(context).To(&v)) {
-        continue;
-      }
-    } else if (arg->IsInt32()) {
-      int32_t n;
-      if (!arg->Int32Value(context).To(&n) || n < 0) {
-        continue;
-      }
-      v = (uint32_t)n;
-    } else {
-      double d;
-      if (arg->IsNull() || arg->IsUndefined()) {
-        continue;
-      }
-      if (!arg->NumberValue(context).To(&d) || std::isnan(d)) {
-        continue;
-      }
-      int64_t n = (int64_t)d;
-      if (n < 0 || n > UINT32_MAX) {
-        continue;
-      }
-      v = (uint32_t)n;
+    if (!v8utils::v8ValueToUint32Fast(context, arg, v)) {
+      continue;
     }
     roaring_bitmap_add(roaring, v);
   }
@@ -581,37 +560,28 @@ void RoaringBitmap32_at(const v8::FunctionCallbackInfo<v8::Value> & info) {
   if (info.Length() < 1) {
     return;
   }
+  const size_t cardinality = self->getSize();
+  auto context = isolate->GetCurrentContext();
   uint32_t index;
-  if (info[0]->IsInt32()) {
-    int64_t n = info[0]->Int32Value(isolate->GetCurrentContext()).FromJust();
-    if (n < 0) {
-      n += (int64_t)self->getSize();
-      if (n < 0 || n > UINT32_MAX) {
-        return;
-      }
-    }
-    index = (uint32_t)n;
-  } else if (info[0]->IsUint32()) {
-    index = info[0]->Uint32Value(isolate->GetCurrentContext()).FromJust();
-  } else {
-    if (info[0]->IsNull() || info[0]->IsUndefined()) {
+  if (!v8utils::v8ValueToUint32Fast(context, info[0], index)) {
+    if (info[0]->IsNullOrUndefined()) {
       return;
     }
     double d;
-    if (!info[0]->NumberValue(isolate->GetCurrentContext()).To(&d) || std::isnan(d)) {
+    if (!info[0]->NumberValue(context).To(&d) || std::isnan(d)) {
       return;
     }
     d = std::trunc(d);
     if (d < 0) {
-      d += (double)self->getSize();
+      d += static_cast<double>(cardinality);
       if (d < 0) {
         return;
       }
     }
-    if (d >= 0x100000000) {
+    if (d >= 4294967296.0) {
       return;
     }
-    index = (uint32_t)d;
+    index = static_cast<uint32_t>(d);
   }
 
   uint32_t result;
@@ -898,6 +868,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   NODE_SET_PROTOTYPE_METHOD(ctor, "shrinkToFit", RoaringBitmap32_shrinkToFit);
   NODE_SET_PROTOTYPE_METHOD(ctor, "statistics", RoaringBitmap32_statistics);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toArray", RoaringBitmap32_toArray);
+  NODE_SET_PROTOTYPE_METHOD(ctor, "toReversed", RoaringBitmap32_toReversed);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toSet", RoaringBitmap32_toSet);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toString", RoaringBitmap32_toString);
   NODE_SET_PROTOTYPE_METHOD(ctor, "toUint32Array", RoaringBitmap32_toUint32Array);

@@ -452,7 +452,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
           return v8utils::throwError(
             isolate, "RoaringBitmap32::toUint32ArrayAsync - argument must be a valid integer number");
         }
-        this->maxSize = maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : (size_t)maxSizeDouble);
+        this->maxSize = maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : static_cast<size_t>(maxSizeDouble));
       } else {
         if (!argumentIsValidUint32ArrayOutput(info[0]) || !this->inputContent.set(isolate, info[0])) {
           return v8utils::throwError(
@@ -490,7 +490,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     }
 
     // Allocate a new buffer
-    uint32_t * buffer = (uint32_t *)bare_aligned_malloc(32, size * sizeof(uint32_t));
+    uint32_t * buffer = static_cast<uint32_t *>(bare_aligned_malloc(32, size * sizeof(uint32_t)));
     if (!buffer) {
       return this->setError(WorkerError("RoaringBitmap32::toUint32ArrayAsync - failed to allocate memory"));
     }
@@ -526,7 +526,11 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     if (allocatedBuffer && outputSize != 0) {
       // Create a new buffer using the allocated memory
       v8::MaybeLocal<v8::Object> nodeBufferMaybeLocal = node::Buffer::New(
-        isolate, (char *)allocatedBuffer, outputSize * sizeof(uint32_t), bare_aligned_free_callback, nullptr);
+        isolate,
+        reinterpret_cast<char *>(allocatedBuffer),
+        outputSize * sizeof(uint32_t),
+        bare_aligned_free_callback,
+        nullptr);
       if (!nodeBufferMaybeLocal.IsEmpty()) {
         this->allocatedBuffer.store(nullptr, std::memory_order_release);
       }

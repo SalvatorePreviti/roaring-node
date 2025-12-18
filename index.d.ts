@@ -630,12 +630,25 @@ export interface ReadonlyRoaringBitmap32
   toSorted(cmp?: (a: number, b: number) => number): number[];
 
   /**
-   * It behaves like array.toReversed.
-   * Returns a new array that is this set sorted in reverse order.
+   * It behaves like array.toReversed but allows extracting descending ranges without extra allocations.
+   * Returns a new array (or fills the provided one) with the values of this set in descending order.
    * WARNING: The returned array may be very big, up to 4 billion elements.
-   * @returns An array containing the elements of this set in reverse order (descending).
+   *
+   * Overloads:
+   *  - `toReversed()`
+   *  - `toReversed(limit, skipFromEnd?)`
+   *  - `toReversed(output, limit?, offset?, skipFromEnd?)`
+   *
+   * When an `output` array is provided, the method writes the descending values into it starting at `offset`
+   * (default: append at the current length). Otherwise a fresh array is allocated and returned.
+   * `limit` bounds how many elements are produced (defaults to the bitmap cardinality) and `skipFromEnd`
+   * skips that many of the largest values before collecting the range.
+   *
+   * @returns An array containing the selected elements in reverse order (descending).
    */
   toReversed(): number[];
+  toReversed(limit: number, skipFromEnd?: number): number[];
+  toReversed(output: number[], limit?: number, offset?: number, skipFromEnd?: number): number[];
 
   /**
    * Gets the minimum value in the set.
