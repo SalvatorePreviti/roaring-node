@@ -70,8 +70,7 @@
     }
   },
   "dependencies": {
-    "@mapbox/node-pre-gyp": "^2.0.3",
-    "@types/fastbitset": "^0.2.2"
+    "@mapbox/node-pre-gyp": "^2.0.3"
   },
   "peerDependencies": {
     "node-gyp": "^12.1.0"
@@ -86,7 +85,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
-    "@octokit/rest": "20.1.2",
+    "@octokit/rest": "^22.0.1",
+    "@types/fastbitset": "^0.2.2",
     "@types/node": "^25.0.3",
     "ansis": "^4.2.0",
     "esbuild": "^0.27.2",
