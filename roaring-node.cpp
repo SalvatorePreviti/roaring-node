@@ -111,7 +111,7 @@ inline size_t bare_aligned_malloc_size(const void * ptr) {
 
 std::atomic<int64_t> gcaware_totalMemCounter{0};
 
-int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
+int64_t gcaware_totalMem() { return gcaware_totalMemCounter.load(std::memory_order_relaxed); }
 
 struct ThreadIsolateContext {
   v8::Isolate * isolate = nullptr;
@@ -170,7 +170,7 @@ inline void _gcaware_adjustAllocatedMemory(int64_t size) {
     }
   }
 
-  gcaware_totalMemCounter += size;
+  gcaware_totalMemCounter.fetch_add(size, std::memory_order_relaxed);
 }
 
 inline void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
