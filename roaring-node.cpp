@@ -189,8 +189,10 @@ void * gcaware_realloc(void * memory, size_t size) {
   size_t oldSize = memory != nullptr ? bare_malloc_size(memory) : 0;
   memory = realloc(memory, size);
   if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(oldSize);
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+    size_t newSize = bare_malloc_size(memory);
+    if (newSize != oldSize) {
+      _gcaware_adjustAllocatedMemory((int64_t)newSize - (int64_t)oldSize);
+    }
   }
   return memory;
 }

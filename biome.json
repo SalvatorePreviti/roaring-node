@@ -13,9 +13,9 @@
       "!**/submodules/**/*",
       "!**/package-lock.json",
       "!**/.clang-tidy",
-      "!*.h",
-      "!*.c",
-      "!*.cpp"
+      "!**/*.h",
+      "!**/*.c",
+      "!**/*.cpp"
     ],
     "ignoreUnknown": true
   },
