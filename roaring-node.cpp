@@ -113,19 +113,64 @@ std::atomic<int64_t> gcaware_totalMemCounter{0};
 
 int64_t gcaware_totalMem() { return gcaware_totalMemCounter; }
 
-thread_local v8::Isolate * thread_local_isolate = nullptr;
+struct ThreadIsolateContext {
+  v8::Isolate * isolate = nullptr;
+  int64_t trackedExternalMemory = 0;
+};
+
+thread_local ThreadIsolateContext thread_local_isolate_context{};
+
+inline void registerThreadLocalIsolate(v8::Isolate * isolate) {
+  thread_local_isolate_context.isolate = isolate;
+  thread_local_isolate_context.trackedExternalMemory = 0;
+}
+
+inline void unregisterThreadLocalIsolate(v8::Isolate * isolate) {
+  if (thread_local_isolate_context.isolate == isolate) {
+    thread_local_isolate_context.isolate = nullptr;
+    thread_local_isolate_context.trackedExternalMemory = 0;
+  }
+}
+
+inline v8::Isolate * resolveIsolateForGcAware() {
+  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  if (isolate == nullptr) {
+    isolate = thread_local_isolate_context.isolate;
+  }
+  return isolate;
+}
 
 inline void _gcaware_adjustAllocatedMemory(int64_t size) {
-  if (size != 0) {
-    v8::Isolate * isolate = v8::Isolate::GetCurrent();
-    if (isolate == nullptr) {
-      isolate = thread_local_isolate;
-    }
-    if (isolate != nullptr) {
-      isolate->AdjustAmountOfExternalAllocatedMemory(size);
-    }
-    gcaware_totalMemCounter += size;
+  if (size == 0) {
+    return;
   }
+
+  v8::Isolate * isolate = resolveIsolateForGcAware();
+  if (isolate != nullptr) {
+    int64_t applied = size;
+    const bool trackBalance = thread_local_isolate_context.isolate == isolate && isolate != nullptr;
+
+    if (trackBalance && size < 0) {
+      const int64_t available = thread_local_isolate_context.trackedExternalMemory;
+      if (available <= 0) {
+        applied = 0;
+      } else if (-size > available) {
+        applied = -available;
+      }
+    }
+
+    if (applied != 0) {
+      isolate->AdjustAmountOfExternalAllocatedMemory(applied);
+      if (trackBalance) {
+        thread_local_isolate_context.trackedExternalMemory += applied;
+        if (thread_local_isolate_context.trackedExternalMemory < 0) {
+          thread_local_isolate_context.trackedExternalMemory = 0;
+        }
+      }
+    }
+  }
+
+  gcaware_totalMemCounter += size;
 }
 
 inline void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
@@ -15896,17 +15941,14 @@ using namespace v8;
   }
 
 void AddonData_DeleteInstance(void * addonData) {
-  if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
-    thread_local_isolate = nullptr;
-  }
-
+  unregisterThreadLocalIsolate(reinterpret_cast<AddonData *>(addonData)->isolate);
   delete (AddonData *)addonData;
 }
 
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  thread_local_isolate = isolate;
+  registerThreadLocalIsolate(isolate);
 
   v8::HandleScope scope(isolate);
 

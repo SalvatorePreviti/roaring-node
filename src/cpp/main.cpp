@@ -14,17 +14,14 @@ using namespace v8;
   }
 
 void AddonData_DeleteInstance(void * addonData) {
-  if (thread_local_isolate == reinterpret_cast<AddonData *>(addonData)->isolate) {
-    thread_local_isolate = nullptr;
-  }
-
+  unregisterThreadLocalIsolate(reinterpret_cast<AddonData *>(addonData)->isolate);
   delete (AddonData *)addonData;
 }
 
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  thread_local_isolate = isolate;
+  registerThreadLocalIsolate(isolate);
 
   v8::HandleScope scope(isolate);
 
