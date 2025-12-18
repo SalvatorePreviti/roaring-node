@@ -16,9 +16,6 @@ jobs:
         with:
           node-version: "24.x"
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
       - name: Configure python for node-gyp
         shell: bash
         run: |
@@ -79,12 +76,14 @@ jobs:
         with:
           python-version: "3.11"
       - name: Configure python for node-gyp
-        shell: sh
+        shell: bash
         run: |
           PY=/usr/bin/python3
-          npm config set python "$PY"
-          echo "PYTHON=$PY" >> "$GITHUB_ENV"
-          echo "NODE_GYP_FORCE_PYTHON=$PY" >> "$GITHUB_ENV"
+          {
+            echo "PYTHON=$PY"
+            echo "NODE_GYP_FORCE_PYTHON=$PY"
+            echo "npm_config_python=$PY"
+          } >> "$GITHUB_ENV"
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
