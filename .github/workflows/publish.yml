@@ -28,6 +28,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
 
       - name: Mark git workspace safe
         run: |
@@ -128,7 +133,13 @@ jobs:
     steps:
       - name: Prepare Alpine base image
         if: matrix.libc == 'musl'
-        run: apk add --no-cache python3 make g++ git bash
+        run: apk add --no-cache python3 py3-distutils make g++ git bash
+      - name: Install Debian build deps
+        if: runner.os == 'Linux' && matrix.libc != 'musl'
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y python3 python3-distutils make g++ git
       - uses: actions/checkout@v6
       - name: Setup Node (non-Linux)
         # Only use setup-node for Windows/macOS
@@ -136,9 +147,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Configure npm for Python3
+      - name: Setup Python (non-Linux)
+        if: runner.os != 'Linux'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp (non-Linux)
+        if: runner.os != 'Linux'
+        run: node ./scripts/ensure-python-env.js
+      - name: Configure python for node-gyp (glibc)
+        if: runner.os == 'Linux' && matrix.libc != 'musl'
+        run: node ./scripts/ensure-python-env.js python3
+      - name: Configure python for node-gyp (musl)
         if: matrix.libc == 'musl'
-        run: npm config set python /usr/bin/python3
+        run: node ./scripts/ensure-python-env.js /usr/bin/python3
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
@@ -164,6 +186,11 @@ jobs:
         with:
           node-version: "24.x"
       - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
       - run: npm install --exact --no-audit --no-save
       - run: npm run test
 
@@ -174,6 +201,13 @@ jobs:
     container: node:24.10.0-bullseye-slim
     steps:
       - uses: actions/checkout@v6
+      - name: Install Debian build deps
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y python3 python3-distutils
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js python3
       - run: npm install --exact --no-audit --no-save
       - run: npm run test
 
@@ -184,9 +218,10 @@ jobs:
     container: node:24.10.0-alpine
     steps:
       - name: Install Alpine build deps
-        run: apk add --no-cache python3 make g++ git bash
+        run: apk add --no-cache python3 py3-distutils make g++ git bash
       - uses: actions/checkout@v6
-      - run: npm config set python /usr/bin/python3
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js /usr/bin/python3
       - run: npm install --exact --no-audit --no-save
       - run: npm run test
 
@@ -198,6 +233,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
 
       - name: npm install
         run: npm install --exact --no-audit --no-save

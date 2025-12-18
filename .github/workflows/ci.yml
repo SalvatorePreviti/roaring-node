@@ -16,12 +16,11 @@ jobs:
         with:
           node-version: "24.x"
       - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Configure python for node-gyp
-        shell: bash
-        run: |
-          PY=$(python -c "import sys; print(sys.executable)")
-          echo "PYTHON=$PY" >> "$GITHUB_ENV"
-          echo "NODE_GYP_FORCE_PYTHON=$PY" >> "$GITHUB_ENV"
+        run: node ./scripts/ensure-python-env.js
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
@@ -48,11 +47,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Configure python for node-gyp
-        shell: bash
-        run: |
-          PY=$(python -c "import sys; print(sys.executable)")
-          echo "PYTHON=$PY" >> "$GITHUB_ENV"
-          echo "NODE_GYP_FORCE_PYTHON=$PY" >> "$GITHUB_ENV"
+        run: node ./scripts/ensure-python-env.js
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
@@ -70,20 +65,10 @@ jobs:
     container: node:${{ matrix.node-version }}-alpine
     steps:
       - name: Install Alpine build deps
-        run: apk add --no-cache python3 make g++ git bash
+        run: apk add --no-cache python3 py3-distutils make g++ git bash
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
       - name: Configure python for node-gyp
-        shell: bash
-        run: |
-          PY=/usr/bin/python3
-          {
-            echo "PYTHON=$PY"
-            echo "NODE_GYP_FORCE_PYTHON=$PY"
-            echo "npm_config_python=$PY"
-          } >> "$GITHUB_ENV"
+        run: node ./scripts/ensure-python-env.js /usr/bin/python3
       - run: npm install --exact --no-audit --no-save
         env:
           ROARING_NODE_PRE_GYP: "false"
