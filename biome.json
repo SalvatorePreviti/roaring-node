@@ -10,7 +10,8 @@
       "!**/docs/**/*",
       "!**/native/**/*",
       "!**/node_modules/**/*",
-      "!**/submodules/**/*"
+      "!**/submodules/**/*",
+      "!**/package-lock.json"
     ],
     "ignoreUnknown": true
   },
