@@ -891,6 +891,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   AddonData_setMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic, addonData);
   AddonData_setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic, addonData);
+  AddonData_setMethod(ctorObject, "deserializeFile", RoaringBitmap32_deserializeFileStatic, addonData);
   AddonData_setMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic, addonData);
   AddonData_setMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync, addonData);
 

@@ -12918,11 +12918,11 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
     v8::HandleScope scope(isolate);
 
     if (info.Length() < 2) {
-      return WorkerError("RoaringBitmap32::deserializeFileAsync expects a file path and format");
+      return WorkerError("RoaringBitmap32::deserializeFile/deserializeFileAsync expects a file path and format");
     }
 
     if (!info[0]->IsString()) {
-      return WorkerError("RoaringBitmap32::deserializeFileAsync expects a file path as the first argument");
+      return WorkerError("RoaringBitmap32::deserializeFile/deserializeFileAsync expects a file path as the first argument");
     }
 
     v8::String::Utf8Value filePathUtf8(isolate, info[0]);
@@ -12930,7 +12930,7 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
 
     FileDeserializationFormat fmt = tryParseFileDeserializationFormat(info[1], isolate);
     if (fmt == FileDeserializationFormat::INVALID) {
-      return WorkerError("RoaringBitmap32::deserializeFileAsync invalid format");
+      return WorkerError("RoaringBitmap32::deserializeFile/deserializeFileAsync invalid format");
     }
     this->format = fmt;
     return WorkerError();
@@ -12987,7 +12987,8 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
           return err;
         }
         if ((size_t)bytesRead != fileSize) {
-          WorkerError err = WorkerError("RoaringBitmap32::deserializeFileAsync read less bytes than expected");
+          WorkerError err =
+            WorkerError("RoaringBitmap32::deserializeFile/deserializeFileAsync read less bytes than expected");
           close(fd);
           gcaware_aligned_free(buf);
           return err;
@@ -14022,6 +14023,43 @@ void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value>
 
   RoaringBitmapDeserializer deserializer;
   WorkerError error = deserializer.parseArguments(info, false);
+  if (!error.hasError()) {
+    error = deserializer.deserialize();
+  }
+  if (error.hasError()) {
+    isolate->ThrowException(error.newV8Error(isolate));
+    return;
+  }
+
+  deserializer.finalizeTargetBitmap(self);
+
+  info.GetReturnValue().Set(result);
+}
+
+void RoaringBitmap32_deserializeFileStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
+
+  v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+  v8::Local<v8::Object> result;
+  if (!resultMaybe.ToLocal(&result)) {
+    return;
+  }
+
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+  if (self == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+  self->replaceBitmapInstance(isolate, nullptr);
+
+  RoaringBitmapFileDeserializer deserializer;
+  WorkerError error = deserializer.parseArguments(info);
   if (!error.hasError()) {
     error = deserializer.deserialize();
   }
@@ -15746,6 +15784,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   AddonData_setMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic, addonData);
   AddonData_setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic, addonData);
+  AddonData_setMethod(ctorObject, "deserializeFile", RoaringBitmap32_deserializeFileStatic, addonData);
   AddonData_setMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic, addonData);
   AddonData_setMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync, addonData);
 

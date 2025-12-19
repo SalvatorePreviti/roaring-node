@@ -2082,6 +2082,24 @@ export class RoaringBitmap32 {
   ): void;
 
   /**
+   * Deserializes the bitmap from a file synchronously.
+   * Returns a new RoaringBitmap32 instance.
+   *
+   * The portable version is meant to be compatible with Java and Go versions.
+   * The croaring version is compatible with the C version, it can be smaller than the portable version.
+   * When a frozen format is used, the buffer will be copied and the bitmap will be frozen.
+   *
+   * Internally it memory-maps or streams the file to avoid extra allocations.
+   *
+   * @static
+   * @param {string} filePath The path of the file to read.
+   * @param {FileDeserializationFormatType} format The format of the serialized data. true means "portable". false means "croaring".
+   * @returns {RoaringBitmap32} A new RoaringBitmap32 instance.
+   * @memberof RoaringBitmap32
+   */
+  static deserializeFile(filePath: string, format: FileDeserializationFormatType): RoaringBitmap32;
+
+  /**
    * Deserializes the bitmap from a file asynchronously.
    * Returns a new RoaringBitmap32 instance.
    *

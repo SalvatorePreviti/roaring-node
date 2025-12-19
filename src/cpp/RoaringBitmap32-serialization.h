@@ -152,6 +152,43 @@ void RoaringBitmap32_deserializeStatic(const v8::FunctionCallbackInfo<v8::Value>
   info.GetReturnValue().Set(result);
 }
 
+void RoaringBitmap32_deserializeFileStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
+  v8::Isolate * isolate = info.GetIsolate();
+
+  AddonData * addonData = AddonData::get(info);
+  if (addonData == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+
+  v8::Local<v8::Function> cons = addonData->RoaringBitmap32_constructor.Get(isolate);
+
+  v8::MaybeLocal<v8::Object> resultMaybe = cons->NewInstance(isolate->GetCurrentContext(), 0, nullptr);
+  v8::Local<v8::Object> result;
+  if (!resultMaybe.ToLocal(&result)) {
+    return;
+  }
+
+  RoaringBitmap32 * self = ObjectWrap::TryUnwrap<RoaringBitmap32>(result, isolate);
+  if (self == nullptr) {
+    return v8utils::throwError(isolate, ERROR_INVALID_OBJECT);
+  }
+  self->replaceBitmapInstance(isolate, nullptr);
+
+  RoaringBitmapFileDeserializer deserializer;
+  WorkerError error = deserializer.parseArguments(info);
+  if (!error.hasError()) {
+    error = deserializer.deserialize();
+  }
+  if (error.hasError()) {
+    isolate->ThrowException(error.newV8Error(isolate));
+    return;
+  }
+
+  deserializer.finalizeTargetBitmap(self);
+
+  info.GetReturnValue().Set(result);
+}
+
 void RoaringBitmap32_deserialize(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
