@@ -2,7 +2,9 @@
 #define ROARING_NODE_ADDON_DATA_
 
 #include "includes.h"
+#include "memory.h"
 #include "addon-strings.h"
+#include <mutex>
 
 template <typename T>
 inline void ignoreMaybeResult(v8::Maybe<T>) {}
@@ -36,6 +38,10 @@ class AddonData final {
   inline explicit AddonData(v8::Isolate * isolate) :
     isolate(isolate), strings(isolate), RoaringBitmap32_instances(0), activeAsyncWorkers(0), shuttingDown(false) {
     _gcaware_adjustAllocatedMemory(this->isolate, sizeof(AddonData));
+    {
+      std::lock_guard<std::mutex> lock(addonDataMapMutex());
+      addonDataMap()[isolate] = this;
+    }
   }
 
   inline ~AddonData() {
@@ -50,6 +56,10 @@ class AddonData final {
     RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
     RoaringBitmap32BufferedIterator_constructor.Reset();
     external.Reset();
+    {
+      std::lock_guard<std::mutex> lock(addonDataMapMutex());
+      addonDataMap().erase(this->isolate);
+    }
     _gcaware_adjustAllocatedMemory(this->isolate, -static_cast<int64_t>(sizeof(AddonData)));
   }
 
@@ -63,6 +73,16 @@ class AddonData final {
       return nullptr;
     }
     return reinterpret_cast<AddonData *>(external->Value());
+  }
+
+  static inline AddonData * FromIsolate(v8::Isolate * isolate) {
+    if (isolate == nullptr) {
+      return nullptr;
+    }
+    std::lock_guard<std::mutex> lock(addonDataMapMutex());
+    auto & map = addonDataMap();
+    auto it = map.find(isolate);
+    return it != map.end() ? it->second : nullptr;
   }
 
   inline void initialize() {
@@ -125,6 +145,17 @@ class AddonData final {
       std::this_thread::sleep_for(std::chrono::microseconds(delayMicros));
       delayMicros = delayMicros >= 5000 ? 5000 : delayMicros * 2;
     }
+  }
+
+ private:
+  static inline std::unordered_map<v8::Isolate *, AddonData *> & addonDataMap() {
+    static std::unordered_map<v8::Isolate *, AddonData *> map;
+    return map;
+  }
+
+  static inline std::mutex & addonDataMapMutex() {
+    static std::mutex mutex;
+    return mutex;
   }
 };
 

@@ -4,6 +4,7 @@
 #include "RoaringBitmap32.h"
 #include "RoaringBitmap32-serialization.h"
 #include "WorkerError.h"
+#include "memory.h"
 
 uint32_t getCpusCount() {
   static uint32_t _cpusCountCache = 0;
@@ -35,6 +36,7 @@ class AsyncWorker {
     _error(nullptr),
     _started(false),
     _completed(false),
+    _pendingExternalMemoryDelta(0),
     _registeredWithAddon(false) {
     _task.data = this;
   }
@@ -146,6 +148,7 @@ class AsyncWorker {
   WorkerError _error;
   bool _started;
   std::atomic<bool> _completed;
+  std::atomic<int64_t> _pendingExternalMemoryDelta;
   v8::Global<v8::Function> _callback;
   v8::Global<v8::Promise::Resolver> _resolver;
   bool _registeredWithAddon;
@@ -259,10 +262,10 @@ class AsyncWorker {
   static void _complete(AsyncWorker * worker) {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     v8::Isolate * isolate = worker->isolate;
-    const bool shuttingDown = worker->isShuttingDown();
+    worker->_applyPendingExternalMemoryDelta();
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
-    if (!shuttingDown) {
+    if (!worker->isShuttingDown()) {
       isolate->PerformMicrotaskCheckpoint();
     }
   }
@@ -271,6 +274,13 @@ class AsyncWorker {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (worker && !worker->hasError()) {
+      struct AsyncWorkerMemoryCounterScope {
+        std::atomic<int64_t> * previous;
+        explicit AsyncWorkerMemoryCounterScope(std::atomic<int64_t> * current) :
+          previous(gcawarePushAsyncWorkerMemoryCounter(current)) {}
+        ~AsyncWorkerMemoryCounterScope() { gcawarePopAsyncWorkerMemoryCounter(previous); }
+      } memoryScope(&worker->_pendingExternalMemoryDelta);
+
       worker->work();
 
       std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -307,6 +317,13 @@ class AsyncWorker {
   }
 
   friend class ParallelAsyncWorker;
+
+  void _applyPendingExternalMemoryDelta() {
+    int64_t delta = _pendingExternalMemoryDelta.exchange(0, std::memory_order_acq_rel);
+    if (delta != 0) {
+      this->isolate->AdjustAmountOfExternalAllocatedMemory(delta);
+    }
+  }
 };
 
 class ParallelAsyncWorker : public AsyncWorker {
@@ -383,6 +400,13 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker) {
+      struct ParallelWorkerMemoryCounterScope {
+        std::atomic<int64_t> * previous;
+        explicit ParallelWorkerMemoryCounterScope(std::atomic<int64_t> * current) :
+          previous(gcawarePushAsyncWorkerMemoryCounter(current)) {}
+        ~ParallelWorkerMemoryCounterScope() { gcawarePopAsyncWorkerMemoryCounter(previous); }
+      } memoryScope(&worker->_pendingExternalMemoryDelta);
+
       uint32_t loopCount = worker->loopCount;
       while (!worker->hasError() && !worker->_completed.load(std::memory_order_acquire)) {
         const uint32_t prevIndex = worker->_currentIndex.load(std::memory_order_relaxed);

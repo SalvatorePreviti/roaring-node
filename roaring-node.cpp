@@ -63,6 +63,22 @@
 #define ROARING_NODE_MEMORY_
 
 
+inline std::atomic<int64_t> *& gcawareCurrentAsyncWorkerMemoryCounter() {
+  thread_local std::atomic<int64_t> * counter = nullptr;
+  return counter;
+}
+
+inline std::atomic<int64_t> * gcawarePushAsyncWorkerMemoryCounter(std::atomic<int64_t> * counter) {
+  auto & slot = gcawareCurrentAsyncWorkerMemoryCounter();
+  std::atomic<int64_t> * previous = slot;
+  slot = counter;
+  return previous;
+}
+
+inline void gcawarePopAsyncWorkerMemoryCounter(std::atomic<int64_t> * previous) {
+  gcawareCurrentAsyncWorkerMemoryCounter() = previous;
+}
+
 /** portable version of posix_memalign */
 void * bare_aligned_malloc(size_t alignment, size_t size) {
   void * p;
@@ -124,6 +140,12 @@ inline void _gcaware_adjustAllocatedMemory(v8::Isolate * isolate, int64_t size) 
 
   if (isolate != nullptr) {
     isolate->AdjustAmountOfExternalAllocatedMemory(size);
+    return;
+  }
+
+  std::atomic<int64_t> * pendingCounter = gcawareCurrentAsyncWorkerMemoryCounter();
+  if (pendingCounter != nullptr) {
+    pendingCounter->fetch_add(size, std::memory_order_relaxed);
   }
 }
 
@@ -10332,6 +10354,7 @@ class AddonDataStrings final {
 
 #endif
 
+#include <mutex>
 
 template <typename T>
 inline void ignoreMaybeResult(v8::Maybe<T>) {}
@@ -10365,6 +10388,10 @@ class AddonData final {
   inline explicit AddonData(v8::Isolate * isolate) :
     isolate(isolate), strings(isolate), RoaringBitmap32_instances(0), activeAsyncWorkers(0), shuttingDown(false) {
     _gcaware_adjustAllocatedMemory(this->isolate, sizeof(AddonData));
+    {
+      std::lock_guard<std::mutex> lock(addonDataMapMutex());
+      addonDataMap()[isolate] = this;
+    }
   }
 
   inline ~AddonData() {
@@ -10379,6 +10406,10 @@ class AddonData final {
     RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
     RoaringBitmap32BufferedIterator_constructor.Reset();
     external.Reset();
+    {
+      std::lock_guard<std::mutex> lock(addonDataMapMutex());
+      addonDataMap().erase(this->isolate);
+    }
     _gcaware_adjustAllocatedMemory(this->isolate, -static_cast<int64_t>(sizeof(AddonData)));
   }
 
@@ -10392,6 +10423,16 @@ class AddonData final {
       return nullptr;
     }
     return reinterpret_cast<AddonData *>(external->Value());
+  }
+
+  static inline AddonData * FromIsolate(v8::Isolate * isolate) {
+    if (isolate == nullptr) {
+      return nullptr;
+    }
+    std::lock_guard<std::mutex> lock(addonDataMapMutex());
+    auto & map = addonDataMap();
+    auto it = map.find(isolate);
+    return it != map.end() ? it->second : nullptr;
   }
 
   inline void initialize() {
@@ -10454,6 +10495,17 @@ class AddonData final {
       std::this_thread::sleep_for(std::chrono::microseconds(delayMicros));
       delayMicros = delayMicros >= 5000 ? 5000 : delayMicros * 2;
     }
+  }
+
+ private:
+  static inline std::unordered_map<v8::Isolate *, AddonData *> & addonDataMap() {
+    static std::unordered_map<v8::Isolate *, AddonData *> map;
+    return map;
+  }
+
+  static inline std::mutex & addonDataMapMutex() {
+    static std::mutex mutex;
+    return mutex;
   }
 };
 
@@ -13051,6 +13103,7 @@ class AsyncWorker {
     _error(nullptr),
     _started(false),
     _completed(false),
+    _pendingExternalMemoryDelta(0),
     _registeredWithAddon(false) {
     _task.data = this;
   }
@@ -13162,6 +13215,7 @@ class AsyncWorker {
   WorkerError _error;
   bool _started;
   std::atomic<bool> _completed;
+  std::atomic<int64_t> _pendingExternalMemoryDelta;
   v8::Global<v8::Function> _callback;
   v8::Global<v8::Promise::Resolver> _resolver;
   bool _registeredWithAddon;
@@ -13276,6 +13330,7 @@ class AsyncWorker {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     v8::Isolate * isolate = worker->isolate;
     const bool shuttingDown = worker->isShuttingDown();
+    worker->_applyPendingExternalMemoryDelta();
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
     if (!shuttingDown) {
@@ -13287,6 +13342,13 @@ class AsyncWorker {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (worker && !worker->hasError()) {
+      struct AsyncWorkerMemoryCounterScope {
+        std::atomic<int64_t> * previous;
+        explicit AsyncWorkerMemoryCounterScope(std::atomic<int64_t> * current) :
+          previous(gcawarePushAsyncWorkerMemoryCounter(current)) {}
+        ~AsyncWorkerMemoryCounterScope() { gcawarePopAsyncWorkerMemoryCounter(previous); }
+      } memoryScope(&worker->_pendingExternalMemoryDelta);
+
       worker->work();
 
       std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -13323,6 +13385,13 @@ class AsyncWorker {
   }
 
   friend class ParallelAsyncWorker;
+
+  void _applyPendingExternalMemoryDelta() {
+    int64_t delta = _pendingExternalMemoryDelta.exchange(0, std::memory_order_acq_rel);
+    if (delta != 0) {
+      this->isolate->AdjustAmountOfExternalAllocatedMemory(delta);
+    }
+  }
 };
 
 class ParallelAsyncWorker : public AsyncWorker {
@@ -13399,6 +13468,13 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker) {
+      struct ParallelWorkerMemoryCounterScope {
+        std::atomic<int64_t> * previous;
+        explicit ParallelWorkerMemoryCounterScope(std::atomic<int64_t> * current) :
+          previous(gcawarePushAsyncWorkerMemoryCounter(current)) {}
+        ~ParallelWorkerMemoryCounterScope() { gcawarePopAsyncWorkerMemoryCounter(previous); }
+      } memoryScope(&worker->_pendingExternalMemoryDelta);
+
       uint32_t loopCount = worker->loopCount;
       while (!worker->hasError() && !worker->_completed.load(std::memory_order_acquire)) {
         const uint32_t prevIndex = worker->_currentIndex.load(std::memory_order_relaxed);

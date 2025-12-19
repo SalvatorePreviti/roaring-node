@@ -3,6 +3,22 @@
 
 #include "includes.h"
 
+inline std::atomic<int64_t> *& gcawareCurrentAsyncWorkerMemoryCounter() {
+  thread_local std::atomic<int64_t> * counter = nullptr;
+  return counter;
+}
+
+inline std::atomic<int64_t> * gcawarePushAsyncWorkerMemoryCounter(std::atomic<int64_t> * counter) {
+  auto & slot = gcawareCurrentAsyncWorkerMemoryCounter();
+  std::atomic<int64_t> * previous = slot;
+  slot = counter;
+  return previous;
+}
+
+inline void gcawarePopAsyncWorkerMemoryCounter(std::atomic<int64_t> * previous) {
+  gcawareCurrentAsyncWorkerMemoryCounter() = previous;
+}
+
 /** portable version of posix_memalign */
 void * bare_aligned_malloc(size_t alignment, size_t size) {
   void * p;
@@ -64,6 +80,12 @@ inline void _gcaware_adjustAllocatedMemory(v8::Isolate * isolate, int64_t size) 
 
   if (isolate != nullptr) {
     isolate->AdjustAmountOfExternalAllocatedMemory(size);
+    return;
+  }
+
+  std::atomic<int64_t> * pendingCounter = gcawareCurrentAsyncWorkerMemoryCounter();
+  if (pendingCounter != nullptr) {
+    pendingCounter->fetch_add(size, std::memory_order_relaxed);
   }
 }
 
