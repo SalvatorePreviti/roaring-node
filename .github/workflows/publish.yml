@@ -181,17 +181,14 @@ jobs:
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Configure python for node-gyp
-        run: node ./scripts/ensure-python-env.js
-      - run: npm install --exact --no-audit --no-save
+      - run: npm install --exact --no-audit --no-save --build-from-source=false
       - run: npm run test
 
   post-test-node24-slim:
@@ -199,16 +196,11 @@ jobs:
     needs: build-and-upload
     runs-on: ubuntu-latest
     container: node:24.10.0-bullseye-slim
+    env:
+      NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v6
-      - name: Install Debian build deps
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get install -y python3 python3-distutils
-      - name: Configure python for node-gyp
-        run: node ./scripts/ensure-python-env.js python3
-      - run: npm install --exact --no-audit --no-save
+      - run: npm install --exact --no-audit --no-save --build-from-source=false
       - run: npm run test
 
   post-test-node24-alpine:
@@ -216,13 +208,11 @@ jobs:
     needs: build-and-upload
     runs-on: ubuntu-latest
     container: node:24.10.0-alpine
+    env:
+      NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Install Alpine build deps
-        run: apk add --no-cache python3 py3-setuptools make g++ git bash
       - uses: actions/checkout@v6
-      - name: Configure python for node-gyp
-        run: node ./scripts/ensure-python-env.js /usr/bin/python3
-      - run: npm install --exact --no-audit --no-save
+      - run: npm install --exact --no-audit --no-save --build-from-source=false
       - run: npm run test
 
   publish-release:
