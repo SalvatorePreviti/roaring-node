@@ -123,6 +123,25 @@ class AddonData final {
           .ToLocalChecked()));
   }
 
+  inline void setMethod(v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback) {
+    if (recv.IsEmpty() || name == nullptr || callback == nullptr) {
+      return;
+    }
+
+    v8::Isolate * isolate = this->isolate;
+    if (isolate == nullptr) {
+      return;
+    }
+
+    v8::HandleScope handleScope(isolate);
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::FunctionTemplate> tpl = v8::FunctionTemplate::New(isolate, callback, this->external.Get(isolate));
+    v8::Local<v8::Function> fn = tpl->GetFunction(context).ToLocalChecked();
+    v8::Local<v8::String> fnName = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
+    fn->SetName(fnName);
+    ignoreMaybeResult(recv->Set(context, fnName, fn));
+  }
+
   inline bool tryEnterAsyncWorker() {
     if (isShuttingDown()) {
       return false;
@@ -158,17 +177,5 @@ class AddonData final {
     return mutex;
   }
 };
-
-inline void AddonData_setMethod(
-  v8::Local<v8::Object> recv, const char * name, v8::FunctionCallback callback, AddonData * addonData) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
-  v8::HandleScope handle_scope(isolate);
-  v8::Local<v8::Context> context = isolate->GetCurrentContext();
-  v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate, callback, addonData->external.Get(isolate));
-  v8::Local<v8::Function> fn = t->GetFunction(context).ToLocalChecked();
-  v8::Local<v8::String> fn_name = v8::String::NewFromUtf8(isolate, name, v8::NewStringType::kInternalized).ToLocalChecked();
-  fn->SetName(fn_name);
-  ignoreMaybeResult(recv->Set(context, fn_name, fn));
-}
 
 #endif

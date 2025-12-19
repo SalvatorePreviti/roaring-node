@@ -7,17 +7,18 @@
 void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool unsafe, bool shared) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
   int64_t size;
   int32_t alignment = 32;
   if (
-    info.Length() < 1 || !info[0]->IsNumber() || !info[0]->IntegerValue(isolate->GetCurrentContext()).To(&size) ||
+    info.Length() < 1 || !info[0]->IsNumber() || !info[0]->IntegerValue(context).To(&size) ||
     size < 0) {
     return v8utils::throwTypeError(isolate, "Buffer size must be a positive integer");
   }
 
   if (info.Length() >= 2 && !info[1]->IsUndefined()) {
-    if (!info[1]->IsNumber() || !info[1]->Int32Value(isolate->GetCurrentContext()).To(&alignment) || alignment <= 0) {
+    if (!info[1]->IsNumber() || !info[1]->Int32Value(context).To(&alignment) || alignment <= 0) {
       return v8utils::throwTypeError(isolate, "Buffer alignment must be a positive integer");
     }
   }
@@ -89,6 +90,7 @@ void bufferAlignedAllocSharedUnsafe(const v8::FunctionCallbackInfo<v8::Value> & 
 void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
   v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
   if (info.Length() < 1) {
     return info.GetReturnValue().Set(false);
@@ -97,7 +99,7 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
   // Second parameter must be a positive integer
   int32_t alignment = 32;
   if (info.Length() >= 2 && !info[1]->IsUndefined()) {
-    if (!info[1]->IsNumber() || !info[1]->Int32Value(isolate->GetCurrentContext()).To(&alignment) || alignment < 0) {
+    if (!info[1]->IsNumber() || !info[1]->Int32Value(context).To(&alignment) || alignment < 0) {
       return info.GetReturnValue().Set(false);
     }
   }
@@ -111,11 +113,11 @@ void isBufferAligned(const v8::FunctionCallbackInfo<v8::Value> & info) {
 }
 
 void AlignedBuffers_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
-  AddonData_setMethod(exports, "bufferAlignedAlloc", bufferAlignedAlloc, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared, addonData);
-  AddonData_setMethod(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe, addonData);
-  AddonData_setMethod(exports, "isBufferAligned", isBufferAligned, addonData);
+  addonData->setMethod(exports, "bufferAlignedAlloc", bufferAlignedAlloc);
+  addonData->setMethod(exports, "bufferAlignedAllocUnsafe", bufferAlignedAllocUnsafe);
+  addonData->setMethod(exports, "bufferAlignedAllocShared", bufferAlignedAllocShared);
+  addonData->setMethod(exports, "bufferAlignedAllocSharedUnsafe", bufferAlignedAllocSharedUnsafe);
+  addonData->setMethod(exports, "isBufferAligned", isBufferAligned);
 }
 
 #endif  // ROARING_NODE_ALIGNED_BUFFERS_

@@ -190,7 +190,7 @@ void RoaringBitmap32BufferedIterator_New(const v8::FunctionCallbackInfo<v8::Valu
 }
 
 void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = addonData->isolate;
 
   auto className = NEW_LITERAL_V8_STRING(isolate, "RoaringBitmap32BufferedIterator", v8::NewStringType::kInternalized);
 

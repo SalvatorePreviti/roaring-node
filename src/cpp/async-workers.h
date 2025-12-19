@@ -156,8 +156,7 @@ class AsyncWorker {
   virtual bool _start() {
     this->_started = true;
     if (
-      uv_queue_work(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &_task, AsyncWorker::_work, AsyncWorker::_done) !=
-      0) {
+      uv_queue_work(node::GetCurrentEventLoop(this->isolate), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
       setError(WorkerError("Error starting async thread"));
       return false;
     }
@@ -262,10 +261,11 @@ class AsyncWorker {
   static void _complete(AsyncWorker * worker) {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     v8::Isolate * isolate = worker->isolate;
+    const bool shouldRunMicrotasks = !worker->isShuttingDown();
     worker->_applyPendingExternalMemoryDelta();
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
-    if (!worker->isShuttingDown()) {
+    if (shouldRunMicrotasks) {
       isolate->PerformMicrotaskCheckpoint();
     }
   }
@@ -383,7 +383,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
       if (
         uv_queue_work(
-          node::GetCurrentEventLoop(v8::Isolate::GetCurrent()),
+          node::GetCurrentEventLoop(this->isolate),
           &tasks[taskIndex],
           ParallelAsyncWorker::_parallelWork,
           ParallelAsyncWorker::_parallelDone) != 0) {

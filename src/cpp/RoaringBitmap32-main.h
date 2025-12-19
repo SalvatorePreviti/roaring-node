@@ -692,7 +692,7 @@ void RoaringBitmap32_contentToString(const v8::FunctionCallbackInfo<v8::Value> &
 }
 
 void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
 
   v8::Local<v8::Value> arg;
 
@@ -744,7 +744,7 @@ void RoaringBitmap32_fromArrayStaticAsync(const v8::FunctionCallbackInfo<v8::Val
 void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) {
   croaringMemoryInitialize();
 
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = addonData->isolate;
   v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
   v8::Local<v8::String> className = addonData->strings.RoaringBitmap32.Get(isolate);
@@ -883,31 +883,31 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   ctor->PrototypeTemplate()->Set(v8::Symbol::GetToStringTag(isolate), className);
   ctor->PrototypeTemplate()->Set(isolate, "CRoaringVersion", versionString);
 
-  AddonData_setMethod(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic, addonData);
-  AddonData_setMethod(ctorObject, "and", RoaringBitmap32_andStatic, addonData);
-  AddonData_setMethod(ctorObject, "andNot", RoaringBitmap32_andNotStatic, addonData);
+  addonData->setMethod(ctorObject, "addOffset", RoaringBitmap32_addOffsetStatic);
+  addonData->setMethod(ctorObject, "and", RoaringBitmap32_andStatic);
+  addonData->setMethod(ctorObject, "andNot", RoaringBitmap32_andNotStatic);
 
   v8utils::defineHiddenField(isolate, ctorObject, "default", ctorFunction);
 
-  AddonData_setMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic, addonData);
-  AddonData_setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic, addonData);
-  AddonData_setMethod(ctorObject, "deserializeFile", RoaringBitmap32_deserializeFileStatic, addonData);
-  AddonData_setMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic, addonData);
-  AddonData_setMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync, addonData);
+  addonData->setMethod(ctorObject, "deserialize", RoaringBitmap32_deserializeStatic);
+  addonData->setMethod(ctorObject, "deserializeAsync", RoaringBitmap32_deserializeAsyncStatic);
+  addonData->setMethod(ctorObject, "deserializeFile", RoaringBitmap32_deserializeFileStatic);
+  addonData->setMethod(ctorObject, "deserializeFileAsync", RoaringBitmap32_deserializeFileAsyncStatic);
+  addonData->setMethod(ctorObject, "deserializeParallelAsync", RoaringBitmap32_deserializeParallelStaticAsync);
 
   ignoreMaybeResult(
     ctorObject->Set(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized), ctorFunction));
 
-  AddonData_setMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync, addonData);
-  AddonData_setMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic, addonData);
-  AddonData_setMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic, addonData);
-  AddonData_setMethod(ctorObject, "of", RoaringBitmap32_ofStatic, addonData);
-  AddonData_setMethod(ctorObject, "or", RoaringBitmap32_orStatic, addonData);
-  AddonData_setMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic, addonData);
-  AddonData_setMethod(ctorObject, "swap", RoaringBitmap32_swapStatic, addonData);
-  AddonData_setMethod(ctorObject, "unsafeFrozenView", RoaringBitmap32_unsafeFrozenViewStatic, addonData);
-  AddonData_setMethod(ctorObject, "xor", RoaringBitmap32_xorStatic, addonData);
-  AddonData_setMethod(ctorObject, "xorMany", RoaringBitmap32_xorManyStatic, addonData);
+  addonData->setMethod(ctorObject, "fromArrayAsync", RoaringBitmap32_fromArrayStaticAsync);
+  addonData->setMethod(ctorObject, "fromRange", RoaringBitmap32_fromRangeStatic);
+  addonData->setMethod(ctorObject, "getInstancesCount", RoaringBitmap32_getInstanceCountStatic);
+  addonData->setMethod(ctorObject, "of", RoaringBitmap32_ofStatic);
+  addonData->setMethod(ctorObject, "or", RoaringBitmap32_orStatic);
+  addonData->setMethod(ctorObject, "orMany", RoaringBitmap32_orManyStatic);
+  addonData->setMethod(ctorObject, "swap", RoaringBitmap32_swapStatic);
+  addonData->setMethod(ctorObject, "unsafeFrozenView", RoaringBitmap32_unsafeFrozenViewStatic);
+  addonData->setMethod(ctorObject, "xor", RoaringBitmap32_xorStatic);
+  addonData->setMethod(ctorObject, "xorMany", RoaringBitmap32_xorManyStatic);
 
   v8utils::defineReadonlyField(isolate, ctorObject, "CRoaringVersion", versionString);
   v8utils::defineReadonlyField(isolate, exports, "CRoaringVersion", versionString);
