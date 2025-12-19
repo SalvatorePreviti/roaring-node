@@ -2,12 +2,7 @@ name: Publish to NPM
 
 # Only allows manual triggering
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to publish"
-        required: false
-        default: "publish"
+  workflow_dispatch: {}
 
 jobs:
   npm-publish:
@@ -18,8 +13,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.inputs.branch || 'publish' }}
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
