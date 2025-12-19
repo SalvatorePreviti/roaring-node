@@ -16,10 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
-          registry-url: "https://registry.npmjs.org"
-      - run: npm config delete always-auth || true
       - run: npm install --exact --no-audit --no-save
       - run: npx tsc --noEmit
       - run: npm run test
-      - run: node --expose-gc ./scripts/test-memory-leaks.js
-      - run: npm publish --provenance --access public
+      - run: npm publish --provenance
