@@ -176,7 +176,7 @@ jobs:
           node ./scripts/node-pre-gyp-publish.js --overwrite
 
   post-test:
-    needs: build-and-upload
+    needs: [build-and-upload, publish-release]
     strategy:
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-latest]
@@ -193,7 +193,7 @@ jobs:
 
   post-test-node24-slim:
     name: post-test-node24-slim
-    needs: build-and-upload
+    needs: [build-and-upload, publish-release]
     runs-on: ubuntu-latest
     container: node:24.10.0-bullseye-slim
     env:
@@ -205,7 +205,7 @@ jobs:
 
   post-test-node24-alpine:
     name: post-test-node24-alpine
-    needs: build-and-upload
+    needs: [build-and-upload, publish-release]
     runs-on: ubuntu-latest
     container: node:24.10.0-alpine
     env:
@@ -216,7 +216,37 @@ jobs:
       - run: npm run test
 
   publish-release:
-    needs: [post-test, post-test-node24-slim, post-test-node24-alpine]
+    needs: build-and-upload
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure python for node-gyp
+        run: node ./scripts/ensure-python-env.js
+
+      - name: npm install
+        run: npm install --exact --no-audit --no-save
+        env:
+          ROARING_NODE_PRE_GYP: "false"
+
+      - name: Publish release (convert draft -> published)
+        env:
+          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node ./scripts/node-pre-gyp-publish.js --publish-version
+
+  publish-docs:
+    needs:
+      [
+        post-test,
+        post-test-node24-slim,
+        post-test-node24-alpine,
+        publish-release,
+      ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -242,8 +272,3 @@ jobs:
         with:
           branch: gh-pages
           folder: docs
-
-      - name: Publish release (convert draft -> published)
-        env:
-          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./scripts/node-pre-gyp-publish.js --publish-version
