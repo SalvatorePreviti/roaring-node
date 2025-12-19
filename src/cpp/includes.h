@@ -16,6 +16,8 @@
 #include <mutex>
 #include <unordered_map>
 #include <memory>
+#include <thread>
+#include <chrono>
 
 #if defined(__APPLE__)
 #  include <malloc/malloc.h>

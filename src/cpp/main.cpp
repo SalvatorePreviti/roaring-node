@@ -13,29 +13,24 @@ using namespace v8;
     registration(exports);                                                                             \
   }
 
-void AddonData_DeleteInstance(void * addonData) {
-  unregisterThreadLocalIsolate(reinterpret_cast<AddonData *>(addonData)->isolate);
-  delete (AddonData *)addonData;
-}
+void AddonData_DeleteInstance(void * addonData) { delete (AddonData *)addonData; }
 
 void InitRoaringNode(Local<Object> exports) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
-
-  registerThreadLocalIsolate(isolate);
+  v8::Isolate * isolate = exports->GetIsolate();
 
   v8::HandleScope scope(isolate);
 
-  AddonData * addonData = new AddonData();
+  AddonData * addonData = new AddonData(isolate);
 
   node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
 
-  addonData->initialize(isolate);
+  addonData->initialize();
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);
   RoaringBitmap32BufferedIterator_Init(exports, addonData);
 
-  AddonData_setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory, addonData);
+  addonData->setMethod(exports, "getRoaringUsedMemory", getRoaringUsedMemory);
 
   v8utils::defineHiddenField(isolate, exports, "default", exports);
 }

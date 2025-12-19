@@ -618,7 +618,7 @@ void RoaringBitmap32_hasRange(const v8::FunctionCallbackInfo<v8::Value> & info) 
 }
 
 void RoaringBitmap32_fromRangeStatic(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  v8::Isolate * isolate = v8::Isolate::GetCurrent();
+  v8::Isolate * isolate = info.GetIsolate();
 
   AddonData * addonData = AddonData::get(info);
   if (addonData == nullptr) {

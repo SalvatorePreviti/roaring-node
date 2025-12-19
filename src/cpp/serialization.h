@@ -527,11 +527,11 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
     v8::HandleScope scope(isolate);
 
     if (info.Length() < 2) {
-      return WorkerError("RoaringBitmap32::deserializeFileAsync expects a file path and format");
+      return WorkerError("RoaringBitmap32::deserializeFile/deserializeFileAsync expects a file path and format");
     }
 
     if (!info[0]->IsString()) {
-      return WorkerError("RoaringBitmap32::deserializeFileAsync expects a file path as the first argument");
+      return WorkerError("RoaringBitmap32::deserializeFile/deserializeFileAsync expects a file path as the first argument");
     }
 
     v8::String::Utf8Value filePathUtf8(isolate, info[0]);
@@ -539,7 +539,7 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
 
     FileDeserializationFormat fmt = tryParseFileDeserializationFormat(info[1], isolate);
     if (fmt == FileDeserializationFormat::INVALID) {
-      return WorkerError("RoaringBitmap32::deserializeFileAsync invalid format");
+      return WorkerError("RoaringBitmap32::deserializeFile/deserializeFileAsync invalid format");
     }
     this->format = fmt;
     return WorkerError();
@@ -596,7 +596,8 @@ class RoaringBitmapFileDeserializer final : public RoaringBitmapDeserializerBase
           return err;
         }
         if ((size_t)bytesRead != fileSize) {
-          WorkerError err = WorkerError("RoaringBitmap32::deserializeFileAsync read less bytes than expected");
+          WorkerError err =
+            WorkerError("RoaringBitmap32::deserializeFile/deserializeFileAsync read less bytes than expected");
           close(fd);
           gcaware_aligned_free(buf);
           return err;

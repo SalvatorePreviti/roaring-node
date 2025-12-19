@@ -86,6 +86,7 @@ describe("RoaringBitmap32 file serialization", () => {
       const tmpFilePath = path.resolve(tmpDir, `test-ϴ-${format}.bin`);
       await new RoaringBitmap32().serializeFileAsync(tmpFilePath, format);
       expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).to.deep.equal([]);
+      expect(RoaringBitmap32.deserializeFile(tmpFilePath, format).toArray()).to.deep.equal([]);
     }
   });
 
@@ -95,6 +96,7 @@ describe("RoaringBitmap32 file serialization", () => {
       const data = [1, 2, 3, 100, 0xfffff, 0xffffffff];
       await new RoaringBitmap32(data).serializeFileAsync(tmpFilePath, format);
       expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, format)).toArray()).to.deep.equal(data);
+      expect(RoaringBitmap32.deserializeFile(tmpFilePath, format).toArray()).to.deep.equal(data);
     }
   });
 
@@ -103,6 +105,7 @@ describe("RoaringBitmap32 file serialization", () => {
     await fs.promises.writeFile(tmpFilePath, Buffer.alloc(10000));
     await new RoaringBitmap32([1, 2, 3]).serializeFileAsync(tmpFilePath, "portable");
     expect((await RoaringBitmap32.deserializeFileAsync(tmpFilePath, "portable")).toArray()).to.deep.equal([1, 2, 3]);
+    expect(RoaringBitmap32.deserializeFile(tmpFilePath, "portable").toArray()).to.deep.equal([1, 2, 3]);
   });
 
   it("throws ENOENT if file does not exist", async () => {
@@ -118,6 +121,18 @@ describe("RoaringBitmap32 file serialization", () => {
     expect(error.code).to.equal("ENOENT");
     expect(error.syscall).to.equal("open");
     expect(error.path).to.equal(tmpFilePath);
+
+    let syncError: any;
+    try {
+      RoaringBitmap32.deserializeFile(tmpFilePath, "portable");
+    } catch (e) {
+      syncError = e;
+    }
+    expect(syncError).to.be.an.instanceOf(Error);
+    expect(syncError.message).to.match(/^ENOENT, No such file or directory/);
+    expect(syncError.code).to.equal("ENOENT");
+    expect(syncError.syscall).to.equal("open");
+    expect(syncError.path).to.equal(tmpFilePath);
   });
 
   it("serializes to comma_separated_values", async () => {

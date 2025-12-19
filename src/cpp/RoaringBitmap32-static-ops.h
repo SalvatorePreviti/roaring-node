@@ -267,14 +267,14 @@ void roaringOpMany(
         RoaringBitmap32 * p =
           array->Get(context, i).ToLocal(&item) ? ObjectWrap::TryUnwrap<RoaringBitmap32>(item, isolate) : nullptr;
         if (p == nullptr) {
-          gcaware_free(x);
+          gcaware_free(isolate, x);
           return v8utils::throwTypeError(isolate, opName, " accepts only RoaringBitmap32 instances");
         }
         x[i] = p->roaring;
       }
 
       roaring_bitmap_t * r = op((TSize)arrayLength, x);
-      gcaware_free(x);
+      gcaware_free(isolate, x);
       if (r == nullptr) {
         return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
       }
@@ -311,14 +311,14 @@ void roaringOpMany(
     for (int i = 0; i < length; ++i) {
       RoaringBitmap32 * p = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, i);
       if (p == nullptr) {
-        gcaware_free(x);
+        gcaware_free(isolate, x);
         return v8utils::throwTypeError(isolate, opName, " accepts only RoaringBitmap32 instances");
       }
       x[i] = p->roaring;
     }
 
     roaring_bitmap_t * r = op((TSize)length, x);
-    gcaware_free(x);
+    gcaware_free(isolate, x);
     if (r == nullptr) {
       return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
     }

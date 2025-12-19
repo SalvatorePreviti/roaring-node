@@ -6,6 +6,7 @@
 class ObjectWrap {
  public:
   AddonData * const addonData;
+  v8::Isolate * const isolate;
 
   template <class T>
   static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
@@ -35,7 +36,7 @@ class ObjectWrap {
   }
 
  protected:
-  explicit ObjectWrap(AddonData * addonData) : addonData(addonData) {}
+  explicit ObjectWrap(AddonData * addonData) : addonData(addonData), isolate(addonData->isolate) {}
 };
 
 #endif  // ROARING_NODE_OBJECT_WRAP_

@@ -4,6 +4,7 @@
 #include "RoaringBitmap32.h"
 #include "RoaringBitmap32-serialization.h"
 #include "WorkerError.h"
+#include "memory.h"
 
 uint32_t getCpusCount() {
   static uint32_t _cpusCountCache = 0;
@@ -30,7 +31,13 @@ class AsyncWorker {
   AddonData * maybeAddonData;
 
   explicit AsyncWorker(v8::Isolate * isolate, AddonData * maybeAddonData) :
-    isolate(isolate), maybeAddonData(maybeAddonData), _error(nullptr), _started(false), _completed(false) {
+    isolate(isolate),
+    maybeAddonData(maybeAddonData),
+    _error(nullptr),
+    _started(false),
+    _completed(false),
+    _pendingExternalMemoryDelta(0),
+    _registeredWithAddon(false) {
     _task.data = this;
   }
 
@@ -53,6 +60,8 @@ class AsyncWorker {
   }
 
   inline void clearError() { this->_error = WorkerError(); }
+
+  inline bool isShuttingDown() const { return maybeAddonData != nullptr && maybeAddonData->isShuttingDown(); }
 
   static v8::Local<v8::Value> run(AsyncWorker * worker) {
     v8::EscapableHandleScope scope(worker->isolate);
@@ -83,6 +92,10 @@ class AsyncWorker {
 
       if (!worker->hasError()) {
         worker->before();
+      }
+
+      if (!worker->hasError()) {
+        worker->_ensureAsyncRegistration();
       }
 
       v8::Local<v8::Value> error;
@@ -135,18 +148,41 @@ class AsyncWorker {
   WorkerError _error;
   bool _started;
   std::atomic<bool> _completed;
+  std::atomic<int64_t> _pendingExternalMemoryDelta;
   v8::Global<v8::Function> _callback;
   v8::Global<v8::Promise::Resolver> _resolver;
+  bool _registeredWithAddon;
 
   virtual bool _start() {
     this->_started = true;
     if (
-      uv_queue_work(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &_task, AsyncWorker::_work, AsyncWorker::_done) !=
-      0) {
+      uv_queue_work(node::GetCurrentEventLoop(this->isolate), &_task, AsyncWorker::_work, AsyncWorker::_done) != 0) {
       setError(WorkerError("Error starting async thread"));
       return false;
     }
     return true;
+  }
+
+  void _ensureAsyncRegistration() {
+    if (this->_registeredWithAddon || this->hasError()) {
+      return;
+    }
+    if (this->maybeAddonData == nullptr) {
+      this->setError(WorkerError("Addon data unavailable"));
+      return;
+    }
+    if (!this->maybeAddonData->tryEnterAsyncWorker()) {
+      this->setError(WorkerError("Addon is shutting down"));
+      return;
+    }
+    this->_registeredWithAddon = true;
+  }
+
+  void _unregisterFromAddon() {
+    if (this->_registeredWithAddon && this->maybeAddonData != nullptr) {
+      this->maybeAddonData->leaveAsyncWorker();
+      this->_registeredWithAddon = false;
+    }
   }
 
   static void _resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error) {
@@ -155,6 +191,14 @@ class AsyncWorker {
     }
 
     worker->_completed.store(true, std::memory_order_release);
+
+    worker->_unregisterFromAddon();
+
+    if (worker->isShuttingDown()) {
+      worker->finally();
+      delete worker;
+      return;
+    }
 
     v8::Isolate * isolate = worker->isolate;
     v8::HandleScope scope(isolate);
@@ -217,15 +261,26 @@ class AsyncWorker {
   static void _complete(AsyncWorker * worker) {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     v8::Isolate * isolate = worker->isolate;
+    const bool shouldRunMicrotasks = !worker->isShuttingDown();
+    worker->_applyPendingExternalMemoryDelta();
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
-    isolate->PerformMicrotaskCheckpoint();
+    if (shouldRunMicrotasks) {
+      isolate->PerformMicrotaskCheckpoint();
+    }
   }
 
   static void _work(uv_work_t * request) {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     auto * worker = static_cast<AsyncWorker *>(request->data);
     if (worker && !worker->hasError()) {
+      struct AsyncWorkerMemoryCounterScope {
+        std::atomic<int64_t> * previous;
+        explicit AsyncWorkerMemoryCounterScope(std::atomic<int64_t> * current) :
+          previous(gcawarePushAsyncWorkerMemoryCounter(current)) {}
+        ~AsyncWorkerMemoryCounterScope() { gcawarePopAsyncWorkerMemoryCounter(previous); }
+      } memoryScope(&worker->_pendingExternalMemoryDelta);
+
       worker->work();
 
       std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -262,6 +317,13 @@ class AsyncWorker {
   }
 
   friend class ParallelAsyncWorker;
+
+  void _applyPendingExternalMemoryDelta() {
+    int64_t delta = _pendingExternalMemoryDelta.exchange(0, std::memory_order_acq_rel);
+    if (delta != 0) {
+      this->isolate->AdjustAmountOfExternalAllocatedMemory(delta);
+    }
+  }
 };
 
 class ParallelAsyncWorker : public AsyncWorker {
@@ -277,7 +339,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     _pendingTasks(0),
     _currentIndex(0) {}
 
-  virtual ~ParallelAsyncWorker() { gcaware_free(_tasks); }
+  virtual ~ParallelAsyncWorker() { gcaware_free(this->isolate, _tasks); }
 
  protected:
   void work() override {
@@ -321,7 +383,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     for (uint32_t taskIndex = 0; taskIndex != tasksCount; ++taskIndex) {
       if (
         uv_queue_work(
-          node::GetCurrentEventLoop(v8::Isolate::GetCurrent()),
+          node::GetCurrentEventLoop(this->isolate),
           &tasks[taskIndex],
           ParallelAsyncWorker::_parallelWork,
           ParallelAsyncWorker::_parallelDone) != 0) {
@@ -338,6 +400,13 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker) {
+      struct ParallelWorkerMemoryCounterScope {
+        std::atomic<int64_t> * previous;
+        explicit ParallelWorkerMemoryCounterScope(std::atomic<int64_t> * current) :
+          previous(gcawarePushAsyncWorkerMemoryCounter(current)) {}
+        ~ParallelWorkerMemoryCounterScope() { gcawarePopAsyncWorkerMemoryCounter(previous); }
+      } memoryScope(&worker->_pendingExternalMemoryDelta);
+
       uint32_t loopCount = worker->loopCount;
       while (!worker->hasError() && !worker->_completed.load(std::memory_order_acquire)) {
         const uint32_t prevIndex = worker->_currentIndex.load(std::memory_order_relaxed);
@@ -354,7 +423,9 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker->_completed.load(std::memory_order_acquire)) {
-      worker->isolate->PerformMicrotaskCheckpoint();
+      if (!worker->isShuttingDown()) {
+        worker->isolate->PerformMicrotaskCheckpoint();
+      }
       return;
     }
 
@@ -364,7 +435,9 @@ class ParallelAsyncWorker : public AsyncWorker {
       return;
     }
 
-    worker->isolate->PerformMicrotaskCheckpoint();
+    if (!worker->isShuttingDown()) {
+      worker->isolate->PerformMicrotaskCheckpoint();
+    }
   }
 };
 
@@ -421,7 +494,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
 
   explicit ToUint32ArrayAsyncWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
     AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(ToUint32ArrayAsyncWorker));
   }
 
   ~ToUint32ArrayAsyncWorker() {
@@ -429,7 +502,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     if (buffer) {
       bare_aligned_free(buffer);
     }
-    gcaware_removeAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(ToUint32ArrayAsyncWorker));
   }
 
  protected:
@@ -452,7 +525,8 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
           return v8utils::throwError(
             isolate, "RoaringBitmap32::toUint32ArrayAsync - argument must be a valid integer number");
         }
-        this->maxSize = maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : static_cast<size_t>(maxSizeDouble));
+        this->maxSize =
+          maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : static_cast<size_t>(maxSizeDouble));
       } else {
         if (!argumentIsValidUint32ArrayOutput(info[0]) || !this->inputContent.set(isolate, info[0])) {
           return v8utils::throwError(
@@ -570,10 +644,10 @@ class SerializeWorker final : public AsyncWorker {
 
   explicit SerializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
     AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(SerializeWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(SerializeWorker));
   }
 
-  virtual ~SerializeWorker() { gcaware_removeAllocatedMemory(sizeof(SerializeWorker)); }
+  virtual ~SerializeWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(SerializeWorker)); }
 
  protected:
   // Called before the thread starts, in the main thread.
@@ -611,10 +685,10 @@ class SerializeFileWorker final : public AsyncWorker {
 
   explicit SerializeFileWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
     AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(SerializeFileWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(SerializeFileWorker));
   }
 
-  virtual ~SerializeFileWorker() { gcaware_removeAllocatedMemory(sizeof(SerializeFileWorker)); }
+  virtual ~SerializeFileWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(SerializeFileWorker)); }
 
  protected:
   // Called before the thread starts, in the main thread.
@@ -655,10 +729,10 @@ class DeserializeWorker final : public AsyncWorker {
 
   explicit DeserializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * addonData) :
     AsyncWorker(info.GetIsolate(), addonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(DeserializeWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(DeserializeWorker));
   }
 
-  virtual ~DeserializeWorker() { gcaware_removeAllocatedMemory(sizeof(DeserializeWorker)); }
+  virtual ~DeserializeWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(DeserializeWorker)); }
 
  protected:
   void before() final {
@@ -705,10 +779,10 @@ class DeserializeFileWorker final : public AsyncWorker {
 
   explicit DeserializeFileWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * addonData) :
     AsyncWorker(info.GetIsolate(), addonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(DeserializeFileWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(DeserializeFileWorker));
   }
 
-  virtual ~DeserializeFileWorker() { gcaware_removeAllocatedMemory(sizeof(DeserializeFileWorker)); }
+  virtual ~DeserializeFileWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(DeserializeFileWorker)); }
 
  protected:
   void before() final { this->setError(this->deserializer.parseArguments(this->info)); }
@@ -801,10 +875,10 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
 
   explicit FromArrayAsyncWorker(v8::Isolate * isolate, AddonData * addonData) :
     RoaringBitmap32FactoryAsyncWorker(isolate, addonData) {
-    gcaware_addAllocatedMemory(sizeof(FromArrayAsyncWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(FromArrayAsyncWorker));
   }
 
-  virtual ~FromArrayAsyncWorker() { gcaware_removeAllocatedMemory(sizeof(FromArrayAsyncWorker)); }
+  virtual ~FromArrayAsyncWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(FromArrayAsyncWorker)); }
 
  protected:
   void work() final {
