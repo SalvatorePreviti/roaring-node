@@ -11,9 +11,7 @@ void _bufferAlignedAlloc(const v8::FunctionCallbackInfo<v8::Value> & info, bool 
 
   int64_t size;
   int32_t alignment = 32;
-  if (
-    info.Length() < 1 || !info[0]->IsNumber() || !info[0]->IntegerValue(context).To(&size) ||
-    size < 0) {
+  if (info.Length() < 1 || !info[0]->IsNumber() || !info[0]->IntegerValue(context).To(&size) || size < 0) {
     return v8utils::throwTypeError(isolate, "Buffer size must be a positive integer");
   }
 

@@ -4,7 +4,6 @@
 #include "includes.h"
 #include "memory.h"
 #include "addon-strings.h"
-#include <mutex>
 
 template <typename T>
 inline void ignoreMaybeResult(v8::Maybe<T>) {}
@@ -37,11 +36,8 @@ class AddonData final {
 
   inline explicit AddonData(v8::Isolate * isolate) :
     isolate(isolate), strings(isolate), RoaringBitmap32_instances(0), activeAsyncWorkers(0), shuttingDown(false) {
-    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(AddonData));
-    {
-      std::lock_guard<std::mutex> lock(addonDataMapMutex());
-      addonDataMap()[isolate] = this;
-    }
+    const int64_t externalSize = static_cast<int64_t>(sizeof(AddonData)) + 256;
+    isolate->AdjustAmountOfExternalAllocatedMemory(externalSize);
   }
 
   inline ~AddonData() {
@@ -56,11 +52,8 @@ class AddonData final {
     RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
     RoaringBitmap32BufferedIterator_constructor.Reset();
     external.Reset();
-    {
-      std::lock_guard<std::mutex> lock(addonDataMapMutex());
-      addonDataMap().erase(this->isolate);
-    }
-    _gcaware_adjustAllocatedMemory(this->isolate, -static_cast<int64_t>(sizeof(AddonData)));
+    const int64_t externalSize = -static_cast<int64_t>(sizeof(AddonData)) - 256;
+    this->isolate->AdjustAmountOfExternalAllocatedMemory(externalSize);
   }
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
@@ -73,16 +66,6 @@ class AddonData final {
       return nullptr;
     }
     return reinterpret_cast<AddonData *>(external->Value());
-  }
-
-  static inline AddonData * FromIsolate(v8::Isolate * isolate) {
-    if (isolate == nullptr) {
-      return nullptr;
-    }
-    std::lock_guard<std::mutex> lock(addonDataMapMutex());
-    auto & map = addonDataMap();
-    auto it = map.find(isolate);
-    return it != map.end() ? it->second : nullptr;
   }
 
   inline void initialize() {
@@ -167,15 +150,6 @@ class AddonData final {
   }
 
  private:
-  static inline std::unordered_map<v8::Isolate *, AddonData *> & addonDataMap() {
-    static std::unordered_map<v8::Isolate *, AddonData *> map;
-    return map;
-  }
-
-  static inline std::mutex & addonDataMapMutex() {
-    static std::mutex mutex;
-    return mutex;
-  }
 };
 
 #endif
