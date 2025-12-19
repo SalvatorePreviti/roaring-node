@@ -3,6 +3,11 @@ name: Publish to NPM
 # Only allows manual triggering
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to publish"
+        required: false
+        default: "publish"
 
 jobs:
   npm-publish:
@@ -14,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: publish
+          ref: ${{ github.event.inputs.branch || 'publish' }}
       - uses: actions/setup-node@v4
         with:
           node-version: "24.x"
@@ -24,5 +29,3 @@ jobs:
       - run: npm run test
       - run: node --expose-gc ./scripts/test-memory-leaks.js
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
