@@ -13,23 +13,18 @@ using namespace v8;
     registration(exports);                                                                             \
   }
 
-void AddonData_DeleteInstance(void * addonData) {
-  unregisterThreadLocalIsolate(reinterpret_cast<AddonData *>(addonData)->isolate);
-  delete (AddonData *)addonData;
-}
+void AddonData_DeleteInstance(void * addonData) { delete (AddonData *)addonData; }
 
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  registerThreadLocalIsolate(isolate);
-
   v8::HandleScope scope(isolate);
 
-  AddonData * addonData = new AddonData();
+  AddonData * addonData = new AddonData(isolate);
 
   node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
 
-  addonData->initialize(isolate);
+  addonData->initialize();
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);

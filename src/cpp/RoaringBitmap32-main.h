@@ -756,7 +756,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   if (ctor.IsEmpty()) {
     return;
   }
-  addonData->RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
+  addonData->RoaringBitmap32_constructorTemplate.Reset(isolate, ctor);
 
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
   ctor->SetClassName(className);
@@ -915,5 +915,5 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
-  addonData->RoaringBitmap32_constructor.Set(isolate, ctorFunction);
+  addonData->RoaringBitmap32_constructor.Reset(isolate, ctorFunction);
 }

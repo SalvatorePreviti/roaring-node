@@ -16,22 +16,42 @@ class AddonData final {
 
   AddonDataStrings strings;
 
-  v8::Eternal<v8::Object> Buffer;
-  v8::Eternal<v8::Object> Uint32Array;
-  v8::Eternal<v8::Function> Uint32Array_from;
-  v8::Eternal<v8::Function> Buffer_from;
+  v8::Global<v8::Object> Buffer;
+  v8::Global<v8::Object> Uint32Array;
+  v8::Global<v8::Function> Uint32Array_from;
+  v8::Global<v8::Function> Buffer_from;
 
   std::atomic<uint64_t> RoaringBitmap32_instances;
+  std::atomic<uint32_t> activeAsyncWorkers;
+  std::atomic<bool> shuttingDown;
 
-  v8::Eternal<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
-  v8::Eternal<v8::Function> RoaringBitmap32_constructor;
+  v8::Global<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
+  v8::Global<v8::Function> RoaringBitmap32_constructor;
 
-  v8::Eternal<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
-  v8::Eternal<v8::Function> RoaringBitmap32BufferedIterator_constructor;
+  v8::Global<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
+  v8::Global<v8::Function> RoaringBitmap32BufferedIterator_constructor;
 
-  v8::Eternal<v8::External> external;
+  v8::Global<v8::External> external;
 
-  inline AddonData() : isolate(nullptr), RoaringBitmap32_instances(0) {}
+  inline explicit AddonData(v8::Isolate * isolate) :
+    isolate(isolate), strings(isolate), RoaringBitmap32_instances(0), activeAsyncWorkers(0), shuttingDown(false) {
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(AddonData));
+  }
+
+  inline ~AddonData() {
+    shuttingDown.store(true, std::memory_order_release);
+    waitForAsyncWorkersToFinish();
+    Buffer.Reset();
+    Uint32Array.Reset();
+    Uint32Array_from.Reset();
+    Buffer_from.Reset();
+    RoaringBitmap32_constructorTemplate.Reset();
+    RoaringBitmap32_constructor.Reset();
+    RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
+    RoaringBitmap32BufferedIterator_constructor.Reset();
+    external.Reset();
+    _gcaware_adjustAllocatedMemory(this->isolate, -static_cast<int64_t>(sizeof(AddonData)));
+  }
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Local<v8::Value> data = info.Data();
@@ -45,12 +65,13 @@ class AddonData final {
     return reinterpret_cast<AddonData *>(external->Value());
   }
 
-  inline void initialize(v8::Isolate * isolate) {
-    this->isolate = isolate;
+  inline void initialize() {
+    v8::Isolate * isolate = this->isolate;
+    if (isolate == nullptr) {
+      return;
+    }
 
-    external.Set(isolate, v8::External::New(isolate, this));
-
-    this->strings.initialize(isolate);
+    external.Reset(isolate, v8::External::New(isolate, this));
 
     auto context = isolate->GetCurrentContext();
 
@@ -65,21 +86,45 @@ class AddonData final {
                     .ToLocalChecked()
                     .As<v8::Object>();
 
-    this->Buffer.Set(isolate, buffer);
+    this->Buffer.Reset(isolate, buffer);
 
-    this->Buffer_from.Set(
+    this->Buffer_from.Reset(
       isolate,
       buffer->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized))
         .ToLocalChecked()
         .As<v8::Function>());
 
-    this->Uint32Array.Set(isolate, uint32Array);
+    this->Uint32Array.Reset(isolate, uint32Array);
 
-    this->Uint32Array_from.Set(
+    this->Uint32Array_from.Reset(
       isolate,
       v8::Local<v8::Function>::Cast(
         uint32Array->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized))
           .ToLocalChecked()));
+  }
+
+  inline bool tryEnterAsyncWorker() {
+    if (isShuttingDown()) {
+      return false;
+    }
+    activeAsyncWorkers.fetch_add(1, std::memory_order_acq_rel);
+    if (isShuttingDown()) {
+      activeAsyncWorkers.fetch_sub(1, std::memory_order_acq_rel);
+      return false;
+    }
+    return true;
+  }
+
+  inline void leaveAsyncWorker() { activeAsyncWorkers.fetch_sub(1, std::memory_order_acq_rel); }
+
+  inline bool isShuttingDown() const { return shuttingDown.load(std::memory_order_acquire); }
+
+  inline void waitForAsyncWorkersToFinish() {
+    uint32_t delayMicros = 50;
+    while (activeAsyncWorkers.load(std::memory_order_acquire) != 0) {
+      std::this_thread::sleep_for(std::chrono::microseconds(delayMicros));
+      delayMicros = delayMicros >= 5000 ? 5000 : delayMicros * 2;
+    }
   }
 };
 

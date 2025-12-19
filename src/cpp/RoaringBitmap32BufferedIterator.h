@@ -22,12 +22,12 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
     ObjectWrap(addonData), reversed(reversed), bitmapInstance(nullptr) {
     this->it.parent = nullptr;
     this->it.has_value = false;
-    gcaware_addAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(RoaringBitmap32BufferedIterator));
   }
 
   ~RoaringBitmap32BufferedIterator() {
     this->destroy();
-    gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
+    _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(RoaringBitmap32BufferedIterator));
   }
 
   inline uint32_t _fill() {
@@ -71,8 +71,7 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
 void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
-  RoaringBitmap32BufferedIterator * instance =
-    ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.This(), isolate);
+  RoaringBitmap32BufferedIterator * instance = ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.This(), isolate);
 
   RoaringBitmap32 * bitmapInstance = instance ? instance->bitmapInstance : nullptr;
 
@@ -201,7 +200,7 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
   ctor->SetClassName(className);
   ctor->InstanceTemplate()->SetInternalFieldCount(2);
 
-  addonData->RoaringBitmap32BufferedIterator_constructorTemplate.Set(isolate, ctor);
+  addonData->RoaringBitmap32BufferedIterator_constructorTemplate.Reset(isolate, ctor);
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "fill", RoaringBitmap32BufferedIterator_fill);
   NODE_SET_PROTOTYPE_METHOD(ctor, "close", RoaringBitmap32BufferedIterator_close);
@@ -213,7 +212,7 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
     return v8utils::throwError(isolate, "Failed to instantiate RoaringBitmap32BufferedIterator");
   }
 
-  addonData->RoaringBitmap32BufferedIterator_constructor.Set(isolate, ctorFunction);
+  addonData->RoaringBitmap32BufferedIterator_constructor.Reset(isolate, ctorFunction);
   v8utils::defineHiddenField(isolate, exports, "RoaringBitmap32BufferedIterator", ctorFunction);
 }
 

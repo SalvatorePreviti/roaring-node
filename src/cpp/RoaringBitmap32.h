@@ -105,7 +105,7 @@ class RoaringBitmap32 final : public ObjectWrap {
     sizeCache(-1),
     frozenCounter(RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN),
     readonlyViewOf(readonlyViewOf->readonlyViewOf ? readonlyViewOf->readonlyViewOf : readonlyViewOf) {
-    gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(RoaringBitmap32));
   }
 
   explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity) :
@@ -116,18 +116,18 @@ class RoaringBitmap32 final : public ObjectWrap {
     frozenCounter(0),
     readonlyViewOf(nullptr) {
     ++addonData->RoaringBitmap32_instances;
-    gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(RoaringBitmap32));
   }
 
   ~RoaringBitmap32() {
-    gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32));
+    _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(RoaringBitmap32));
     if (!this->readonlyViewOf) {
       --this->addonData->RoaringBitmap32_instances;
       if (this->roaring != nullptr) {
         roaring_bitmap_free(this->roaring);
       }
       if (this->frozenStorage.data != nullptr && this->frozenStorage.length == std::numeric_limits<size_t>::max()) {
-        gcaware_aligned_free(this->frozenStorage.data);
+        gcaware_aligned_free(this->isolate, this->frozenStorage.data);
       }
     }
     if (!this->persistent.IsEmpty()) {

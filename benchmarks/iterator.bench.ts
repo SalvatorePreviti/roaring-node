@@ -1,6 +1,6 @@
 import { bench, describe } from "vitest";
 import roaringModule from "../index.js";
-import { consume } from "./utils.js";
+import { consume } from "./utils";
 
 const { RoaringBitmap32 } = roaringModule;
 const N = 65536;

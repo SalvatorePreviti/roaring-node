@@ -33,6 +33,8 @@
 #include <mutex>
 #include <unordered_map>
 #include <memory>
+#include <thread>
+#include <chrono>
 
 #if defined(__APPLE__)
 #  include <malloc/malloc.h>
@@ -113,126 +115,24 @@ inline size_t bare_aligned_malloc_size(const void * ptr) {
 
 std::atomic<int64_t> gcaware_totalMemCounter{0};
 
-int64_t gcaware_totalMem() { return gcaware_totalMemCounter.load(std::memory_order_relaxed); }
-
-struct IsolateMemoryTracker {
-  std::atomic<int64_t> reported{0};
-};
-
-inline std::unordered_map<v8::Isolate *, std::shared_ptr<IsolateMemoryTracker>> & gcaware_isolate_trackers() {
-  static std::unordered_map<v8::Isolate *, std::shared_ptr<IsolateMemoryTracker>> trackers;
-  return trackers;
-}
-
-inline std::mutex & gcaware_isolate_trackers_mutex() {
-  static std::mutex trackersMutex;
-  return trackersMutex;
-}
-
-inline std::shared_ptr<IsolateMemoryTracker> gcaware_ensure_isolate_tracker(v8::Isolate * isolate) {
-  if (isolate == nullptr) {
-    return {};
-  }
-  std::lock_guard<std::mutex> lock(gcaware_isolate_trackers_mutex());
-  auto & trackers = gcaware_isolate_trackers();
-  auto & entry = trackers[isolate];
-  if (!entry) {
-    entry = std::make_shared<IsolateMemoryTracker>();
-  }
-  return entry;
-}
-
-inline void gcaware_release_isolate_tracker(v8::Isolate * isolate) {
-  if (isolate == nullptr) {
-    return;
-  }
-  std::lock_guard<std::mutex> lock(gcaware_isolate_trackers_mutex());
-  auto & trackers = gcaware_isolate_trackers();
-  trackers.erase(isolate);
-}
-
-struct ThreadIsolateContext {
-  v8::Isolate * isolate = nullptr;
-  std::shared_ptr<IsolateMemoryTracker> tracker;
-};
-
-thread_local ThreadIsolateContext thread_local_isolate_context{};
-
-inline void registerThreadLocalIsolate(v8::Isolate * isolate) {
-  thread_local_isolate_context.isolate = isolate;
-  thread_local_isolate_context.tracker = gcaware_ensure_isolate_tracker(isolate);
-}
-
-inline void unregisterThreadLocalIsolate(v8::Isolate * isolate) {
-  if (thread_local_isolate_context.isolate == isolate) {
-    thread_local_isolate_context.isolate = nullptr;
-    thread_local_isolate_context.tracker.reset();
-  }
-  gcaware_release_isolate_tracker(isolate);
-}
-
-inline std::shared_ptr<IsolateMemoryTracker> resolveIsolateTracker(v8::Isolate *& isolate) {
-  isolate = v8::Isolate::GetCurrent();
-  if (isolate == nullptr) {
-    isolate = thread_local_isolate_context.isolate;
-  }
-  if (isolate == nullptr) {
-    return {};
-  }
-  if (thread_local_isolate_context.isolate != isolate || !thread_local_isolate_context.tracker) {
-    thread_local_isolate_context.isolate = isolate;
-    thread_local_isolate_context.tracker = gcaware_ensure_isolate_tracker(isolate);
-  }
-  return thread_local_isolate_context.tracker;
-}
-
-inline void _gcaware_adjustAllocatedMemory(int64_t size) {
+inline void _gcaware_adjustAllocatedMemory(v8::Isolate * isolate, int64_t size) {
   if (size == 0) {
     return;
   }
 
-  v8::Isolate * isolate = nullptr;
-  std::shared_ptr<IsolateMemoryTracker> tracker = resolveIsolateTracker(isolate);
-
-  if (isolate != nullptr && tracker) {
-    int64_t applied = 0;
-    if (size > 0) {
-      tracker->reported.fetch_add(size, std::memory_order_relaxed);
-      applied = size;
-    } else {
-      int64_t toRemove = -size;
-      int64_t removed = 0;
-      while (toRemove > 0) {
-        int64_t current = tracker->reported.load(std::memory_order_relaxed);
-        if (current <= 0) {
-          break;
-        }
-        int64_t allowed = current < toRemove ? current : toRemove;
-        if (tracker->reported.compare_exchange_weak(
-              current, current - allowed, std::memory_order_relaxed, std::memory_order_relaxed)) {
-          removed = allowed;
-          break;
-        }
-      }
-      applied = removed == 0 ? 0 : -removed;
-    }
-
-    if (applied != 0) {
-      isolate->AdjustAmountOfExternalAllocatedMemory(applied);
-    }
-  }
-
   gcaware_totalMemCounter.fetch_add(size, std::memory_order_relaxed);
+
+  if (isolate != nullptr) {
+    isolate->AdjustAmountOfExternalAllocatedMemory(size);
+  }
 }
 
-inline void gcaware_addAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory((int64_t)size); }
-
-inline void gcaware_removeAllocatedMemory(size_t size) { _gcaware_adjustAllocatedMemory(-(int64_t)size); }
+inline void _gcaware_adjustAllocatedMemory(int64_t size) { _gcaware_adjustAllocatedMemory(v8::Isolate::GetCurrent(), size); }
 
 void * gcaware_malloc(size_t size) {
   void * memory = malloc(size);
   if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+    _gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
   }
   return memory;
 }
@@ -252,14 +152,21 @@ void * gcaware_realloc(void * memory, size_t size) {
 void * gcaware_calloc(size_t count, size_t size) {
   void * memory = calloc(count, size);
   if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_malloc_size(memory));
+    _gcaware_adjustAllocatedMemory(bare_malloc_size(memory));
   }
   return memory;
 }
 
 void gcaware_free(void * memory) {
   if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(bare_malloc_size(memory));
+    _gcaware_adjustAllocatedMemory(-bare_malloc_size(memory));
+    free(memory);
+  }
+}
+
+void gcaware_free(v8::Isolate * isolate, void * memory) {
+  if (memory != nullptr) {
+    _gcaware_adjustAllocatedMemory(-bare_malloc_size(memory));
     free(memory);
   }
 }
@@ -267,14 +174,21 @@ void gcaware_free(void * memory) {
 void * gcaware_aligned_malloc(size_t alignment, size_t size) {
   void * memory = bare_aligned_malloc(alignment, size);
   if (memory != nullptr) {
-    gcaware_addAllocatedMemory(bare_aligned_malloc_size(memory));
+    _gcaware_adjustAllocatedMemory(bare_aligned_malloc_size(memory));
   }
   return memory;
 }
 
 void gcaware_aligned_free(void * memory) {
   if (memory != nullptr) {
-    gcaware_removeAllocatedMemory(bare_aligned_malloc_size(memory));
+    _gcaware_adjustAllocatedMemory(-bare_aligned_malloc_size(memory));
+    bare_aligned_free(memory);
+  }
+}
+
+void gcaware_aligned_free(v8::Isolate * isolate, void * memory) {
+  if (memory != nullptr) {
+    _gcaware_adjustAllocatedMemory(isolate, -bare_aligned_malloc_size(memory));
     bare_aligned_free(memory);
   }
 }
@@ -289,7 +203,7 @@ inline bool is_pointer_aligned(const void * ptr, std::uintptr_t alignment) noexc
 }
 
 void getRoaringUsedMemory(const v8::FunctionCallbackInfo<v8::Value> & info) {
-  info.GetReturnValue().Set((double)gcaware_totalMem());
+  info.GetReturnValue().Set((double)gcaware_totalMemCounter.load(std::memory_order_relaxed));
 }
 
 #endif  // ROARING_NODE_MEMORY_
@@ -10385,15 +10299,18 @@ const char * const ERROR_INVALID_OBJECT = "Invalid RoaringBitmap32 object";
 
 class AddonDataStrings final {
  public:
-  v8::Eternal<v8::String> n;
-  v8::Eternal<v8::String> readonly;
-  v8::Eternal<v8::String> RoaringBitmap32;
-  v8::Eternal<v8::Symbol> symbol_rnshared;
+  v8::Global<v8::String> n;
+  v8::Global<v8::String> readonly;
+  v8::Global<v8::String> RoaringBitmap32;
+  v8::Global<v8::Symbol> symbol_rnshared;
 
-  v8::Eternal<v8::String> OperationFailed;
-  v8::Eternal<v8::String> Comma;
+  v8::Global<v8::String> OperationFailed;
+  v8::Global<v8::String> Comma;
 
-  inline void initialize(v8::Isolate * isolate) {
+  inline explicit AddonDataStrings(v8::Isolate * isolate) {
+    if (isolate == nullptr) {
+      return;
+    }
     literal(isolate, this->n, "n");
     literal(isolate, this->readonly, "readonly");
     literal(isolate, this->RoaringBitmap32, "RoaringBitmap32");
@@ -10401,14 +10318,15 @@ class AddonDataStrings final {
 
     literal(isolate, this->OperationFailed, "Operation failed");
 
-    symbol_rnshared.Set(
-      isolate, v8::Symbol::ForApi(isolate, NEW_LITERAL_V8_STRING(isolate, "rnshared", v8::NewStringType::kInternalized)));
+    symbol_rnshared.Reset(
+      isolate,
+      v8::Symbol::ForApi(isolate, NEW_LITERAL_V8_STRING(isolate, "rnshared", v8::NewStringType::kInternalized)));
   }
 
  private:
   template <int N>
-  static void literal(v8::Isolate * isolate, v8::Eternal<v8::String> & result, const char (&literal)[N]) {
-    result.Set(isolate, NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized));
+  static void literal(v8::Isolate * isolate, v8::Global<v8::String> & result, const char (&literal)[N]) {
+    result.Reset(isolate, NEW_LITERAL_V8_STRING(isolate, literal, v8::NewStringType::kInternalized));
   }
 };
 
@@ -10427,22 +10345,42 @@ class AddonData final {
 
   AddonDataStrings strings;
 
-  v8::Eternal<v8::Object> Buffer;
-  v8::Eternal<v8::Object> Uint32Array;
-  v8::Eternal<v8::Function> Uint32Array_from;
-  v8::Eternal<v8::Function> Buffer_from;
+  v8::Global<v8::Object> Buffer;
+  v8::Global<v8::Object> Uint32Array;
+  v8::Global<v8::Function> Uint32Array_from;
+  v8::Global<v8::Function> Buffer_from;
 
   std::atomic<uint64_t> RoaringBitmap32_instances;
+  std::atomic<uint32_t> activeAsyncWorkers;
+  std::atomic<bool> shuttingDown;
 
-  v8::Eternal<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
-  v8::Eternal<v8::Function> RoaringBitmap32_constructor;
+  v8::Global<v8::FunctionTemplate> RoaringBitmap32_constructorTemplate;
+  v8::Global<v8::Function> RoaringBitmap32_constructor;
 
-  v8::Eternal<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
-  v8::Eternal<v8::Function> RoaringBitmap32BufferedIterator_constructor;
+  v8::Global<v8::FunctionTemplate> RoaringBitmap32BufferedIterator_constructorTemplate;
+  v8::Global<v8::Function> RoaringBitmap32BufferedIterator_constructor;
 
-  v8::Eternal<v8::External> external;
+  v8::Global<v8::External> external;
 
-  inline AddonData() : isolate(nullptr), RoaringBitmap32_instances(0) {}
+  inline explicit AddonData(v8::Isolate * isolate) :
+    isolate(isolate), strings(isolate), RoaringBitmap32_instances(0), activeAsyncWorkers(0), shuttingDown(false) {
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(AddonData));
+  }
+
+  inline ~AddonData() {
+    shuttingDown.store(true, std::memory_order_release);
+    waitForAsyncWorkersToFinish();
+    Buffer.Reset();
+    Uint32Array.Reset();
+    Uint32Array_from.Reset();
+    Buffer_from.Reset();
+    RoaringBitmap32_constructorTemplate.Reset();
+    RoaringBitmap32_constructor.Reset();
+    RoaringBitmap32BufferedIterator_constructorTemplate.Reset();
+    RoaringBitmap32BufferedIterator_constructor.Reset();
+    external.Reset();
+    _gcaware_adjustAllocatedMemory(this->isolate, -static_cast<int64_t>(sizeof(AddonData)));
+  }
 
   static inline AddonData * get(const v8::FunctionCallbackInfo<v8::Value> & info) {
     v8::Local<v8::Value> data = info.Data();
@@ -10456,12 +10394,13 @@ class AddonData final {
     return reinterpret_cast<AddonData *>(external->Value());
   }
 
-  inline void initialize(v8::Isolate * isolate) {
-    this->isolate = isolate;
+  inline void initialize() {
+    v8::Isolate * isolate = this->isolate;
+    if (isolate == nullptr) {
+      return;
+    }
 
-    external.Set(isolate, v8::External::New(isolate, this));
-
-    this->strings.initialize(isolate);
+    external.Reset(isolate, v8::External::New(isolate, this));
 
     auto context = isolate->GetCurrentContext();
 
@@ -10476,21 +10415,45 @@ class AddonData final {
                     .ToLocalChecked()
                     .As<v8::Object>();
 
-    this->Buffer.Set(isolate, buffer);
+    this->Buffer.Reset(isolate, buffer);
 
-    this->Buffer_from.Set(
+    this->Buffer_from.Reset(
       isolate,
       buffer->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized))
         .ToLocalChecked()
         .As<v8::Function>());
 
-    this->Uint32Array.Set(isolate, uint32Array);
+    this->Uint32Array.Reset(isolate, uint32Array);
 
-    this->Uint32Array_from.Set(
+    this->Uint32Array_from.Reset(
       isolate,
       v8::Local<v8::Function>::Cast(
         uint32Array->Get(context, NEW_LITERAL_V8_STRING(isolate, "from", v8::NewStringType::kInternalized))
           .ToLocalChecked()));
+  }
+
+  inline bool tryEnterAsyncWorker() {
+    if (isShuttingDown()) {
+      return false;
+    }
+    activeAsyncWorkers.fetch_add(1, std::memory_order_acq_rel);
+    if (isShuttingDown()) {
+      activeAsyncWorkers.fetch_sub(1, std::memory_order_acq_rel);
+      return false;
+    }
+    return true;
+  }
+
+  inline void leaveAsyncWorker() { activeAsyncWorkers.fetch_sub(1, std::memory_order_acq_rel); }
+
+  inline bool isShuttingDown() const { return shuttingDown.load(std::memory_order_acquire); }
+
+  inline void waitForAsyncWorkersToFinish() {
+    uint32_t delayMicros = 50;
+    while (activeAsyncWorkers.load(std::memory_order_acquire) != 0) {
+      std::this_thread::sleep_for(std::chrono::microseconds(delayMicros));
+      delayMicros = delayMicros >= 5000 ? 5000 : delayMicros * 2;
+    }
   }
 };
 
@@ -10518,6 +10481,7 @@ inline void AddonData_setMethod(
 class ObjectWrap {
  public:
   AddonData * const addonData;
+  v8::Isolate * const isolate;
 
   template <class T>
   static T * TryUnwrap(const v8::Local<v8::Value> & value, v8::Isolate * isolate) {
@@ -10547,7 +10511,7 @@ class ObjectWrap {
   }
 
  protected:
-  explicit ObjectWrap(AddonData * addonData) : addonData(addonData) {}
+  explicit ObjectWrap(AddonData * addonData) : addonData(addonData), isolate(addonData->isolate) {}
 };
 
 #endif  // ROARING_NODE_OBJECT_WRAP_
@@ -11352,7 +11316,7 @@ class RoaringBitmap32 final : public ObjectWrap {
     sizeCache(-1),
     frozenCounter(RoaringBitmap32::FROZEN_COUNTER_HARD_FROZEN),
     readonlyViewOf(readonlyViewOf->readonlyViewOf ? readonlyViewOf->readonlyViewOf : readonlyViewOf) {
-    gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(RoaringBitmap32));
   }
 
   explicit RoaringBitmap32(AddonData * addonData, uint32_t capacity) :
@@ -11363,18 +11327,18 @@ class RoaringBitmap32 final : public ObjectWrap {
     frozenCounter(0),
     readonlyViewOf(nullptr) {
     ++addonData->RoaringBitmap32_instances;
-    gcaware_addAllocatedMemory(sizeof(RoaringBitmap32));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(RoaringBitmap32));
   }
 
   ~RoaringBitmap32() {
-    gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32));
+    _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(RoaringBitmap32));
     if (!this->readonlyViewOf) {
       --this->addonData->RoaringBitmap32_instances;
       if (this->roaring != nullptr) {
         roaring_bitmap_free(this->roaring);
       }
       if (this->frozenStorage.data != nullptr && this->frozenStorage.length == std::numeric_limits<size_t>::max()) {
-        gcaware_aligned_free(this->frozenStorage.data);
+        gcaware_aligned_free(this->isolate, this->frozenStorage.data);
       }
     }
     if (!this->persistent.IsEmpty()) {
@@ -12029,14 +11993,14 @@ void roaringOpMany(
         RoaringBitmap32 * p =
           array->Get(context, i).ToLocal(&item) ? ObjectWrap::TryUnwrap<RoaringBitmap32>(item, isolate) : nullptr;
         if (p == nullptr) {
-          gcaware_free(x);
+          gcaware_free(isolate, x);
           return v8utils::throwTypeError(isolate, opName, " accepts only RoaringBitmap32 instances");
         }
         x[i] = p->roaring;
       }
 
       roaring_bitmap_t * r = op((TSize)arrayLength, x);
-      gcaware_free(x);
+      gcaware_free(isolate, x);
       if (r == nullptr) {
         return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
       }
@@ -12073,14 +12037,14 @@ void roaringOpMany(
     for (int i = 0; i < length; ++i) {
       RoaringBitmap32 * p = ObjectWrap::TryUnwrap<RoaringBitmap32>(info, i);
       if (p == nullptr) {
-        gcaware_free(x);
+        gcaware_free(isolate, x);
         return v8utils::throwTypeError(isolate, opName, " accepts only RoaringBitmap32 instances");
       }
       x[i] = p->roaring;
     }
 
     roaring_bitmap_t * r = op((TSize)length, x);
-    gcaware_free(x);
+    gcaware_free(isolate, x);
     if (r == nullptr) {
       return v8utils::throwTypeError(isolate, opName, " failed roaring allocation");
     }
@@ -13081,7 +13045,12 @@ class AsyncWorker {
   AddonData * maybeAddonData;
 
   explicit AsyncWorker(v8::Isolate * isolate, AddonData * maybeAddonData) :
-    isolate(isolate), maybeAddonData(maybeAddonData), _error(nullptr), _started(false), _completed(false) {
+    isolate(isolate),
+    maybeAddonData(maybeAddonData),
+    _error(nullptr),
+    _started(false),
+    _completed(false),
+    _registeredWithAddon(false) {
     _task.data = this;
   }
 
@@ -13104,6 +13073,8 @@ class AsyncWorker {
   }
 
   inline void clearError() { this->_error = WorkerError(); }
+
+  inline bool isShuttingDown() const { return maybeAddonData != nullptr && maybeAddonData->isShuttingDown(); }
 
   static v8::Local<v8::Value> run(AsyncWorker * worker) {
     v8::EscapableHandleScope scope(worker->isolate);
@@ -13134,6 +13105,10 @@ class AsyncWorker {
 
       if (!worker->hasError()) {
         worker->before();
+      }
+
+      if (!worker->hasError()) {
+        worker->_ensureAsyncRegistration();
       }
 
       v8::Local<v8::Value> error;
@@ -13188,6 +13163,7 @@ class AsyncWorker {
   std::atomic<bool> _completed;
   v8::Global<v8::Function> _callback;
   v8::Global<v8::Promise::Resolver> _resolver;
+  bool _registeredWithAddon;
 
   virtual bool _start() {
     this->_started = true;
@@ -13200,12 +13176,42 @@ class AsyncWorker {
     return true;
   }
 
+  void _ensureAsyncRegistration() {
+    if (this->_registeredWithAddon || this->hasError()) {
+      return;
+    }
+    if (this->maybeAddonData == nullptr) {
+      this->setError(WorkerError("Addon data unavailable"));
+      return;
+    }
+    if (!this->maybeAddonData->tryEnterAsyncWorker()) {
+      this->setError(WorkerError("Addon is shutting down"));
+      return;
+    }
+    this->_registeredWithAddon = true;
+  }
+
+  void _unregisterFromAddon() {
+    if (this->_registeredWithAddon && this->maybeAddonData != nullptr) {
+      this->maybeAddonData->leaveAsyncWorker();
+      this->_registeredWithAddon = false;
+    }
+  }
+
   static void _resolveOrReject(AsyncWorker * worker, v8::Local<v8::Value> & error) {
     if (worker->_completed.load(std::memory_order_acquire)) {
       return;
     }
 
     worker->_completed.store(true, std::memory_order_release);
+
+    worker->_unregisterFromAddon();
+
+    if (worker->isShuttingDown()) {
+      worker->finally();
+      delete worker;
+      return;
+    }
 
     v8::Isolate * isolate = worker->isolate;
     v8::HandleScope scope(isolate);
@@ -13268,9 +13274,12 @@ class AsyncWorker {
   static void _complete(AsyncWorker * worker) {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     v8::Isolate * isolate = worker->isolate;
+    const bool shuttingDown = worker->isShuttingDown();
     v8::Local<v8::Value> error;
     _resolveOrReject(worker, error);
-    isolate->PerformMicrotaskCheckpoint();
+    if (!shuttingDown) {
+      isolate->PerformMicrotaskCheckpoint();
+    }
   }
 
   static void _work(uv_work_t * request) {
@@ -13328,7 +13337,7 @@ class ParallelAsyncWorker : public AsyncWorker {
     _pendingTasks(0),
     _currentIndex(0) {}
 
-  virtual ~ParallelAsyncWorker() { gcaware_free(_tasks); }
+  virtual ~ParallelAsyncWorker() { gcaware_free(this->isolate, _tasks); }
 
  protected:
   void work() override {
@@ -13405,7 +13414,9 @@ class ParallelAsyncWorker : public AsyncWorker {
     auto * worker = static_cast<ParallelAsyncWorker *>(request->data);
 
     if (worker->_completed.load(std::memory_order_acquire)) {
-      worker->isolate->PerformMicrotaskCheckpoint();
+      if (!worker->isShuttingDown()) {
+        worker->isolate->PerformMicrotaskCheckpoint();
+      }
       return;
     }
 
@@ -13415,7 +13426,9 @@ class ParallelAsyncWorker : public AsyncWorker {
       return;
     }
 
-    worker->isolate->PerformMicrotaskCheckpoint();
+    if (!worker->isShuttingDown()) {
+      worker->isolate->PerformMicrotaskCheckpoint();
+    }
   }
 };
 
@@ -13472,7 +13485,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
 
   explicit ToUint32ArrayAsyncWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
     AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(ToUint32ArrayAsyncWorker));
   }
 
   ~ToUint32ArrayAsyncWorker() {
@@ -13480,7 +13493,7 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
     if (buffer) {
       bare_aligned_free(buffer);
     }
-    gcaware_removeAllocatedMemory(sizeof(ToUint32ArrayAsyncWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(ToUint32ArrayAsyncWorker));
   }
 
  protected:
@@ -13503,7 +13516,8 @@ class ToUint32ArrayAsyncWorker final : public AsyncWorker {
           return v8utils::throwError(
             isolate, "RoaringBitmap32::toUint32ArrayAsync - argument must be a valid integer number");
         }
-        this->maxSize = maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : static_cast<size_t>(maxSizeDouble));
+        this->maxSize =
+          maxSizeDouble <= 0 ? 0 : (maxSizeDouble > 0xfffffffff ? 0xfffffffff : static_cast<size_t>(maxSizeDouble));
       } else {
         if (!argumentIsValidUint32ArrayOutput(info[0]) || !this->inputContent.set(isolate, info[0])) {
           return v8utils::throwError(
@@ -13621,10 +13635,10 @@ class SerializeWorker final : public AsyncWorker {
 
   explicit SerializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
     AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(SerializeWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(SerializeWorker));
   }
 
-  virtual ~SerializeWorker() { gcaware_removeAllocatedMemory(sizeof(SerializeWorker)); }
+  virtual ~SerializeWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(SerializeWorker)); }
 
  protected:
   // Called before the thread starts, in the main thread.
@@ -13662,10 +13676,10 @@ class SerializeFileWorker final : public AsyncWorker {
 
   explicit SerializeFileWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * maybeAddonData) :
     AsyncWorker(info.GetIsolate(), maybeAddonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(SerializeFileWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(SerializeFileWorker));
   }
 
-  virtual ~SerializeFileWorker() { gcaware_removeAllocatedMemory(sizeof(SerializeFileWorker)); }
+  virtual ~SerializeFileWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(SerializeFileWorker)); }
 
  protected:
   // Called before the thread starts, in the main thread.
@@ -13706,10 +13720,10 @@ class DeserializeWorker final : public AsyncWorker {
 
   explicit DeserializeWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * addonData) :
     AsyncWorker(info.GetIsolate(), addonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(DeserializeWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(DeserializeWorker));
   }
 
-  virtual ~DeserializeWorker() { gcaware_removeAllocatedMemory(sizeof(DeserializeWorker)); }
+  virtual ~DeserializeWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(DeserializeWorker)); }
 
  protected:
   void before() final {
@@ -13756,10 +13770,10 @@ class DeserializeFileWorker final : public AsyncWorker {
 
   explicit DeserializeFileWorker(const v8::FunctionCallbackInfo<v8::Value> & info, AddonData * addonData) :
     AsyncWorker(info.GetIsolate(), addonData), info(info) {
-    gcaware_addAllocatedMemory(sizeof(DeserializeFileWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(DeserializeFileWorker));
   }
 
-  virtual ~DeserializeFileWorker() { gcaware_removeAllocatedMemory(sizeof(DeserializeFileWorker)); }
+  virtual ~DeserializeFileWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(DeserializeFileWorker)); }
 
  protected:
   void before() final { this->setError(this->deserializer.parseArguments(this->info)); }
@@ -13852,10 +13866,10 @@ class FromArrayAsyncWorker : public RoaringBitmap32FactoryAsyncWorker {
 
   explicit FromArrayAsyncWorker(v8::Isolate * isolate, AddonData * addonData) :
     RoaringBitmap32FactoryAsyncWorker(isolate, addonData) {
-    gcaware_addAllocatedMemory(sizeof(FromArrayAsyncWorker));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(FromArrayAsyncWorker));
   }
 
-  virtual ~FromArrayAsyncWorker() { gcaware_removeAllocatedMemory(sizeof(FromArrayAsyncWorker)); }
+  virtual ~FromArrayAsyncWorker() { _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(FromArrayAsyncWorker)); }
 
  protected:
   void work() final {
@@ -15597,7 +15611,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
   if (ctor.IsEmpty()) {
     return;
   }
-  addonData->RoaringBitmap32_constructorTemplate.Set(isolate, ctor);
+  addonData->RoaringBitmap32_constructorTemplate.Reset(isolate, ctor);
 
   v8::Local<v8::ObjectTemplate> ctorInstanceTemplate = ctor->InstanceTemplate();
   ctor->SetClassName(className);
@@ -15756,7 +15770,7 @@ void RoaringBitmap32_Init(v8::Local<v8::Object> exports, AddonData * addonData) 
 
   ignoreMaybeResult(exports->Set(context, className, ctorFunction));
 
-  addonData->RoaringBitmap32_constructor.Set(isolate, ctorFunction);
+  addonData->RoaringBitmap32_constructor.Reset(isolate, ctorFunction);
 }
 
 
@@ -15785,12 +15799,12 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
     ObjectWrap(addonData), reversed(reversed), bitmapInstance(nullptr) {
     this->it.parent = nullptr;
     this->it.has_value = false;
-    gcaware_addAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
+    _gcaware_adjustAllocatedMemory(this->isolate, sizeof(RoaringBitmap32BufferedIterator));
   }
 
   ~RoaringBitmap32BufferedIterator() {
     this->destroy();
-    gcaware_removeAllocatedMemory(sizeof(RoaringBitmap32BufferedIterator));
+    _gcaware_adjustAllocatedMemory(this->isolate, -sizeof(RoaringBitmap32BufferedIterator));
   }
 
   inline uint32_t _fill() {
@@ -15834,8 +15848,7 @@ class RoaringBitmap32BufferedIterator final : public ObjectWrap {
 void RoaringBitmap32BufferedIterator_fill(const v8::FunctionCallbackInfo<v8::Value> & info) {
   v8::Isolate * isolate = info.GetIsolate();
 
-  RoaringBitmap32BufferedIterator * instance =
-    ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.This(), isolate);
+  RoaringBitmap32BufferedIterator * instance = ObjectWrap::TryUnwrap<RoaringBitmap32BufferedIterator>(info.This(), isolate);
 
   RoaringBitmap32 * bitmapInstance = instance ? instance->bitmapInstance : nullptr;
 
@@ -15964,7 +15977,7 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
   ctor->SetClassName(className);
   ctor->InstanceTemplate()->SetInternalFieldCount(2);
 
-  addonData->RoaringBitmap32BufferedIterator_constructorTemplate.Set(isolate, ctor);
+  addonData->RoaringBitmap32BufferedIterator_constructorTemplate.Reset(isolate, ctor);
 
   NODE_SET_PROTOTYPE_METHOD(ctor, "fill", RoaringBitmap32BufferedIterator_fill);
   NODE_SET_PROTOTYPE_METHOD(ctor, "close", RoaringBitmap32BufferedIterator_close);
@@ -15976,7 +15989,7 @@ void RoaringBitmap32BufferedIterator_Init(v8::Local<v8::Object> exports, AddonDa
     return v8utils::throwError(isolate, "Failed to instantiate RoaringBitmap32BufferedIterator");
   }
 
-  addonData->RoaringBitmap32BufferedIterator_constructor.Set(isolate, ctorFunction);
+  addonData->RoaringBitmap32BufferedIterator_constructor.Reset(isolate, ctorFunction);
   v8utils::defineHiddenField(isolate, exports, "RoaringBitmap32BufferedIterator", ctorFunction);
 }
 
@@ -15994,23 +16007,18 @@ using namespace v8;
     registration(exports);                                                                             \
   }
 
-void AddonData_DeleteInstance(void * addonData) {
-  unregisterThreadLocalIsolate(reinterpret_cast<AddonData *>(addonData)->isolate);
-  delete (AddonData *)addonData;
-}
+void AddonData_DeleteInstance(void * addonData) { delete (AddonData *)addonData; }
 
 void InitRoaringNode(Local<Object> exports) {
   v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
-  registerThreadLocalIsolate(isolate);
-
   v8::HandleScope scope(isolate);
 
-  AddonData * addonData = new AddonData();
+  AddonData * addonData = new AddonData(isolate);
 
   node::AddEnvironmentCleanupHook(isolate, AddonData_DeleteInstance, addonData);
 
-  addonData->initialize(isolate);
+  addonData->initialize();
 
   AlignedBuffers_Init(exports, addonData);
   RoaringBitmap32_Init(exports, addonData);
